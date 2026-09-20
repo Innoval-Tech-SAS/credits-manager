@@ -2,6 +2,8 @@
 
 namespace App\Gastos\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Gastos\Models\Municipio;
 use App\Gastos\Models\TarifaReteIcaMunicipio;
 use App\Gastos\Repositories\TarifaReteIcaMunicipioRepository;
@@ -12,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class TarifaReteIcaMunicipioService
 {
-    public function __construct(protected TarifaReteIcaMunicipioRepository $tarifas) {}
+    public function __construct(
+        protected TarifaReteIcaMunicipioRepository $tarifas,
+        protected EmisorAuditoria $auditoria,
+    ) {}
 
     public function listar(): Collection
     {
@@ -39,12 +44,29 @@ class TarifaReteIcaMunicipioService
             $abierta = $this->tarifas->abiertaPara($datos['municipio_id'], $datos['actividad_economica_id']);
 
             if ($abierta) {
+                $anteriores = $this->auditoria->instantanea($abierta);
+
                 $this->tarifas->actualizar($abierta, [
                     'fecha_hasta' => Carbon::parse($datos['fecha_desde'])->subDay()->toDateString(),
                 ]);
+
+                $this->auditoria->registrarModificacion(
+                    AuditoriaConstants::MODULO_GASTOS,
+                    "Tarifa ReteICA #{$abierta->id} del municipio #{$abierta->municipio_id} cerrada por una nueva vigencia",
+                    $abierta,
+                    $anteriores,
+                );
             }
 
-            return $this->tarifas->crear($datos);
+            $tarifa = $this->tarifas->crear($datos);
+
+            $this->auditoria->registrarCreacion(
+                AuditoriaConstants::MODULO_GASTOS,
+                "Tarifa ReteICA #{$tarifa->id} del municipio #{$tarifa->municipio_id} vigente desde {$datos['fecha_desde']}",
+                $tarifa,
+            );
+
+            return $tarifa;
         });
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Gastos\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Gastos\Models\ParametrizacionTipoGasto;
 use App\Gastos\Models\TipoGasto;
 use App\Gastos\Repositories\ParametrizacionTipoGastoRepository;
@@ -12,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class ParametrizacionTipoGastoService
 {
-    public function __construct(protected ParametrizacionTipoGastoRepository $parametrizaciones) {}
+    public function __construct(
+        protected ParametrizacionTipoGastoRepository $parametrizaciones,
+        protected EmisorAuditoria $auditoria,
+    ) {}
 
     public function listarPorTipoGasto(int $tipoGastoId): Collection
     {
@@ -43,12 +48,29 @@ class ParametrizacionTipoGastoService
             $abierta = $this->parametrizaciones->abiertaParaTipoGasto($datos['tipo_gasto_id']);
 
             if ($abierta) {
+                $anteriores = $this->auditoria->instantanea($abierta);
+
                 $this->parametrizaciones->actualizar($abierta, [
                     'fecha_hasta' => Carbon::parse($datos['fecha_desde'])->subDay()->toDateString(),
                 ]);
+
+                $this->auditoria->registrarModificacion(
+                    AuditoriaConstants::MODULO_GASTOS,
+                    "Parametrización #{$abierta->id} del tipo de gasto #{$abierta->tipo_gasto_id} cerrada por una nueva vigencia",
+                    $abierta,
+                    $anteriores,
+                );
             }
 
-            return $this->parametrizaciones->crear($datos);
+            $parametrizacion = $this->parametrizaciones->crear($datos);
+
+            $this->auditoria->registrarCreacion(
+                AuditoriaConstants::MODULO_GASTOS,
+                "Parametrización #{$parametrizacion->id} del tipo de gasto #{$parametrizacion->tipo_gasto_id} vigente desde {$datos['fecha_desde']}",
+                $parametrizacion,
+            );
+
+            return $parametrizacion;
         });
     }
 }
