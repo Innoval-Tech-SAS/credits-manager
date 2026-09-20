@@ -9,3 +9,7 @@ certbot/www/
 
 resources/
 .mcp.json
+
+CLAUDE.md
+.playwright-mcp/
+*.png
