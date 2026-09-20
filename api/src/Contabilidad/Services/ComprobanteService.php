@@ -2,6 +2,9 @@
 
 namespace App\Contabilidad\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Enums\EstadoComprobante;
 use App\Contabilidad\Enums\EstadoPeriodo;
 use App\Contabilidad\Enums\EventoContable;
@@ -33,6 +36,7 @@ class ComprobanteService
         protected TipoComprobanteRepository $tiposComprobante,
         protected ReglaContabilizacionRepository $reglas,
         protected PeriodoContableService $periodos,
+        protected EmisorAuditoria $auditoria,
     ) {}
 
     public function listar(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
@@ -129,6 +133,15 @@ class ComprobanteService
                 ]);
             }
 
+            $origen = $moduloOrigen ? " (origen: {$moduloOrigen} #{$origenId})" : '';
+            $this->auditoria->registrarCreacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                'Comprobante #'.$comprobante->consecutivo.($contabilizarInmediato ? ' contabilizado' : ' creado en borrador')." por {$totalDebito->aDecimalString()}{$origen}",
+                $comprobante,
+                ['lineas' => count($lineas)],
+                $contabilizarInmediato ? AccionAuditoria::Contabilizar : AccionAuditoria::Crear,
+            );
+
             return $comprobante;
         });
     }
@@ -161,6 +174,8 @@ class ComprobanteService
         ])->all();
 
         return DB::transaction(function () use ($original, $motivo, $lineasReverso) {
+            $anteriores = $this->auditoria->instantanea($original);
+
             $reverso = $this->crearComprobante(
                 $original->tipo_comprobante_id,
                 now()->toDateString(),
@@ -178,6 +193,15 @@ class ComprobanteService
                 'anulado_por' => Auth::id(),
                 'anulado_en' => now(),
             ]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                'Comprobante #'.$original->consecutivo.' reversado por el #'.$reverso->consecutivo,
+                $original,
+                $anteriores,
+                $motivo,
+                AccionAuditoria::Reversar,
+            );
 
             return $reverso;
         });

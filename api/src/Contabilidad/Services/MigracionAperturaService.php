@@ -2,6 +2,9 @@
 
 namespace App\Contabilidad\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Clientes\Repositories\ClienteRepository;
 use App\Contabilidad\Models\MigracionApertura;
 use App\Contabilidad\Repositories\MigracionAperturaRepository;
@@ -34,6 +37,7 @@ class MigracionAperturaService
         protected OtroTerceroRepository $otrosTerceros,
         protected ClienteRepository $clientes,
         protected ProveedorRepository $proveedores,
+        protected EmisorAuditoria $auditoria,
     ) {}
 
     public function paginar(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
@@ -76,7 +80,7 @@ class MigracionAperturaService
             }
         });
 
-        return $this->migraciones->crear([
+        $migracion = $this->migraciones->crear([
             'tipo' => $tipo,
             'archivo_original' => $archivo->getClientOriginalName(),
             'registros_aceptados' => $aceptados,
@@ -84,6 +88,23 @@ class MigracionAperturaService
             'detalle_errores' => $errores,
             'usuario_id' => Auth::id(),
         ]);
+
+        $this->auditoria->registrar(
+            AccionAuditoria::Importar,
+            AuditoriaConstants::MODULO_CONTABILIDAD,
+            "Migración de apertura ({$tipo}) importada desde {$archivo->getClientOriginalName()}: {$aceptados} aceptados, {$rechazados} rechazados",
+            'migracion_apertura',
+            $migracion->id,
+            nuevos: [
+                'tipo' => $tipo,
+                'archivo_original' => $archivo->getClientOriginalName(),
+                'registros_aceptados' => $aceptados,
+                'registros_rechazados' => $rechazados,
+                'primeros_errores' => array_slice($errores, 0, 20),
+            ],
+        );
+
+        return $migracion;
     }
 
     /**

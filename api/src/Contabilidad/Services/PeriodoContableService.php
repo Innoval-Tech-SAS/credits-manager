@@ -2,6 +2,9 @@
 
 namespace App\Contabilidad\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Enums\EstadoPeriodo;
 use App\Contabilidad\Models\PeriodoContable;
 use App\Contabilidad\Repositories\PeriodoContableRepository;
@@ -11,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class PeriodoContableService
 {
-    public function __construct(protected PeriodoContableRepository $periodos) {}
+    public function __construct(
+        protected PeriodoContableRepository $periodos,
+        protected EmisorAuditoria $auditoria,
+    ) {}
 
     public function listar(): Collection
     {
@@ -39,19 +45,31 @@ class PeriodoContableService
 
     public function cerrar(PeriodoContable $periodo): PeriodoContable
     {
-        return $this->periodos->actualizar($periodo, [
+        $anteriores = $this->auditoria->instantanea($periodo);
+
+        $periodo = $this->periodos->actualizar($periodo, [
             'estado' => EstadoPeriodo::Cerrado,
             'cerrado_por' => Auth::id(),
             'cerrado_en' => now(),
         ]);
+
+        $this->auditoria->registrarModificacion(AuditoriaConstants::MODULO_CONTABILIDAD, "Período {$periodo->mes}/{$periodo->anio} cerrado", $periodo, $anteriores, accion: AccionAuditoria::CerrarPeriodo);
+
+        return $periodo;
     }
 
     /** Requiere permiso `contabilidad,eliminar` (el más privilegiado) en la ruta. */
     public function reabrir(PeriodoContable $periodo, string $motivo): PeriodoContable
     {
-        return $this->periodos->actualizar($periodo, [
+        $anteriores = $this->auditoria->instantanea($periodo);
+
+        $periodo = $this->periodos->actualizar($periodo, [
             'estado' => EstadoPeriodo::Abierto,
             'reabierto_motivo' => $motivo,
         ]);
+
+        $this->auditoria->registrarModificacion(AuditoriaConstants::MODULO_CONTABILIDAD, "Período {$periodo->mes}/{$periodo->anio} reabierto", $periodo, $anteriores, $motivo, AccionAuditoria::ReabrirPeriodo);
+
+        return $periodo;
     }
 }
