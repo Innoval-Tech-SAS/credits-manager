@@ -1,5 +1,6 @@
 <?php
 
+use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -71,6 +72,18 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+        ],
+
+        // Respaldo de eventos de auditoría que no llegaron a Redis o no se pudieron insertar:
+        // una línea JSON por evento, sin rotación (el panel de recuperación los relee).
+        'auditoria_respaldo' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/auditoria-respaldo.log'),
+            'level' => 'critical',
+            'days' => 0,
+            'formatter' => JsonFormatter::class,
+            'formatter_with' => ['appendNewline' => true],
+            'replace_placeholders' => false,
         ],
 
         'slack' => [

@@ -2,6 +2,8 @@
 
 namespace App\Auth\Services;
 
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Usuarios\Models\Usuario;
 use App\Usuarios\Repositories\UsuarioRepository;
 use Illuminate\Http\Request;
@@ -11,7 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
-    public function __construct(protected UsuarioRepository $usuarios) {}
+    public function __construct(
+        protected UsuarioRepository $usuarios,
+        protected EmisorAuditoria $auditoria,
+    ) {}
 
     public function iniciarSesion(Request $peticion, string $usuario, string $clave): void
     {
@@ -32,10 +37,14 @@ class AuthService
         }
 
         $peticion->session()->regenerate();
+
+        $this->auditoria->registrar(AccionAuditoria::Login, 'auth', 'Inicio de sesión de '.Auth::user()->nombre, 'usuario', Auth::id());
     }
 
     public function cerrarSesion(Request $peticion): void
     {
+        $this->auditoria->registrar(AccionAuditoria::Logout, 'auth', 'Cierre de sesión de '.$peticion->user()->nombre, 'usuario', $peticion->user()->id);
+
         Auth::guard('web')->logout();
 
         $peticion->session()->invalidate();

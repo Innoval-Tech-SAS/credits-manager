@@ -3,6 +3,7 @@
 use App\Auth\Middleware\EsAdmin;
 use App\Auth\Middleware\EsSuperAdmin;
 use App\Auth\Middleware\TienePermiso;
+use App\Auth\Middleware\TienePermisoOSuperAdmin;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -20,6 +21,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
         apiPrefix: 'api/v1',
     )
+    ->withBroadcasting(
+        __DIR__.'/../routes/channels.php',
+        ['prefix' => 'api/v1', 'middleware' => ['api', 'auth:sanctum']],
+    )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
 
@@ -27,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => EsAdmin::class,
             'superadmin' => EsSuperAdmin::class,
             'permiso' => TienePermiso::class,
+            'permiso_o_superadmin' => TienePermisoOSuperAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

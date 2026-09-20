@@ -172,6 +172,9 @@ return [
     */
 
     'custom' => [
+        'exportacion' => [
+            'excede_limite' => 'La exportación tiene :filas filas y el máximo es :maximo (límite de Excel). Acota los filtros e inténtalo de nuevo.',
+        ],
         'credito_origen_id' => [
             'pertenece_a_otro_cliente' => 'El crédito seleccionado no pertenece a este cliente.',
         ],

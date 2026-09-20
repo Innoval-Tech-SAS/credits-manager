@@ -2,6 +2,8 @@
 
 namespace App\Empresas\Services;
 
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Empresas\Constants\EmpresaConstants;
 use App\Empresas\Models\Empresa;
 use App\Empresas\Repositories\EmpresaRepository;
@@ -17,7 +19,10 @@ use Illuminate\Support\Facades\Storage;
 
 class EmpresaService
 {
-    public function __construct(protected EmpresaRepository $empresas) {}
+    public function __construct(
+        protected EmpresaRepository $empresas,
+        protected EmisorAuditoria $auditoria,
+    ) {}
 
     /** Panel de super-admin: todas las empresas de la plataforma. */
     public function listarEmpresas(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
@@ -54,13 +59,41 @@ class EmpresaService
                 'activo' => true,
             ]);
 
+            $this->auditoria->registrar(
+                AccionAuditoria::Crear,
+                'empresas',
+                "Empresa {$empresa->nombre_empresa} creada con su administrador {$datos['admin_usuario']}",
+                'empresa',
+                $empresa->id,
+                nuevos: $empresa->only(['nombre_empresa', 'nit', 'direccion', 'telefono', 'correo']) + ['admin_usuario' => strtolower($datos['admin_usuario'])],
+            );
+
             return $empresa;
         });
     }
 
     public function editarEmpresa(Empresa $empresa, array $datos): Empresa
     {
-        return $this->empresas->actualizar($empresa, $datos);
+        $anteriores = $empresa->only(array_keys($datos));
+
+        $empresa = $this->empresas->actualizar($empresa, $datos);
+
+        $nuevos = $empresa->only(array_keys($datos));
+        $cambiados = array_keys(array_diff_assoc($nuevos, $anteriores));
+
+        if ($cambiados !== []) {
+            $this->auditoria->registrar(
+                AccionAuditoria::Modificar,
+                'empresas',
+                "Empresa {$empresa->nombre_empresa} modificada",
+                'empresa',
+                $empresa->id,
+                anteriores: array_intersect_key($anteriores, array_flip($cambiados)),
+                nuevos: array_intersect_key($nuevos, array_flip($cambiados)),
+            );
+        }
+
+        return $empresa;
     }
 
     public function actualizarLogoPropia(UploadedFile $logo): Empresa

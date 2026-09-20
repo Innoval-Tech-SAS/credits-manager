@@ -1,5 +1,7 @@
 <?php
 
+use App\Auditoria\Controllers\BitacoraAuditoriaController;
+use App\Auditoria\Controllers\RecuperacionAuditoriaController;
 use App\Auth\Controllers\AuthController;
 use App\Calendario\Controllers\CalendarioController;
 use App\Cartera\Controllers\CarteraController;
@@ -18,6 +20,7 @@ use App\Dashboard\Controllers\DashboardController;
 use App\Empleadores\Controllers\EmpleadorController;
 use App\Empresas\Controllers\EmpresaAdminController;
 use App\Empresas\Controllers\EmpresaController;
+use App\Exportacion\Controllers\ExportacionController;
 use App\Gastos\Controllers\ActividadEconomicaController;
 use App\Gastos\Controllers\GastoController;
 use App\Gastos\Controllers\MunicipioController;
@@ -25,6 +28,7 @@ use App\Gastos\Controllers\ParametrizacionTipoGastoController;
 use App\Gastos\Controllers\TarifaReteIcaMunicipioController;
 use App\Gastos\Controllers\TipoGastoController;
 use App\Gastos\Controllers\ValorUvtController;
+use App\Notificaciones\Controllers\NotificacionController;
 use App\Pagos\Controllers\PagoController;
 use App\Proveedores\Controllers\ProveedorController;
 use App\Terceros\Controllers\TerceroController;
@@ -50,6 +54,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/empresa/logo', [EmpresaController::class, 'uploadLogo'])->middleware('admin');
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    Route::get('/auditoria/bitacora', [BitacoraAuditoriaController::class, 'index'])->middleware('permiso_o_superadmin:auditoria,listar');
+    Route::post('/auditoria/bitacora/exportar', [BitacoraAuditoriaController::class, 'exportar'])->middleware('permiso_o_superadmin:auditoria,exportar');
+    Route::get('/auditoria/respaldo', [RecuperacionAuditoriaController::class, 'index'])->middleware('superadmin');
+    Route::post('/auditoria/respaldo/recuperar', [RecuperacionAuditoriaController::class, 'recuperar'])->middleware('superadmin');
+
+    Route::get('/exportaciones', [ExportacionController::class, 'index']);
+    Route::get('/exportaciones/{exportacion}/descargar', [ExportacionController::class, 'descargar'])->whereNumber('exportacion');
+
+    Route::get('/notificaciones', [NotificacionController::class, 'index']);
+    Route::post('/notificaciones/leer-todas', [NotificacionController::class, 'leerTodas']);
+    Route::post('/notificaciones/{notificacion}/leer', [NotificacionController::class, 'leer'])->whereNumber('notificacion');
 
     Route::get('/usuarios', [UsuarioController::class, 'index'])->middleware('permiso:usuarios,listar');
     Route::post('/usuarios', [UsuarioController::class, 'store'])->middleware('permiso:usuarios,crear');
