@@ -2,7 +2,7 @@ services:
   database:
     image: mysql:8.4
     container_name: credits-manager-database
-    command: ["mysqld", "--default-time-zone=-05:00"]
+    command: ["mysqld", "--default-time-zone=-05:00", "--log-bin-trust-function-creators=1"]
     environment:
       TZ: America/Bogota
       MYSQL_DATABASE: ${DB_DATABASE}
@@ -22,6 +22,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: credits-manager-redis
+    command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -43,6 +44,7 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
+    image: credits-manager-api:latest
     container_name: credits-manager-api
     environment:
       TZ: America/Bogota
@@ -66,6 +68,17 @@ services:
       SEED_ADMIN_NOMBRE: ${SEED_ADMIN_NOMBRE}
       SEED_ADMIN_USUARIO: ${SEED_ADMIN_USUARIO}
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      REVERB_ALLOWED_ORIGINS: ${REVERB_ALLOWED_ORIGINS}
+      REDIS_QUEUE_RETRY_AFTER: 4000
     depends_on:
       database:
         condition: service_healthy
@@ -73,6 +86,7 @@ services:
         condition: service_started
     volumes:
       - api_storage:/var/www/html/storage
+      - exportaciones_data:/var/exportaciones
     healthcheck:
       test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
       interval: 5s
@@ -81,12 +95,98 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # Suscriptor de larga duración de la bitácora: lee el stream de Redis e inserta en la tabla.
+  auditoria-listener:
+    image: credits-manager-api:latest
+    container_name: credits-manager-auditoria-listener
+    entrypoint: ["php", "artisan", "auditoria:escuchar"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 15s
+    environment: &api-worker-env
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: info
+      TZ: America/Bogota
+      APP_NAME: ${APP_NAME}
+      APP_ENV: ${APP_ENV}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: ${APP_URL}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+      APP_LOCALE: ${APP_LOCALE}
+      APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE}
+      DB_CONNECTION: mysql
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      REDIS_QUEUE_RETRY_AFTER: 4000
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - api_storage:/var/www/html/storage
+    restart: unless-stopped
+
+  # Genera en segundo plano los archivos de exportación (cola `redis`, sin tocar QUEUE_CONNECTION).
+  exportaciones-worker:
+    image: credits-manager-api:latest
+    container_name: credits-manager-exportaciones-worker
+    entrypoint: ["php", "artisan", "queue:work", "redis", "--queue=exportaciones", "--timeout=3600", "--tries=1", "--sleep=1"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    environment: *api-worker-env
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - api_storage:/var/www/html/storage
+      - exportaciones_data:/var/exportaciones
+    restart: unless-stopped
+
+  # Servidor WebSocket (Laravel Reverb). El navegador entra por nginx (wss://api.creditos.local/app).
+  reverb:
+    image: credits-manager-api:latest
+    container_name: credits-manager-reverb
+    entrypoint: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 10s
+    environment:
+      <<: *api-worker-env
+      REVERB_SERVER_HOST: 0.0.0.0
+      REVERB_SERVER_PORT: 8080
+      REVERB_ALLOWED_ORIGINS: ${REVERB_ALLOWED_ORIGINS}
+    depends_on:
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
   nginx:
     build:
       context: .
       dockerfile: nginx/Dockerfile
       args:
         VITE_API_URL: ${VITE_API_URL}
+        VITE_REVERB_APP_KEY: ${REVERB_APP_KEY}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME}
     container_name: credits-manager-nginx
     environment:
       TZ: America/Bogota
@@ -100,6 +200,8 @@ services:
     depends_on:
       api:
         condition: service_healthy
+      reverb:
+        condition: service_started
       phpmyadmin:
         condition: service_started
     restart: unless-stopped
@@ -108,3 +210,4 @@ volumes:
   mysql_data:
   redis_data:
   api_storage:
+  exportaciones_data:

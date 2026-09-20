@@ -47,6 +47,14 @@ return [
             'report' => false,
         ],
 
+        // Volumen `exportaciones_data`: no lo monta nginx; la descarga pasa por un endpoint autenticado.
+        'exportaciones' => [
+            'driver' => 'local',
+            'root' => env('EXPORTACIONES_PATH', '/var/exportaciones'),
+            'throw' => true,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
