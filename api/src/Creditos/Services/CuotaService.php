@@ -2,16 +2,39 @@
 
 namespace App\Creditos\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Repositories\CuotaRepository;
 
 class CuotaService
 {
-    public function __construct(protected CuotaRepository $cuotas) {}
+    public function __construct(
+        protected CuotaRepository $cuotas,
+        protected EmisorAuditoria $auditoria,
+    ) {}
 
+    /** Corre también sin sesión (scheduler): el evento lleva el `empresa_id` de cada crédito, nunca el de `Auth`. */
     public function actualizarVencidas(): void
     {
-        $this->cuotas->marcarVencidas();
+        $marcadas = $this->cuotas->marcarVencidas();
+
+        foreach ($marcadas->groupBy('credito.empresa_id') as $empresaId => $cuotas) {
+            $this->auditoria->registrar(
+                AccionAuditoria::Modificar,
+                AuditoriaConstants::MODULO_CARTERA,
+                "Mora: {$cuotas->count()} cuota(s) pasaron a vencida (proceso automático)",
+                'cuota',
+                anteriores: ['estado' => 'pendiente'],
+                nuevos: [
+                    'estado' => 'vencida',
+                    'cuotas' => $cuotas->count(),
+                    'creditos' => $cuotas->pluck('credito_id')->unique()->values()->take(AuditoriaConstants::MAXIMO_IDS_EN_EVENTO)->all(),
+                ],
+                empresaId: (int) $empresaId,
+            );
+        }
     }
 
     public function saldoCredito(int $creditoId): Dinero
