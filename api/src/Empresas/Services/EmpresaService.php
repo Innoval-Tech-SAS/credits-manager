@@ -104,9 +104,22 @@ class EmpresaService
             Storage::disk('public')->delete(str_replace('storage/', '', $empresa->logo_path));
         }
 
+        $anteriores = $empresa->only(['logo_path']);
         $path = $logo->store('logos', 'public');
 
-        return $this->empresas->actualizar($empresa, ['logo_path' => 'storage/'.$path]);
+        $empresa = $this->empresas->actualizar($empresa, ['logo_path' => 'storage/'.$path]);
+
+        $this->auditoria->registrar(
+            AccionAuditoria::Modificar,
+            'empresas',
+            "Logo de la empresa {$empresa->nombre_empresa} actualizado",
+            'empresa',
+            $empresa->id,
+            anteriores: $anteriores,
+            nuevos: $empresa->only(['logo_path']),
+        );
+
+        return $empresa;
     }
 
     /** @return array<string, Rol> roles creados, indexados por nombre */

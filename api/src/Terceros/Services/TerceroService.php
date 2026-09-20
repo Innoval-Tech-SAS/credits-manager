@@ -2,6 +2,8 @@
 
 namespace App\Terceros\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Terceros\Models\Tercero;
 use App\Terceros\Repositories\OtroTerceroRepository;
 use App\Terceros\Repositories\TerceroRepository;
@@ -13,6 +15,7 @@ class TerceroService
     public function __construct(
         protected TerceroRepository $terceros,
         protected OtroTerceroRepository $otrosTerceros,
+        protected EmisorAuditoria $auditoria,
     ) {}
 
     public function listar(?string $busqueda, ?string $tipo, int $porPagina, int $pagina): LengthAwarePaginator
@@ -28,12 +31,24 @@ class TerceroService
 
             $this->otrosTerceros->crear(['tercero_id' => $tercero->id, 'activo' => true]);
 
+            $this->auditoria->registrarCreacion(
+                AuditoriaConstants::MODULO_TERCEROS,
+                "Tercero {$tercero->nombre} creado",
+                $tercero,
+                ['tipo' => 'otro', 'tercero_reutilizado' => ! $tercero->wasRecentlyCreated],
+            );
+
             return $tercero->setAttribute('tercero_reutilizado', ! $tercero->wasRecentlyCreated);
         });
     }
 
     public function editar(Tercero $tercero, array $datos): Tercero
     {
-        return $this->terceros->actualizar($tercero, $datos);
+        $anteriores = $this->auditoria->instantanea($tercero);
+        $tercero = $this->terceros->actualizar($tercero, $datos);
+
+        $this->auditoria->registrarModificacion(AuditoriaConstants::MODULO_TERCEROS, "Tercero {$tercero->nombre} modificado", $tercero, $anteriores);
+
+        return $tercero;
     }
 }
