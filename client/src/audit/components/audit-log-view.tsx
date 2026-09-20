@@ -90,6 +90,7 @@ export const AuditLogView: FC<AuditLogViewProps> = ({ companies }) => {
                 rows={items}
                 getRowKey={(row) => row.id}
                 loading={isLoading}
+                maxHeightClassName="max-h-[65vh]"
                 emptyMessage="No hay eventos para los filtros seleccionados."
             />
         </ModuleListPage>
