@@ -66,7 +66,9 @@ class MotorReglasFiscalesService
             return [...$base, 'incluida' => false, 'regla' => 'bajo_base_minima', 'detalle' => "Valor bruto {$valorBruto->aDecimalString()} menor a la base mínima {$baseMinima->aDecimalString()}."];
         }
 
-        $tarifa = $tercero->tipo_persona === TipoPersona::Juridica
+        $tipoPersona = $tercero->tipo_persona ?? TipoPersona::Natural;
+
+        $tarifa = $tipoPersona === TipoPersona::Juridica
             ? $parametrizacion->tarifa_retefuente_persona_juridica
             : $parametrizacion->tarifa_retefuente_persona_natural;
 
@@ -80,7 +82,7 @@ class MotorReglasFiscalesService
             'valor' => $valorBruto->multiplicarPorTasa((float) $tarifa / 100),
             'tarifa_aplicada' => (float) $tarifa,
             'regla' => 'tarifa_por_tipo_persona',
-            'detalle' => "Tarifa aplicada según tipo de persona ({$tercero->tipo_persona->value}).",
+            'detalle' => "Tarifa aplicada según tipo de persona ({$tipoPersona->value}).",
         ];
     }
 
