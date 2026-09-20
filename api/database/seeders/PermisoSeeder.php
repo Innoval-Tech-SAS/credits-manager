@@ -22,6 +22,7 @@ class PermisoSeeder extends Seeder
         'calendario' => ['listar'],
         'contabilidad' => ['listar', 'crear', 'editar', 'configurar', 'crear_manual', 'anular', 'cerrar_periodo', 'reabrir_periodo'],
         'gastos' => ['listar', 'crear', 'anular', 'parametrizar'],
+        'auditoria' => ['listar', 'exportar'],
     ];
 
     public function run(): void

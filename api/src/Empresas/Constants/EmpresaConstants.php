@@ -53,6 +53,8 @@ class EmpresaConstants
         'auditoria' => [
             'contabilidad.listar',
             'cartera.listar',
+            'auditoria.listar',
+            'auditoria.exportar',
         ],
     ];
 }
