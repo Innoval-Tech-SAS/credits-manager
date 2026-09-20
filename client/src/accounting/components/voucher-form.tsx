@@ -135,17 +135,17 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
                 </div>
 
                 <div>
-                    <div className="mb-3 flex items-center justify-between">
+                    <div className="mb-3 flex items-center justify-between gap-3">
                         <p className="text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
                             Líneas (débito = crédito, obligatorio para contabilizar)
                         </p>
-                        <Button type="button" variant="outline" size="sm" onClick={agregarLinea}>
+                        <Button type="button" variant="outline" size="sm" onClick={agregarLinea} className="shrink-0 whitespace-nowrap">
                             + Agregar línea
                         </Button>
                     </div>
 
                     <div className="custom-scrollbar overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
-                        <table className="w-full text-left text-sm">
+                        <table className="w-full min-w-160 text-left text-sm">
                             <thead>
                                 <tr className="border-b border-gray-100 dark:border-gray-800">
                                     <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Cuenta</th>
