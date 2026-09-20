@@ -1,0 +1,21 @@
+/** Valores del enum `AccionAuditoria` del backend. */
+export type AuditAction =
+    | 'crear'
+    | 'modificar'
+    | 'eliminar'
+    | 'aprobar'
+    | 'desembolsar'
+    | 'cancelar'
+    | 'anular'
+    | 'revertir'
+    | 'login'
+    | 'logout'
+    | 'cambio_permisos'
+    | 'importar'
+    | 'exportar'
+    | 'recuperar'
+    | 'causar'
+    | 'contabilizar'
+    | 'reversar'
+    | 'cerrar_periodo'
+    | 'reabrir_periodo';

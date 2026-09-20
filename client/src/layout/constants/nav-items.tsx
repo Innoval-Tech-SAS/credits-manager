@@ -14,18 +14,43 @@ import {
     MapPin,
     Pencil,
     Percent,
+    ScrollText,
     Search,
+    ShieldCheck,
     Upload,
     User,
     Users,
     Wallet,
 } from "lucide-react";
+import { canAccessAudit } from "../../auth/utils/can-access-audit";
 import type { NavItem } from "../types/nav-item";
 
-export const SUPERADMIN_NAV_ITEMS: NavItem[] = [{ name: "Empresas", icon: Building2, path: "/empresas" }];
+export const SUPERADMIN_NAV_ITEMS: NavItem[] = [
+    { name: "Empresas", icon: Building2, path: "/empresas" },
+    {
+        name: "Auditoría",
+        icon: ShieldCheck,
+        subItems: [
+            { name: "Bitácora", path: "/auditoria", icon: ScrollText },
+            { name: "Recuperación", path: "/recuperacion-auditoria", icon: Lock },
+        ],
+    },
+];
 
 export const NAV_ITEMS: NavItem[] = [
     { name: "Inicio", icon: Home, path: "/" },
+    {
+        name: "Auditoría",
+        icon: ShieldCheck,
+        subItems: [
+            {
+                name: "Bitácora",
+                path: "/auditoria",
+                icon: ScrollText,
+                isVisible: (user) => canAccessAudit(user, "listar"),
+            },
+        ],
+    },
     {
         name: "Cartera",
         icon: Wallet,

@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 
-import type { PermissionAction } from '../../auth/types/user';
+import type { PermissionAction, User } from '../../auth/types/user';
 
 export type NavSubItem = {
     name: string;
@@ -10,6 +10,8 @@ export type NavSubItem = {
     moduleKey?: string;
     /** Permission action required for this item to show up. Defaults to "listar". */
     action?: PermissionAction;
+    /** Regla propia de visibilidad, para accesos que no se reducen a un permiso (p. ej. auditoría: superadmin, admin o permiso). */
+    isVisible?: (user: User | null) => boolean;
 };
 
 export type NavItem = {
@@ -20,5 +22,6 @@ export type NavItem = {
     moduleKey?: string;
     /** Permission action required for this item to show up. Defaults to "listar". */
     action?: PermissionAction;
+    isVisible?: (user: User | null) => boolean;
     subItems?: NavSubItem[];
 };
