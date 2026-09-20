@@ -99,7 +99,7 @@ export const ClientsListPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
-                            placeholder="Buscar por nombre, documento o empresa…"
+                            placeholder="Nombre, documento o empresa…"
                             startIcon={<Search className="size-4" />}
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
