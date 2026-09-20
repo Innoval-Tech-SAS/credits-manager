@@ -6,6 +6,34 @@ class AuditoriaConstants
 {
     public const MODULO = 'auditoria';
 
+    public const MODULO_USUARIOS = 'usuarios';
+
+    public const MODULO_CLIENTES = 'clientes';
+
+    public const MODULO_EMPLEADORES = 'empleadores';
+
+    public const MODULO_TERCEROS = 'terceros';
+
+    public const MODULO_PROVEEDORES = 'proveedores';
+
+    public const MODULO_DOCUMENTOS = 'documentos';
+
+    public const MODULO_CREDITOS = 'creditos';
+
+    public const MODULO_PAGOS = 'pagos';
+
+    public const MODULO_CARTERA = 'cartera';
+
+    public const MODULO_CONTABILIDAD = 'contabilidad';
+
+    public const MODULO_GASTOS = 'gastos';
+
+    /** Tope de ids que un evento masivo (p. ej. mora) lista de forma explícita; el conteo siempre va completo. */
+    public const MAXIMO_IDS_EN_EVENTO = 200;
+
+    /** Columnas de tiempo que cambian solas y no aportan al antes/después de un evento. */
+    public const COLUMNAS_TIEMPO = ['creado_en', 'ultima_actualizacion', 'borrado_en'];
+
     public const STREAM = 'auditoria:eventos';
 
     public const GRUPO = 'escucha_auditoria';
