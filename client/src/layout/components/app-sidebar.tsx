@@ -13,7 +13,7 @@ import type { NavItem, NavSubItem } from '../types/nav-item';
 import { isNavPathActive } from '../utils/is-nav-path-active';
 
 export const AppSidebar: FC = () => {
-    const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+    const { isExpanded, isMobileOpen, isHovered, setIsHovered, closeMobileSidebar } = useSidebar();
     const { user } = useAuth();
     const { company } = useCompany();
     const location = useLocation();
@@ -53,16 +53,17 @@ export const AppSidebar: FC = () => {
         setOpenMenu((current) => (current === name ? null : name));
     };
 
+    // `top-19` = alto del header en móvil; el drawer se ajusta con top/bottom para no salirse de la pantalla.
     return (
         <aside
-            className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-800 dark:text-white/90 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 ${
+            className={`fixed top-19 bottom-0 left-0 flex flex-col lg:top-0 px-5 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-800 dark:text-white/90 transition-all duration-300 ease-in-out z-50 border-r border-gray-200 ${
                 isExpanded || isMobileOpen ? 'w-72.5' : isHovered ? 'w-72.5' : 'w-22.5'
             } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
             onMouseEnter={() => !isExpanded && setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
         >
             <div className={`py-8 flex items-center ${!isShown ? 'lg:justify-center' : 'justify-start'}`}>
-                <Link to="/" className="flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-white/90">
+                <Link to="/" onClick={closeMobileSidebar} className="flex items-center gap-2 text-lg font-semibold text-gray-800 dark:text-white/90">
                     {company?.logoPath ? (
                         <img
                             src={`${API_ROOT}/${company.logoPath}`}
@@ -75,7 +76,7 @@ export const AppSidebar: FC = () => {
                 </Link>
             </div>
 
-            <nav className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+            <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-6 duration-300 ease-linear no-scrollbar">
                 <ul className="flex flex-col gap-4">
                     {visibleItems.map((item) => {
                         const hasChildren = !!item.subItems && item.subItems.length > 0;
@@ -114,6 +115,7 @@ export const AppSidebar: FC = () => {
                                                     <li key={sub.path}>
                                                         <Link
                                                             to={sub.path}
+                                                            onClick={closeMobileSidebar}
                                                             className={
                                                                 isActive(sub.path)
                                                                     ? 'menu-dropdown-item menu-dropdown-item-active'
@@ -135,6 +137,7 @@ export const AppSidebar: FC = () => {
                                 ) : (
                                     <Link
                                         to={item.path ?? '/'}
+                                        onClick={closeMobileSidebar}
                                         className={`menu-item group ${
                                             isActive(item.path ?? '') ? 'menu-item-active' : 'menu-item-inactive'
                                         }`}
