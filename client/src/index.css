@@ -581,9 +581,6 @@ span.flatpickr-weekday,
 .dark .fc .fc-scroller::-webkit-scrollbar-thumb {
   background-color: #344054;
 }
-.fc-dayGridMonth-view.fc-view.fc-daygrid {
-  @apply min-w-[718px];
-}
 .fc .fc-scrollgrid-section > * {
   border-right-width: 0;
   border-bottom-width: 0;
