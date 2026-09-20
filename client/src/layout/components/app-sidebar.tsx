@@ -31,6 +31,10 @@ export const AppSidebar: FC = () => {
             return false;
         }
 
+        if (entry.isVisible && !entry.isVisible(user)) {
+            return false;
+        }
+
         return true;
     };
 

@@ -19,6 +19,8 @@ import { TrialBalancePage } from './accounting/pages/trial-balance-page';
 import { VoucherDetailPage } from './accounting/pages/voucher-detail-page';
 import { VoucherTypesPage } from './accounting/pages/voucher-types-page';
 import { VouchersListPage } from './accounting/pages/vouchers-list-page';
+import { AuditLogPage } from './audit/pages/audit-log-page';
+import { AuditRecoveryPage } from './audit/pages/audit-recovery-page';
 import { CalendarPage } from './calendar/pages/calendar-page';
 import { CreateEconomicActivityPage } from './expenses/pages/create-economic-activity-page';
 import { CreateExpensePage } from './expenses/pages/create-expense-page';
@@ -43,6 +45,7 @@ import { LoginPage } from './auth/pages/login-page';
 import { RolesListPage } from './auth/pages/roles-list-page';
 import { UsersListPage } from './auth/pages/users-list-page';
 import { RequireAdmin } from './auth/components/require-admin';
+import { RequireAuditAccess } from './auth/components/require-audit-access';
 import { RequireAuth } from './auth/components/require-auth';
 import { RequireModulePermission } from './auth/components/require-module-permission';
 import { RequireSuperAdmin } from './auth/components/require-super-admin';
@@ -274,6 +277,22 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireSuperAdmin>
                                 <CreateCompanyPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
+                        path: 'auditoria',
+                        element: (
+                            <RequireAuditAccess>
+                                <AuditLogPage />
+                            </RequireAuditAccess>
+                        ),
+                    },
+                    {
+                        path: 'recuperacion-auditoria',
+                        element: (
+                            <RequireSuperAdmin>
+                                <AuditRecoveryPage />
                             </RequireSuperAdmin>
                         ),
                     },

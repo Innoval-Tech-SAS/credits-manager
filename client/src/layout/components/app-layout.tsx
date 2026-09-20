@@ -5,6 +5,7 @@ import { Outlet, useLocation } from 'react-router';
 import { PageHeaderProvider } from '@ui/breadcrumb/components/page-header-provider';
 import { SidebarProvider } from '@ui/sidebar/components/sidebar-provider';
 import { useSidebar } from '@ui/sidebar/hooks/use-sidebar';
+import { NotificationsProvider } from '../../notifications/components/notifications-provider';
 import { AppHeader } from './app-header';
 import { AppPageHeader } from './app-page-header';
 import { AppSidebar } from './app-sidebar';
@@ -56,8 +57,10 @@ const LayoutContent: FC = () => {
 
 export const AppLayout: FC = () => {
     return (
-        <SidebarProvider>
-            <LayoutContent />
-        </SidebarProvider>
+        <NotificationsProvider>
+            <SidebarProvider>
+                <LayoutContent />
+            </SidebarProvider>
+        </NotificationsProvider>
     );
 };
