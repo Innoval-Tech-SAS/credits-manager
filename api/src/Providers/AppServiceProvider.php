@@ -33,7 +33,11 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login', function (Request $peticion) {
             $usuario = Str::lower((string) $peticion->input('usuario'));
 
-            return Limit::perMinute(5)->by($usuario !== '' ? $usuario : $peticion->ip());
+            // El tope por IP acota las filas que un cliente puede provocar en la bitácora (solo inserción) probando usuarios distintos.
+            return [
+                Limit::perMinute(5)->by($usuario !== '' ? $usuario : $peticion->ip()),
+                Limit::perMinute(30)->by('ip:'.$peticion->ip()),
+            ];
         });
     }
 }

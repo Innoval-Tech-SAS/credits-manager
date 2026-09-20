@@ -46,7 +46,7 @@ Todo servicio con escrituras de negocio emite su evento; los módulos son las co
 
 | Módulo | Procesos registrados |
 |---|---|
-| `auth` | Inicio y cierre de sesión, cambio de la contraseña propia |
+| `auth` | Inicio y cierre de sesión, intentos de inicio de sesión fallidos (`login_fallido`, con su motivo), cambio de la contraseña propia |
 | `empresas` | Alta, edición y logo |
 | `usuarios` | Alta, edición, baja y restablecimiento de clave de usuarios; alta, edición y baja de roles; `cambio_permisos` (rol o permisos extra, con antes/después en `modulo.accion`) |
 | `clientes`, `empleadores`, `terceros`, `proveedores` | Alta, edición y baja (cliente/proveedor incluyen los datos del tercero) |
@@ -58,7 +58,9 @@ Todo servicio con escrituras de negocio emite su evento; los módulos son las co
 | `gastos` | Causación y anulación de gastos, tipos de gasto, municipios, actividades, valor UVT, parametrizaciones y tarifas ReteICA (incluida la vigencia que se cierra sola) |
 | `auditoria` | Exportaciones y descargas de la bitácora |
 
-No se registran a propósito: lecturas y reportes (salvo su exportación), el marcado de notificaciones como leídas, la creación automática del período contable vacío, el contador de consecutivos y los intentos de login fallidos.
+**Inicio de sesión fallido.** El cliente siempre recibe el mismo error genérico; la razón real queda solo en la bitácora, en `motivo`: *Usuario inexistente*, *Usuario dado de baja*, *Contraseña incorrecta* o *Usuario inactivo* (`MotivoLoginFallido`). Si el usuario existe el evento lleva su empresa (la ve el administrador de esa empresa); si no existe, `empresa_id` es nulo y solo lo ve el superadmin. Nunca se guarda la clave digitada, y el nombre digitado se recorta a 60 caracteres. Como la bitácora es de solo inserción, el limitador `login` acota las filas que un cliente puede provocar: 5 intentos por minuto por usuario y 30 por IP.
+
+No se registran a propósito: lecturas y reportes (salvo su exportación), el marcado de notificaciones como leídas, la creación automática del período contable vacío y el contador de consecutivos.
 
 ## Visibilidad (se aplica en el backend)
 

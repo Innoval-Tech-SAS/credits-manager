@@ -4,6 +4,7 @@ namespace App\Auth\Services;
 
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Auth\Enums\MotivoLoginFallido;
 use App\Usuarios\Models\Usuario;
 use App\Usuarios\Repositories\UsuarioRepository;
 use Illuminate\Http\Request;
@@ -31,6 +32,8 @@ class AuthService
         ]);
 
         if (! $autenticado) {
+            $this->registrarLoginFallido($usuario, $clave);
+
             throw ValidationException::withMessages([
                 'usuario' => __('validation.custom.usuario.credenciales_invalidas'),
             ]);
@@ -62,5 +65,34 @@ class AuthService
         $this->usuarios->actualizar($usuario, ['password_hash' => $claveNueva]);
 
         $this->auditoria->registrar(AccionAuditoria::Modificar, 'auth', 'Cambio de la contraseña propia de '.$usuario->usuario, 'usuario', $usuario->id);
+    }
+
+    /** El cliente sigue viendo un error genérico; la razón real solo queda en la bitácora. Nunca se guarda la clave digitada. */
+    private function registrarLoginFallido(string $usuario, string $clave): void
+    {
+        $usuario = strtolower($usuario);
+        $existente = $this->usuarios->buscarPorUsuario($usuario);
+
+        // `attempt` ya exigió `activo`: un usuario activo que llegó aquí solo pudo fallar por la clave, sin volver a hashear.
+        $motivo = match (true) {
+            $existente === null => MotivoLoginFallido::UsuarioInexistente,
+            $existente->trashed() => MotivoLoginFallido::UsuarioDadoDeBaja,
+            $existente->activo || ! Hash::check($clave, $existente->password_hash) => MotivoLoginFallido::ClaveIncorrecta,
+            default => MotivoLoginFallido::UsuarioInactivo,
+        };
+
+        // Sin usuario persistido, el snapshot del autor lleva solo el nombre digitado, recortado.
+        $autor = $existente ?? new Usuario(['usuario' => mb_substr($usuario, 0, 60)]);
+
+        $this->auditoria->registrar(
+            AccionAuditoria::LoginFallido,
+            'auth',
+            'Intento fallido de inicio de sesión de '.$autor->usuario,
+            $existente ? 'usuario' : null,
+            $existente?->id,
+            motivo: $motivo->descripcion(),
+            autor: $autor,
+            empresaId: $existente?->empresa_id,
+        );
     }
 }

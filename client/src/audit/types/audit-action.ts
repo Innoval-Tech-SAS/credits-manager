@@ -10,6 +10,7 @@ export type AuditAction =
     | 'revertir'
     | 'login'
     | 'logout'
+    | 'login_fallido'
     | 'cambio_permisos'
     | 'importar'
     | 'exportar'

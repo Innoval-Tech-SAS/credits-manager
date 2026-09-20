@@ -14,6 +14,7 @@ enum AccionAuditoria: string
     case Revertir = 'revertir';
     case Login = 'login';
     case Logout = 'logout';
+    case LoginFallido = 'login_fallido';
     case CambioPermisos = 'cambio_permisos';
     case Importar = 'importar';
     case Exportar = 'exportar';
