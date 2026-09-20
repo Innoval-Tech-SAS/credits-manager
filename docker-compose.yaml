@@ -25,6 +25,11 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
     restart: unless-stopped
 
   phpmyadmin:
@@ -37,6 +42,92 @@ services:
       UPLOAD_LIMIT: 64M
     depends_on:
       database:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Suscriptor de larga duración de la bitácora: lee el stream de Redis e inserta en la tabla.
+  auditoria-listener:
+    image: credits-manager-api:latest
+    container_name: credits-manager-auditoria-listener
+    entrypoint: ["php", "artisan", "auditoria:escuchar"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 15s
+    environment: &api-worker-env
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: info
+      TZ: America/Bogota
+      APP_NAME: ${APP_NAME}
+      APP_ENV: ${APP_ENV}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: ${APP_URL}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+      APP_LOCALE: ${APP_LOCALE}
+      APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE}
+      DB_CONNECTION: mysql
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      REDIS_QUEUE_RETRY_AFTER: 4000
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_storage:/var/www/html/storage
+    restart: unless-stopped
+
+  # Genera en segundo plano los archivos de exportación (cola `redis`, sin tocar QUEUE_CONNECTION).
+  exportaciones-worker:
+    image: credits-manager-api:latest
+    container_name: credits-manager-exportaciones-worker
+    entrypoint: ["php", "artisan", "queue:work", "redis", "--queue=exportaciones", "--timeout=3600", "--tries=1", "--sleep=1"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    environment: *api-worker-env
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_storage:/var/www/html/storage
+      - exportaciones_data:/var/exportaciones
+    restart: unless-stopped
+
+  # Servidor WebSocket (Laravel Reverb). El navegador entra por nginx (wss://api.creditos.local/app).
+  reverb:
+    image: credits-manager-api:latest
+    container_name: credits-manager-reverb
+    entrypoint: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 10s
+    environment:
+      <<: *api-worker-env
+      REVERB_SERVER_HOST: 0.0.0.0
+      REVERB_SERVER_PORT: 8080
+      REVERB_ALLOWED_ORIGINS: ${REVERB_ALLOWED_ORIGINS}
+      # Reverb consulta la caché cada 5 s (llave del comando reverb:restart): en Redis no depende de MySQL.
+      CACHE_STORE: redis
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -83,6 +174,12 @@ services:
       database:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      auditoria-listener:
+        condition: service_started
+      exportaciones-worker:
+        condition: service_started
+      reverb:
         condition: service_started
     volumes:
       - api_storage:/var/www/html/storage
@@ -93,92 +190,6 @@ services:
       timeout: 3s
       retries: 10
       start_period: 10s
-    restart: unless-stopped
-
-  # Suscriptor de larga duración de la bitácora: lee el stream de Redis e inserta en la tabla.
-  auditoria-listener:
-    image: credits-manager-api:latest
-    container_name: credits-manager-auditoria-listener
-    entrypoint: ["php", "artisan", "auditoria:escuchar"]
-    user: www-data
-    stop_signal: SIGTERM
-    stop_grace_period: 15s
-    environment: &api-worker-env
-      LOG_CHANNEL: stderr
-      LOG_LEVEL: info
-      TZ: America/Bogota
-      APP_NAME: ${APP_NAME}
-      APP_ENV: ${APP_ENV}
-      APP_KEY: ${APP_KEY}
-      APP_DEBUG: ${APP_DEBUG}
-      APP_URL: ${APP_URL}
-      APP_TIMEZONE: ${APP_TIMEZONE}
-      APP_LOCALE: ${APP_LOCALE}
-      APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE}
-      DB_CONNECTION: mysql
-      DB_HOST: database
-      DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
-      BROADCAST_CONNECTION: reverb
-      REVERB_APP_ID: ${REVERB_APP_ID}
-      REVERB_APP_KEY: ${REVERB_APP_KEY}
-      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
-      REVERB_HOST: reverb
-      REVERB_PORT: 8080
-      REVERB_SCHEME: http
-      REDIS_QUEUE_RETRY_AFTER: 4000
-    depends_on:
-      database:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    volumes:
-      - api_storage:/var/www/html/storage
-    restart: unless-stopped
-
-  # Genera en segundo plano los archivos de exportación (cola `redis`, sin tocar QUEUE_CONNECTION).
-  exportaciones-worker:
-    image: credits-manager-api:latest
-    container_name: credits-manager-exportaciones-worker
-    entrypoint: ["php", "artisan", "queue:work", "redis", "--queue=exportaciones", "--timeout=3600", "--tries=1", "--sleep=1"]
-    user: www-data
-    stop_signal: SIGTERM
-    stop_grace_period: 60s
-    environment: *api-worker-env
-    depends_on:
-      database:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    volumes:
-      - api_storage:/var/www/html/storage
-      - exportaciones_data:/var/exportaciones
-    restart: unless-stopped
-
-  # Servidor WebSocket (Laravel Reverb). El navegador entra por nginx (wss://api.creditos.local/app).
-  reverb:
-    image: credits-manager-api:latest
-    container_name: credits-manager-reverb
-    entrypoint: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
-    user: www-data
-    stop_signal: SIGTERM
-    stop_grace_period: 10s
-    environment:
-      <<: *api-worker-env
-      REVERB_SERVER_HOST: 0.0.0.0
-      REVERB_SERVER_PORT: 8080
-      REVERB_ALLOWED_ORIGINS: ${REVERB_ALLOWED_ORIGINS}
-      # Reverb consulta la caché cada 5 s (llave del comando reverb:restart): en Redis no depende de MySQL.
-      CACHE_STORE: redis
-    depends_on:
-      database:
-        condition: service_healthy
-      redis:
-        condition: service_started
     restart: unless-stopped
 
   nginx:
