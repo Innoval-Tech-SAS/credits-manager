@@ -172,7 +172,11 @@ services:
       REVERB_SERVER_HOST: 0.0.0.0
       REVERB_SERVER_PORT: 8080
       REVERB_ALLOWED_ORIGINS: ${REVERB_ALLOWED_ORIGINS}
+      # Reverb consulta la caché cada 5 s (llave del comando reverb:restart): en Redis no depende de MySQL.
+      CACHE_STORE: redis
     depends_on:
+      database:
+        condition: service_healthy
       redis:
         condition: service_started
     restart: unless-stopped
