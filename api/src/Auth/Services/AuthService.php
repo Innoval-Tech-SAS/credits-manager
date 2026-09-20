@@ -60,5 +60,7 @@ class AuthService
         }
 
         $this->usuarios->actualizar($usuario, ['password_hash' => $claveNueva]);
+
+        $this->auditoria->registrar(AccionAuditoria::Modificar, 'auth', 'Cambio de la contraseña propia de '.$usuario->usuario, 'usuario', $usuario->id);
     }
 }

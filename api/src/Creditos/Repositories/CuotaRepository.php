@@ -79,13 +79,24 @@ class CuotaRepository extends BaseRepository
      * vía `whereHas('credito')`, que hereda el `EmpresaScope` de `Credito`. Sin este filtro,
      * esta actualización corría sobre las cuotas de TODAS las empresas del sistema.
      */
-    public function marcarVencidas(): void
+    public function marcarVencidas(): Collection
     {
-        $this->consulta()
-            ->where('estado', EstadoCuota::Pendiente)
-            ->where('fecha_vencimiento', '<', now()->toDateString())
-            ->whereHas('credito')
-            ->update(['estado' => EstadoCuota::Vencida]);
+        return DB::transaction(function () {
+            // lockForUpdate: dos peticiones simultáneas no marcan (ni reportan) las mismas cuotas dos veces.
+            $cuotas = $this->consulta()
+                ->where('estado', EstadoCuota::Pendiente)
+                ->where('fecha_vencimiento', '<', now()->toDateString())
+                ->whereHas('credito')
+                ->with('credito:id,empresa_id')
+                ->lockForUpdate()
+                ->get(['id', 'credito_id']);
+
+            foreach (array_chunk($cuotas->modelKeys(), 1000) as $lote) {
+                $this->consulta()->whereIn('id', $lote)->update(['estado' => EstadoCuota::Vencida]);
+            }
+
+            return $cuotas;
+        });
     }
 
     /** Centavos enteros — `SUM()` de MySQL sobre columnas `bigint` es exacto. */

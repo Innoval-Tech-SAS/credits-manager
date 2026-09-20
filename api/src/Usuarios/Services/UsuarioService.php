@@ -2,6 +2,9 @@
 
 namespace App\Usuarios\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Usuarios\Constants\UsuarioConstants;
 use App\Usuarios\Models\Usuario;
 use App\Usuarios\Repositories\RolRepository;
@@ -16,6 +19,7 @@ class UsuarioService
     public function __construct(
         protected UsuarioRepository $usuarios,
         protected RolRepository $roles,
+        protected EmisorAuditoria $auditoria,
     ) {}
 
     public function listarUsuarios(?string $busqueda, string $columna, string $direccion, int $porPagina, int $pagina): LengthAwarePaginator
@@ -45,6 +49,8 @@ class UsuarioService
 
             $this->usuarios->sincronizarPermisosExtra($usuario, $this->mapaPermisosExtra($datos));
 
+            $this->auditoria->registrarCreacion(AuditoriaConstants::MODULO_USUARIOS, "Usuario {$usuario->usuario} creado", $usuario, ['permisos_extra' => $this->permisosExtraDe($usuario)]);
+
             return $usuario;
         });
     }
@@ -54,6 +60,9 @@ class UsuarioService
         $this->impedirAutoBloqueoDeAdmin($usuario, $datos['rol_id'], $datos['activo']);
 
         return DB::transaction(function () use ($usuario, $datos) {
+            $anteriores = $this->auditoria->instantanea($usuario);
+            $permisosAnteriores = $this->permisosExtraDe($usuario);
+
             $usuario = $this->usuarios->actualizar($usuario, [
                 'nombre' => $datos['nombre'],
                 'usuario' => $datos['usuario'],
@@ -62,6 +71,21 @@ class UsuarioService
             ]);
 
             $this->usuarios->sincronizarPermisosExtra($usuario, $this->mapaPermisosExtra($datos));
+            $permisosNuevos = $this->permisosExtraDe($usuario);
+
+            $this->auditoria->registrarModificacion(AuditoriaConstants::MODULO_USUARIOS, "Usuario {$usuario->usuario} modificado", $usuario, $anteriores);
+
+            if ($permisosAnteriores !== $permisosNuevos || (int) $anteriores['rol_id'] !== (int) $usuario->rol_id) {
+                $this->auditoria->registrar(
+                    AccionAuditoria::CambioPermisos,
+                    AuditoriaConstants::MODULO_USUARIOS,
+                    "Permisos de {$usuario->usuario} modificados",
+                    'usuario',
+                    $usuario->id,
+                    ['rol_id' => $anteriores['rol_id'], 'permisos_extra' => $permisosAnteriores],
+                    ['rol_id' => $usuario->rol_id, 'permisos_extra' => $permisosNuevos],
+                );
+            }
 
             return $usuario;
         });
@@ -76,9 +100,25 @@ class UsuarioService
             ->all();
     }
 
+    /** @return array<string, bool> "modulo.accion" => concedido, ordenado para poder comparar antes/después */
+    private function permisosExtraDe(Usuario $usuario): array
+    {
+        $permisos = $usuario->permisosExtra()->get()
+            ->mapWithKeys(fn ($permiso) => ["{$permiso->modulo}.{$permiso->accion}" => (bool) $permiso->pivot->concedido])
+            ->all();
+
+        ksort($permisos);
+
+        return $permisos;
+    }
+
     public function cambiarClave(Usuario $usuario, string $claveNueva): Usuario
     {
-        return $this->usuarios->actualizar($usuario, ['password_hash' => $claveNueva]);
+        $usuario = $this->usuarios->actualizar($usuario, ['password_hash' => $claveNueva]);
+
+        $this->auditoria->registrar(AccionAuditoria::Modificar, AuditoriaConstants::MODULO_USUARIOS, "Contraseña de {$usuario->usuario} restablecida por el administrador", 'usuario', $usuario->id);
+
+        return $usuario;
     }
 
     public function eliminarUsuario(Usuario $usuario): bool
@@ -88,7 +128,11 @@ class UsuarioService
         return DB::transaction(function () use ($usuario) {
             $this->usuarios->actualizar($usuario, ['activo' => false]);
 
-            return $this->usuarios->eliminar($usuario);
+            $eliminado = $this->usuarios->eliminar($usuario);
+
+            $this->auditoria->registrarEliminacion(AuditoriaConstants::MODULO_USUARIOS, "Usuario {$usuario->usuario} eliminado", $usuario);
+
+            return $eliminado;
         });
     }
 

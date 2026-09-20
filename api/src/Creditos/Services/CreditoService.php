@@ -2,6 +2,9 @@
 
 namespace App\Creditos\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
@@ -22,6 +25,7 @@ class CreditoService
         protected CuotaRepository $cuotas,
         protected CuotaService $cuotaService,
         protected ComprobanteService $comprobantes,
+        protected EmisorAuditoria $auditoria,
     ) {}
 
     public function listarCreditos(?string $busqueda, int $porPagina, int $pagina, ?int $clienteId = null, ?EstadoCredito $estado = null): LengthAwarePaginator
@@ -64,10 +68,26 @@ class CreditoService
                 'valor_total' => $resultado['valor_total'],
             ]);
 
+            $this->auditoria->registrarCreacion(
+                AuditoriaConstants::MODULO_CREDITOS,
+                "Crédito #{$credito->id} creado para el cliente #{$credito->cliente_id}",
+                $credito,
+                ['cuotas' => count($resultado['cuotas'])],
+            );
+
             if ($credito->tipo_credito === TipoCredito::Refinanciacion) {
                 $origen = $this->creditos->buscarPorIdOFallar($datos['credito_origen_id']);
+                $anteriores = $this->auditoria->instantanea($origen);
+
                 $this->creditos->marcarComoPagado($origen);
                 $this->cuotas->cerrarPendientesComoOrigen($origen->id);
+
+                $this->auditoria->registrarModificacion(
+                    AuditoriaConstants::MODULO_CREDITOS,
+                    "Crédito #{$origen->id} cerrado por la refinanciación #{$credito->id}",
+                    $origen,
+                    $anteriores,
+                );
             }
 
             return $this->creditos->obtenerConRelaciones($credito);
@@ -85,7 +105,18 @@ class CreditoService
     {
         $this->exigirEstado($credito, EstadoCredito::Solicitado);
 
-        return $this->creditos->actualizar($credito, ['estado' => EstadoCredito::Aprobado]);
+        $anteriores = $this->auditoria->instantanea($credito);
+        $credito = $this->creditos->actualizar($credito, ['estado' => EstadoCredito::Aprobado]);
+
+        $this->auditoria->registrarModificacion(
+            AuditoriaConstants::MODULO_CREDITOS,
+            "Crédito #{$credito->id} aprobado",
+            $credito,
+            $anteriores,
+            accion: AccionAuditoria::Aprobar,
+        );
+
+        return $credito;
     }
 
     /** Recién aquí se contabiliza el desembolso — antes de aprobar/desembolsar no ha salido dinero real. */
@@ -93,11 +124,22 @@ class CreditoService
     {
         $this->exigirEstado($credito, EstadoCredito::Aprobado);
 
+        $anteriores = $this->auditoria->instantanea($credito);
+
         $credito = $this->creditos->actualizar($credito, [
             'estado' => EstadoCredito::Desembolsado,
             'desembolsado_en' => now(),
         ]);
-        $this->comprobantes->contabilizarDesembolsoCredito($credito);
+        $comprobante = $this->comprobantes->contabilizarDesembolsoCredito($credito);
+
+        $this->auditoria->registrarModificacion(
+            AuditoriaConstants::MODULO_CREDITOS,
+            "Crédito #{$credito->id} desembolsado".($comprobante ? '' : ' sin contabilizar (no hay regla activa)'),
+            $credito,
+            $anteriores,
+            accion: AccionAuditoria::Desembolsar,
+            adicionales: ['comprobante_id' => $comprobante?->id, 'contabilizado' => $comprobante !== null],
+        );
 
         return $credito;
     }
@@ -132,11 +174,23 @@ class CreditoService
                 throw ValidationException::withMessages(['credito' => __('validation.custom.credito.cancelacion_con_pagos')]);
             }
 
+            $anteriores = $this->auditoria->instantanea($credito);
+
             if ($credito->estado === EstadoCredito::Desembolsado) {
                 $this->reversarDesembolsoSiExiste($credito, 'Cancelación del crédito #'.$credito->id.' dentro de las 24 horas del desembolso');
             }
 
-            return $this->creditos->actualizar($credito, ['estado' => EstadoCredito::Cancelado]);
+            $credito = $this->creditos->actualizar($credito, ['estado' => EstadoCredito::Cancelado]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CREDITOS,
+                "Crédito #{$credito->id} cancelado",
+                $credito,
+                $anteriores,
+                accion: AccionAuditoria::Cancelar,
+            );
+
+            return $credito;
         });
     }
 
@@ -160,7 +214,11 @@ class CreditoService
 
             $this->cuotas->eliminarTodasDeCredito($credito->id);
 
-            return $this->creditos->eliminar($credito);
+            $eliminado = $this->creditos->eliminar($credito);
+
+            $this->auditoria->registrarEliminacion(AuditoriaConstants::MODULO_CREDITOS, "Crédito #{$credito->id} eliminado", $credito);
+
+            return $eliminado;
         });
     }
 

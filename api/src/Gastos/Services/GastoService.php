@@ -2,6 +2,9 @@
 
 namespace App\Gastos\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Models\AplicacionDocumento;
 use App\Contabilidad\Services\ComprobanteService;
@@ -36,6 +39,7 @@ class GastoService
         protected MotorReglasFiscalesService $motor,
         protected ComprobanteService $comprobantes,
         protected DocumentoTerceroService $documentosTercero,
+        protected EmisorAuditoria $auditoria,
     ) {}
 
     public function listar(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
@@ -149,6 +153,13 @@ class GastoService
 
             $this->reglasAplicadas->crearVarias($gasto->id, $calculo['retenciones']);
 
+            $this->auditoria->registrarCreacion(
+                AuditoriaConstants::MODULO_GASTOS,
+                "Gasto {$gasto->numero_documento} causado por {$valorBruto->aDecimalString()} (neto {$calculo['valor_neto']->aDecimalString()})",
+                $gasto,
+                accion: AccionAuditoria::Causar,
+            );
+
             return $this->gastos->obtenerConDetalle($gasto);
         });
     }
@@ -175,6 +186,8 @@ class GastoService
                 }
             }
 
+            $anteriores = $this->auditoria->instantanea($gasto);
+
             if ($gasto->comprobante) {
                 $this->comprobantes->reversarComprobante($gasto->comprobante, 'Anulación del gasto #'.$gasto->id);
             }
@@ -190,6 +203,8 @@ class GastoService
             ]);
 
             $this->gastos->eliminar($gasto);
+
+            $this->auditoria->registrarModificacion(AuditoriaConstants::MODULO_GASTOS, "Gasto {$gasto->numero_documento} anulado", $gasto, $anteriores, accion: AccionAuditoria::Anular);
 
             return $gasto;
         });

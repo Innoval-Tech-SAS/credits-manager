@@ -2,6 +2,9 @@
 
 namespace App\Contabilidad\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Enums\EstadoDocumentoTercero;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Models\DocumentoTercero;
@@ -26,12 +29,17 @@ class DocumentoTerceroService
     public function __construct(
         protected DocumentoTerceroRepository $documentos,
         protected AplicacionDocumentoRepository $aplicaciones,
+        protected EmisorAuditoria $auditoria,
     ) {}
 
     /** Anula (soft delete) un documento que nunca llegó a tener aplicaciones — el llamador ya validó eso. */
     public function anular(DocumentoTercero $documento): bool
     {
-        return $this->documentos->eliminar($documento);
+        $anulado = $this->documentos->eliminar($documento);
+
+        $this->auditoria->registrarEliminacion(AuditoriaConstants::MODULO_CONTABILIDAD, "Documento {$documento->numero_documento} anulado", $documento, accion: AccionAuditoria::Anular);
+
+        return $anulado;
     }
 
     public function pendientesPorTercero(Tercero $tercero, NaturalezaDocumento $naturaleza)
@@ -51,7 +59,7 @@ class DocumentoTerceroService
         int $origenId,
         ?DocumentoTercero $documentoOriginal = null,
     ): DocumentoTercero {
-        return $this->documentos->crear([
+        $documento = $this->documentos->crear([
             'tercero_id' => $tercero->id,
             'naturaleza' => $naturaleza,
             'tipo_documento' => $tipoDocumento,
@@ -65,6 +73,10 @@ class DocumentoTerceroService
             'origen_id' => $origenId,
             'documento_original_id' => $documentoOriginal?->id,
         ]);
+
+        $this->auditoria->registrarCreacion(AuditoriaConstants::MODULO_CONTABILIDAD, "Documento {$numeroDocumento} ({$naturaleza->value}) creado por {$valor->aDecimalString()}", $documento);
+
+        return $documento;
     }
 
     /**
@@ -129,11 +141,20 @@ class DocumentoTerceroService
                 ]);
 
                 $nuevoSaldo = $documento->saldo->restar($valor);
+                $anteriores = $this->auditoria->instantanea($documento);
 
                 $this->documentos->actualizar($documento, [
                     'saldo' => $nuevoSaldo,
                     'estado' => $nuevoSaldo->esPositivo() ? EstadoDocumentoTercero::Pendiente : EstadoDocumentoTercero::Cancelado,
                 ]);
+
+                $this->auditoria->registrarModificacion(
+                    AuditoriaConstants::MODULO_CONTABILIDAD,
+                    "Documento {$documento->numero_documento}: aplicados {$valor->aDecimalString()}",
+                    $documento,
+                    $anteriores,
+                    adicionales: ['valor_aplicado' => $valor, 'modulo_aplicacion' => $moduloAplicacion, 'aplicacion_id' => $aplicacionId],
+                );
 
                 $totalAplicado = $totalAplicado->sumar($valor);
                 $documentosActualizados->push($documento);

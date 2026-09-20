@@ -2,6 +2,9 @@
 
 namespace App\Usuarios\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Usuarios\Constants\UsuarioConstants;
 use App\Usuarios\Models\Rol;
 use App\Usuarios\Repositories\RolRepository;
@@ -11,7 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class RolService
 {
-    public function __construct(protected RolRepository $roles) {}
+    public function __construct(
+        protected RolRepository $roles,
+        protected EmisorAuditoria $auditoria,
+    ) {}
 
     public function paginar(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
     {
@@ -28,6 +34,8 @@ class RolService
 
             $this->roles->sincronizarPermisos($rol, $datos['permisos'] ?? []);
 
+            $this->auditoria->registrarCreacion(AuditoriaConstants::MODULO_USUARIOS, "Rol {$rol->nombre} creado", $rol, ['permisos' => $this->permisosDe($rol)]);
+
             return $rol;
         });
     }
@@ -41,15 +49,43 @@ class RolService
         }
 
         return DB::transaction(function () use ($rol, $datos) {
+            $anteriores = $this->auditoria->instantanea($rol);
+            $permisosAnteriores = $this->permisosDe($rol);
+
             $rol = $this->roles->actualizar($rol, [
                 'nombre' => $datos['nombre'],
                 'descripcion' => $datos['descripcion'] ?? null,
             ]);
 
             $this->roles->sincronizarPermisos($rol, $datos['permisos'] ?? []);
+            $permisosNuevos = $this->permisosDe($rol);
+
+            $this->auditoria->registrarModificacion(AuditoriaConstants::MODULO_USUARIOS, "Rol {$rol->nombre} modificado", $rol, $anteriores);
+
+            if ($permisosAnteriores !== $permisosNuevos) {
+                $this->auditoria->registrar(
+                    AccionAuditoria::CambioPermisos,
+                    AuditoriaConstants::MODULO_USUARIOS,
+                    "Permisos del rol {$rol->nombre} modificados",
+                    'rol',
+                    $rol->id,
+                    ['permisos' => $permisosAnteriores],
+                    ['permisos' => $permisosNuevos],
+                );
+            }
 
             return $rol;
         });
+    }
+
+    /** @return list<string> "modulo.accion" ordenados, para comparar antes/después */
+    private function permisosDe(Rol $rol): array
+    {
+        return $rol->permisos()->get()
+            ->map(fn ($permiso) => "{$permiso->modulo}.{$permiso->accion}")
+            ->sort()
+            ->values()
+            ->all();
     }
 
     public function eliminar(Rol $rol): bool
@@ -66,6 +102,10 @@ class RolService
             ]);
         }
 
-        return $this->roles->eliminar($rol);
+        $eliminado = $this->roles->eliminar($rol);
+
+        $this->auditoria->registrarEliminacion(AuditoriaConstants::MODULO_USUARIOS, "Rol {$rol->nombre} eliminado", $rol);
+
+        return $eliminado;
     }
 }

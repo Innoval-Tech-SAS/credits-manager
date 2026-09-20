@@ -2,6 +2,8 @@
 
 namespace App\Pagos\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
@@ -26,6 +28,7 @@ class PagoService
         protected CuotaRepository $cuotas,
         protected CreditoRepository $creditos,
         protected ComprobanteService $comprobantes,
+        protected EmisorAuditoria $auditoria,
     ) {}
 
     public function listarPorCredito(int $creditoId, string $direccion = 'desc'): Collection
@@ -49,6 +52,8 @@ class PagoService
         $this->exigirDesembolsado($credito);
 
         return DB::transaction(function () use ($credito, $valorPago, $formaPago, $observacion, $usuarioId) {
+            $creditoAnteriores = $this->auditoria->instantanea($credito);
+
             $pago = $this->pagos->crear([
                 'credito_id' => $credito->id,
                 'cliente_id' => $credito->cliente_id,
@@ -62,6 +67,7 @@ class PagoService
             $restante = $valorPago;
             $capitalTotal = Dinero::cero();
             $interesTotal = Dinero::cero();
+            $cuotasAfectadas = [];
 
             foreach ($this->cuotas->pendientesOrdenadasParaActualizar($credito->id) as $cuota) {
                 if (! $restante->esPositivo()) {
@@ -92,6 +98,8 @@ class PagoService
                     'valor_aplicado' => $aplicar,
                 ]);
 
+                $cuotasAfectadas[] = $cuota->id;
+
                 $this->cuotas->actualizar($cuota, [
                     'valor_pagado' => $nuevoPagado,
                     'estado' => $nuevoPagado->mayorOIgualQue($cuota->valor) ? EstadoCuota::Pagada : EstadoCuota::Pendiente,
@@ -106,7 +114,26 @@ class PagoService
                 $this->creditos->marcarComoPagado($credito);
             }
 
-            $this->comprobantes->contabilizarRecaudoPago($pago, $capitalTotal, $interesTotal);
+            $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $capitalTotal, $interesTotal);
+
+            $this->auditoria->registrarCreacion(
+                AuditoriaConstants::MODULO_PAGOS,
+                "Pago #{$pago->id} de {$valorPago->aDecimalString()} registrado en el crédito #{$credito->id}",
+                $pago,
+                [
+                    'capital' => $capitalTotal,
+                    'interes' => $interesTotal,
+                    'sobrante_descartado' => $restante,
+                    'cuotas_afectadas' => $cuotasAfectadas,
+                    'comprobante_id' => $comprobante?->id,
+                ],
+            );
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CREDITOS,
+                "Crédito #{$credito->id} saldado con el pago #{$pago->id}",
+                $credito,
+                $creditoAnteriores,
+            );
 
             return ['pago' => $pago, 'sobrante' => $restante];
         });
@@ -176,6 +203,7 @@ class PagoService
     public function liquidarCredito(Credito $credito, FormaPago $formaPago, ?string $observacion, ?int $usuarioId): array
     {
         return DB::transaction(function () use ($credito, $formaPago, $observacion, $usuarioId) {
+            $creditoAnteriores = $this->auditoria->instantanea($credito);
             $cotizacion = $this->calcularLiquidacion($credito);
 
             $pago = $this->pagos->crear([
@@ -191,7 +219,24 @@ class PagoService
             $this->cuotas->cerrarPendientesComoOrigen($credito->id);
             $this->recalcularSaldoCapital($credito);
             $this->creditos->marcarComoPagado($credito);
-            $this->comprobantes->contabilizarRecaudoPago($pago, $cotizacion['capital_pendiente'], $cotizacion['interes']);
+            $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $cotizacion['capital_pendiente'], $cotizacion['interes']);
+
+            $this->auditoria->registrarCreacion(
+                AuditoriaConstants::MODULO_PAGOS,
+                "Liquidación anticipada del crédito #{$credito->id}: pago #{$pago->id} de {$cotizacion['total']->aDecimalString()}",
+                $pago,
+                [
+                    'capital' => $cotizacion['capital_pendiente'],
+                    'interes' => $cotizacion['interes'],
+                    'comprobante_id' => $comprobante?->id,
+                ],
+            );
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CREDITOS,
+                "Crédito #{$credito->id} saldado por liquidación anticipada",
+                $credito,
+                $creditoAnteriores,
+            );
 
             return ['pago' => $pago, ...$cotizacion];
         });

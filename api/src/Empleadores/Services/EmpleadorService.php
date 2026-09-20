@@ -2,6 +2,8 @@
 
 namespace App\Empleadores\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Empleadores\Models\Empleador;
 use App\Empleadores\Repositories\EmpleadorRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -9,7 +11,10 @@ use Illuminate\Validation\ValidationException;
 
 class EmpleadorService
 {
-    public function __construct(protected EmpleadorRepository $empleadores) {}
+    public function __construct(
+        protected EmpleadorRepository $empleadores,
+        protected EmisorAuditoria $auditoria,
+    ) {}
 
     public function listarEmpleadores(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
     {
@@ -18,22 +23,32 @@ class EmpleadorService
 
     public function crear(array $datos): Empleador
     {
-        return $this->empleadores->crear([
+        $empleador = $this->empleadores->crear([
             'nombre' => $datos['nombre'],
             'nit' => $datos['nit'] ?? null,
             'direccion' => $datos['direccion'] ?? null,
             'telefono' => $datos['telefono'] ?? null,
         ]);
+
+        $this->auditoria->registrarCreacion(AuditoriaConstants::MODULO_EMPLEADORES, "Empleador {$empleador->nombre} creado", $empleador);
+
+        return $empleador;
     }
 
     public function editar(Empleador $empleador, array $datos): Empleador
     {
-        return $this->empleadores->actualizar($empleador, [
+        $anteriores = $this->auditoria->instantanea($empleador);
+
+        $empleador = $this->empleadores->actualizar($empleador, [
             'nombre' => $datos['nombre'],
             'nit' => $datos['nit'] ?? null,
             'direccion' => $datos['direccion'] ?? null,
             'telefono' => $datos['telefono'] ?? null,
         ]);
+
+        $this->auditoria->registrarModificacion(AuditoriaConstants::MODULO_EMPLEADORES, "Empleador {$empleador->nombre} modificado", $empleador, $anteriores);
+
+        return $empleador;
     }
 
     public function eliminar(Empleador $empleador): bool
@@ -44,6 +59,10 @@ class EmpleadorService
             ]);
         }
 
-        return $this->empleadores->eliminar($empleador);
+        $eliminado = $this->empleadores->eliminar($empleador);
+
+        $this->auditoria->registrarEliminacion(AuditoriaConstants::MODULO_EMPLEADORES, "Empleador {$empleador->nombre} eliminado", $empleador);
+
+        return $eliminado;
     }
 }

@@ -2,13 +2,18 @@
 
 namespace App\Contabilidad\Services;
 
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Models\TipoComprobante;
 use App\Contabilidad\Repositories\TipoComprobanteRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class TipoComprobanteService
 {
-    public function __construct(protected TipoComprobanteRepository $tipos) {}
+    public function __construct(
+        protected TipoComprobanteRepository $tipos,
+        protected EmisorAuditoria $auditoria,
+    ) {}
 
     public function paginar(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
     {
@@ -17,6 +22,10 @@ class TipoComprobanteService
 
     public function crear(array $datos): TipoComprobante
     {
-        return $this->tipos->crear($datos);
+        $tipo = $this->tipos->crear($datos);
+
+        $this->auditoria->registrarCreacion(AuditoriaConstants::MODULO_CONTABILIDAD, "Tipo de comprobante {$tipo->codigo} {$tipo->nombre} creado", $tipo);
+
+        return $tipo;
     }
 }
