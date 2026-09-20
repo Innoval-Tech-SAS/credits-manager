@@ -4,5 +4,6 @@ export type SidebarContextValue = {
     isHovered: boolean;
     toggleSidebar: () => void;
     toggleMobileSidebar: () => void;
+    closeMobileSidebar: () => void;
     setIsHovered: (isHovered: boolean) => void;
 };

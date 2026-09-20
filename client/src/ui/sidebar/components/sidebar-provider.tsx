@@ -35,6 +35,10 @@ export const SidebarProvider: FC<WithChildrenProps> = ({ children }) => {
         setIsMobileOpen((previous) => !previous);
     };
 
+    const closeMobileSidebar = () => {
+        setIsMobileOpen(false);
+    };
+
     return (
         <SidebarContext.Provider
             value={{
@@ -43,6 +47,7 @@ export const SidebarProvider: FC<WithChildrenProps> = ({ children }) => {
                 isHovered,
                 toggleSidebar,
                 toggleMobileSidebar,
+                closeMobileSidebar,
                 setIsHovered,
             }}
         >

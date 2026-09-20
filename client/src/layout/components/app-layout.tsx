@@ -11,7 +11,7 @@ import { AppPageHeader } from './app-page-header';
 import { AppSidebar } from './app-sidebar';
 
 const LayoutContent: FC = () => {
-    const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+    const { isExpanded, isHovered, isMobileOpen, closeMobileSidebar } = useSidebar();
     const { pathname } = useLocation();
     const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -21,6 +21,13 @@ const LayoutContent: FC = () => {
 
     return (
         <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 print:h-auto print:overflow-visible print:bg-white">
+            {isMobileOpen && (
+                <div
+                    className="fixed inset-x-0 top-19 bottom-0 z-40 bg-gray-400/50 backdrop-blur-[32px] lg:hidden print:hidden"
+                    onClick={closeMobileSidebar}
+                    aria-hidden="true"
+                />
+            )}
             <div className="print:hidden">
                 <AppSidebar />
             </div>
