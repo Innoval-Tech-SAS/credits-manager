@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Gastos\Services;
+
+use App\Gastos\Models\Municipio;
+use App\Gastos\Models\TarifaReteIcaMunicipio;
+use App\Gastos\Repositories\TarifaReteIcaMunicipioRepository;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+class TarifaReteIcaMunicipioService
+{
+    public function __construct(protected TarifaReteIcaMunicipioRepository $tarifas) {}
+
+    public function listar(): Collection
+    {
+        return $this->tarifas->todas();
+    }
+
+    /**
+     * Mismo patrón de vigencia de {@see ParametrizacionTipoGastoService::crear()}: cierra la
+     * vigente antes de crear la nueva, nunca la sobrescribe. La verificación y el cierre se
+     * hacen dentro de la misma transacción, bajo `lockForUpdate()` sobre el `Municipio`, para
+     * evitar vigencias abiertas duplicadas creadas por requests concurrentes.
+     */
+    public function crear(array $datos): TarifaReteIcaMunicipio
+    {
+        return DB::transaction(function () use ($datos) {
+            Municipio::whereKey($datos['municipio_id'])->lockForUpdate()->firstOrFail();
+
+            if ($this->tarifas->existeEnRangoCerrado($datos['municipio_id'], $datos['actividad_economica_id'], $datos['fecha_desde'])) {
+                throw ValidationException::withMessages([
+                    'fecha_desde' => __('validation.custom.tarifa_reteica.solapa_rango_cerrado'),
+                ]);
+            }
+
+            $abierta = $this->tarifas->abiertaPara($datos['municipio_id'], $datos['actividad_economica_id']);
+
+            if ($abierta) {
+                $this->tarifas->actualizar($abierta, [
+                    'fecha_hasta' => Carbon::parse($datos['fecha_desde'])->subDay()->toDateString(),
+                ]);
+            }
+
+            return $this->tarifas->crear($datos);
+        });
+    }
+}

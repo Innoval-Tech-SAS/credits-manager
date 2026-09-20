@@ -1,0 +1,110 @@
+services:
+  database:
+    image: mysql:8.4
+    container_name: credits-manager-database
+    command: ["mysqld", "--default-time-zone=-05:00"]
+    environment:
+      TZ: America/Bogota
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/custom.cnf:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: credits-manager-redis
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: credits-manager-phpmyadmin
+    environment:
+      TZ: America/Bogota
+      PMA_HOST: database
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: credits-manager-api
+    environment:
+      TZ: America/Bogota
+      APP_NAME: ${APP_NAME}
+      APP_ENV: ${APP_ENV}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: ${APP_URL}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+      APP_LOCALE: ${APP_LOCALE}
+      APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE}
+      APP_FAKER_LOCALE: ${APP_FAKER_LOCALE}
+      DB_CONNECTION: mysql
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SESSION_DOMAIN: ${SESSION_DOMAIN}
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS}
+      SEED_ADMIN_NOMBRE: ${SEED_ADMIN_NOMBRE}
+      SEED_ADMIN_USUARIO: ${SEED_ADMIN_USUARIO}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - api_storage:/var/www/html/storage
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: credits-manager-nginx
+    environment:
+      TZ: America/Bogota
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certbot/www:/var/www/certbot:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - api_storage:/var/www/html/storage:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      phpmyadmin:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:
+  api_storage:

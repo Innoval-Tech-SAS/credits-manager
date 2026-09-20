@@ -1,0 +1,20 @@
+FROM node:22-alpine AS client-builder
+WORKDIR /app
+
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+RUN corepack enable && corepack prepare pnpm@11.13.0 --activate
+
+COPY client/package.json client/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY client/ .
+RUN pnpm run build
+
+FROM nginx:alpine
+
+COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+COPY api/public /var/www/html/public
+RUN ln -sf /var/www/html/storage/app/public /var/www/html/public/storage
+COPY --from=client-builder /app/dist /var/www/html/app

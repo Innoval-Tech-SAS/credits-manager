@@ -1,0 +1,11 @@
+certs/
+certbot/www/
+.env
+.claude
+.github
+.agents
+.vscode/
+.pnpm-store/
+
+resources/
+.mcp.json

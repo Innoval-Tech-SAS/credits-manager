@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Pagos\Models;
+
+use App\Clientes\Models\Cliente;
+use App\Core\Base\BaseModel;
+use App\Core\Concerns\PerteneceAEmpresa;
+use App\Core\Dinero\DineroCast;
+use App\Creditos\Models\Credito;
+use App\Pagos\Enums\FormaPago;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+#[Fillable([
+    'credito_id',
+    'cliente_id',
+    'valor_pago',
+    'fecha_pago',
+    'forma_pago',
+    'observacion',
+    'registrado_por',
+])]
+class Pago extends BaseModel
+{
+    use PerteneceAEmpresa;
+
+    protected $table = 'pagos';
+
+    protected function casts(): array
+    {
+        return [
+            'forma_pago' => FormaPago::class,
+            'valor_pago' => DineroCast::class,
+            'fecha_pago' => 'datetime:Y-m-d',
+        ];
+    }
+
+    public function credito(): BelongsTo
+    {
+        return $this->belongsTo(Credito::class);
+    }
+
+    public function cliente(): BelongsTo
+    {
+        return $this->belongsTo(Cliente::class);
+    }
+
+    public function detalles(): HasMany
+    {
+        return $this->hasMany(PagoDetalle::class);
+    }
+}

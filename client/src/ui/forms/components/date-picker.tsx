@@ -1,0 +1,73 @@
+import type { FC } from 'react';
+import { useEffect, useRef } from 'react';
+
+import flatpickr from 'flatpickr';
+import 'flatpickr/dist/flatpickr.css';
+import { Calendar } from 'lucide-react';
+import type { DatePickerProps } from '../props/date-picker-props';
+
+export const DatePicker: FC<DatePickerProps> = ({
+    id,
+    name,
+    mode = 'single',
+    value,
+    onChange,
+    placeholder = 'Seleccione una fecha',
+    required = false,
+    disabled = false,
+    className = '',
+}) => {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const instanceRef = useRef<flatpickr.Instance | null>(null);
+    const onChangeRef = useRef(onChange);
+    onChangeRef.current = onChange;
+
+    useEffect(() => {
+        if (!inputRef.current) {
+            return;
+        }
+
+        instanceRef.current = flatpickr(inputRef.current, {
+            mode,
+            static: true,
+            monthSelectorType: 'static',
+            dateFormat: 'Y-m-d',
+            defaultDate: value || undefined,
+            disableMobile: true,
+            onChange: (_dates, dateStr) => onChangeRef.current?.(dateStr),
+        });
+
+        return () => {
+            instanceRef.current?.destroy();
+            instanceRef.current = null;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mode]);
+
+    useEffect(() => {
+        if (instanceRef.current && (value ?? '') !== instanceRef.current.input.value) {
+            instanceRef.current.setDate(value || '', false);
+        }
+    }, [value]);
+
+    return (
+        <div className="relative">
+            <input
+                ref={inputRef}
+                id={id}
+                name={name}
+                placeholder={placeholder}
+                required={required}
+                disabled={disabled}
+                readOnly
+                className={`h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:focus:border-brand-800 ${
+                    disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'
+                } ${className}`}
+            />
+
+            <span className="pointer-events-none absolute top-1/2 right-4 -translate-y-1/2 text-gray-500 dark:text-gray-400">
+                <Calendar className="size-5" />
+            </span>
+        </div>
+    );
+};

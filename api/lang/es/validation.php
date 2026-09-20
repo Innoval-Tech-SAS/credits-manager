@@ -1,0 +1,366 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Validation Language Lines
+    |--------------------------------------------------------------------------
+    |
+    | Traducción al español de las líneas por defecto de Laravel. Se carga
+    | automáticamente porque APP_LOCALE=es — ningún FormRequest necesita
+    | definir messages() a mano; basta con las reglas nativas de Validator.
+    |
+    */
+
+    'accepted' => 'El campo :attribute debe ser aceptado.',
+    'accepted_if' => 'El campo :attribute debe ser aceptado cuando :other es :value.',
+    'active_url' => 'El campo :attribute no es una URL válida.',
+    'after' => 'El campo :attribute debe ser una fecha posterior a :date.',
+    'after_or_equal' => 'El campo :attribute debe ser una fecha posterior o igual a :date.',
+    'alpha' => 'El campo :attribute solo debe contener letras.',
+    'alpha_dash' => 'El campo :attribute solo debe contener letras, números, guiones y guiones bajos.',
+    'alpha_num' => 'El campo :attribute solo debe contener letras y números.',
+    'array' => 'El campo :attribute debe ser un arreglo.',
+    'ascii' => 'El campo :attribute solo debe contener caracteres alfanuméricos y símbolos de un solo byte.',
+    'before' => 'El campo :attribute debe ser una fecha anterior a :date.',
+    'before_or_equal' => 'El campo :attribute debe ser una fecha anterior o igual a :date.',
+    'between' => [
+        'array' => 'El campo :attribute debe tener entre :min y :max elementos.',
+        'file' => 'El campo :attribute debe pesar entre :min y :max kilobytes.',
+        'numeric' => 'El campo :attribute debe estar entre :min y :max.',
+        'string' => 'El campo :attribute debe tener entre :min y :max caracteres.',
+    ],
+    'boolean' => 'El campo :attribute debe ser verdadero o falso.',
+    'can' => 'El campo :attribute contiene un valor no autorizado.',
+    'confirmed' => 'La confirmación de :attribute no coincide.',
+    'contains' => 'Falta un valor requerido en el campo :attribute.',
+    'current_password' => 'La contraseña es incorrecta.',
+    'date' => 'El campo :attribute debe ser una fecha válida.',
+    'date_equals' => 'El campo :attribute debe ser una fecha igual a :date.',
+    'date_format' => 'El campo :attribute debe coincidir con el formato :format.',
+    'decimal' => 'El campo :attribute debe tener :decimal decimales.',
+    'declined' => 'El campo :attribute debe ser rechazado.',
+    'declined_if' => 'El campo :attribute debe ser rechazado cuando :other es :value.',
+    'different' => 'Los campos :attribute y :other deben ser diferentes.',
+    'digits' => 'El campo :attribute debe tener :digits dígitos.',
+    'digits_between' => 'El campo :attribute debe tener entre :min y :max dígitos.',
+    'dimensions' => 'El campo :attribute tiene dimensiones de imagen no válidas.',
+    'distinct' => 'El campo :attribute tiene un valor duplicado.',
+    'doesnt_end_with' => 'El campo :attribute no debe terminar con uno de los siguientes valores: :values.',
+    'doesnt_start_with' => 'El campo :attribute no debe empezar con uno de los siguientes valores: :values.',
+    'email' => 'El campo :attribute debe ser una dirección de correo válida.',
+    'ends_with' => 'El campo :attribute debe terminar con uno de los siguientes valores: :values.',
+    'enum' => 'El :attribute seleccionado no es válido.',
+    'exists' => 'El :attribute seleccionado no es válido.',
+    'extensions' => 'El campo :attribute debe tener una de las siguientes extensiones: :values.',
+    'file' => 'El campo :attribute debe ser un archivo.',
+    'filled' => 'El campo :attribute debe tener un valor.',
+    'gt' => [
+        'array' => 'El campo :attribute debe tener más de :value elementos.',
+        'file' => 'El campo :attribute debe pesar más de :value kilobytes.',
+        'numeric' => 'El campo :attribute debe ser mayor que :value.',
+        'string' => 'El campo :attribute debe tener más de :value caracteres.',
+    ],
+    'gte' => [
+        'array' => 'El campo :attribute debe tener :value elementos o más.',
+        'file' => 'El campo :attribute debe pesar :value kilobytes o más.',
+        'numeric' => 'El campo :attribute debe ser mayor o igual que :value.',
+        'string' => 'El campo :attribute debe tener :value caracteres o más.',
+    ],
+    'hex_color' => 'El campo :attribute debe ser un color hexadecimal válido.',
+    'image' => 'El campo :attribute debe ser una imagen.',
+    'in' => 'El :attribute seleccionado no es válido.',
+    'in_array' => 'El campo :attribute debe existir en :other.',
+    'integer' => 'El campo :attribute debe ser un número entero.',
+    'ip' => 'El campo :attribute debe ser una dirección IP válida.',
+    'ipv4' => 'El campo :attribute debe ser una dirección IPv4 válida.',
+    'ipv6' => 'El campo :attribute debe ser una dirección IPv6 válida.',
+    'json' => 'El campo :attribute debe ser una cadena JSON válida.',
+    'list' => 'El campo :attribute debe ser una lista.',
+    'lowercase' => 'El campo :attribute debe estar en minúsculas.',
+    'lt' => [
+        'array' => 'El campo :attribute debe tener menos de :value elementos.',
+        'file' => 'El campo :attribute debe pesar menos de :value kilobytes.',
+        'numeric' => 'El campo :attribute debe ser menor que :value.',
+        'string' => 'El campo :attribute debe tener menos de :value caracteres.',
+    ],
+    'lte' => [
+        'array' => 'El campo :attribute no debe tener más de :value elementos.',
+        'file' => 'El campo :attribute debe pesar :value kilobytes o menos.',
+        'numeric' => 'El campo :attribute debe ser menor o igual que :value.',
+        'string' => 'El campo :attribute debe tener :value caracteres o menos.',
+    ],
+    'mac_address' => 'El campo :attribute debe ser una dirección MAC válida.',
+    'max' => [
+        'array' => 'El campo :attribute no debe tener más de :max elementos.',
+        'file' => 'El campo :attribute no debe pesar más de :max kilobytes.',
+        'numeric' => 'El campo :attribute no debe ser mayor que :max.',
+        'string' => 'El campo :attribute no debe tener más de :max caracteres.',
+    ],
+    'max_digits' => 'El campo :attribute no debe tener más de :max dígitos.',
+    'mimes' => 'El campo :attribute debe ser un archivo de tipo: :values.',
+    'mimetypes' => 'El campo :attribute debe ser un archivo de tipo: :values.',
+    'min' => [
+        'array' => 'El campo :attribute debe tener al menos :min elementos.',
+        'file' => 'El campo :attribute debe pesar al menos :min kilobytes.',
+        'numeric' => 'El campo :attribute debe ser al menos :min.',
+        'string' => 'El campo :attribute debe tener al menos :min caracteres.',
+    ],
+    'min_digits' => 'El campo :attribute debe tener al menos :min dígitos.',
+    'missing' => 'El campo :attribute no debe estar presente.',
+    'missing_if' => 'El campo :attribute no debe estar presente cuando :other es :value.',
+    'missing_unless' => 'El campo :attribute no debe estar presente a menos que :other sea :value.',
+    'missing_with' => 'El campo :attribute no debe estar presente cuando :values está presente.',
+    'missing_with_all' => 'El campo :attribute no debe estar presente cuando :values están presentes.',
+    'multiple_of' => 'El campo :attribute debe ser múltiplo de :value.',
+    'not_in' => 'El :attribute seleccionado no es válido.',
+    'not_regex' => 'El formato del campo :attribute no es válido.',
+    'numeric' => 'El campo :attribute debe ser un número.',
+    'password' => [
+        'letters' => 'El campo :attribute debe contener al menos una letra.',
+        'mixed' => 'El campo :attribute debe contener al menos una mayúscula y una minúscula.',
+        'numbers' => 'El campo :attribute debe contener al menos un número.',
+        'symbols' => 'El campo :attribute debe contener al menos un símbolo.',
+        'uncompromised' => 'El :attribute proporcionado aparece en una filtración de datos conocida. Elige otro :attribute.',
+    ],
+    'present' => 'El campo :attribute debe estar presente.',
+    'present_if' => 'El campo :attribute debe estar presente cuando :other es :value.',
+    'present_unless' => 'El campo :attribute debe estar presente a menos que :other sea :value.',
+    'present_with' => 'El campo :attribute debe estar presente cuando :values está presente.',
+    'present_with_all' => 'El campo :attribute debe estar presente cuando :values están presentes.',
+    'prohibited' => 'El campo :attribute está prohibido.',
+    'prohibited_if' => 'El campo :attribute está prohibido cuando :other es :value.',
+    'prohibited_unless' => 'El campo :attribute está prohibido a menos que :other esté en :values.',
+    'prohibits' => 'El campo :attribute impide que :other esté presente.',
+    'regex' => 'El formato del campo :attribute no es válido.',
+    'required' => 'El campo :attribute es obligatorio.',
+    'required_array_keys' => 'El campo :attribute debe contener valores para: :values.',
+    'required_if' => 'El campo :attribute es obligatorio cuando :other es :value.',
+    'required_if_accepted' => 'El campo :attribute es obligatorio cuando :other es aceptado.',
+    'required_if_declined' => 'El campo :attribute es obligatorio cuando :other es rechazado.',
+    'required_unless' => 'El campo :attribute es obligatorio a menos que :other esté en :values.',
+    'required_with' => 'El campo :attribute es obligatorio cuando :values está presente.',
+    'required_with_all' => 'El campo :attribute es obligatorio cuando :values están presentes.',
+    'required_without' => 'El campo :attribute es obligatorio cuando :values no está presente.',
+    'required_without_all' => 'El campo :attribute es obligatorio cuando ninguno de :values está presente.',
+    'same' => 'Los campos :attribute y :other deben coincidir.',
+    'size' => [
+        'array' => 'El campo :attribute debe contener :size elementos.',
+        'file' => 'El campo :attribute debe pesar :size kilobytes.',
+        'numeric' => 'El campo :attribute debe ser :size.',
+        'string' => 'El campo :attribute debe tener :size caracteres.',
+    ],
+    'starts_with' => 'El campo :attribute debe empezar con uno de los siguientes valores: :values.',
+    'string' => 'El campo :attribute debe ser una cadena de texto.',
+    'timezone' => 'El campo :attribute debe ser una zona horaria válida.',
+    'ulid' => 'El campo :attribute debe ser un ULID válido.',
+    'unique' => 'El :attribute ya está en uso.',
+    'uploaded' => 'Error al subir el archivo :attribute.',
+    'uppercase' => 'El campo :attribute debe estar en mayúsculas.',
+    'url' => 'El campo :attribute debe ser una URL válida.',
+    'uuid' => 'El campo :attribute debe ser un UUID válido.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Validation Language Lines
+    |--------------------------------------------------------------------------
+    |
+    | Mensajes que un FormRequest agrega a mano (fuera de `rules()`) también
+    | pasan por aquí vía __('validation.custom....'), no se hardcodean en PHP.
+    |
+    */
+
+    'custom' => [
+        'credito_origen_id' => [
+            'pertenece_a_otro_cliente' => 'El crédito seleccionado no pertenece a este cliente.',
+        ],
+        'estado' => [
+            'transicion_invalida' => 'El crédito no está en un estado válido para esta acción.',
+            'no_desembolsado' => 'Este crédito no está desembolsado; no se pueden registrar pagos ni liquidarlo.',
+        ],
+        'lineas' => [
+            'descuadrado' => 'Comprobante descuadrado: débitos :debito distintos de créditos :credito. No se puede contabilizar.',
+            'sin_valor' => 'El comprobante no tiene valor.',
+        ],
+        'comprobante' => [
+            'no_contabilizado' => 'Solo se pueden reversar comprobantes contabilizados.',
+            'periodo_cerrado' => 'El período del comprobante original está cerrado; solicite reapertura autorizada.',
+        ],
+        'fecha' => [
+            'periodo_cerrado' => 'El período contable :mes/:anio está cerrado. No se pueden registrar movimientos.',
+        ],
+        'mes' => [
+            'formato_invalido' => 'El mes debe tener el formato AAAA-MM.',
+        ],
+        'usuario' => [
+            'credenciales_invalidas' => 'Usuario o contraseña incorrectos.',
+            'unico_admin_activo' => 'No puedes quitarte el rol de administrador o desactivarte siendo el único administrador activo.',
+        ],
+        'rol' => [
+            'no_renombrar_admin' => 'El rol de administrador no se puede renombrar.',
+            'no_eliminar_admin' => 'El rol de administrador no se puede eliminar.',
+            'tiene_usuarios_activos' => 'No se puede eliminar un rol con usuarios activos asignados.',
+        ],
+        'clave_actual' => [
+            'incorrecta' => 'La contraseña actual no es correcta.',
+        ],
+        'tercero' => [
+            'numero_documento' => [
+                'ya_es_cliente' => 'Ya existe un cliente registrado con este documento.',
+                'ya_es_proveedor' => 'Ya existe un proveedor registrado con este documento.',
+                'ya_registrado' => 'Este documento ya está registrado como tercero.',
+            ],
+        ],
+        'empleador' => [
+            'tiene_clientes_asignados' => 'No se puede eliminar un empleador con clientes asignados actualmente.',
+        ],
+        'cliente' => [
+            'tiene_creditos_activos' => 'No se puede eliminar un cliente con créditos activos (no pagados ni cancelados).',
+        ],
+        'credito' => [
+            'tiene_pagos_registrados' => 'No se puede eliminar un crédito con pagos registrados.',
+            'cancelacion_con_pagos' => 'No se puede cancelar un crédito con pagos registrados.',
+        ],
+        'documento' => [
+            'naturaleza_invalida' => 'Debe indicar una naturaleza válida (por_pagar o por_cobrar).',
+            'sin_aplicaciones' => 'Debe seleccionar al menos un documento para aplicar el valor.',
+            'saldo_insuficiente' => 'El valor a aplicar debe ser mayor a cero y no puede superar el saldo pendiente del documento.',
+            'no_pendiente_o_no_pertenece' => 'Uno de los documentos seleccionados no pertenece a este tercero o ya no está pendiente.',
+        ],
+        'tipo_gasto' => [
+            'inactivo_o_no_existe' => 'El tipo de gasto no existe o está inactivo.',
+            'requiere_tercero' => 'Este tipo de gasto requiere un tercero.',
+        ],
+        'parametrizacion' => [
+            'no_vigente' => 'Este tipo de gasto no tiene una parametrización vigente para la fecha indicada.',
+            'solapa_rango_cerrado' => 'Ya existe una parametrización de este tipo de gasto vigente en esa fecha.',
+        ],
+        'tarifa_reteica' => [
+            'no_vigente' => 'No hay una tarifa de ReteICA vigente para el municipio y la actividad económica del tercero en esta fecha.',
+            'solapa_rango_cerrado' => 'Ya existe una tarifa de ReteICA vigente para ese municipio y actividad económica en esa fecha.',
+        ],
+        'valor_uvt' => [
+            'no_configurado' => 'No hay un valor de UVT configurado para el año de la fecha del documento.',
+        ],
+        'gasto' => [
+            'tiene_cruces_registrados' => 'No se puede anular un gasto con pagos (cruces) registrados. Reversa primero los egresos asociados antes de anularlo.',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Validation Attributes
+    |--------------------------------------------------------------------------
+    |
+    | Nombres legibles para los campos de este proyecto (todas sus columnas ya
+    | están en español) — evita mensajes como "El campo valor_prestamo...".
+    |
+    */
+
+    'attributes' => [
+        // Créditos
+        'cliente_id' => 'cliente',
+        'tipo_credito' => 'tipo de crédito',
+        'credito_origen_id' => 'crédito que refinancia',
+        'valor_prestamo' => 'valor del préstamo',
+        'tasa_interes' => 'tasa de interés',
+        'plazo' => 'plazo',
+        'tipo_pago' => 'tipo de pago',
+        'fecha_desembolso' => 'fecha de desembolso',
+
+        // Pagos
+        'valor_pago' => 'valor del pago',
+        'forma_pago' => 'forma de pago',
+        'observacion' => 'observación',
+
+        // Auth
+        'usuario' => 'usuario',
+        'clave' => 'contraseña',
+        'clave_actual' => 'contraseña actual',
+        'clave_nueva' => 'contraseña nueva',
+
+        // Clientes
+        'nombre' => 'nombre',
+        'tipo_documento' => 'tipo de documento',
+        'numero_documento' => 'número de documento',
+        'barrio' => 'barrio',
+        'ciudad' => 'ciudad',
+        'celular' => 'celular',
+        'telefono_fijo' => 'teléfono fijo',
+        'correo' => 'correo',
+        'empleador_id' => 'empleador',
+        'archivo' => 'archivo',
+
+        // Empresa
+        'nombre_empresa' => 'nombre de la empresa',
+        'nit' => 'NIT',
+        'direccion' => 'dirección',
+        'telefono' => 'teléfono',
+        'logo' => 'logo',
+        'admin_nombre' => 'nombre del administrador',
+        'admin_usuario' => 'usuario del administrador',
+        'admin_password' => 'contraseña del administrador',
+
+        // Usuarios
+        'rol' => 'rol',
+        'permisos' => 'permisos',
+        'permisos.*.modulo' => 'módulo',
+        'permisos.*.crear' => 'permiso de crear',
+        'permisos.*.listar' => 'permiso de listar',
+        'permisos.*.editar' => 'permiso de editar',
+        'permisos.*.eliminar' => 'permiso de eliminar',
+        'activo' => 'activo',
+
+        // Contabilidad
+        'codigo' => 'código',
+        'naturaleza' => 'naturaleza',
+        'cuenta_padre_id' => 'cuenta padre',
+        'tipo' => 'tipo',
+        'permite_movimiento' => 'permite movimiento',
+        'evento' => 'evento',
+        'cuenta_debito_id' => 'cuenta débito',
+        'cuenta_credito_id' => 'cuenta crédito',
+        'tipo_comprobante_id' => 'tipo de comprobante',
+        'consecutivo' => 'consecutivo',
+        'fecha' => 'fecha',
+        'concepto' => 'concepto',
+        'documento_soporte' => 'documento soporte',
+        'tercero_id' => 'tercero',
+        'lineas' => 'líneas',
+        'motivo' => 'motivo',
+
+        // Gastos
+        'tipo_gasto_id' => 'tipo de gasto',
+        'municipio_id' => 'municipio',
+        'actividad_economica_id' => 'actividad económica',
+        'valor_bruto' => 'valor bruto',
+        'requiere_tercero' => 'requiere tercero',
+        'aplica_iva' => 'aplica IVA',
+        'fecha_desde' => 'fecha desde',
+        'fecha_hasta' => 'fecha hasta',
+        'cuenta_gasto_id' => 'cuenta de gasto',
+        'cuenta_iva_id' => 'cuenta de IVA descontable',
+        'cuenta_cxp_id' => 'cuenta de cuentas por pagar',
+        'tarifa_iva' => 'tarifa de IVA',
+        'aplica_retefuente' => 'aplica ReteFuente',
+        'concepto_dian' => 'concepto DIAN',
+        'base_minima_uvt' => 'base mínima en UVT',
+        'tarifa_retefuente_persona_natural' => 'tarifa de ReteFuente persona natural',
+        'tarifa_retefuente_persona_juridica' => 'tarifa de ReteFuente persona jurídica',
+        'cuenta_retefuente_id' => 'cuenta de ReteFuente por pagar',
+        'aplica_reteica' => 'aplica ReteICA',
+        'cuenta_reteica_id' => 'cuenta de ReteICA por pagar',
+        'aplica_reteiva' => 'aplica ReteIVA',
+        'tarifa_reteiva' => 'tarifa de ReteIVA',
+        'cuenta_reteiva_id' => 'cuenta de ReteIVA por pagar',
+        'anio' => 'año',
+        'valor' => 'valor',
+        'tarifa' => 'tarifa',
+        'regimen_tributario' => 'régimen tributario',
+        'tipo_persona' => 'tipo de persona',
+        'autorretenedor' => 'autorretenedor',
+        'responsable_iva' => 'responsable de IVA',
+    ],
+
+];

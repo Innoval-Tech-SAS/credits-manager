@@ -1,0 +1,173 @@
+<?php
+
+namespace Tests\Feature\Creditos;
+
+use App\Creditos\Enums\TipoCredito;
+use App\Creditos\Enums\TipoPago;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesCreditFixtures;
+use Tests\TestCase;
+
+class CrearCreditoValidationTest extends TestCase
+{
+    use ActsAsAdmin;
+    use CreatesCreditFixtures;
+    use RefreshDatabase;
+
+    private function payloadValido(int $clienteId): array
+    {
+        return [
+            'cliente_id' => $clienteId,
+            'tipo_credito' => TipoCredito::Nuevo->value,
+            'valor_prestamo' => 1000000,
+            'tasa_interes' => 5,
+            'plazo' => 12,
+            'tipo_pago' => TipoPago::Mensual->value,
+            'fecha_desembolso' => '2026-01-01',
+        ];
+    }
+
+    public function test_rechaza_cliente_inexistente(): void
+    {
+        $this->actingAsAdmin();
+
+        $respuesta = $this->postJson('/api/v1/creditos', $this->payloadValido(999999));
+
+        $respuesta->assertStatus(422)->assertJsonValidationErrors('cliente_id');
+        $this->assertDatabaseCount('creditos', 0);
+    }
+
+    public function test_rechaza_valor_prestamo_cero_o_negativo(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente();
+
+        foreach ([0, -100] as $valorInvalido) {
+            $respuesta = $this->postJson('/api/v1/creditos', [
+                ...$this->payloadValido($cliente->id),
+                'valor_prestamo' => $valorInvalido,
+            ]);
+
+            $respuesta->assertStatus(422)->assertJsonValidationErrors('valor_prestamo');
+
+            // Protege la traducción (lang/es/validation.php), no solo que el campo falle.
+            $respuesta->assertJsonPath('errors.valor_prestamo.0', 'El campo valor del préstamo debe ser al menos 0.01.');
+        }
+
+        $this->assertDatabaseCount('creditos', 0);
+    }
+
+    public function test_rechaza_tasa_de_interes_negativa(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente();
+
+        $respuesta = $this->postJson('/api/v1/creditos', [
+            ...$this->payloadValido($cliente->id),
+            'tasa_interes' => -1,
+        ]);
+
+        $respuesta->assertStatus(422)->assertJsonValidationErrors('tasa_interes');
+    }
+
+    public function test_rechaza_plazo_menor_a_uno(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente();
+
+        $respuesta = $this->postJson('/api/v1/creditos', [
+            ...$this->payloadValido($cliente->id),
+            'plazo' => 0,
+        ]);
+
+        $respuesta->assertStatus(422)->assertJsonValidationErrors('plazo');
+    }
+
+    public function test_rechaza_tipo_de_pago_fuera_del_enum(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente();
+
+        $respuesta = $this->postJson('/api/v1/creditos', [
+            ...$this->payloadValido($cliente->id),
+            'tipo_pago' => 'semanal',
+        ]);
+
+        $respuesta->assertStatus(422)->assertJsonValidationErrors('tipo_pago');
+    }
+
+    public function test_refinanciacion_exige_credito_origen(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente();
+
+        $respuesta = $this->postJson('/api/v1/creditos', [
+            ...$this->payloadValido($cliente->id),
+            'tipo_credito' => TipoCredito::Refinanciacion->value,
+        ]);
+
+        $respuesta->assertStatus(422)->assertJsonValidationErrors('credito_origen_id');
+    }
+
+    /**
+     * Mejora de seguridad sobre el legado (que solo validaba esto en JS):
+     * no se puede refinanciar un crédito que pertenece a otro cliente.
+     */
+    public function test_refinanciacion_rechaza_credito_origen_de_otro_cliente(): void
+    {
+        $this->actingAsAdmin();
+        $clienteA = $this->crearCliente();
+        $clienteB = $this->crearCliente();
+        $creditoDeB = $this->crearCredito($clienteB);
+
+        $respuesta = $this->postJson('/api/v1/creditos', [
+            ...$this->payloadValido($clienteA->id),
+            'tipo_credito' => TipoCredito::Refinanciacion->value,
+            'credito_origen_id' => $creditoDeB->id,
+        ]);
+
+        $respuesta->assertStatus(422)->assertJsonValidationErrors('credito_origen_id');
+        $respuesta->assertJsonPath('errors.credito_origen_id.0', 'El crédito seleccionado no pertenece a este cliente.');
+        $this->assertDatabaseCount('creditos', 1);
+        $this->assertSame('activo', $creditoDeB->fresh()->estado->value);
+    }
+
+    public function test_refinanciacion_acepta_credito_origen_del_mismo_cliente(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente();
+        $origen = $this->crearCredito($cliente);
+
+        $respuesta = $this->postJson('/api/v1/creditos', [
+            ...$this->payloadValido($cliente->id),
+            'tipo_credito' => TipoCredito::Refinanciacion->value,
+            'credito_origen_id' => $origen->id,
+        ]);
+
+        $respuesta->assertStatus(201);
+        $this->assertSame('pagado', $origen->fresh()->estado->value);
+    }
+
+    public function test_sin_autenticar_no_puede_crear_creditos(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente();
+        $this->salirDeSesion();
+
+        $respuesta = $this->postJson('/api/v1/creditos', $this->payloadValido($cliente->id));
+
+        $respuesta->assertStatus(401);
+    }
+
+    public function test_asesor_sin_permiso_de_creditos_no_puede_crear(): void
+    {
+        $this->actingAsAsesor();
+        $cliente = $this->crearCliente();
+
+        $respuesta = $this->postJson('/api/v1/creditos', $this->payloadValido($cliente->id));
+
+        $respuesta->assertStatus(403);
+        $this->assertDatabaseCount('creditos', 0);
+    }
+}
