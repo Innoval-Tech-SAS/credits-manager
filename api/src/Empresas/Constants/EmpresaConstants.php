@@ -29,9 +29,9 @@ class EmpresaConstants
         'contable' => [
             'contabilidad.listar', 'contabilidad.crear', 'contabilidad.editar',
             'contabilidad.configurar', 'contabilidad.crear_manual',
-            'contabilidad.anular', 'contabilidad.cerrar_periodo',
+            'contabilidad.anular', 'contabilidad.cerrar_periodo', 'contabilidad.exportar',
             'gastos.listar', 'gastos.crear', 'gastos.anular', 'gastos.parametrizar',
-            'cartera.listar',
+            'cartera.listar', 'cartera.exportar',
             'clientes.listar',
         ],
         'cartera' => [
@@ -51,8 +51,8 @@ class EmpresaConstants
             'contabilidad.listar',
         ],
         'auditoria' => [
-            'contabilidad.listar',
-            'cartera.listar',
+            'contabilidad.listar', 'contabilidad.exportar',
+            'cartera.listar', 'cartera.exportar',
             'auditoria.listar',
             'auditoria.exportar',
         ],
