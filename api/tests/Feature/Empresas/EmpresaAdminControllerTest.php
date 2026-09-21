@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Empresas;
 
+use Database\Seeders\PermisoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\TestCase;
@@ -44,6 +45,7 @@ class EmpresaAdminControllerTest extends TestCase
     public function test_superadmin_crea_una_empresa_con_su_primer_admin(): void
     {
         $this->actingAsSuperAdmin();
+        $this->seed(PermisoSeeder::class);
 
         $respuesta = $this->postJson('/api/v1/empresas', $this->datosEmpresaValidos());
 
@@ -56,6 +58,7 @@ class EmpresaAdminControllerTest extends TestCase
     public function test_superadmin_lista_y_edita_empresas(): void
     {
         $this->actingAsSuperAdmin();
+        $this->seed(PermisoSeeder::class);
         $creada = $this->postJson('/api/v1/empresas', $this->datosEmpresaValidos())->json('empresa');
 
         $this->getJson('/api/v1/empresas')->assertStatus(200)->assertJsonCount(1, 'data');

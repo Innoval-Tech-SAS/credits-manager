@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Contabilidad;
 
+use App\Contabilidad\Services\ComprobanteService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
@@ -91,9 +92,17 @@ class ComprobanteControllerTest extends TestCase
     public function test_asesor_sin_permiso_no_puede_reversar(): void
     {
         $this->actingAsAsesor();
+        $payload = $this->payloadValido();
+        $comprobante = app(ComprobanteService::class)->crearComprobante(
+            $payload['tipo_comprobante_id'],
+            $payload['fecha'],
+            $payload['lineas'],
+            $payload['concepto'],
+        );
 
-        $respuesta = $this->postJson('/api/v1/contabilidad/comprobantes/1/reversar', ['motivo' => 'x']);
+        $respuesta = $this->postJson("/api/v1/contabilidad/comprobantes/{$comprobante->id}/reversar", ['motivo' => 'x']);
 
         $respuesta->assertStatus(403);
+        $this->assertDatabaseHas('comprobantes', ['id' => $comprobante->id, 'estado' => 'contabilizado']);
     }
 }

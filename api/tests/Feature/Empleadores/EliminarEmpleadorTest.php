@@ -72,7 +72,9 @@ class EliminarEmpleadorTest extends TestCase
 
     public function test_sin_autenticar_no_puede_eliminar(): void
     {
+        $this->actingAsAdmin();
         $empleador = $this->crearEmpleador();
+        $this->salirDeSesion();
 
         $respuesta = $this->deleteJson("/api/v1/empleadores/{$empleador->id}");
 
