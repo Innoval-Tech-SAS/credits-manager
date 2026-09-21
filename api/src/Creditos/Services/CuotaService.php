@@ -44,6 +44,12 @@ class CuotaService
         return Dinero::desdeCentavos($this->cuotas->saldoPendiente($creditoId));
     }
 
+    /** Capital que aún se debe tras aplicar los pagos (interés primero, luego capital): el saldo a la fecha del último pago. */
+    public function capitalPendiente(Credito $credito): Dinero
+    {
+        return $this->resumenAlDia($credito->id, $credito->valor_prestamo)['saldo_capital_pendiente'];
+    }
+
     public function estadoCartera(Credito $credito): string
     {
         if ($credito->estado === EstadoCredito::Refinanciado) {

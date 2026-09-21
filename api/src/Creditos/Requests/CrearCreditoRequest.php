@@ -34,7 +34,9 @@ class CrearCreditoRequest extends FormRequest
                 'nullable', 'required_if:tipo_credito,refinanciacion', 'integer',
                 Rule::exists('creditos', 'id')->where('empresa_id', $this->user()->empresa_id),
             ],
-            'valor_prestamo' => ['required', 'numeric', 'min:0.01'],
+            // En una refinanciación el valor del préstamo lo calcula el servidor: saldo de capital del original + `valor_adicional`.
+            'valor_prestamo' => ['required_unless:tipo_credito,refinanciacion', 'prohibited_if:tipo_credito,refinanciacion', 'numeric', 'min:0.01'],
+            'valor_adicional' => ['required_if:tipo_credito,refinanciacion', 'prohibited_unless:tipo_credito,refinanciacion', 'numeric', 'min:0'],
             'tasa_interes' => ['required', 'numeric', 'min:0'],
             'plazo' => ['required', 'integer', 'min:1'],
             'tipo_pago' => ['required', Rule::enum(TipoPago::class)],

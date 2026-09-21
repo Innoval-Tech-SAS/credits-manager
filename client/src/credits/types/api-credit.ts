@@ -13,6 +13,8 @@ export type ApiCredit = {
     credito_origen_id: number | null;
     credito_origen?: ApiCredit | null;
     valor_prestamo: string;
+    /** Solo en refinanciaciones: saldo de capital tomado del original. Decimal string; nulo si no aplica o es anterior a la columna. */
+    saldo_refinanciado: string | null;
     tasa_interes: string;
     plazo: number;
     tipo_pago: PaymentType;

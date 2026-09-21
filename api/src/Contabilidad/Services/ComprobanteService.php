@@ -212,7 +212,10 @@ class ComprobanteService
     public function contabilizarDesembolsoCredito(Credito $credito): ?Comprobante
     {
         $regla = $this->reglas->activaParaEvento(EventoContable::DesembolsoCredito);
-        if (! $regla) {
+        // En una refinanciación el saldo tomado ya está en cartera: solo el dinero nuevo mueve caja y cartera.
+        $valor = $credito->valorDesembolsado();
+
+        if (! $regla || ! $valor->esPositivo()) {
             return null;
         }
 
@@ -220,8 +223,8 @@ class ComprobanteService
             $regla->tipo_comprobante_id,
             $credito->fecha_desembolso->toDateString(),
             [
-                ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $credito->valor_prestamo, 'credito' => 0],
-                ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $credito->valor_prestamo],
+                ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $valor, 'credito' => 0],
+                ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $valor],
             ],
             'Desembolso crédito #'.$credito->id,
             'creditos',
