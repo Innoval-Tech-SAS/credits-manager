@@ -27,7 +27,7 @@ class ClienteRepository extends BaseRepository
         $consulta = $this->consulta()->with(['tercero', 'empleador']);
 
         if ($activo !== null) {
-            $consulta->where('activo', $activo);
+            $consulta->where('clientes.activo', $activo);
         }
 
         if ($estadoCredito) {
