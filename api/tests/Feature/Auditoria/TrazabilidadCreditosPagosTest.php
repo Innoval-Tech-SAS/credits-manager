@@ -60,7 +60,7 @@ class TrazabilidadCreditosPagosTest extends TestCase
         $this->assertSinEventosDeAuditoria();
     }
 
-    public function test_una_refinanciacion_deja_un_evento_del_credito_nuevo_y_otro_del_origen_cerrado(): void
+    public function test_una_refinanciacion_deja_un_evento_del_credito_nuevo_y_otro_del_origen_refinanciado(): void
     {
         $this->actingAsAdmin();
         $cliente = $this->crearCliente();
@@ -75,7 +75,7 @@ class TrazabilidadCreditosPagosTest extends TestCase
         $this->assertEventoAuditoria('crear', 'creditos', 'credito', $nuevoId);
         $cierre = $this->assertEventoAuditoria('modificar', 'creditos', 'credito', $origen->id);
         $this->assertSame('desembolsado', $cierre['valores_anteriores']['estado']);
-        $this->assertSame('pagado', $cierre['valores_nuevos']['estado']);
+        $this->assertSame('refinanciado', $cierre['valores_nuevos']['estado']);
         $this->assertStringContainsString("#{$nuevoId}", $cierre['descripcion']);
     }
 

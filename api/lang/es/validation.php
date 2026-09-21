@@ -177,10 +177,12 @@ return [
         ],
         'credito_origen_id' => [
             'pertenece_a_otro_cliente' => 'El crédito seleccionado no pertenece a este cliente.',
+            'no_desembolsado' => 'Solo se puede refinanciar un crédito desembolsado.',
         ],
         'estado' => [
             'transicion_invalida' => 'El crédito no está en un estado válido para esta acción.',
             'no_desembolsado' => 'Este crédito no está desembolsado; no se pueden registrar pagos ni liquidarlo.',
+            'refinanciado' => 'Este crédito fue refinanciado y quedó congelado; los pagos se aplican al crédito que lo reemplazó.',
         ],
         'lineas' => [
             'descuadrado' => 'Comprobante descuadrado: débitos :debito distintos de créditos :credito. No se puede contabilizar.',
@@ -224,6 +226,7 @@ return [
         'credito' => [
             'tiene_pagos_registrados' => 'No se puede eliminar un crédito con pagos registrados.',
             'cancelacion_con_pagos' => 'No se puede cancelar un crédito con pagos registrados.',
+            'refinanciado_no_eliminable' => 'No se puede eliminar un crédito refinanciado: es el historial del crédito que lo reemplazó.',
         ],
         'documento' => [
             'naturaleza_invalida' => 'Debe indicar una naturaleza válida (por_pagar o por_cobrar).',

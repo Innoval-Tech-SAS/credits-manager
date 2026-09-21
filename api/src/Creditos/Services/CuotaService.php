@@ -6,6 +6,8 @@ use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Core\Dinero\Dinero;
+use App\Creditos\Enums\EstadoCredito;
+use App\Creditos\Models\Credito;
 use App\Creditos\Repositories\CuotaRepository;
 
 class CuotaService
@@ -42,9 +44,13 @@ class CuotaService
         return Dinero::desdeCentavos($this->cuotas->saldoPendiente($creditoId));
     }
 
-    public function estadoCartera(int $creditoId): string
+    public function estadoCartera(Credito $credito): string
     {
-        return $this->cuotas->contarVencidas($creditoId) > 0 ? 'En mora' : 'Al día';
+        if ($credito->estado === EstadoCredito::Refinanciado) {
+            return 'Refinanciado';
+        }
+
+        return $this->cuotas->contarVencidas($credito->id) > 0 ? 'En mora' : 'Al día';
     }
 
     public function diasMora(int $creditoId): int

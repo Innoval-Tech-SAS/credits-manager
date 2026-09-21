@@ -154,7 +154,7 @@ class ClienteService
 
     public function eliminar(Cliente $cliente): bool
     {
-        if ($cliente->creditos()->whereNotIn('estado', [EstadoCredito::Pagado, EstadoCredito::Cancelado])->exists()) {
+        if ($cliente->creditos()->whereNotIn('estado', [EstadoCredito::Pagado, EstadoCredito::Cancelado, EstadoCredito::Refinanciado])->exists()) {
             throw ValidationException::withMessages([
                 'cliente' => __('validation.custom.cliente.tiene_creditos_activos'),
             ]);

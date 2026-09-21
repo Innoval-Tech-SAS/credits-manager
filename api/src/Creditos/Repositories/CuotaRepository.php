@@ -78,6 +78,7 @@ class CuotaRepository extends BaseRepository
      * `asientos_contables` respecto a `comprobantes`): el aislamiento por empresa se hace
      * vía `whereHas('credito')`, que hereda el `EmpresaScope` de `Credito`. Sin este filtro,
      * esta actualización corría sobre las cuotas de TODAS las empresas del sistema.
+     * Solo entran en mora los créditos desembolsados: un solicitado, cancelado o refinanciado no cobra.
      */
     public function marcarVencidas(): Collection
     {
@@ -86,7 +87,7 @@ class CuotaRepository extends BaseRepository
             $cuotas = $this->consulta()
                 ->where('estado', EstadoCuota::Pendiente)
                 ->where('fecha_vencimiento', '<', now()->toDateString())
-                ->whereHas('credito')
+                ->whereHas('credito', fn ($consultaCredito) => $consultaCredito->where('estado', EstadoCredito::Desembolsado))
                 ->with('credito:id,empresa_id')
                 ->lockForUpdate()
                 ->get(['id', 'credito_id']);

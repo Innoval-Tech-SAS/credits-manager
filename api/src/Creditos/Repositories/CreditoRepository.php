@@ -63,4 +63,9 @@ class CreditoRepository extends BaseRepository
     {
         $this->actualizar($credito, ['estado' => EstadoCredito::Pagado]);
     }
+
+    public function marcarComoRefinanciado(Credito $credito): void
+    {
+        $this->actualizar($credito, ['estado' => EstadoCredito::Refinanciado]);
+    }
 }
