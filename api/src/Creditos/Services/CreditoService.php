@@ -75,21 +75,6 @@ class CreditoService
                 ['cuotas' => count($resultado['cuotas'])],
             );
 
-            if ($credito->tipo_credito === TipoCredito::Refinanciacion) {
-                $origen = $this->creditos->buscarPorIdOFallar($datos['credito_origen_id']);
-                $anteriores = $this->auditoria->instantanea($origen);
-
-                // El original queda congelado como historial: sus cuotas no se tocan ni se inventan pagos.
-                $this->creditos->marcarComoRefinanciado($origen);
-
-                $this->auditoria->registrarModificacion(
-                    AuditoriaConstants::MODULO_CREDITOS,
-                    "Crédito #{$origen->id} refinanciado por el crédito #{$credito->id}",
-                    $origen,
-                    $anteriores,
-                );
-            }
-
             return $this->creditos->obtenerConRelaciones($credito);
         });
     }
@@ -122,26 +107,72 @@ class CreditoService
     /** Recién aquí se contabiliza el desembolso — antes de aprobar/desembolsar no ha salido dinero real. */
     public function desembolsar(Credito $credito): Credito
     {
-        $this->exigirEstado($credito, EstadoCredito::Aprobado);
+        return DB::transaction(function () use ($credito) {
+            $this->exigirEstado($credito, EstadoCredito::Aprobado);
 
-        $anteriores = $this->auditoria->instantanea($credito);
+            $origen = $this->origenParaCongelar($credito);
+            $anteriores = $this->auditoria->instantanea($credito);
 
-        $credito = $this->creditos->actualizar($credito, [
-            'estado' => EstadoCredito::Desembolsado,
-            'desembolsado_en' => now(),
-        ]);
-        $comprobante = $this->comprobantes->contabilizarDesembolsoCredito($credito);
+            $credito = $this->creditos->actualizar($credito, [
+                'estado' => EstadoCredito::Desembolsado,
+                'desembolsado_en' => now(),
+            ]);
+            $comprobante = $this->comprobantes->contabilizarDesembolsoCredito($credito);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CREDITOS,
+                "Crédito #{$credito->id} desembolsado".($comprobante ? '' : ' sin contabilizar (no hay regla activa)'),
+                $credito,
+                $anteriores,
+                accion: AccionAuditoria::Desembolsar,
+                adicionales: ['comprobante_id' => $comprobante?->id, 'contabilizado' => $comprobante !== null],
+            );
+
+            if ($origen) {
+                $this->congelarOrigen($origen, $credito);
+            }
+
+            return $credito;
+        });
+    }
+
+    /** El original sigue recibiendo pagos hasta que se desembolsa la refinanciación; debe seguir desembolsado en ese momento. */
+    private function origenParaCongelar(Credito $credito): ?Credito
+    {
+        if ($credito->tipo_credito !== TipoCredito::Refinanciacion || $credito->credito_origen_id === null) {
+            return null;
+        }
+
+        $origen = $this->creditos->buscarParaCongelar($credito->credito_origen_id);
+
+        if ($origen->estado !== EstadoCredito::Desembolsado) {
+            throw ValidationException::withMessages(['credito_origen_id' => __('validation.custom.credito_origen_id.origen_no_desembolsado')]);
+        }
+
+        return $origen;
+    }
+
+    /** El original queda congelado como historial: sus cuotas no se tocan ni se inventan pagos. */
+    private function congelarOrigen(Credito $origen, Credito $refinanciacion): void
+    {
+        $anteriores = $this->auditoria->instantanea($origen);
+
+        $this->creditos->marcarComoRefinanciado($origen);
 
         $this->auditoria->registrarModificacion(
             AuditoriaConstants::MODULO_CREDITOS,
-            "Crédito #{$credito->id} desembolsado".($comprobante ? '' : ' sin contabilizar (no hay regla activa)'),
-            $credito,
+            "Crédito #{$origen->id} refinanciado por el crédito #{$refinanciacion->id}",
+            $origen,
             $anteriores,
-            accion: AccionAuditoria::Desembolsar,
-            adicionales: ['comprobante_id' => $comprobante?->id, 'contabilizado' => $comprobante !== null],
         );
+    }
 
-        return $credito;
+    /** Desembolsada, la refinanciación ya congeló al original: deshacerla dejaría a ambos sin cobrar. */
+    private function exigirNoSerRefinanciacionDesembolsada(Credito $credito): void
+    {
+        if ($credito->tipo_credito === TipoCredito::Refinanciacion && $credito->estado === EstadoCredito::Desembolsado) {
+            throw ValidationException::withMessages(['credito' => __('validation.custom.credito.refinanciacion_desembolsada')]);
+        }
     }
 
     /**
@@ -159,6 +190,8 @@ class CreditoService
     public function cancelar(Credito $credito): Credito
     {
         return DB::transaction(function () use ($credito) {
+            $this->exigirNoSerRefinanciacionDesembolsada($credito);
+
             $puedeCancelar = match ($credito->estado) {
                 EstadoCredito::Solicitado, EstadoCredito::Aprobado => true,
                 EstadoCredito::Desembolsado => $credito->desembolsado_en !== null
@@ -207,6 +240,8 @@ class CreditoService
             if ($credito->estado === EstadoCredito::Refinanciado) {
                 throw ValidationException::withMessages(['credito' => __('validation.custom.credito.refinanciado_no_eliminable')]);
             }
+
+            $this->exigirNoSerRefinanciacionDesembolsada($credito);
 
             if ($credito->pagos()->exists()) {
                 throw ValidationException::withMessages(['credito' => __('validation.custom.credito.tiene_pagos_registrados')]);

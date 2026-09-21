@@ -139,6 +139,9 @@ export const CreateCreditPage: FC = () => {
                                     placeholder={cliente ? 'Selecciona el crédito activo del cliente…' : 'Primero selecciona un cliente'}
                                     onChange={(value) => setCreditoOrigenId(value ? Number(value) : null)}
                                 />
+                                <p className="mt-1.5 text-theme-xs text-gray-500 dark:text-gray-400">
+                                    El crédito original sigue activo y recibiendo pagos hasta que se desembolse esta refinanciación.
+                                </p>
                             </div>
                         )}
 

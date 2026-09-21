@@ -60,7 +60,7 @@ class TrazabilidadCreditosPagosTest extends TestCase
         $this->assertSinEventosDeAuditoria();
     }
 
-    public function test_una_refinanciacion_deja_un_evento_del_credito_nuevo_y_otro_del_origen_refinanciado(): void
+    public function test_una_refinanciacion_deja_el_evento_del_origen_solo_al_desembolsarla(): void
     {
         $this->actingAsAdmin();
         $cliente = $this->crearCliente();
@@ -73,6 +73,11 @@ class TrazabilidadCreditosPagosTest extends TestCase
         ]))->assertCreated()->json('credito.id');
 
         $this->assertEventoAuditoria('crear', 'creditos', 'credito', $nuevoId);
+        $this->assertCount(0, $this->eventosDeAuditoria('modificar', 'creditos'), 'Al solicitar, el original no cambia.');
+
+        $this->postJson("/api/v1/creditos/{$nuevoId}/aprobar")->assertOk();
+        $this->postJson("/api/v1/creditos/{$nuevoId}/desembolsar")->assertOk();
+
         $cierre = $this->assertEventoAuditoria('modificar', 'creditos', 'credito', $origen->id);
         $this->assertSame('desembolsado', $cierre['valores_anteriores']['estado']);
         $this->assertSame('refinanciado', $cierre['valores_nuevos']['estado']);
