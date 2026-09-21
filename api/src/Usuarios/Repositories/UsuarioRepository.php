@@ -23,6 +23,15 @@ class UsuarioRepository extends BaseRepository
             ->first();
     }
 
+    /** Incluye inactivos y dados de baja: solo para explicar por qué falló un inicio de sesión. */
+    public function buscarPorUsuario(string $usuario): ?Usuario
+    {
+        return $this->consulta()
+            ->withTrashed()
+            ->where('usuario', $usuario)
+            ->first();
+    }
+
     public function paginar(?string $busqueda, ?string $columna, string $direccion, int $porPagina, int $pagina): LengthAwarePaginator
     {
         $consulta = $this->consulta()->with('rol');
