@@ -6,6 +6,7 @@ use App\Core\Base\BaseRepository;
 use App\Usuarios\Constants\UsuarioConstants;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class UsuarioRepository extends BaseRepository
@@ -30,6 +31,20 @@ class UsuarioRepository extends BaseRepository
             ->withTrashed()
             ->where('usuario', $usuario)
             ->first();
+    }
+
+    /**
+     * Usuarios activos de la empresa con el permiso dado (por rol o por excepción). Se evalúa uno a uno con
+     * `tienePermiso`, que ya resuelve el rol admin y las excepciones concedidas o revocadas; son pocos por empresa.
+     */
+    public function activosConPermiso(string $modulo, string $accion): Collection
+    {
+        return $this->consulta()
+            ->where('activo', true)
+            ->with('rol')
+            ->get()
+            ->filter(fn (Usuario $usuario) => $usuario->tienePermiso($modulo, $accion))
+            ->values();
     }
 
     public function paginar(?string $busqueda, ?string $columna, string $direccion, int $porPagina, int $pagina): LengthAwarePaginator

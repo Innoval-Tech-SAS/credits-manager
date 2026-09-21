@@ -3,7 +3,8 @@ import { useState } from 'react';
 
 import { Dropdown } from '@ui/dropdown/components/dropdown';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { AlertCircle, Bell, CircleCheck, Download } from 'lucide-react';
+import { AlertCircle, Bell, Download } from 'lucide-react';
+import { NotificationIcon } from '../../notifications/components/notification-icon';
 import { useNotifications } from '../../notifications/hooks/use-notifications';
 import type { ApiNotification } from '../../notifications/types/api-notification';
 import { useDownloadExport } from '../../shared/hooks/use-download-export';
@@ -88,11 +89,7 @@ export const NotificationDropdown: FC = () => {
                                     className="flex cursor-default gap-3 rounded-lg px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5"
                                 >
                                     <span className="mt-0.5 shrink-0">
-                                        {notification.tipo === 'exportacion_lista' ? (
-                                            <CircleCheck className="size-5 text-success-500" />
-                                        ) : (
-                                            <AlertCircle className="size-5 text-error-500" />
-                                        )}
+                                        <NotificationIcon tipo={notification.tipo} />
                                     </span>
 
                                     <div className="min-w-0 flex-1">

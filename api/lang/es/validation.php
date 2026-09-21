@@ -194,6 +194,14 @@ return [
             'descuadrado' => 'Comprobante descuadrado: débitos :debito distintos de créditos :credito. No se puede contabilizar.',
             'sin_valor' => 'El comprobante no tiene valor.',
         ],
+        'periodo' => [
+            'no_cerrado' => 'Solo se puede solicitar la reapertura de un período cerrado.',
+            'ya_solicitado' => 'Este período ya tiene una solicitud de reapertura pendiente.',
+            'ya_abierto' => 'El período ya está abierto; rechaza la solicitud.',
+        ],
+        'solicitud' => [
+            'ya_resuelta' => 'Esta solicitud ya fue resuelta.',
+        ],
         'comprobante' => [
             'no_contabilizado' => 'Solo se pueden reversar comprobantes contabilizados.',
             'periodo_cerrado' => 'El período del comprobante original está cerrado; solicite reapertura autorizada.',
@@ -342,6 +350,7 @@ return [
         'tercero_id' => 'tercero',
         'lineas' => 'líneas',
         'motivo' => 'motivo',
+        'motivo_resolucion' => 'motivo del rechazo',
 
         // Gastos
         'tipo_gasto_id' => 'tipo de gasto',
