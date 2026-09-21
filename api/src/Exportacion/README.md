@@ -10,7 +10,7 @@ Exportación genérica y **asíncrona** a XLSX/CSV. No conoce ningún dominio: c
 4. El servicio `exportaciones-worker` escribe el archivo en streaming (memoria constante) en el volumen `exportaciones_data` (`/var/exportaciones`, **no** montado en nginx) y notifica al solicitante por WebSocket.
 5. `GET /exportaciones/{id}/descargar` (solo el solicitante; otro usuario → 404) sirve el archivo y audita la descarga.
 
-Mantenimiento: `php artisan exportaciones:limpiar --dias=7` borra archivos vencidos y archiva el registro. **No está programado**: no hay servicio scheduler en el compose.
+Mantenimiento: `php artisan exportaciones:limpiar --dias=7` borra archivos vencidos y archiva el registro. Lo programa el servicio `scheduler` del compose todos los días a las 03:00 (hora de Bogotá).
 
 ## Agregar un reporte nuevo (sin modificar este módulo)
 

@@ -10,14 +10,16 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 /**
- * Mismo trabajo que ya se dispara en cada GET de Créditos/Cartera/Calendario/Dashboard
- * (ver CuotaService::actualizarVencidas). Se agrega aquí para eventualmente dejar de
- * depender de la lectura y correrlo una sola vez al día — requiere que algo invoque
- * `php artisan schedule:run` (cron/supervisor), que hoy no existe en docker-compose.yaml.
- * Hasta que se agregue ese servicio, las llamadas en las rutas de lectura siguen siendo
- * la única garantía real de que las cuotas vencidas se marquen.
+ * Marca la mora de todas las empresas una vez al día, sin sesión. Las llamadas a
+ * `CuotaService::actualizarVencidas` en las lecturas de Créditos/Cartera/Calendario/Dashboard
+ * se mantienen como respaldo por si el servicio `scheduler` estuviera detenido.
  */
 Schedule::call(fn () => app(CuotaService::class)->actualizarVencidas())
     ->dailyAt('00:05')
     ->name('cuotas:actualizar-vencidas')
-    ->withoutOverlapping();
+    ->withoutOverlapping(10);
+
+Schedule::command('exportaciones:limpiar')
+    ->dailyAt('03:00')
+    ->name('exportaciones:limpiar')
+    ->withoutOverlapping(30);

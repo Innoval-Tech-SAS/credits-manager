@@ -109,6 +109,26 @@ services:
       - exportaciones_data:/var/exportaciones
     restart: unless-stopped
 
+  # Ejecuta las tareas programadas de Laravel (`routes/console.php`): mora diaria y limpieza de exportaciones.
+  # Una sola instancia: con dos réplicas cada tarea correría duplicada.
+  scheduler:
+    image: credits-manager-api:latest
+    container_name: credits-manager-scheduler
+    entrypoint: ["php", "artisan", "schedule:work"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
+    environment: *api-worker-env
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_storage:/var/www/html/storage
+      - exportaciones_data:/var/exportaciones
+    restart: unless-stopped
+
   # Servidor WebSocket (Laravel Reverb). El navegador entra por nginx (wss://api.creditos.local/app).
   reverb:
     image: credits-manager-api:latest
