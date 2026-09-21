@@ -6,17 +6,29 @@ use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Models\Credito;
+use App\Creditos\Services\CuotaService;
 use App\Pagos\Enums\FormaPago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\AfirmaAuditoria;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class PagoServiceTest extends TestCase
 {
+    use ActsAsAdmin;
+    use AfirmaAuditoria;
     use CreatesCreditFixtures;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->actingAsAdmin();
+    }
 
     /**
      * Crédito con 3 cuotas de 300 (900 en total), sin pagos aún.
@@ -163,6 +175,79 @@ class PagoServiceTest extends TestCase
         $cuotas = $credito->cuotas()->orderBy('numero_cuota')->get();
         $this->assertSame(EstadoCuota::Pagada, $cuotas[0]->estado);
         $this->assertEquals(0, $cuotas[1]->valor_pagado->aFloat());
+    }
+
+    /** Crédito de 600 con dos cuotas de 300: 100 de interés y 200 de capital cada una. */
+    private function creditoConInteres(): Credito
+    {
+        $credito = $this->crearCredito($this->crearCliente(), ['valor_prestamo' => 600]);
+
+        foreach ([1 => '2026-01-01', 2 => '2026-02-01'] as $numero => $vencimiento) {
+            $this->crearCuota($credito, [
+                'numero_cuota' => $numero, 'fecha_vencimiento' => $vencimiento,
+                'valor' => 300, 'valor_interes' => 100, 'valor_capital' => 200,
+            ]);
+        }
+
+        return $credito->fresh();
+    }
+
+    /** Desglose (capital, interés) que quedó en el evento del último pago registrado. */
+    private function desgloseDelUltimoPago(): array
+    {
+        $pagos = $this->eventosDeAuditoria('crear', 'pagos');
+        $nuevos = end($pagos)['valores_nuevos'];
+
+        return [$nuevos['capital'], $nuevos['interes']];
+    }
+
+    public function test_un_abono_menor_al_interes_de_la_cuota_no_amortiza_capital(): void
+    {
+        $credito = $this->creditoConInteres();
+
+        app(PagoService::class)->registrarPago($credito, Dinero::desdePesos(60), FormaPago::Efectivo, null, null);
+
+        $this->assertSame(['0.00', '60.00'], $this->desgloseDelUltimoPago());
+        $this->assertSame('600.00', app(CuotaService::class)->capitalPendiente($credito->fresh())->aDecimalString());
+    }
+
+    public function test_un_abono_mayor_al_interes_paga_primero_el_interes_y_el_resto_a_capital(): void
+    {
+        $credito = $this->creditoConInteres();
+
+        app(PagoService::class)->registrarPago($credito, Dinero::desdePesos(150), FormaPago::Efectivo, null, null);
+
+        $this->assertSame(['50.00', '100.00'], $this->desgloseDelUltimoPago());
+        $this->assertSame('550.00', app(CuotaService::class)->capitalPendiente($credito->fresh())->aDecimalString());
+    }
+
+    public function test_un_segundo_abono_completa_primero_el_interes_que_faltaba_de_la_misma_cuota(): void
+    {
+        $credito = $this->creditoConInteres();
+        $servicio = app(PagoService::class);
+
+        $servicio->registrarPago($credito, Dinero::desdePesos(60), FormaPago::Efectivo, null, null);
+        $servicio->registrarPago($credito->fresh(), Dinero::desdePesos(150), FormaPago::Efectivo, null, null);
+
+        // Del segundo abono, 40 completan el interés de la cuota (100 - 60) y los 110 restantes son capital.
+        $this->assertSame(['110.00', '40.00'], $this->desgloseDelUltimoPago());
+        $this->assertSame('490.00', app(CuotaService::class)->capitalPendiente($credito->fresh())->aDecimalString());
+    }
+
+    public function test_un_pago_superior_a_la_cuota_paga_interes_y_capital_de_cada_cuota_en_orden(): void
+    {
+        $credito = $this->creditoConInteres();
+
+        $resultado = app(PagoService::class)->registrarPago($credito, Dinero::desdePesos(450), FormaPago::Efectivo, null, null);
+
+        // Cuota 1 completa (100 de interés y 200 de capital) y 150 sobre la cuota 2 (100 de interés y 50 de capital).
+        $this->assertSame(['250.00', '200.00'], $this->desgloseDelUltimoPago());
+        $this->assertTrue($resultado['sobrante']->esCero());
+
+        $cuotas = $credito->cuotas()->orderBy('numero_cuota')->get();
+        $this->assertSame(EstadoCuota::Pagada, $cuotas[0]->estado);
+        $this->assertSame(EstadoCuota::Pendiente, $cuotas[1]->estado);
+        $this->assertSame('350.00', app(CuotaService::class)->capitalPendiente($credito->fresh())->aDecimalString());
     }
 
     public function test_rechaza_registrar_pago_en_un_credito_que_no_esta_desembolsado(): void

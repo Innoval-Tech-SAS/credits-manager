@@ -7,6 +7,7 @@ use App\Core\Dinero\Dinero;
 use App\Pagos\Enums\FormaPago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
@@ -19,9 +20,17 @@ use Tests\TestCase;
  */
 class PagoContabilizacionTest extends TestCase
 {
+    use ActsAsAdmin;
     use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->actingAsAdmin();
+    }
 
     private function configurarReglas(): void
     {
