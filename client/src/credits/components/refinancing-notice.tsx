@@ -10,12 +10,12 @@ export const RefinancingNotice: FC<RefinancingNoticeProps> = ({ vinculo, valorPr
     const esRefinanciacion = vinculo.tipo === 'refinancia';
     const originalCongelado = relacionadoEstado === 'refinanciado';
 
-    const titulo = esRefinanciacion ? `Refinanciación del crédito #${relacionadoId}` : `Crédito refinanciado por el crédito #${relacionadoId}`;
+    const titulo = esRefinanciacion ? 'Refinanciación' : 'Crédito refinanciado';
     const descripcion = esRefinanciacion
         ? originalCongelado
-            ? `El crédito #${relacionadoId} quedó refinanciado y congelado como historial; los pagos se aplican a este crédito.`
-            : `El crédito #${relacionadoId} quedará refinanciado y congelado como historial cuando se desembolse este crédito.`
-        : `Este crédito quedó congelado como historial. Los pagos se aplican al crédito #${relacionadoId}, que lo reemplazó.`;
+            ? 'Este crédito refinanció al crédito original, que quedó congelado como historial. Los pagos se aplican a este crédito.'
+            : 'Este crédito refinancia al crédito original, que quedará congelado como historial cuando se desembolse este crédito.'
+        : 'Este crédito quedó congelado como historial. Los pagos se aplican a la refinanciación que lo reemplazó.';
 
     return (
         <div className={`rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 ${className}`}>
@@ -48,7 +48,7 @@ export const RefinancingNotice: FC<RefinancingNoticeProps> = ({ vinculo, valorPr
                         to={`/creditos/${relacionadoId}${linkSuffix}`}
                         className="mt-4 inline-block text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 print:hidden"
                     >
-                        Ver crédito #{relacionadoId}
+                        {esRefinanciacion ? 'Ver crédito original' : 'Ver refinanciación'}
                     </Link>
                 </div>
             </div>
