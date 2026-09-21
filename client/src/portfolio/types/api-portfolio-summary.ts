@@ -1,4 +1,5 @@
 import type { ApiCredit } from '../../credits/types/api-credit';
+import type { AgingBucketKey } from './aging-bucket-key';
 
 /** Raw shape of an entry nested in `ApiPortfolioSummary.al_dia`/`en_mora` (`GET /cartera`). */
 export type ApiPortfolioEntry = {
@@ -30,9 +31,5 @@ export type ApiPortfolioSummary = {
         al_dia: ApiPortfolioTotal;
         en_mora: ApiPortfolioTotal;
     };
-    envejecimiento_mora: {
-        '1_30': ApiPortfolioAgingBucket;
-        '31_60': ApiPortfolioAgingBucket;
-        '61_mas': ApiPortfolioAgingBucket;
-    };
+    envejecimiento_mora: Record<AgingBucketKey, ApiPortfolioAgingBucket>;
 };
