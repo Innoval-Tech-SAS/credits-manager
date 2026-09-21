@@ -192,6 +192,33 @@ class GastoControllerTest extends TestCase
         $respuestaJuridica->assertJsonPath('gasto.valor_retefuente', '110000.00');
     }
 
+    public function test_un_tercero_sin_tipo_de_persona_se_trata_como_persona_natural(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearValorUvt();
+        $tipoGasto = $this->crearTipoGasto();
+        $this->crearParametrizacion($tipoGasto, [
+            'aplica_retefuente' => true,
+            'tarifa_retefuente_persona_natural' => 10,
+            'tarifa_retefuente_persona_juridica' => 11,
+            'cuenta_retefuente_id' => $this->crearCuenta()->id,
+        ]);
+        $tercero = $this->crearTerceroFiscal(['tipo_persona' => null]);
+
+        $respuesta = $this->postJson('/api/v1/gastos', [
+            'tipo_gasto_id' => $tipoGasto->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
+            'numero_documento' => 'FAC-106', 'concepto' => 'Honorarios sin tipo de persona', 'valor_bruto' => 1000000,
+        ]);
+
+        $respuesta->assertStatus(201)->assertJsonPath('gasto.valor_retefuente', '100000.00');
+        $this->assertDatabaseHas('gasto_reglas_fiscales_aplicadas', [
+            'gasto_id' => $respuesta->json('gasto.id'),
+            'tipo_retencion' => 'retefuente',
+            'incluida' => true,
+            'regla' => 'tarifa_por_tipo_persona',
+        ]);
+    }
+
     public function test_genera_un_asiento_balanceado(): void
     {
         $this->actingAsAdmin();
