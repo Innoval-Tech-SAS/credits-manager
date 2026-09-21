@@ -6,4 +6,5 @@ export const CREDIT_STATUS_LABEL: Record<ApiCredit['estado'], string> = {
     desembolsado: 'Desembolsado',
     pagado: 'Pagado',
     cancelado: 'Cancelado',
+    refinanciado: 'Refinanciado',
 };

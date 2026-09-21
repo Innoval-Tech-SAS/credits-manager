@@ -79,12 +79,12 @@ class CreditoService
                 $origen = $this->creditos->buscarPorIdOFallar($datos['credito_origen_id']);
                 $anteriores = $this->auditoria->instantanea($origen);
 
-                $this->creditos->marcarComoPagado($origen);
-                $this->cuotas->cerrarPendientesComoOrigen($origen->id);
+                // El original queda congelado como historial: sus cuotas no se tocan ni se inventan pagos.
+                $this->creditos->marcarComoRefinanciado($origen);
 
                 $this->auditoria->registrarModificacion(
                     AuditoriaConstants::MODULO_CREDITOS,
-                    "Crédito #{$origen->id} cerrado por la refinanciación #{$credito->id}",
+                    "Crédito #{$origen->id} refinanciado por el crédito #{$credito->id}",
                     $origen,
                     $anteriores,
                 );
@@ -204,6 +204,10 @@ class CreditoService
     public function eliminar(Credito $credito): bool
     {
         return DB::transaction(function () use ($credito) {
+            if ($credito->estado === EstadoCredito::Refinanciado) {
+                throw ValidationException::withMessages(['credito' => __('validation.custom.credito.refinanciado_no_eliminable')]);
+            }
+
             if ($credito->pagos()->exists()) {
                 throw ValidationException::withMessages(['credito' => __('validation.custom.credito.tiene_pagos_registrados')]);
             }

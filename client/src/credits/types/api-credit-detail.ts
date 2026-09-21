@@ -7,7 +7,7 @@ export type ApiCreditDetail = {
     credito: ApiCredit;
     /** Decimal string (ej. "12345.66"), no number — viene de `App\Core\Dinero\Dinero`. */
     saldo: string;
-    cartera: 'En mora' | 'Al día';
+    cartera: 'En mora' | 'Al día' | 'Refinanciado';
     pagos: ApiPayment[];
     resumen_cuotas: ApiResumenCuotas;
 };

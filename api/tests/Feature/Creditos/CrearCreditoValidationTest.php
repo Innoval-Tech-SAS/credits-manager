@@ -130,7 +130,7 @@ class CrearCreditoValidationTest extends TestCase
         $respuesta->assertStatus(422)->assertJsonValidationErrors('credito_origen_id');
         $respuesta->assertJsonPath('errors.credito_origen_id.0', 'El crédito seleccionado no pertenece a este cliente.');
         $this->assertDatabaseCount('creditos', 1);
-        $this->assertSame('activo', $creditoDeB->fresh()->estado->value);
+        $this->assertSame('desembolsado', $creditoDeB->fresh()->estado->value);
     }
 
     public function test_refinanciacion_acepta_credito_origen_del_mismo_cliente(): void
@@ -146,7 +146,7 @@ class CrearCreditoValidationTest extends TestCase
         ]);
 
         $respuesta->assertStatus(201);
-        $this->assertSame('pagado', $origen->fresh()->estado->value);
+        $this->assertSame('refinanciado', $origen->fresh()->estado->value);
     }
 
     public function test_sin_autenticar_no_puede_crear_creditos(): void

@@ -41,7 +41,7 @@ class CreditoServiceTest extends TestCase
         );
     }
 
-    public function test_refinanciacion_cierra_el_credito_origen_y_marca_pagadas_sus_cuotas_pendientes(): void
+    public function test_refinanciacion_congela_el_credito_origen_sin_tocar_sus_cuotas(): void
     {
         $cliente = $this->crearCliente();
         $origen = $this->crearCredito($cliente);
@@ -60,20 +60,19 @@ class CreditoServiceTest extends TestCase
             'fecha_desembolso' => '2026-01-01',
         ]);
 
-        $this->assertSame(EstadoCredito::Pagado, $origen->fresh()->estado);
+        $this->assertSame(EstadoCredito::Refinanciado, $origen->fresh()->estado);
         $this->assertSame(EstadoCredito::Solicitado, $nuevo->estado);
         $this->assertCount(3, $nuevo->cuotas);
 
+        // El original es solo historial: ninguna cuota cambia de estado ni se le inventa un pago.
         $cuotasOrigen = $origen->cuotas()->orderBy('numero_cuota')->get();
 
-        // La cuota #1 ya estaba pagada antes de refinanciar: no se toca.
-        $this->assertEquals(300, $cuotasOrigen[0]->valor_pagado);
-
-        // Las cuotas #2 y #3 (pendiente/vencida) quedan pagadas al valor completo de la cuota.
-        $this->assertSame(EstadoCuota::Pagada, $cuotasOrigen[1]->estado);
-        $this->assertEquals(300, $cuotasOrigen[1]->valor_pagado);
-        $this->assertSame(EstadoCuota::Pagada, $cuotasOrigen[2]->estado);
-        $this->assertEquals(300, $cuotasOrigen[2]->valor_pagado);
+        $this->assertSame(EstadoCuota::Pagada, $cuotasOrigen[0]->estado);
+        $this->assertSame('300.00', $cuotasOrigen[0]->valor_pagado->aDecimalString());
+        $this->assertSame(EstadoCuota::Pendiente, $cuotasOrigen[1]->estado);
+        $this->assertSame('0.00', $cuotasOrigen[1]->valor_pagado->aDecimalString());
+        $this->assertSame(EstadoCuota::Vencida, $cuotasOrigen[2]->estado);
+        $this->assertSame('100.00', $cuotasOrigen[2]->valor_pagado->aDecimalString());
     }
 
     public function test_aprueba_desembolsa_y_cancela_siguiendo_las_transiciones_validas(): void

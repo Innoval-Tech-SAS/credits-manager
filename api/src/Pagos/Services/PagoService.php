@@ -244,6 +244,10 @@ class PagoService
 
     private function exigirDesembolsado(Credito $credito): void
     {
+        if ($credito->estado === EstadoCredito::Refinanciado) {
+            throw ValidationException::withMessages(['estado' => __('validation.custom.estado.refinanciado')]);
+        }
+
         if ($credito->estado !== EstadoCredito::Desembolsado) {
             throw ValidationException::withMessages(['estado' => __('validation.custom.estado.no_desembolsado')]);
         }

@@ -9,4 +9,5 @@ enum EstadoCredito: string
     case Desembolsado = 'desembolsado';
     case Pagado = 'pagado';
     case Cancelado = 'cancelado';
+    case Refinanciado = 'refinanciado';
 }

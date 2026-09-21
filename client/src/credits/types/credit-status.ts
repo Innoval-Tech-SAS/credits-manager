@@ -1,1 +1,1 @@
-export type CreditStatus = 'solicitado' | 'aprobado' | 'desembolsado' | 'pagado' | 'cancelado';
+export type CreditStatus = 'solicitado' | 'aprobado' | 'desembolsado' | 'pagado' | 'cancelado' | 'refinanciado';

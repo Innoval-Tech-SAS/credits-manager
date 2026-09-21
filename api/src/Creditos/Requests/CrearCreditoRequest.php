@@ -2,6 +2,7 @@
 
 namespace App\Creditos\Requests;
 
+use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\TipoCredito;
 use App\Creditos\Enums\TipoPago;
 use App\Creditos\Repositories\CreditoRepository;
@@ -52,6 +53,10 @@ class CrearCreditoRequest extends FormRequest
 
             if ($origen && (string) $origen->cliente_id !== (string) $this->input('cliente_id')) {
                 $validador->errors()->add('credito_origen_id', __('validation.custom.credito_origen_id.pertenece_a_otro_cliente'));
+            }
+
+            if ($origen && $origen->estado !== EstadoCredito::Desembolsado) {
+                $validador->errors()->add('credito_origen_id', __('validation.custom.credito_origen_id.no_desembolsado'));
             }
         });
     }
