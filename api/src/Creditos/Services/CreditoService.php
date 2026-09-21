@@ -104,6 +104,44 @@ class CreditoService
         return [$valorPrestamo, $saldoTomado];
     }
 
+    /**
+     * Vínculo entre el crédito original y su refinanciación, visible desde ambos lados en el
+     * detalle y en el estado de cuenta. Requiere `obtenerConRelaciones` (usa las relaciones ya cargadas).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function vinculoRefinanciacion(Credito $credito): ?array
+    {
+        if ($credito->tipo_credito === TipoCredito::Refinanciacion && $credito->credito_origen) {
+            return [
+                'tipo' => 'refinancia',
+                'credito_relacionado' => $this->resumenDelVinculo($credito->credito_origen),
+                'saldo_tomado' => $credito->saldo_refinanciado,
+                'valor_adicional' => $credito->saldo_refinanciado === null ? null : $credito->valorDesembolsado(),
+            ];
+        }
+
+        if ($credito->estado === EstadoCredito::Refinanciado && $credito->refinanciado_por) {
+            return [
+                'tipo' => 'refinanciado',
+                'credito_relacionado' => $this->resumenDelVinculo($credito->refinanciado_por),
+            ];
+        }
+
+        return null;
+    }
+
+    /** @return array<string, mixed> */
+    private function resumenDelVinculo(Credito $credito): array
+    {
+        return [
+            'id' => $credito->id,
+            'estado' => $credito->estado,
+            'valor_prestamo' => $credito->valor_prestamo,
+            'fecha_desembolso' => $credito->fecha_desembolso,
+        ];
+    }
+
     public function mostrarCredito(Credito $credito): Credito
     {
         $this->cuotaService->actualizarVencidas();

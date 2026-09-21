@@ -56,7 +56,7 @@ class CreditoRepository extends BaseRepository
 
     public function obtenerConRelaciones(Credito $credito): Credito
     {
-        return $credito->load(['cliente.tercero', 'cuotas', 'credito_origen.cliente.tercero']);
+        return $credito->load(['cliente.tercero', 'cuotas', 'credito_origen.cliente.tercero', 'refinanciado_por']);
     }
 
     public function marcarComoPagado(Credito $credito): void

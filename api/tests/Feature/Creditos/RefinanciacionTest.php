@@ -187,6 +187,70 @@ class RefinanciacionTest extends TestCase
         $this->assertDatabaseCount('comprobantes', 0);
     }
 
+    public function test_el_detalle_y_el_estado_de_cuenta_del_original_apuntan_a_la_refinanciacion(): void
+    {
+        $origen = $this->refinanciar();
+        $refinanciacion = $this->refinanciacionDe($origen);
+
+        foreach (["/api/v1/creditos/{$origen->id}", "/api/v1/creditos/{$origen->id}/estado-cuenta"] as $ruta) {
+            $this->getJson($ruta)
+                ->assertOk()
+                ->assertJsonPath('refinanciacion.tipo', 'refinanciado')
+                ->assertJsonPath('refinanciacion.credito_relacionado.id', $refinanciacion->id)
+                ->assertJsonPath('refinanciacion.credito_relacionado.estado', 'desembolsado')
+                ->assertJsonPath('refinanciacion.credito_relacionado.valor_prestamo', '1100.00');
+        }
+    }
+
+    public function test_el_detalle_y_el_estado_de_cuenta_de_la_refinanciacion_apuntan_al_original_y_desglosan_el_valor(): void
+    {
+        $origen = $this->refinanciar();
+        $refinanciacion = $this->refinanciacionDe($origen);
+
+        foreach (["/api/v1/creditos/{$refinanciacion->id}", "/api/v1/creditos/{$refinanciacion->id}/estado-cuenta"] as $ruta) {
+            $this->getJson($ruta)
+                ->assertOk()
+                ->assertJsonPath('refinanciacion.tipo', 'refinancia')
+                ->assertJsonPath('refinanciacion.credito_relacionado.id', $origen->id)
+                ->assertJsonPath('refinanciacion.credito_relacionado.estado', 'refinanciado')
+                ->assertJsonPath('refinanciacion.saldo_tomado', '600.00')
+                ->assertJsonPath('refinanciacion.valor_adicional', '500.00');
+        }
+    }
+
+    public function test_una_refinanciacion_solicitada_ya_apunta_al_original_pero_el_original_aun_no(): void
+    {
+        $origen = $this->crearOrigen();
+        $id = $this->solicitarRefinanciacion($origen)->assertCreated()->json('credito.id');
+
+        $this->getJson("/api/v1/creditos/{$id}")->assertOk()->assertJsonPath('refinanciacion.credito_relacionado.id', $origen->id);
+        $this->getJson("/api/v1/creditos/{$origen->id}")->assertOk()->assertJsonPath('refinanciacion', null);
+    }
+
+    public function test_un_credito_sin_refinanciacion_no_lleva_vinculo(): void
+    {
+        $origen = $this->crearOrigen();
+
+        $this->getJson("/api/v1/creditos/{$origen->id}")->assertOk()->assertJsonPath('refinanciacion', null);
+        $this->getJson("/api/v1/creditos/{$origen->id}/estado-cuenta")->assertOk()->assertJsonPath('refinanciacion', null);
+    }
+
+    public function test_una_refinanciacion_anterior_al_saldo_guardado_no_desglosa_el_valor(): void
+    {
+        $origen = $this->crearOrigen();
+        $antigua = $this->crearCredito($this->cliente, [
+            'tipo_credito' => TipoCredito::Refinanciacion,
+            'credito_origen_id' => $origen->id,
+            'saldo_refinanciado' => null,
+        ]);
+
+        $this->getJson("/api/v1/creditos/{$antigua->id}")
+            ->assertOk()
+            ->assertJsonPath('refinanciacion.tipo', 'refinancia')
+            ->assertJsonPath('refinanciacion.saldo_tomado', null)
+            ->assertJsonPath('refinanciacion.valor_adicional', null);
+    }
+
     public function test_al_solicitar_la_refinanciacion_el_original_sigue_desembolsado_y_recibe_pagos(): void
     {
         $origen = $this->crearOrigen();

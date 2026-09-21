@@ -15,6 +15,7 @@ import { CreditInfoGrid } from '../components/credit-info-grid';
 import { CreditInstallmentsChartCard } from '../components/credit-installments-chart-card';
 import { CreditInstallmentsTable } from '../components/credit-installments-table';
 import { CreditSummaryCards } from '../components/credit-summary-cards';
+import { RefinancingNotice } from '../components/refinancing-notice';
 import { CREDIT_TRANSITION_ACTION_CONFIG } from '../constants/credit-transition-action-config';
 import { puedeCancelarCredito } from '../utils/can-cancel-credit';
 import type { ApiCreditDetail } from '../types/api-credit-detail';
@@ -91,7 +92,7 @@ export const CreditDetailPage: FC = () => {
         );
     }
 
-    const { credito, saldo, cartera, pagos, resumen_cuotas: resumenCuotas } = detalle;
+    const { credito, saldo, cartera, refinanciacion, pagos, resumen_cuotas: resumenCuotas } = detalle;
     const valorPrestamoNumerico = parseFloat(credito.valor_prestamo);
     const porcentajeCapitalRecuperado =
         valorPrestamoNumerico > 0 ? (Number(resumenCuotas.saldo_capital_pagado) / valorPrestamoNumerico) * 100 : 0;
@@ -99,6 +100,8 @@ export const CreditDetailPage: FC = () => {
     return (
         <div className="flex min-h-full flex-col pb-6">
             <PageBreadcrumb pageTitle={`Crédito de ${credito.cliente?.tercero.nombre ?? '—'}`} />
+
+            {refinanciacion && <RefinancingNotice vinculo={refinanciacion} valorPrestamo={credito.valor_prestamo} className="mb-6" />}
 
             <CreditSummaryCards valorPrestamo={credito.valor_prestamo} valorTotal={credito.valor_total} saldo={saldo} cartera={cartera} />
 

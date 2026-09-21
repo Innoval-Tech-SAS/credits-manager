@@ -9,6 +9,7 @@ import { Spinner } from '@ui/spinner/components/spinner';
 import { AccountStatementHeader } from '../components/account-statement-header';
 import { AccountStatementInstallmentsTable } from '../components/account-statement-installments-table';
 import { AccountStatementPaymentsTable } from '../components/account-statement-payments-table';
+import { RefinancingNotice } from '../components/refinancing-notice';
 import type { ApiAccountStatement } from '../types/api-account-statement';
 
 export const AccountStatementPage: FC = () => {
@@ -33,7 +34,7 @@ export const AccountStatementPage: FC = () => {
         );
     }
 
-    const { credito, saldo, pagos, resumen_cuotas: resumenCuotas } = estadoCuenta;
+    const { credito, saldo, refinanciacion, pagos, resumen_cuotas: resumenCuotas } = estadoCuenta;
     const cuotas = credito.cuotas ?? [];
     const cuotasPagadas = cuotas.filter((c) => c.estado === 'pagada').length;
     const totalPagado = pagos.reduce((total, pago) => total + parseFloat(pago.valor_pago), 0);
@@ -47,6 +48,10 @@ export const AccountStatementPage: FC = () => {
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3 print:border-0 print:p-0">
                 <AccountStatementHeader company={company} credito={credito} cuotasPagadas={cuotasPagadas} />
+
+                {refinanciacion && (
+                    <RefinancingNotice vinculo={refinanciacion} valorPrestamo={credito.valor_prestamo} linkSuffix="/estado-cuenta" className="mb-6" />
+                )}
 
                 <AccountStatementPaymentsTable pagos={pagos} totalPagado={totalPagado} />
 
