@@ -6,6 +6,7 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
     modificar: 'Modificar',
     eliminar: 'Eliminar',
     aprobar: 'Aprobar',
+    rechazar: 'Rechazar',
     desembolsar: 'Desembolsar',
     cancelar: 'Cancelar',
     anular: 'Anular',
@@ -38,6 +39,7 @@ const BRAND = 'bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-4
 export const AUDIT_ACTION_BADGE_CLASSES: Record<AuditAction, string> = {
     crear: SUCCESS,
     aprobar: SUCCESS,
+    rechazar: ERROR,
     desembolsar: SUCCESS,
     causar: SUCCESS,
     contabilizar: SUCCESS,

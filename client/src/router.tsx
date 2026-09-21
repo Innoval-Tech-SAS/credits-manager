@@ -58,6 +58,7 @@ import { CreateEmployerPage } from './employers/pages/create-employer-page';
 import { EditEmployerPage } from './employers/pages/edit-employer-page';
 import { EmployersListPage } from './employers/pages/employers-list-page';
 import { AccountStatementPage } from './credits/pages/account-statement-page';
+import { EditCreditPage } from './credits/pages/edit-credit-page';
 import { CreateCreditPage } from './credits/pages/create-credit-page';
 import { CreditDetailPage } from './credits/pages/credit-detail-page';
 import { CreditsListPage } from './credits/pages/credits-list-page';
@@ -189,6 +190,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="creditos" accion="listar">
                                 <CreditDetailPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'creditos/:id/editar',
+                        element: (
+                            <RequireModulePermission modulo="creditos" accion="editar">
+                                <EditCreditPage />
                             </RequireModulePermission>
                         ),
                     },

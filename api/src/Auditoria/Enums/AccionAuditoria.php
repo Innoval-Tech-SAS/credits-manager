@@ -8,6 +8,7 @@ enum AccionAuditoria: string
     case Modificar = 'modificar';
     case Eliminar = 'eliminar';
     case Aprobar = 'aprobar';
+    case Rechazar = 'rechazar';
     case Desembolsar = 'desembolsar';
     case Cancelar = 'cancelar';
     case Anular = 'anular';

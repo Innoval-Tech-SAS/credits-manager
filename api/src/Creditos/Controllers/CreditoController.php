@@ -5,6 +5,7 @@ namespace App\Creditos\Controllers;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Models\Credito;
 use App\Creditos\Requests\CrearCreditoRequest;
+use App\Creditos\Requests\EditarCreditoRequest;
 use App\Creditos\Services\CreditoService;
 use App\Creditos\Services\CuotaService;
 use App\Http\Controllers\Controller;
@@ -41,6 +42,11 @@ class CreditoController extends Controller
         $credito = $this->creditos->crearCredito($peticion->validated());
 
         return response()->json(['credito' => $credito], 201);
+    }
+
+    public function update(EditarCreditoRequest $peticion, Credito $credito): JsonResponse
+    {
+        return response()->json(['credito' => $this->creditos->editarCondiciones($credito, $peticion->validated())]);
     }
 
     public function show(Credito $credito): JsonResponse

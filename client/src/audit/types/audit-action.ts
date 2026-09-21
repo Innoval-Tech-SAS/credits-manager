@@ -4,6 +4,7 @@ export type AuditAction =
     | 'modificar'
     | 'eliminar'
     | 'aprobar'
+    | 'rechazar'
     | 'desembolsar'
     | 'cancelar'
     | 'anular'

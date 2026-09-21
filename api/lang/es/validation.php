@@ -194,6 +194,14 @@ return [
             'descuadrado' => 'Comprobante descuadrado: débitos :debito distintos de créditos :credito. No se puede contabilizar.',
             'sin_valor' => 'El comprobante no tiene valor.',
         ],
+        'periodo' => [
+            'no_cerrado' => 'Solo se puede solicitar la reapertura de un período cerrado.',
+            'ya_solicitado' => 'Este período ya tiene una solicitud de reapertura pendiente.',
+            'ya_abierto' => 'El período ya está abierto; rechaza la solicitud.',
+        ],
+        'solicitud' => [
+            'ya_resuelta' => 'Esta solicitud ya fue resuelta.',
+        ],
         'comprobante' => [
             'no_contabilizado' => 'Solo se pueden reversar comprobantes contabilizados.',
             'periodo_cerrado' => 'El período del comprobante original está cerrado; solicite reapertura autorizada.',
@@ -233,7 +241,8 @@ return [
             'tiene_pagos_registrados' => 'No se puede eliminar un crédito con pagos registrados.',
             'cancelacion_con_pagos' => 'No se puede cancelar un crédito con pagos registrados.',
             'refinanciado_no_eliminable' => 'No se puede eliminar un crédito refinanciado: es el historial del crédito que lo reemplazó.',
-            'refinanciacion_desembolsada' => 'No se puede cancelar ni eliminar una refinanciación desembolsada: el crédito original ya quedó congelado.',
+            'no_editable' => 'Solo se pueden modificar las condiciones de un crédito solicitado o aprobado. Después del desembolso, la corrección se hace refinanciando.',
+            'refinanciacion_desembolsada' =>'No se puede cancelar ni eliminar una refinanciación desembolsada: el crédito original ya quedó congelado.',
         ],
         'documento' => [
             'naturaleza_invalida' => 'Debe indicar una naturaleza válida (por_pagar o por_cobrar).',
@@ -342,6 +351,7 @@ return [
         'tercero_id' => 'tercero',
         'lineas' => 'líneas',
         'motivo' => 'motivo',
+        'motivo_resolucion' => 'motivo del rechazo',
 
         // Gastos
         'tipo_gasto_id' => 'tipo de gasto',

@@ -10,13 +10,22 @@ use App\Pagos\Models\Pago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class LiquidacionCreditoTest extends TestCase
 {
+    use ActsAsAdmin;
     use CreatesCreditFixtures;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->actingAsAdmin();
+    }
 
     /**
      * Reproduce el ejemplo exacto que dio el cliente: capital pendiente 1.000.000,
@@ -43,10 +52,10 @@ class LiquidacionCreditoTest extends TestCase
 
         $cotizacion = app(PagoService::class)->calcularLiquidacion($credito->fresh());
 
-        $this->assertEquals(1_000_000, $cotizacion['capital_pendiente']);
+        $this->assertSame('1000000.00', $cotizacion['capital_pendiente']->aDecimalString());
         $this->assertEquals(15, $cotizacion['dias_transcurridos']);
-        $this->assertEquals(10000.0, $cotizacion['interes']);
-        $this->assertEquals(1_010_000.0, $cotizacion['total']);
+        $this->assertSame('10000.00', $cotizacion['interes']->aDecimalString());
+        $this->assertSame('1010000.00', $cotizacion['total']->aDecimalString());
     }
 
     public function test_sin_pagos_previos_cuenta_los_dias_desde_el_desembolso(): void
@@ -78,12 +87,14 @@ class LiquidacionCreditoTest extends TestCase
         $cuotas = $credito->cuotas()->orderBy('numero_cuota')->get();
         foreach ($cuotas as $cuota) {
             $this->assertSame(EstadoCuota::Pagada, $cuota->estado);
-            $this->assertEquals(0, $cuota->saldo_capital);
         }
+
+        // `saldo_capital` es el saldo corrido tras cada cuota: la última queda en cero.
+        $this->assertSame(['600.00', '300.00', '0.00'], $cuotas->map(fn ($cuota) => $cuota->saldo_capital->aDecimalString())->all());
 
         $this->assertSame(EstadoCredito::Pagado, $credito->fresh()->estado);
         $this->assertDatabaseCount('pagos', 1);
-        $this->assertEquals($resultado['total'], (float) $resultado['pago']->valor_pago);
+        $this->assertSame($resultado['total']->aDecimalString(), $resultado['pago']->valor_pago->aDecimalString());
         $this->assertEquals('Liquidación anticipada del crédito', $resultado['pago']->observacion);
     }
 

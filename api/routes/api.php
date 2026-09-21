@@ -14,6 +14,7 @@ use App\Contabilidad\Controllers\PeriodoContableController;
 use App\Contabilidad\Controllers\PlanCuentaController;
 use App\Contabilidad\Controllers\ReglaContabilizacionController;
 use App\Contabilidad\Controllers\ReporteContableController;
+use App\Contabilidad\Controllers\SolicitudReaperturaPeriodoController;
 use App\Contabilidad\Controllers\TipoComprobanteController;
 use App\Creditos\Controllers\CreditoController;
 use App\Dashboard\Controllers\DashboardController;
@@ -99,6 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/creditos', [CreditoController::class, 'index'])->middleware('permiso:creditos,listar');
     Route::post('/creditos', [CreditoController::class, 'store'])->middleware('permiso:creditos,crear');
     Route::get('/creditos/{credito}', [CreditoController::class, 'show'])->middleware('permiso:creditos,listar');
+    Route::patch('/creditos/{credito}', [CreditoController::class, 'update'])->middleware('permiso:creditos,editar');
     Route::get('/creditos/{credito}/estado-cuenta', [CreditoController::class, 'estadoCuenta'])->middleware('permiso:creditos,listar');
     Route::post('/creditos/{credito}/aprobar', [CreditoController::class, 'aprobar'])->middleware('permiso:creditos,aprobar');
     Route::post('/creditos/{credito}/desembolsar', [CreditoController::class, 'desembolsar'])->middleware('permiso:creditos,desembolsar');
@@ -123,6 +125,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/periodos', [PeriodoContableController::class, 'index'])->middleware('permiso:contabilidad,listar');
     Route::post('/contabilidad/periodos/{periodo}/cerrar', [PeriodoContableController::class, 'cerrar'])->middleware('permiso:contabilidad,cerrar_periodo');
     Route::post('/contabilidad/periodos/{periodo}/reabrir', [PeriodoContableController::class, 'reabrir'])->middleware('permiso:contabilidad,reabrir_periodo');
+
+    Route::get('/contabilidad/solicitudes-reapertura', [SolicitudReaperturaPeriodoController::class, 'index'])->middleware('permiso:contabilidad,listar');
+    Route::post('/contabilidad/periodos/{periodo}/solicitar-reapertura', [SolicitudReaperturaPeriodoController::class, 'store'])->middleware('permiso:contabilidad,cerrar_periodo');
+    Route::post('/contabilidad/solicitudes-reapertura/{solicitud}/autorizar', [SolicitudReaperturaPeriodoController::class, 'autorizar'])->middleware('permiso:contabilidad,reabrir_periodo');
+    Route::post('/contabilidad/solicitudes-reapertura/{solicitud}/rechazar', [SolicitudReaperturaPeriodoController::class, 'rechazar'])->middleware('permiso:contabilidad,reabrir_periodo');
 
     Route::get('/contabilidad/tipos-comprobante', [TipoComprobanteController::class, 'index'])->middleware('permiso:contabilidad,listar');
     Route::post('/contabilidad/tipos-comprobante', [TipoComprobanteController::class, 'store'])->middleware('permiso:contabilidad,crear');

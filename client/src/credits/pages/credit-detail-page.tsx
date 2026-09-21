@@ -26,6 +26,7 @@ export const CreditDetailPage: FC = () => {
     const navigate = useNavigate();
     const canRegisterPayment = usePermission('pagos', 'crear');
     const canViewPayments = usePermission('pagos', 'listar');
+    const canEditar = usePermission('creditos', 'editar');
     const canAprobar = usePermission('creditos', 'aprobar');
     const canDesembolsar = usePermission('creditos', 'desembolsar');
     const canCancelar = usePermission('creditos', 'cancelar');
@@ -127,6 +128,11 @@ export const CreditDetailPage: FC = () => {
                 )}
 
                 <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-100 pt-6 dark:border-gray-800">
+                    {(credito.estado === 'solicitado' || credito.estado === 'aprobado') && canEditar && (
+                        <Button variant="outline" onClick={() => navigate(`/creditos/${credito.id}/editar`)}>
+                            Modificar condiciones
+                        </Button>
+                    )}
                     {credito.estado === 'solicitado' && canAprobar && (
                         <Button onClick={() => setAccionPendiente('aprobar')}>Aprobar</Button>
                     )}
