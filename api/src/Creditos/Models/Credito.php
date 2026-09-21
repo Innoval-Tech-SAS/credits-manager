@@ -14,6 +14,7 @@ use App\Pagos\Models\Pago;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'cliente_id',
@@ -72,6 +73,12 @@ class Credito extends BaseModel
     public function credito_origen(): BelongsTo
     {
         return $this->belongsTo(self::class, 'credito_origen_id');
+    }
+
+    /** La refinanciación ya desembolsada que reemplazó a este crédito; solo existe cuando está refinanciado. */
+    public function refinanciado_por(): HasOne
+    {
+        return $this->hasOne(self::class, 'credito_origen_id')->whereIn('estado', [EstadoCredito::Desembolsado, EstadoCredito::Pagado]);
     }
 
     public function pagos(): HasMany
