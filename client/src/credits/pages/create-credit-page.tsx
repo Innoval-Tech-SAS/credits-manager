@@ -16,9 +16,11 @@ import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { ArrowRight } from 'lucide-react';
 import { formatMoney } from '../../shared/utils/format-money';
+import { RefinancingBaseCard } from '../components/refinancing-base-card';
 import { CREDIT_TYPE_OPTIONS } from '../constants/credit-type-options';
 import { PAYMENT_TYPE_OPTIONS } from '../constants/payment-type-options';
 import type { ApiCredit } from '../types/api-credit';
+import type { ApiCreditDetail } from '../types/api-credit-detail';
 import type { CreditType } from '../types/credit-type';
 import type { PaymentType } from '../types/payment-type';
 
@@ -39,6 +41,11 @@ export const CreateCreditPage: FC = () => {
         tipoCredito === 'refinanciacion' && cliente ? `/creditos?${creditosActivosParams}` : '',
     );
     const creditosActivos = creditosActivosData?.data ?? [];
+
+    const { data: origenDetalle, isLoading: isLoadingOrigen } = useResource<ApiCreditDetail>(
+        tipoCredito === 'refinanciacion' && creditoOrigenId ? `/creditos/${creditoOrigenId}` : '',
+    );
+    const saldoTomado = creditoOrigenId ? (origenDetalle?.resumen_cuotas.saldo_capital_pendiente ?? null) : null;
 
     const [valorPrestamo, setValorPrestamo] = useState('');
     const [tasaInteres, setTasaInteres] = useState('');
@@ -82,7 +89,8 @@ export const CreateCreditPage: FC = () => {
                     cliente_id: cliente.id,
                     tipo_credito: tipoCredito,
                     credito_origen_id: tipoCredito === 'refinanciacion' ? creditoOrigenId : null,
-                    valor_prestamo: valorPrestamo,
+                    // En una refinanciación el servidor calcula el préstamo: saldo de capital del original + valor adicional.
+                    ...(tipoCredito === 'refinanciacion' ? { valor_adicional: valorPrestamo } : { valor_prestamo: valorPrestamo }),
                     tasa_interes: tasaInteres,
                     plazo,
                     tipo_pago: tipoPago,
@@ -145,16 +153,20 @@ export const CreateCreditPage: FC = () => {
                             </div>
                         )}
 
+                        {tipoCredito === 'refinanciacion' && (
+                            <RefinancingBaseCard saldoTomado={saldoTomado} valorAdicional={valorPrestamo} isLoading={isLoadingOrigen && !origenDetalle} />
+                        )}
+
                         <div>
                             <Label htmlFor="valor-prestamo">
-                                Valor del préstamo{tipoCredito === 'refinanciacion' && ' (nuevo saldo a financiar)'}
+                                {tipoCredito === 'refinanciacion' ? 'Nuevo valor a prestar (puede ser 0)' : 'Valor del préstamo'}
                             </Label>
                             <Input
                                 id="valor-prestamo"
                                 name="valor-prestamo"
                                 type="number"
                                 step={0.01}
-                                min="1"
+                                min={tipoCredito === 'refinanciacion' ? '0' : '1'}
                                 required
                                 value={valorPrestamo}
                                 onChange={(event) => setValorPrestamo(event.target.value)}

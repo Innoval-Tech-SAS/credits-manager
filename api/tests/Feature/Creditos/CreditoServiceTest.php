@@ -53,7 +53,7 @@ class CreditoServiceTest extends TestCase
             'cliente_id' => $cliente->id,
             'tipo_credito' => TipoCredito::Refinanciacion->value,
             'credito_origen_id' => $origen->id,
-            'valor_prestamo' => 500,
+            'valor_adicional' => 500,
             'tasa_interes' => 5,
             'plazo' => 3,
             'tipo_pago' => TipoPago::Mensual->value,

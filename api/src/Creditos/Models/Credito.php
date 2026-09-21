@@ -5,6 +5,7 @@ namespace App\Creditos\Models;
 use App\Clientes\Models\Cliente;
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
+use App\Core\Dinero\Dinero;
 use App\Core\Dinero\DineroCast;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\TipoCredito;
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'tipo_credito',
     'credito_origen_id',
     'valor_prestamo',
+    'saldo_refinanciado',
     'tasa_interes',
     'plazo',
     'tipo_pago',
@@ -42,12 +44,19 @@ class Credito extends BaseModel
             'tipo_pago' => TipoPago::class,
             'estado' => EstadoCredito::class,
             'valor_prestamo' => DineroCast::class,
+            'saldo_refinanciado' => DineroCast::class,
             'tasa_interes' => 'decimal:3',
             'valor_cuota' => DineroCast::class,
             'valor_total' => DineroCast::class,
             'fecha_desembolso' => 'date:Y-m-d',
             'desembolsado_en' => 'datetime',
         ];
+    }
+
+    /** Dinero nuevo que sale de caja al desembolsar: en una refinanciación, lo prestado menos el saldo que ya estaba en cartera. */
+    public function valorDesembolsado(): Dinero
+    {
+        return $this->saldo_refinanciado === null ? $this->valor_prestamo : $this->valor_prestamo->restar($this->saldo_refinanciado);
     }
 
     public function cliente(): BelongsTo

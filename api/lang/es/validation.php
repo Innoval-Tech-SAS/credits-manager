@@ -180,6 +180,10 @@ return [
             'no_desembolsado' => 'Solo se puede refinanciar un crédito desembolsado.',
             'en_curso' => 'Este crédito ya tiene una refinanciación en curso (solicitada o aprobada).',
             'origen_no_desembolsado' => 'El crédito original ya no está desembolsado; no se puede desembolsar esta refinanciación.',
+            'saldo_cambio' => 'El saldo de capital del crédito original cambió desde la solicitud; cancela esta refinanciación y solicítala de nuevo.',
+        ],
+        'valor_adicional' => [
+            'sin_valor' => 'El valor del nuevo crédito debe ser mayor que cero: el crédito original no tiene saldo de capital, así que el nuevo valor a prestar debe ser mayor que cero.',
         ],
         'estado' => [
             'transicion_invalida' => 'El crédito no está en un estado válido para esta acción.',

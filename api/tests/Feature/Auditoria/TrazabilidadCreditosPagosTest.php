@@ -67,10 +67,14 @@ class TrazabilidadCreditosPagosTest extends TestCase
         $origen = $this->crearCredito($cliente, ['estado' => EstadoCredito::Desembolsado]);
         $this->crearCuota($origen);
 
-        $nuevoId = $this->postJson('/api/v1/creditos', $this->payloadCredito($cliente->id, [
+        $payload = $this->payloadCredito($cliente->id, [
             'tipo_credito' => TipoCredito::Refinanciacion->value,
             'credito_origen_id' => $origen->id,
-        ]))->assertCreated()->json('credito.id');
+            'valor_adicional' => 500000,
+        ]);
+        unset($payload['valor_prestamo']);
+
+        $nuevoId = $this->postJson('/api/v1/creditos', $payload)->assertCreated()->json('credito.id');
 
         $this->assertEventoAuditoria('crear', 'creditos', 'credito', $nuevoId);
         $this->assertCount(0, $this->eventosDeAuditoria('modificar', 'creditos'), 'Al solicitar, el original no cambia.');

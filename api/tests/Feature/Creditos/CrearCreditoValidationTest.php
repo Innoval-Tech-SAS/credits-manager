@@ -28,6 +28,15 @@ class CrearCreditoValidationTest extends TestCase
         ];
     }
 
+    /** En una refinanciación no se envía `valor_prestamo`: lo calcula el servidor a partir del original y del valor adicional. */
+    private function payloadRefinanciacion(int $clienteId, array $cambios = []): array
+    {
+        $payload = $this->payloadValido($clienteId);
+        unset($payload['valor_prestamo']);
+
+        return array_merge($payload, ['tipo_credito' => TipoCredito::Refinanciacion->value, 'valor_adicional' => 500000], $cambios);
+    }
+
     public function test_rechaza_cliente_inexistente(): void
     {
         $this->actingAsAdmin();
@@ -102,10 +111,7 @@ class CrearCreditoValidationTest extends TestCase
         $this->actingAsAdmin();
         $cliente = $this->crearCliente();
 
-        $respuesta = $this->postJson('/api/v1/creditos', [
-            ...$this->payloadValido($cliente->id),
-            'tipo_credito' => TipoCredito::Refinanciacion->value,
-        ]);
+        $respuesta = $this->postJson('/api/v1/creditos', $this->payloadRefinanciacion($cliente->id));
 
         $respuesta->assertStatus(422)->assertJsonValidationErrors('credito_origen_id');
     }
@@ -121,11 +127,7 @@ class CrearCreditoValidationTest extends TestCase
         $clienteB = $this->crearCliente();
         $creditoDeB = $this->crearCredito($clienteB);
 
-        $respuesta = $this->postJson('/api/v1/creditos', [
-            ...$this->payloadValido($clienteA->id),
-            'tipo_credito' => TipoCredito::Refinanciacion->value,
-            'credito_origen_id' => $creditoDeB->id,
-        ]);
+        $respuesta = $this->postJson('/api/v1/creditos', $this->payloadRefinanciacion($clienteA->id, ['credito_origen_id' => $creditoDeB->id]));
 
         $respuesta->assertStatus(422)->assertJsonValidationErrors('credito_origen_id');
         $respuesta->assertJsonPath('errors.credito_origen_id.0', 'El crédito seleccionado no pertenece a este cliente.');
@@ -139,11 +141,7 @@ class CrearCreditoValidationTest extends TestCase
         $cliente = $this->crearCliente();
         $origen = $this->crearCredito($cliente);
 
-        $respuesta = $this->postJson('/api/v1/creditos', [
-            ...$this->payloadValido($cliente->id),
-            'tipo_credito' => TipoCredito::Refinanciacion->value,
-            'credito_origen_id' => $origen->id,
-        ]);
+        $respuesta = $this->postJson('/api/v1/creditos', $this->payloadRefinanciacion($cliente->id, ['credito_origen_id' => $origen->id]));
 
         $respuesta->assertStatus(201);
         $this->assertSame('desembolsado', $origen->fresh()->estado->value, 'El original se congela al desembolsar la refinanciación, no al solicitarla.');

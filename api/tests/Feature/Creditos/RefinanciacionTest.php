@@ -3,6 +3,8 @@
 namespace Tests\Feature\Creditos;
 
 use App\Clientes\Models\Cliente;
+use App\Contabilidad\Enums\EventoContable;
+use App\Contabilidad\Models\Comprobante;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Enums\TipoCredito;
@@ -11,12 +13,14 @@ use App\Creditos\Services\CuotaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class RefinanciacionTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
@@ -34,18 +38,19 @@ class RefinanciacionTest extends TestCase
         return $origen;
     }
 
-    private function solicitarRefinanciacion(Credito $origen, ?Cliente $cliente = null): TestResponse
+    /** Sin `valor_prestamo`: lo calcula el servidor (capital pendiente del original + `valor_adicional`). */
+    private function solicitarRefinanciacion(Credito $origen, ?Cliente $cliente = null, array $cambios = []): TestResponse
     {
-        return $this->postJson('/api/v1/creditos', [
+        return $this->postJson('/api/v1/creditos', array_merge([
             'cliente_id' => ($cliente ?? $this->cliente)->id,
             'tipo_credito' => TipoCredito::Refinanciacion->value,
             'credito_origen_id' => $origen->id,
-            'valor_prestamo' => 500,
+            'valor_adicional' => 500,
             'tasa_interes' => 5,
             'plazo' => 3,
             'tipo_pago' => 'mensual',
             'fecha_desembolso' => '2026-04-01',
-        ]);
+        ], $cambios));
     }
 
     /** Solicita y aprueba la refinanciación, sin desembolsarla todavía; devuelve su id. */
@@ -70,6 +75,116 @@ class RefinanciacionTest extends TestCase
     private function refinanciacionDe(Credito $origen): Credito
     {
         return Credito::where('credito_origen_id', $origen->id)->firstOrFail();
+    }
+
+    public function test_el_valor_del_prestamo_es_el_capital_pendiente_del_original_mas_el_valor_adicional(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente();
+        $origen = $this->crearCredito($cliente, ['valor_prestamo' => 900]);
+        // Interés primero: la cuota 1 queda pagada (50 de interés y 250 de capital), la 2 tiene un abono de 100 (50 y 50) y la 3 nada.
+        $this->crearCuota($origen, ['numero_cuota' => 1, 'valor' => 300, 'valor_interes' => 50, 'valor_capital' => 250, 'valor_pagado' => 300, 'estado' => EstadoCuota::Pagada]);
+        $this->crearCuota($origen, ['numero_cuota' => 2, 'valor' => 300, 'valor_interes' => 50, 'valor_capital' => 250, 'valor_pagado' => 100]);
+        $this->crearCuota($origen, ['numero_cuota' => 3, 'valor' => 300, 'valor_interes' => 50, 'valor_capital' => 250]);
+
+        $respuesta = $this->solicitarRefinanciacion($origen, $cliente, ['valor_adicional' => '400.50'])->assertCreated();
+
+        $respuesta->assertJsonPath('credito.saldo_refinanciado', '600.00');
+        $respuesta->assertJsonPath('credito.valor_prestamo', '1000.50');
+        $this->assertCount(3, $respuesta->json('credito.cuotas'));
+        $this->assertDatabaseHas('creditos', ['id' => $respuesta->json('credito.id'), 'saldo_refinanciado' => 60000, 'valor_prestamo' => 100050]);
+    }
+
+    public function test_una_refinanciacion_sin_dinero_nuevo_toma_solo_el_saldo_del_original(): void
+    {
+        $origen = $this->crearOrigen();
+
+        $respuesta = $this->solicitarRefinanciacion($origen, null, ['valor_adicional' => 0])->assertCreated();
+
+        $respuesta->assertJsonPath('credito.saldo_refinanciado', '600.00');
+        $respuesta->assertJsonPath('credito.valor_prestamo', '600.00');
+    }
+
+    public function test_una_refinanciacion_sin_saldo_ni_dinero_nuevo_se_rechaza(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente();
+        $origen = $this->crearCredito($cliente, ['valor_prestamo' => 300]);
+        $this->crearCuota($origen, ['numero_cuota' => 1, 'valor' => 300, 'valor_capital' => 300, 'valor_pagado' => 300, 'estado' => EstadoCuota::Pagada]);
+
+        $this->solicitarRefinanciacion($origen, $cliente, ['valor_adicional' => 0])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('valor_adicional');
+
+        $this->assertDatabaseCount('creditos', 1);
+    }
+
+    public function test_en_una_refinanciacion_el_valor_del_prestamo_no_se_envia_y_el_adicional_es_obligatorio(): void
+    {
+        $origen = $this->crearOrigen();
+
+        $this->solicitarRefinanciacion($origen, null, ['valor_prestamo' => 500])->assertStatus(422)->assertJsonValidationErrors('valor_prestamo');
+        $this->solicitarRefinanciacion($origen, null, ['valor_adicional' => null])->assertStatus(422)->assertJsonValidationErrors('valor_adicional');
+        $this->assertDatabaseCount('creditos', 1);
+    }
+
+    public function test_un_credito_nuevo_no_acepta_valor_adicional(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente();
+
+        $this->postJson('/api/v1/creditos', [
+            'cliente_id' => $cliente->id,
+            'tipo_credito' => TipoCredito::Nuevo->value,
+            'valor_prestamo' => 1000,
+            'valor_adicional' => 500,
+            'tasa_interes' => 5,
+            'plazo' => 3,
+            'tipo_pago' => 'mensual',
+            'fecha_desembolso' => '2026-04-01',
+        ])->assertStatus(422)->assertJsonValidationErrors('valor_adicional');
+    }
+
+    public function test_si_el_saldo_del_original_cambia_antes_del_desembolso_no_se_puede_desembolsar(): void
+    {
+        $origen = $this->crearOrigen();
+        $id = $this->aprobarRefinanciacion($origen);
+
+        $this->postJson("/api/v1/creditos/{$origen->id}/pagos", ['valor_pago' => 100, 'forma_pago' => 'efectivo'])->assertCreated();
+
+        $this->postJson("/api/v1/creditos/{$id}/desembolsar")
+            ->assertStatus(422)
+            ->assertJsonPath('errors.credito_origen_id.0', 'El saldo de capital del crédito original cambió desde la solicitud; cancela esta refinanciación y solicítala de nuevo.');
+
+        $this->assertSame(EstadoCredito::Aprobado, Credito::findOrFail($id)->estado);
+        $this->assertSame(EstadoCredito::Desembolsado, $origen->fresh()->estado);
+    }
+
+    public function test_el_asiento_del_desembolso_registra_solo_el_dinero_nuevo(): void
+    {
+        $origen = $this->crearOrigen();
+        $this->crearRegla(EventoContable::DesembolsoCredito);
+        $id = $this->solicitarRefinanciacion($origen, null, ['valor_adicional' => 500])->assertCreated()->json('credito.id');
+        $this->postJson("/api/v1/creditos/{$id}/aprobar")->assertOk();
+
+        $this->postJson("/api/v1/creditos/{$id}/desembolsar")->assertOk();
+
+        $this->assertSame('1100.00', Credito::findOrFail($id)->valor_prestamo->aDecimalString());
+        $comprobante = Comprobante::where('modulo_origen', 'creditos')->where('origen_id', $id)->firstOrFail();
+        $this->assertSame('500.00', $comprobante->total_debito->aDecimalString(), 'El saldo tomado ya estaba en cartera: no mueve caja otra vez.');
+    }
+
+    public function test_una_refinanciacion_sin_dinero_nuevo_no_genera_asiento_de_desembolso(): void
+    {
+        $origen = $this->crearOrigen();
+        $this->crearRegla(EventoContable::DesembolsoCredito);
+        $id = $this->solicitarRefinanciacion($origen, null, ['valor_adicional' => 0])->assertCreated()->json('credito.id');
+        $this->postJson("/api/v1/creditos/{$id}/aprobar")->assertOk();
+
+        $this->postJson("/api/v1/creditos/{$id}/desembolsar")->assertOk();
+
+        $this->assertSame(EstadoCredito::Refinanciado, $origen->fresh()->estado);
+        $this->assertDatabaseCount('comprobantes', 0);
     }
 
     public function test_al_solicitar_la_refinanciacion_el_original_sigue_desembolsado_y_recibe_pagos(): void

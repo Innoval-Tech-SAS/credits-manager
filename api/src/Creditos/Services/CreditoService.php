@@ -38,11 +38,14 @@ class CreditoService
     public function crearCredito(array $datos): Credito
     {
         return DB::transaction(function () use ($datos) {
+            [$valorPrestamo, $saldoTomado] = $this->valorDelPrestamo($datos);
+
             $credito = $this->creditos->crear([
                 'cliente_id' => $datos['cliente_id'],
                 'tipo_credito' => $datos['tipo_credito'],
                 'credito_origen_id' => $datos['credito_origen_id'] ?? null,
-                'valor_prestamo' => $datos['valor_prestamo'],
+                'valor_prestamo' => $valorPrestamo,
+                'saldo_refinanciado' => $saldoTomado,
                 'tasa_interes' => $datos['tasa_interes'],
                 'plazo' => $datos['plazo'],
                 'tipo_pago' => $datos['tipo_pago'],
@@ -54,7 +57,7 @@ class CreditoService
             ]);
 
             $resultado = AmortizacionCalculator::calcular(
-                Dinero::desdePesos($datos['valor_prestamo']),
+                $valorPrestamo,
                 (float) $datos['tasa_interes'],
                 (int) $datos['plazo'],
                 TipoPago::from($datos['tipo_pago']),
@@ -77,6 +80,28 @@ class CreditoService
 
             return $this->creditos->obtenerConRelaciones($credito);
         });
+    }
+
+    /**
+     * Refinanciar es unificar el saldo de capital pendiente del original con el nuevo valor a
+     * prestar en un solo crédito (definición de DDA). El saldo tomado se guarda como foto.
+     *
+     * @return array{0: Dinero, 1: ?Dinero} valor del préstamo y saldo tomado (nulo si no es refinanciación)
+     */
+    private function valorDelPrestamo(array $datos): array
+    {
+        if ($datos['tipo_credito'] !== TipoCredito::Refinanciacion->value) {
+            return [Dinero::desdePesos($datos['valor_prestamo']), null];
+        }
+
+        $saldoTomado = $this->cuotaService->capitalPendiente($this->creditos->buscarPorIdOFallar($datos['credito_origen_id']));
+        $valorPrestamo = $saldoTomado->sumar(Dinero::desdePesos($datos['valor_adicional']));
+
+        if (! $valorPrestamo->esPositivo()) {
+            throw ValidationException::withMessages(['valor_adicional' => __('validation.custom.valor_adicional.sin_valor')]);
+        }
+
+        return [$valorPrestamo, $saldoTomado];
     }
 
     public function mostrarCredito(Credito $credito): Credito
@@ -121,7 +146,7 @@ class CreditoService
 
             $this->auditoria->registrarModificacion(
                 AuditoriaConstants::MODULO_CREDITOS,
-                "Crédito #{$credito->id} desembolsado".($comprobante ? '' : ' sin contabilizar (no hay regla activa)'),
+                "Crédito #{$credito->id} desembolsado".($comprobante ? '' : ' sin contabilizar (sin regla activa o sin dinero nuevo)'),
                 $credito,
                 $anteriores,
                 accion: AccionAuditoria::Desembolsar,
@@ -147,6 +172,11 @@ class CreditoService
 
         if ($origen->estado !== EstadoCredito::Desembolsado) {
             throw ValidationException::withMessages(['credito_origen_id' => __('validation.custom.credito_origen_id.origen_no_desembolsado')]);
+        }
+
+        // El original siguió recibiendo pagos desde la solicitud: si su saldo cambió, la base de la refinanciación ya no es la acordada.
+        if ($credito->saldo_refinanciado !== null && ! $this->cuotaService->capitalPendiente($origen)->igualA($credito->saldo_refinanciado)) {
+            throw ValidationException::withMessages(['credito_origen_id' => __('validation.custom.credito_origen_id.saldo_cambio')]);
         }
 
         return $origen;
