@@ -3,6 +3,7 @@ import { CircleCheck, TriangleAlert } from 'lucide-react';
 
 import { formatMoney } from '../../shared/utils/format-money';
 import { DonutChart } from '@ui/charts/components/donut-chart';
+import { AGING_BUCKETS } from '../constants/aging-buckets';
 import type { PortfolioSummaryCardsProps } from '../props/portfolio-summary-cards-props';
 
 export const PortfolioSummaryCards: FC<PortfolioSummaryCardsProps> = ({ totales, envejecimientoMora }) => {
@@ -52,22 +53,14 @@ export const PortfolioSummaryCards: FC<PortfolioSummaryCardsProps> = ({ totales,
                         <p className="text-xs text-gray-400 dark:text-gray-500">Promedio por crédito</p>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{formatMoney(totales.en_mora.promedio)}</p>
                     </div>
-                    <div className="mt-4 grid grid-cols-3 gap-2 border-t border-gray-100 pt-3 dark:border-gray-800">
-                        <div className="text-center">
-                            <p className="text-[10px] font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">1-30 días</p>
-                            <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">{envejecimientoMora['1_30'].count}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{formatMoney(envejecimientoMora['1_30'].saldo)}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-[10px] font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">31-60 días</p>
-                            <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">{envejecimientoMora['31_60'].count}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{formatMoney(envejecimientoMora['31_60'].saldo)}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-[10px] font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">61+ días</p>
-                            <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">{envejecimientoMora['61_mas'].count}</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">{formatMoney(envejecimientoMora['61_mas'].saldo)}</p>
-                        </div>
+                    <div className="mt-4 grid grid-cols-2 gap-x-2 gap-y-3 border-t border-gray-100 pt-3 dark:border-gray-800">
+                        {AGING_BUCKETS.map(({ key, label }) => (
+                            <div key={key} className="text-center">
+                                <p className="text-[10px] font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">{label}</p>
+                                <p className="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90">{envejecimientoMora[key].count}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{formatMoney(envejecimientoMora[key].saldo)}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

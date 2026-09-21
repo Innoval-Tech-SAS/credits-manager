@@ -2,6 +2,7 @@
 
 namespace App\Cartera\Services;
 
+use App\Cartera\Constants\CarteraConstants;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Repositories\CreditoRepository;
 use App\Creditos\Repositories\CuotaRepository;
@@ -67,29 +68,32 @@ class CarteraService
     }
 
     /**
-     * Agrupa los créditos en mora en los rangos de antigüedad estándar de cobranza
-     * (1-30 / 31-60 / 61+ días), a partir del `dias_mora` que ya calcula `resumen()`.
+     * Agrupa los créditos en mora en los rangos de `CarteraConstants::RANGOS_MORA`
+     * (1-30 / 31-60 / 61-90 / más de 90 días), a partir del `dias_mora` que ya calcula `resumen()`.
      */
     private function envejecimientoMora(array $enMora): array
     {
-        $rangos = [
-            '1_30' => ['count' => 0, 'saldo' => Dinero::cero()],
-            '31_60' => ['count' => 0, 'saldo' => Dinero::cero()],
-            '61_mas' => ['count' => 0, 'saldo' => Dinero::cero()],
-        ];
+        $rangos = array_map(fn () => ['count' => 0, 'saldo' => Dinero::cero()], CarteraConstants::RANGOS_MORA);
 
         foreach ($enMora as $fila) {
-            $clave = match (true) {
-                $fila['dias_mora'] <= 30 => '1_30',
-                $fila['dias_mora'] <= 60 => '31_60',
-                default => '61_mas',
-            };
+            $clave = $this->rangoDeMora($fila['dias_mora']);
 
             $rangos[$clave]['count']++;
             $rangos[$clave]['saldo'] = $rangos[$clave]['saldo']->sumar($fila['saldo']);
         }
 
         return $rangos;
+    }
+
+    private function rangoDeMora(int $diasMora): string
+    {
+        foreach (CarteraConstants::RANGOS_MORA as $clave => $hasta) {
+            if ($hasta === null || $diasMora <= $hasta) {
+                return $clave;
+            }
+        }
+
+        return array_key_last(CarteraConstants::RANGOS_MORA);
     }
 
     public function reporteEmpleador(?int $empleadorId): array
