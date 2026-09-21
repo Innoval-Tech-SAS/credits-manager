@@ -47,7 +47,9 @@ class DocumentoTerceroControllerTest extends TestCase
 
     public function test_sin_autenticar_no_puede_consultar(): void
     {
+        $this->actingAsAdmin();
         $tercero = $this->crearTercero();
+        $this->salirDeSesion();
 
         $respuesta = $this->getJson("/api/v1/terceros/{$tercero->id}/documentos-pendientes?naturaleza=por_pagar");
 

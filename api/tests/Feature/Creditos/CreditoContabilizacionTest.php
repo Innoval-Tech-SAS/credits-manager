@@ -7,6 +7,7 @@ use App\Creditos\Enums\TipoCredito;
 use App\Creditos\Enums\TipoPago;
 use App\Creditos\Services\CreditoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
@@ -19,9 +20,17 @@ use Tests\TestCase;
  */
 class CreditoContabilizacionTest extends TestCase
 {
+    use ActsAsAdmin;
     use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->actingAsAdmin();
+    }
 
     public function test_desembolso_genera_comprobante_automatico_cuando_hay_regla_configurada(): void
     {
@@ -47,11 +56,11 @@ class CreditoContabilizacionTest extends TestCase
             'modulo_origen' => 'creditos',
             'origen_id' => $credito->id,
             'estado' => 'contabilizado',
-            'total_debito' => 1000,
-            'total_credito' => 1000,
+            'total_debito' => 100000,
+            'total_credito' => 100000,
         ]);
-        $this->assertDatabaseHas('asientos_contables', ['cuenta_id' => $cuentaCartera->id, 'debito' => 1000]);
-        $this->assertDatabaseHas('asientos_contables', ['cuenta_id' => $cuentaBancos->id, 'credito' => 1000]);
+        $this->assertDatabaseHas('asientos_contables', ['cuenta_id' => $cuentaCartera->id, 'debito' => 100000]);
+        $this->assertDatabaseHas('asientos_contables', ['cuenta_id' => $cuentaBancos->id, 'credito' => 100000]);
     }
 
     public function test_desembolso_no_bloquea_la_creacion_del_credito_sin_regla_configurada(): void

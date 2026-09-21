@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Creditos;
 
+use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Enums\TipoCredito;
@@ -9,13 +10,22 @@ use App\Creditos\Enums\TipoPago;
 use App\Creditos\Services\CreditoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
+use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class CreditoServiceTest extends TestCase
 {
+    use ActsAsAdmin;
     use CreatesCreditFixtures;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->actingAsAdmin();
+    }
 
     public function test_crear_credito_nuevo_genera_las_cuotas_de_la_amortizacion(): void
     {
@@ -33,10 +43,10 @@ class CreditoServiceTest extends TestCase
 
         $this->assertSame(EstadoCredito::Solicitado, $credito->estado);
         $this->assertCount(6, $credito->cuotas);
-        $this->assertGreaterThan(0, (float) $credito->valor_cuota);
+        $this->assertTrue($credito->valor_cuota->esPositivo());
         $this->assertEqualsWithDelta(
-            (float) $credito->valor_total,
-            (float) $credito->cuotas->sum('valor'),
+            $credito->valor_total->aFloat(),
+            Dinero::sumarVarios(...$credito->cuotas->pluck('valor')->all())->aFloat(),
             0.01,
         );
     }
