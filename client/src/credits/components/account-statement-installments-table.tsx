@@ -15,32 +15,32 @@ export const AccountStatementInstallmentsTable: FC<AccountStatementInstallmentsT
             <table className="w-full text-sm">
                 <thead>
                     <tr className="border-b border-gray-200 text-left text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                        <th className="py-2 font-medium">#</th>
-                        <th className="py-2 font-medium">Vencimiento</th>
-                        <th className="py-2 font-medium">Interés</th>
-                        <th className="py-2 font-medium">Capital</th>
-                        <th className="py-2 font-medium">Cuota</th>
-                        <th className="py-2 font-medium">Saldo capital</th>
-                        <th className="py-2 font-medium">Estado</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">#</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Vencimiento</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Interés</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Capital</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Cuota</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Saldo capital</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Estado</th>
                     </tr>
                 </thead>
                 <tbody>
                     {cuotas.map((cuota) => (
                         <tr key={cuota.id} className="border-b border-gray-100 text-gray-700 dark:border-gray-800 dark:text-gray-300">
-                            <td className="py-2">{cuota.numero_cuota}</td>
-                            <td className="py-2">{formatDateEs(cuota.fecha_vencimiento)}</td>
-                            <td className="py-2">{formatMoney(cuota.valor_interes)}</td>
-                            <td className="py-2">{formatMoney(cuota.valor_capital)}</td>
-                            <td className="py-2">{formatMoney(cuota.valor)}</td>
-                            <td className="py-2">{formatMoney(saldoCapitalTeoricoPorCuota[cuota.numero_cuota] ?? 0)}</td>
-                            <td className="py-2 capitalize">{cuota.estado}</td>
+                            <td className="py-2 pr-4 whitespace-nowrap">{cuota.numero_cuota}</td>
+                            <td className="py-2 pr-4 whitespace-nowrap">{formatDateEs(cuota.fecha_vencimiento)}</td>
+                            <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(cuota.valor_interes)}</td>
+                            <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(cuota.valor_capital)}</td>
+                            <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(cuota.valor)}</td>
+                            <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(saldoCapitalTeoricoPorCuota[cuota.numero_cuota] ?? 0)}</td>
+                            <td className="py-2 pr-4 whitespace-nowrap capitalize">{cuota.estado}</td>
                         </tr>
                     ))}
                     <tr className="border-t-2 border-gray-800 font-semibold text-gray-800 dark:border-white/90 dark:text-white/90">
-                        <td className="py-2" colSpan={5}>
+                        <td className="py-2 pr-4" colSpan={5}>
                             Saldo pendiente a la fecha
                         </td>
-                        <td className="py-2" colSpan={2}>
+                        <td className="py-2 pr-4" colSpan={2}>
                             {formatMoney(saldo)}
                         </td>
                     </tr>

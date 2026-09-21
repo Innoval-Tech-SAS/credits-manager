@@ -11,10 +11,10 @@ export const AccountStatementPaymentsTable: FC<AccountStatementPaymentsTableProp
             <table className="w-full text-sm">
                 <thead>
                     <tr className="border-b border-gray-200 text-left text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
-                        <th className="py-2 font-medium">Fecha</th>
-                        <th className="py-2 font-medium">Concepto</th>
-                        <th className="py-2 font-medium">Valor</th>
-                        <th className="py-2 font-medium">Forma de pago</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Fecha</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Concepto</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Valor</th>
+                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Forma de pago</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,18 +27,18 @@ export const AccountStatementPaymentsTable: FC<AccountStatementPaymentsTableProp
                     ) : (
                         pagos.map((pago) => (
                             <tr key={pago.id} className="border-b border-gray-100 text-gray-700 dark:border-gray-800 dark:text-gray-300">
-                                <td className="py-2">{formatDateEs(pago.fecha_pago)}</td>
-                                <td className="py-2">{pago.observacion || 'Pago'}</td>
-                                <td className="py-2">{formatMoney(pago.valor_pago)}</td>
-                                <td className="py-2 capitalize">{pago.forma_pago}</td>
+                                <td className="py-2 pr-4 whitespace-nowrap">{formatDateEs(pago.fecha_pago)}</td>
+                                <td className="min-w-28 py-2 pr-4">{pago.observacion || 'Pago'}</td>
+                                <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(pago.valor_pago)}</td>
+                                <td className="py-2 pr-4 whitespace-nowrap capitalize">{pago.forma_pago}</td>
                             </tr>
                         ))
                     )}
                     <tr className="border-t-2 border-gray-800 font-semibold text-gray-800 dark:border-white/90 dark:text-white/90">
-                        <td className="py-2" colSpan={2}>
+                        <td className="py-2 pr-4" colSpan={2}>
                             Total pagado
                         </td>
-                        <td className="py-2">{formatMoney(totalPagado)}</td>
+                        <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(totalPagado)}</td>
                         <td className="py-2" />
                     </tr>
                 </tbody>
