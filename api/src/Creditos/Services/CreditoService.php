@@ -83,6 +83,69 @@ class CreditoService
     }
 
     /**
+     * Solo mientras el crédito no se ha desembolsado: aún no hay pagos ni comprobante contable, así que
+     * cambiar las condiciones se resuelve regenerando el plan de cuotas. Pasado el desembolso, cualquier
+     * corrección va por refinanciación. La bitácora conserva valores anteriores y nuevos, motivo, usuario y fecha.
+     */
+    public function editarCondiciones(Credito $credito, array $datos): Credito
+    {
+        return DB::transaction(function () use ($credito, $datos) {
+            $credito = $this->creditos->bloquear($credito->id);
+
+            if (! in_array($credito->estado, [EstadoCredito::Solicitado, EstadoCredito::Aprobado], true)) {
+                throw ValidationException::withMessages(['credito' => __('validation.custom.credito.no_editable')]);
+            }
+
+            $valorPrestamo = $credito->tipo_credito === TipoCredito::Refinanciacion
+                ? ($credito->saldo_refinanciado ?? Dinero::cero())->sumar(Dinero::desdePesos($datos['valor_adicional']))
+                : Dinero::desdePesos($datos['valor_prestamo']);
+
+            if (! $valorPrestamo->esPositivo()) {
+                throw ValidationException::withMessages(['valor_adicional' => __('validation.custom.valor_adicional.sin_valor')]);
+            }
+
+            $anteriores = $this->auditoria->instantanea($credito);
+            $cuotasReemplazadas = $this->cuotas->todasOrdenadasParaActualizar($credito->id)->count();
+
+            $resultado = AmortizacionCalculator::calcular(
+                $valorPrestamo,
+                (float) $datos['tasa_interes'],
+                (int) $datos['plazo'],
+                TipoPago::from($datos['tipo_pago']),
+                $datos['fecha_desembolso'],
+            );
+
+            $this->cuotas->eliminarTodasDeCredito($credito->id);
+            $this->cuotas->crearVarias($credito->id, $resultado['cuotas']);
+
+            $credito = $this->creditos->actualizar($credito, [
+                'valor_prestamo' => $valorPrestamo,
+                'tasa_interes' => $datos['tasa_interes'],
+                'plazo' => (int) $datos['plazo'],
+                'tipo_pago' => $datos['tipo_pago'],
+                'fecha_desembolso' => $datos['fecha_desembolso'],
+                'valor_cuota' => $resultado['valor_cuota'],
+                'valor_total' => $resultado['valor_total'],
+            ]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CREDITOS,
+                "Condiciones del crédito #{$credito->id} modificadas",
+                $credito,
+                $anteriores,
+                motivo: $datos['motivo'],
+                adicionales: [
+                    'cuotas_reemplazadas' => $cuotasReemplazadas,
+                    'cuotas_generadas' => count($resultado['cuotas']),
+                    'efecto_contable' => 'ninguno: el crédito aún no se desembolsa',
+                ],
+            );
+
+            return $this->creditos->obtenerConRelaciones($credito);
+        });
+    }
+
+    /**
      * Refinanciar es unificar el saldo de capital pendiente del original con el nuevo valor a
      * prestar en un solo crédito (definición de DDA). El saldo tomado se guarda como foto.
      *

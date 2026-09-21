@@ -75,6 +75,12 @@ class CreditoRepository extends BaseRepository
         return $this->consulta()->lockForUpdate()->findOrFail($id);
     }
 
+    /** Bloquea la fila: dos ediciones o una aprobación simultánea no pueden pisarse. */
+    public function bloquear(int $id): Credito
+    {
+        return $this->consulta()->lockForUpdate()->findOrFail($id);
+    }
+
     public function existeRefinanciacionEnCurso(int $origenId): bool
     {
         return $this->consulta()
