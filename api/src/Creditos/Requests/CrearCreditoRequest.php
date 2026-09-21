@@ -58,6 +58,10 @@ class CrearCreditoRequest extends FormRequest
             if ($origen && $origen->estado !== EstadoCredito::Desembolsado) {
                 $validador->errors()->add('credito_origen_id', __('validation.custom.credito_origen_id.no_desembolsado'));
             }
+
+            if ($origen && $this->creditos->existeRefinanciacionEnCurso($origen->id)) {
+                $validador->errors()->add('credito_origen_id', __('validation.custom.credito_origen_id.en_curso'));
+            }
         });
     }
 }

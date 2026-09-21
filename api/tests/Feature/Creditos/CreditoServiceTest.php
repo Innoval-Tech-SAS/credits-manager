@@ -41,7 +41,7 @@ class CreditoServiceTest extends TestCase
         );
     }
 
-    public function test_refinanciacion_congela_el_credito_origen_sin_tocar_sus_cuotas(): void
+    public function test_refinanciacion_congela_el_credito_origen_al_desembolsar_sin_tocar_sus_cuotas(): void
     {
         $cliente = $this->crearCliente();
         $origen = $this->crearCredito($cliente);
@@ -60,9 +60,14 @@ class CreditoServiceTest extends TestCase
             'fecha_desembolso' => '2026-01-01',
         ]);
 
-        $this->assertSame(EstadoCredito::Refinanciado, $origen->fresh()->estado);
+        $this->assertSame(EstadoCredito::Desembolsado, $origen->fresh()->estado, 'Al solicitar, el original no se congela.');
         $this->assertSame(EstadoCredito::Solicitado, $nuevo->estado);
         $this->assertCount(3, $nuevo->cuotas);
+
+        $servicio = app(CreditoService::class);
+        $servicio->desembolsar($servicio->aprobar($nuevo));
+
+        $this->assertSame(EstadoCredito::Refinanciado, $origen->fresh()->estado);
 
         // El original es solo historial: ninguna cuota cambia de estado ni se le inventa un pago.
         $cuotasOrigen = $origen->cuotas()->orderBy('numero_cuota')->get();

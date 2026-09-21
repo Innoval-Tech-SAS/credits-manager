@@ -68,4 +68,18 @@ class CreditoRepository extends BaseRepository
     {
         $this->actualizar($credito, ['estado' => EstadoCredito::Refinanciado]);
     }
+
+    /** Bloquea la fila del original: dos desembolsos simultáneos no pueden refinanciar el mismo crédito. */
+    public function buscarParaCongelar(int $id): Credito
+    {
+        return $this->consulta()->lockForUpdate()->findOrFail($id);
+    }
+
+    public function existeRefinanciacionEnCurso(int $origenId): bool
+    {
+        return $this->consulta()
+            ->where('credito_origen_id', $origenId)
+            ->whereIn('estado', [EstadoCredito::Solicitado, EstadoCredito::Aprobado])
+            ->exists();
+    }
 }

@@ -146,7 +146,7 @@ class CrearCreditoValidationTest extends TestCase
         ]);
 
         $respuesta->assertStatus(201);
-        $this->assertSame('refinanciado', $origen->fresh()->estado->value);
+        $this->assertSame('desembolsado', $origen->fresh()->estado->value, 'El original se congela al desembolsar la refinanciación, no al solicitarla.');
     }
 
     public function test_sin_autenticar_no_puede_crear_creditos(): void
