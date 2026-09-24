@@ -10,8 +10,9 @@ RUN composer dump-autoload --optimize --no-dev
 FROM php:8.4-fpm-alpine
 WORKDIR /var/www/html
 
-RUN apk add --no-cache icu-dev libzip-dev oniguruma-dev \
-    && docker-php-ext-install pdo_mysql mbstring bcmath intl zip opcache pcntl \
+RUN apk add --no-cache icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev \
+    && docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-install pdo_mysql mbstring bcmath intl zip opcache pcntl gd \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
     && pecl install redis \
     && docker-php-ext-enable redis \
