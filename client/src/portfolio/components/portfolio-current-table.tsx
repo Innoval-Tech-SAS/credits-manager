@@ -4,6 +4,7 @@ import { formatMoney } from '../../shared/utils/format-money';
 import { Button } from '@ui/button/components/button';
 import { DataTable } from '@ui/table/components/data-table';
 import type { PortfolioCurrentTableProps } from '../props/portfolio-current-table-props';
+import { Eye } from 'lucide-react';
 
 export const PortfolioCurrentTable: FC<PortfolioCurrentTableProps> = ({ entradas, onView }) => (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
@@ -19,7 +20,7 @@ export const PortfolioCurrentTable: FC<PortfolioCurrentTableProps> = ({ entradas
                     label: '',
                     render: (row) => (
                         <div className="text-right">
-                            <Button variant="outline" onClick={() => onView(row.credito.id)}>
+                            <Button iconOnly startIcon={<Eye className="size-4" />} variant="outline" onClick={() => onView(row.credito.id)}>
                                 Ver
                             </Button>
                         </div>

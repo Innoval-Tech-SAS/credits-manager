@@ -41,7 +41,7 @@ export const VoucherTypesPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button startIcon={<FileText className="size-4" />} onClick={() => navigate('/contabilidad/tipos-comprobante/crear')}>
+                        <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/contabilidad/tipos-comprobante/crear')}>
                             Crear tipo de comprobante
                         </Button>
                     )}

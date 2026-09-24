@@ -41,7 +41,7 @@ export const CostCentersPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button startIcon={<Layers className="size-4" />} onClick={() => navigate('/contabilidad/centros-costo/crear')}>
+                        <Button collapseBelow="md" startIcon={<Layers className="size-4" />} onClick={() => navigate('/contabilidad/centros-costo/crear')}>
                             Crear centro de costo
                         </Button>
                     )}

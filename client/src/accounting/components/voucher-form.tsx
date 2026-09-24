@@ -11,7 +11,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { ArrowRight, Trash2 } from 'lucide-react';
+import { ArrowRight, Plus, Trash2 } from 'lucide-react';
 import type { VoucherFormProps } from '../props/voucher-form-props';
 import type { ApiVoucher } from '../types/api-voucher';
 import type { VoucherFormLine } from '../types/voucher-form-line';
@@ -139,8 +139,8 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
                         <p className="text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
                             Líneas (débito = crédito, obligatorio para contabilizar)
                         </p>
-                        <Button type="button" variant="outline" size="sm" onClick={agregarLinea} className="shrink-0 whitespace-nowrap">
-                            + Agregar línea
+                        <Button iconOnly startIcon={<Plus className="size-4" />} type="button" variant="outline" size="sm" onClick={agregarLinea} className="shrink-0 whitespace-nowrap">
+                            Agregar línea
                         </Button>
                     </div>
 

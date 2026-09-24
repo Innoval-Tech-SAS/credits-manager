@@ -44,7 +44,7 @@ export const VouchersListPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button startIcon={<FilePlus2 className="size-4" />} onClick={() => navigate('/contabilidad/comprobantes/crear')}>
+                        <Button collapseBelow="md" startIcon={<FilePlus2 className="size-4" />} onClick={() => navigate('/contabilidad/comprobantes/crear')}>
                             Nuevo comprobante manual
                         </Button>
                     )}

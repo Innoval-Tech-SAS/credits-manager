@@ -27,7 +27,7 @@ export const ExpenseTypesPage: FC = () => {
             countLabel={`${tiposGasto.length} ${tiposGasto.length === 1 ? 'tipo registrado' : 'tipos registrados'}`}
             toolbar={
                 canCreate && (
-                    <Button startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/tipos-gasto/crear')}>
+                    <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/tipos-gasto/crear')}>
                         Crear tipo de gasto
                     </Button>
                 )

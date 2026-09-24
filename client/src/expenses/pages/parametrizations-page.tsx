@@ -46,7 +46,7 @@ export const ParametrizationsPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/parametrizaciones/crear')}>
+                        <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/parametrizaciones/crear')}>
                             Crear parametrización
                         </Button>
                     )}

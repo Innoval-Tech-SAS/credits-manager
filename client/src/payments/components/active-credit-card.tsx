@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useNavigate } from 'react-router';
-import { ArrowRight, Calendar, CreditCard } from 'lucide-react';
+import { Calendar, CircleDollarSign, CreditCard, HandCoins } from 'lucide-react';
 
 import { formatDateEs } from '../../shared/utils/format-date-es';
 import { formatMoney } from '../../shared/utils/format-money';
@@ -68,10 +68,10 @@ export const ActiveCreditCard: FC<ActiveCreditCardProps> = ({ credito }) => {
             </div>
 
             <div className="mt-5 flex flex-wrap gap-2 border-t border-gray-100 pt-4 dark:border-gray-800">
-                <Button size="sm" endIcon={<ArrowRight className="size-4" />} onClick={() => navigate(`/pagos/creditos/${credito.id}/nuevo`)}>
+                <Button iconOnly size="sm" startIcon={<HandCoins className="size-4" />} onClick={() => navigate(`/pagos/creditos/${credito.id}/nuevo`)}>
                     Pagar cuota
                 </Button>
-                <Button size="sm" variant="outline" onClick={() => navigate(`/pagos/creditos/${credito.id}/liquidar`)}>
+                <Button iconOnly startIcon={<CircleDollarSign className="size-4" />} size="sm" variant="outline" onClick={() => navigate(`/pagos/creditos/${credito.id}/liquidar`)}>
                     Liquidar
                 </Button>
                 <button

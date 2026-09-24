@@ -6,6 +6,7 @@ import { DataTable } from '@ui/table/components/data-table';
 import { CREDIT_STATUS_BADGE_CLASSES } from '../../credits/constants/credit-status-badge-classes';
 import { CREDIT_STATUS_LABEL } from '../../credits/constants/credit-status-label';
 import type { ClientCreditsTableProps } from '../props/client-credits-table-props';
+import { Eye } from 'lucide-react';
 
 export const ClientCreditsTable: FC<ClientCreditsTableProps> = ({ creditos, onView }) => (
     <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
@@ -29,7 +30,7 @@ export const ClientCreditsTable: FC<ClientCreditsTableProps> = ({ creditos, onVi
                     label: '',
                     render: (row) => (
                         <div className="text-right">
-                            <Button variant="outline" onClick={() => onView(row.id)}>
+                            <Button iconOnly startIcon={<Eye className="size-4" />} variant="outline" onClick={() => onView(row.id)}>
                                 Ver
                             </Button>
                         </div>

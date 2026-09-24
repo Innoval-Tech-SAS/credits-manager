@@ -42,7 +42,7 @@ export const MunicipalitiesAdminPage: FC = () => {
                     : 'Elige un país y un departamento para ver sus municipios'
             }
             toolbar={
-                <Button startIcon={<MapPin className="size-4" />} onClick={() => navigate('/geografia/municipios/crear')}>
+                <Button collapseBelow="md" startIcon={<MapPin className="size-4" />} onClick={() => navigate('/geografia/municipios/crear')}>
                     Agregar municipio
                 </Button>
             }
@@ -86,7 +86,7 @@ export const MunicipalitiesAdminPage: FC = () => {
                         key: 'acciones',
                         label: 'Acciones',
                         render: (municipality) => (
-                            <Button size="sm" variant="outline" startIcon={<Pencil className="size-4" />} onClick={() => setEditing(municipality)}>
+                            <Button iconOnly size="sm" variant="outline" startIcon={<Pencil className="size-4" />} onClick={() => setEditing(municipality)}>
                                 Editar
                             </Button>
                         ),

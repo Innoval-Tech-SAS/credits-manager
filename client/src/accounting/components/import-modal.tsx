@@ -68,7 +68,7 @@ export const ImportModal: FC<ImportModalProps> = ({ onClose, tipo, titulo, colum
                     </p>
                     {notas && <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{notas}</p>}
                 </div>
-                <Button variant="outline" size="sm" startIcon={<Download className="size-4" />} onClick={handleDescargarPlantilla}>
+                <Button iconOnly variant="outline" size="sm" startIcon={<Download className="size-4" />} onClick={handleDescargarPlantilla}>
                     Descargar plantilla
                 </Button>
             </div>

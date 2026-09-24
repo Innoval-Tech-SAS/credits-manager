@@ -2,13 +2,14 @@ import type { FC } from 'react';
 
 import { Button } from '@ui/button/components/button';
 import type { ClientInfoCardProps } from '../props/client-info-card-props';
+import { Pencil } from 'lucide-react';
 
 export const ClientInfoCard: FC<ClientInfoCardProps> = ({ cliente, canEdit, onEdit }) => (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
         <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">Datos del cliente</h2>
             {canEdit && (
-                <Button variant="outline" onClick={onEdit}>
+                <Button iconOnly startIcon={<Pencil className="size-4" />} variant="outline" onClick={onEdit}>
                     Editar
                 </Button>
             )}

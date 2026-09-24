@@ -27,7 +27,7 @@ export const EconomicActivitiesPage: FC = () => {
             countLabel={`${actividades.length} ${actividades.length === 1 ? 'actividad registrada' : 'actividades registradas'}`}
             toolbar={
                 canCreate && (
-                    <Button startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/actividades-economicas/crear')}>
+                    <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/actividades-economicas/crear')}>
                         Crear actividad económica
                     </Button>
                 )

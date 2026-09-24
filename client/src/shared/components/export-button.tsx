@@ -55,9 +55,9 @@ export const ExportButton: FC<ExportButtonProps> = ({
 
     return (
         <div className="relative">
-            <Button
+            <Button iconOnly
                 variant="outline"
-                className="dropdown-toggle w-full sm:w-auto"
+                className="dropdown-toggle"
                 startIcon={<Download className="size-4" />}
                 disabled={disabled || isRequesting || isDownloading}
                 onClick={() => setIsOpen((previous) => !previous)}

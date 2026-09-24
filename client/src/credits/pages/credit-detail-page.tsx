@@ -20,6 +20,7 @@ import { CREDIT_TRANSITION_ACTION_CONFIG } from '../constants/credit-transition-
 import { puedeCancelarCredito } from '../utils/can-cancel-credit';
 import type { ApiCreditDetail } from '../types/api-credit-detail';
 import type { CreditTransitionAction } from '../types/credit-transition-action';
+import { CircleDollarSign, FileText, HandCoins, Receipt, SlidersHorizontal } from 'lucide-react';
 
 export const CreditDetailPage: FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -129,7 +130,7 @@ export const CreditDetailPage: FC = () => {
 
                 <div className="mt-6 flex flex-wrap gap-3 border-t border-gray-100 pt-6 dark:border-gray-800">
                     {(credito.estado === 'solicitado' || credito.estado === 'aprobado') && canEditar && (
-                        <Button variant="outline" onClick={() => navigate(`/creditos/${credito.id}/editar`)}>
+                        <Button iconOnly startIcon={<SlidersHorizontal className="size-4" />} variant="outline" onClick={() => navigate(`/creditos/${credito.id}/editar`)}>
                             Modificar condiciones
                         </Button>
                     )}
@@ -151,18 +152,18 @@ export const CreditDetailPage: FC = () => {
                     )}
                     {credito.estado === 'desembolsado' && canRegisterPayment && (
                         <>
-                            <Button onClick={() => navigate(`/pagos/creditos/${credito.id}/nuevo`)}>Pagar cuota</Button>
-                            <Button variant="outline" onClick={() => navigate(`/pagos/creditos/${credito.id}/liquidar`)}>
+                            <Button iconOnly startIcon={<HandCoins className="size-4" />} onClick={() => navigate(`/pagos/creditos/${credito.id}/nuevo`)}>Pagar cuota</Button>
+                            <Button iconOnly startIcon={<CircleDollarSign className="size-4" />} variant="outline" onClick={() => navigate(`/pagos/creditos/${credito.id}/liquidar`)}>
                                 Liquidar crédito
                             </Button>
                         </>
                     )}
                     {canViewPayments && (
-                        <Button variant="outline" onClick={() => navigate(`/pagos/creditos/${credito.id}`)}>
+                        <Button iconOnly startIcon={<Receipt className="size-4" />} variant="outline" onClick={() => navigate(`/pagos/creditos/${credito.id}`)}>
                             Ver pagos
                         </Button>
                     )}
-                    <Button variant="outline" onClick={() => navigate(`/creditos/${credito.id}/estado-cuenta`)}>
+                    <Button iconOnly startIcon={<FileText className="size-4" />} variant="outline" onClick={() => navigate(`/creditos/${credito.id}/estado-cuenta`)}>
                         Estado de cuenta
                     </Button>
                 </div>
