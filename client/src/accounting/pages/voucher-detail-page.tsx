@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { Download } from 'lucide-react';
+import { Download, Undo2 } from 'lucide-react';
 
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import { useResource } from '../../shared/hooks/use-resource';
@@ -73,7 +73,7 @@ export const VoucherDetailPage: FC = () => {
                                     {isDownloading ? 'Generando…' : 'Descargar PDF'}
                                 </Button>
                                 {canReverse && comprobante.estado === 'contabilizado' && (
-                                    <Button variant="outline" size="sm" onClick={() => setIsReversing(true)}>
+                                    <Button iconOnly variant="outline" startIcon={<Undo2 className="size-4" />} onClick={() => setIsReversing(true)}>
                                         Reversar
                                     </Button>
                                 )}
