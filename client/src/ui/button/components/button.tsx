@@ -26,11 +26,12 @@ export const Button: FC<ButtonProps> = ({
 
     const sizeClasses = isIconOnly ? BUTTON_ICON_ONLY_CLASSES.always : collapses ? BUTTON_ICON_ONLY_CLASSES.belowMd : BUTTON_SIZE_CLASSES[size];
 
+    // `relative` contiene el texto `sr-only` (absoluto): sin un ancestro posicionado se salía del contenedor con scroll y alargaba el documento.
     const button = (
         <button
             type={type}
             aria-label={isCompact ? text : undefined}
-            className={`inline-flex items-center justify-center gap-2 rounded-lg transition ${className} ${sizeClasses} ${
+            className={`${isCompact ? 'relative ' : ''}inline-flex items-center justify-center gap-2 rounded-lg transition ${className} ${sizeClasses} ${
                 BUTTON_VARIANT_CLASSES[variant]
             } ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
             onClick={onClick}
