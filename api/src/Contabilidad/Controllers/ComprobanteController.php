@@ -5,14 +5,19 @@ namespace App\Contabilidad\Controllers;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Requests\CrearComprobanteRequest;
 use App\Contabilidad\Requests\ReversarComprobanteRequest;
+use App\Contabilidad\Services\ComprobantePdfService;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class ComprobanteController extends Controller
 {
-    public function __construct(protected ComprobanteService $comprobantes) {}
+    public function __construct(
+        protected ComprobanteService $comprobantes,
+        protected ComprobantePdfService $comprobantesPdf,
+    ) {}
 
     public function index(Request $peticion): JsonResponse
     {
@@ -46,6 +51,16 @@ class ComprobanteController extends Controller
     public function show(Comprobante $comprobante): JsonResponse
     {
         return response()->json(['comprobante' => $this->comprobantes->mostrar($comprobante)]);
+    }
+
+    public function pdf(Comprobante $comprobante): Response
+    {
+        $pdf = $this->comprobantesPdf->generarPdf($comprobante);
+
+        return response($pdf->contenido, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$pdf->nombreArchivo.'.pdf"',
+        ]);
     }
 
     public function reversar(ReversarComprobanteRequest $peticion, Comprobante $comprobante): JsonResponse
