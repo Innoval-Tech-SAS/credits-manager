@@ -157,6 +157,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/comprobantes', [ComprobanteController::class, 'index'])->middleware('permiso:contabilidad,listar');
     Route::post('/contabilidad/comprobantes', [ComprobanteController::class, 'store'])->middleware('permiso:contabilidad,crear_manual');
     Route::get('/contabilidad/comprobantes/{comprobante}', [ComprobanteController::class, 'show'])->middleware('permiso:contabilidad,listar');
+    Route::get('/contabilidad/comprobantes/{comprobante}/pdf', [ComprobanteController::class, 'pdf'])->middleware('permiso:contabilidad,listar')->whereNumber('comprobante');
     Route::post('/contabilidad/comprobantes/{comprobante}/reversar', [ComprobanteController::class, 'reversar'])->middleware('permiso:contabilidad,anular');
 
     Route::get('/contabilidad/libro-diario', [ReporteContableController::class, 'libroDiario'])->middleware('permiso:contabilidad,listar');

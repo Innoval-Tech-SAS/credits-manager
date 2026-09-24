@@ -1,7 +1,9 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { Download } from 'lucide-react';
 
+import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import { useResource } from '../../shared/hooks/use-resource';
 import { formatDateEs } from '../../shared/utils/format-date-es';
 import { formatMoney } from '../../shared/utils/format-money';
@@ -21,6 +23,7 @@ export const VoucherDetailPage: FC = () => {
     const { data, error, isLoading } = useResource<{ comprobante: ApiVoucher }>(`/contabilidad/comprobantes/${id}`);
     const comprobante = data?.comprobante ?? null;
     const [isReversing, setIsReversing] = useState(false);
+    const { download, isDownloading, error: downloadError } = useDownloadFile();
 
     return (
         <div className="flex min-h-full flex-col pb-6">
@@ -47,6 +50,7 @@ export const VoucherDetailPage: FC = () => {
                                 <p>Concepto: {comprobante.concepto}</p>
                                 {comprobante.tercero && <p>Tercero: {comprobante.tercero.nombre}</p>}
                                 {comprobante.documento_soporte && <p>Documento soporte: {comprobante.documento_soporte}</p>}
+                                {downloadError && <p className="text-error-600 dark:text-error-400">{downloadError}</p>}
                                 {comprobante.comprobante_reverso_id && (
                                     <p className="text-brand-600 dark:text-brand-400">
                                         Reversado por el comprobante #{comprobante.comprobante_reverso_id}.
@@ -54,10 +58,20 @@ export const VoucherDetailPage: FC = () => {
                                 )}
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-3">
                                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${VOUCHER_STATUS_BADGE_CLASSES[comprobante.estado]}`}>
                                     {comprobante.estado}
                                 </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="whitespace-nowrap"
+                                    startIcon={<Download className="size-4" />}
+                                    disabled={isDownloading}
+                                    onClick={() => download(`/contabilidad/comprobantes/${comprobante.id}/pdf`, `comprobante-${comprobante.id}.pdf`)}
+                                >
+                                    {isDownloading ? 'Generando…' : 'Descargar PDF'}
+                                </Button>
                                 {canReverse && comprobante.estado === 'contabilizado' && (
                                     <Button variant="outline" size="sm" onClick={() => setIsReversing(true)}>
                                         Reversar
