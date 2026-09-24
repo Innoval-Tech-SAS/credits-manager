@@ -8,6 +8,7 @@ use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
 use App\Core\Dinero\DineroCast;
 use App\Gastos\Enums\EstadoGasto;
+use App\Geografia\Models\Municipio;
 use App\Terceros\Models\Tercero;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

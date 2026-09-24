@@ -4,6 +4,7 @@ namespace App\Gastos\Models;
 
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
+use App\Geografia\Models\Municipio;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

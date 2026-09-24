@@ -3,17 +3,19 @@
 namespace Tests\Concerns;
 
 use App\Gastos\Models\ActividadEconomica;
-use App\Gastos\Models\Municipio;
 use App\Gastos\Models\ParametrizacionTipoGasto;
 use App\Gastos\Models\TarifaReteIcaMunicipio;
 use App\Gastos\Models\TipoGasto;
 use App\Gastos\Models\ValorUvt;
+use App\Geografia\Models\Municipio;
 use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
 
 /** Fixtures del módulo de Gastos — evita repetir el armado de tipo de gasto + parametrización vigente en cada test. */
 trait CreatesGastosFixtures
 {
+    use CreatesGeografiaFixtures;
+
     protected function crearTipoGasto(array $overrides = []): TipoGasto
     {
         static $contador = 0;
@@ -24,17 +26,6 @@ trait CreatesGastosFixtures
             'nombre' => "Tipo de gasto de prueba {$contador}",
             'requiere_tercero' => true,
             'aplica_iva' => false,
-        ], $overrides));
-    }
-
-    protected function crearMunicipio(array $overrides = []): Municipio
-    {
-        static $contador = 0;
-        $contador++;
-
-        return Municipio::create(array_merge([
-            'codigo' => "M{$contador}",
-            'nombre' => "Municipio de prueba {$contador}",
         ], $overrides));
     }
 
