@@ -28,7 +28,7 @@ class EmpresaAdminController extends Controller
 
     public function show(Empresa $empresa): JsonResponse
     {
-        return response()->json(['empresa' => $empresa]);
+        return response()->json(['empresa' => $this->empresas->conMunicipio($empresa)]);
     }
 
     public function store(CrearEmpresaRequest $peticion): JsonResponse

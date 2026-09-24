@@ -15,7 +15,7 @@ class EmpresaRepository extends BaseRepository
 
     public function paginar(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
     {
-        $consulta = $this->consulta()->orderBy('nombre_empresa');
+        $consulta = $this->consulta()->with('municipio:id,nombre')->orderBy('nombre_empresa');
 
         if ($busqueda) {
             $consulta->where('nombre_empresa', 'like', "%{$busqueda}%");

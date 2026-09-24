@@ -7,6 +7,14 @@ export function mapCompany(apiCompany: ApiCompany): Company {
         name: apiCompany.nombre_empresa,
         taxId: apiCompany.nit,
         address: apiCompany.direccion,
+        municipality: apiCompany.municipio
+            ? {
+                  id: apiCompany.municipio.id,
+                  name: apiCompany.municipio.nombre,
+                  stateId: apiCompany.municipio.estado?.id ?? null,
+                  countryId: apiCompany.municipio.estado?.pais_id ?? null,
+              }
+            : null,
         phone: apiCompany.telefono,
         email: apiCompany.correo,
         logoPath: apiCompany.logo_path,

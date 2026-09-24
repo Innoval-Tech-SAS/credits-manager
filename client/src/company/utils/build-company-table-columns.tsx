@@ -5,6 +5,7 @@ export function buildCompanyTableColumns(): DataTableColumn<ApiCompany>[] {
     return [
         { key: 'nombre_empresa', label: 'Empresa', render: (row) => row.nombre_empresa },
         { key: 'nit', label: 'NIT', render: (row) => row.nit ?? '—' },
+        { key: 'municipio', label: 'Municipio', render: (row) => row.municipio?.nombre ?? '—' },
         { key: 'correo', label: 'Correo', render: (row) => row.correo ?? '—' },
         { key: 'telefono', label: 'Teléfono', render: (row) => row.telefono ?? '—' },
         {

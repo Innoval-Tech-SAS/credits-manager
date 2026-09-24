@@ -3,6 +3,9 @@
 namespace Tests\Concerns;
 
 use App\Empresas\Models\Empresa;
+use App\Geografia\Models\Estado;
+use App\Geografia\Models\Municipio;
+use App\Geografia\Models\Pais;
 use App\Usuarios\Constants\UsuarioConstants;
 use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
@@ -22,9 +25,19 @@ trait ActsAsAdmin
             'nombre_empresa' => "Empresa de prueba {$contador}",
             'nit' => "90000000{$contador}-0",
             'direccion' => 'Calle falsa 123',
+            'municipio_id' => $this->municipioDePrueba()->id,
             'telefono' => '3000000000',
             'correo' => "empresa{$contador}@example.com",
         ], $overrides));
+    }
+
+    /** Un único municipio compartido por todas las empresas de prueba: el catálogo es global. */
+    protected function municipioDePrueba(): Municipio
+    {
+        $pais = Pais::firstOrCreate(['codigo' => 'CO'], ['nombre' => 'Colombia']);
+        $estado = Estado::firstOrCreate(['pais_id' => $pais->id, 'codigo' => '47'], ['nombre' => 'Magdalena']);
+
+        return Municipio::firstOrCreate(['estado_id' => $estado->id, 'codigo' => '47001'], ['nombre' => 'Santa Marta', 'es_capital' => true]);
     }
 
     protected function actingAsAdmin(?Empresa $empresa = null): Usuario

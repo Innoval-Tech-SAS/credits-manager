@@ -17,7 +17,7 @@ class EmpresaAuditoriaTest extends TestCase
     private function datosEmpresa(): array
     {
         return [
-            'nombre_empresa' => 'Empresa auditada SAS', 'nit' => '900555444-1', 'direccion' => 'Calle 1', 'telefono' => '3001112222',
+            'nombre_empresa' => 'Empresa auditada SAS', 'nit' => '900555444-1', 'direccion' => 'Calle 1', 'municipio_id' => $this->municipioDePrueba()->id, 'telefono' => '3001112222',
             'correo' => 'auditada@example.com', 'admin_nombre' => 'Admin Auditado', 'admin_usuario' => 'admin_auditado', 'admin_password' => 'Clave123!',
         ];
     }
@@ -26,7 +26,7 @@ class EmpresaAuditoriaTest extends TestCase
     {
         return array_merge([
             'nombre_empresa' => $empresa->nombre_empresa, 'nit' => $empresa->nit, 'direccion' => $empresa->direccion,
-            'telefono' => $empresa->telefono, 'correo' => $empresa->correo,
+            'municipio_id' => $empresa->municipio_id, 'telefono' => $empresa->telefono, 'correo' => $empresa->correo,
         ], $cambios);
     }
 
