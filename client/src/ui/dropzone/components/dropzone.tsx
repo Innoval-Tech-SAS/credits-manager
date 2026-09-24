@@ -21,7 +21,7 @@ export const Dropzone: FC<DropzoneProps> = ({ onFileAccepted, hint, accept = ACC
         <div className="transition border border-gray-300 border-dashed cursor-pointer dark:hover:border-brand-500 dark:border-gray-700 rounded-xl hover:border-brand-500">
             <div
                 {...getRootProps()}
-                className={`rounded-xl border-dashed p-7 text-center ${
+                className={`relative rounded-xl border-dashed p-7 text-center ${
                     isDragActive
                         ? 'border-brand-500 bg-gray-100 dark:bg-gray-800'
                         : 'border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
