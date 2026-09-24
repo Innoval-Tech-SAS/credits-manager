@@ -4,10 +4,8 @@ namespace App\Impresion\Constants;
 
 class ImpresionConstants
 {
-    /** Todos los documentos van en carta vertical. */
+    /** Todos los documentos van en carta; la orientación la decide cada documento (vertical salvo excepción). */
     public const PAPEL = 'letter';
-
-    public const ORIENTACION = 'portrait';
 
     /** Fuente base del núcleo de PDF: trae tildes y eñe sin instalar fuentes. */
     public const FUENTE = 'Helvetica';

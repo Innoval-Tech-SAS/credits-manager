@@ -11,5 +11,6 @@ final readonly class DestinatarioDocumento
         public ?string $telefono = null,
         public ?string $direccion = null,
         public ?string $ciudad = null,
+        public string $etiquetaDocumento = 'NIT',
     ) {}
 }

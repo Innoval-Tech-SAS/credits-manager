@@ -5,6 +5,7 @@ namespace App\Impresion\Services;
 use App\Empresas\Models\Empresa;
 use App\Impresion\Constants\ImpresionConstants;
 use App\Impresion\Contracts\DocumentoPdf;
+use App\Impresion\Enums\OrientacionDocumento;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -34,12 +35,14 @@ final class GeneradorPdf
             'documento' => $documento,
             'columnas' => $documento->columnas(),
             'filas' => $filas,
+            'tablasAdicionales' => $documento->tablasAdicionales(),
+            'horizontal' => $documento->orientacion() === OrientacionDocumento::Horizontal,
             'formateador' => $this->formateador,
         ])->render();
 
         $dompdf = new Dompdf($this->opciones());
         $dompdf->loadHtml($html, 'UTF-8');
-        $dompdf->setPaper(ImpresionConstants::PAPEL, ImpresionConstants::ORIENTACION);
+        $dompdf->setPaper(ImpresionConstants::PAPEL, $documento->orientacion()->value);
         $dompdf->render();
 
         $this->numerarPaginas($dompdf);
