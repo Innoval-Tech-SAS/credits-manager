@@ -6,7 +6,12 @@ import { useDownloadFile } from './use-download-file';
 export function useDownloadExport() {
     const { download: downloadFile, isDownloading, error } = useDownloadFile();
 
-    const download = useCallback((exportId: number): Promise<void> => downloadFile(`/exportaciones/${exportId}/descargar`, `exportacion-${exportId}`), [downloadFile]);
+    const download = useCallback(
+        async (exportId: number): Promise<void> => {
+            await downloadFile(`/exportaciones/${exportId}/descargar`, `exportacion-${exportId}`);
+        },
+        [downloadFile],
+    );
 
     return { download, isDownloading, error };
 }

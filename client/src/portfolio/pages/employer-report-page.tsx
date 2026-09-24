@@ -1,9 +1,11 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 
+import { usePermission } from '../../auth/hooks/use-permission';
+import { ExportButton } from '../../shared/components/export-button';
 import { useResource } from '../../shared/hooks/use-resource';
 import { formatMoney } from '../../shared/utils/format-money';
-import { Button } from '@ui/button/components/button';
+import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
@@ -14,6 +16,9 @@ import { formatPeriodoEs } from '../utils/format-periodo-es';
 export const EmployerReportPage: FC = () => {
     /** null = todavía no hay selección explícita del usuario; usa el default que resuelve el servidor. */
     const [empleadorId, setEmpleadorId] = useState<number | null>(null);
+    const [exportMessage, setExportMessage] = useState<string | null>(null);
+    const [exportError, setExportError] = useState<string | null>(null);
+    const canExport = usePermission('cartera', 'exportar');
 
     const params = new URLSearchParams();
     if (empleadorId) {
@@ -43,10 +48,39 @@ export const EmployerReportPage: FC = () => {
 
     return (
         <div className="flex min-h-full flex-col pb-6">
-            <div className="mb-4 flex items-center justify-between print:hidden">
+            <div className="mb-4 flex items-center gap-3 print:hidden">
                 <PageBreadcrumb pageTitle="Reporte por empleador" />
-                {empleadorSeleccionado && <Button onClick={() => window.print()}>Imprimir</Button>}
+                {empleadorSeleccionado && canExport && (
+                    <ExportButton
+                        endpoint="/cartera/reporte-empleador/exportar"
+                        filters={{ empleador_id: String(empleadorSeleccionado) }}
+                        formats={['xlsx']}
+                        pdfEndpoint="/cartera/reporte-empleador/pdf"
+                        pdfFilename="relacion-descuento.pdf"
+                        align="left"
+                        disabled={filas.length === 0}
+                        onRequested={() => {
+                            setExportError(null);
+                            setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
+                        }}
+                        onError={(message) => {
+                            setExportMessage(null);
+                            setExportError(message);
+                        }}
+                    />
+                )}
             </div>
+
+            {exportMessage && (
+                <div className="mb-4 print:hidden">
+                    <Alert variant="success" title="Listo" message={exportMessage} onDismiss={() => setExportMessage(null)} />
+                </div>
+            )}
+            {exportError && (
+                <div className="mb-4 print:hidden">
+                    <Alert variant="danger" title="No se pudo exportar" message={exportError} onDismiss={() => setExportError(null)} />
+                </div>
+            )}
 
             <div className="mb-6 max-w-sm rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 print:hidden">
                 {empleadores.length === 0 ? (

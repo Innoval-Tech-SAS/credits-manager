@@ -13,7 +13,7 @@ Solo implementa `Contracts/DocumentoPdf` y entrega datos, nunca HTML:
 - `titulo()`, `consecutivo()` (nulo si no tiene), `nombreArchivo()` y `orientacion()` (`OrientacionDocumento`: **vertical para todos, salvo el reporte por empleador, que es horizontal**).
 - `destinatario()` (`DestinatarioDocumento`; `etiquetaDocumento` es "NIT" salvo que el documento use otra, p. ej. "CC") y `fechas()` (`FechaDocumento`).
 - `tituloTabla()` (nulo si no lleva), `columnas()` (`ColumnaDocumento`: clave, encabezado, tipo y ancho en %) y `filas()`. **Los encabezados de la tabla son libres**: ítem, cantidad, descripción y valor cambian según el documento.
-- `tablasAdicionales()`: tablas bajo la principal (`TablaDocumento`: título, columnas, filas, fila de total opcional y mensaje si no hay filas). Ejemplo: el estado de cuenta trae el plan de cuotas como tabla principal y el detalle de pagos como adicional.
+- `tablasAdicionales()`: tablas bajo la principal (`TablaDocumento`: título —vacío si no lleva—, columnas, filas, fila de total opcional, mensaje si no hay filas y `conEncabezado`, falso para una fila de totales que continúa a la principal con las mismas columnas). Ejemplos: el estado de cuenta trae el plan de cuotas como tabla principal y el detalle de pagos como adicional; el reporte por empleador pone los totales por mes como tabla adicional sin encabezado.
 - `totales()` (`TotalDocumento`, con `Dinero`), `secciones()` (valor en letras, forma de pago, observaciones…) y `pie()`.
 
 `NumeroALetras::pesos(Dinero)` escribe el valor en letras ("Un millón doscientos veintidós mil trescientos ochenta pesos m/cte").
@@ -31,5 +31,7 @@ Un documento real se arma en el Service de su módulo (ver `Creditos/Documentos/
 
 - **Cifras y fechas** las formatea `FormateadorDocumento` como la plantilla de DDA: coma de miles y punto decimal. Los montos viajan como `Dinero`. Una fecha **con hora** es un instante y se lleva a hora de Bogotá; una fecha **sin hora** (vencimiento, desembolso) es de calendario y se imprime tal cual, sin correrla de día.
 - **Logo**: solo PNG, JPG o GIF. El SVG se omite porque dompdf lo dibuja con fondo negro. Requiere la extensión `gd` (en el `Dockerfile` de `api`).
+- **Horizontal** (`OrientacionDocumento::Horizontal`): la fuente de la tabla baja a 7 pt y las celdas aceptan saltos de línea (`
+`), lo que permite valor y estado en dos líneas para caber muchos meses. Los anchos de columna (`ancho`, en %) se aplican a las celdas de la primera fila.
 - Varias páginas: la cabecera de la tabla se repite, los totales van una sola vez al final y cada página lleva "Página x de y".
 - Probar un documento nuevo: `tests/Support/DocumentoPdfDePrueba` y `tests/Feature/Impresion/GeneradorPdfTest` muestran cómo generar y leer el texto del PDF.

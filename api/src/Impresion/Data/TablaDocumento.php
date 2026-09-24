@@ -10,6 +10,7 @@ final readonly class TablaDocumento
      * @param  list<array<string, mixed>>  $filas  cada una indexada por la clave de columna
      * @param  array<string, mixed>|null  $filaTotal  misma forma que una fila; se imprime en negrita al final
      * @param  string|null  $mensajeVacio  se imprime en lugar de las filas cuando no hay ninguna
+     * @param  bool  $conEncabezado  falso para una tabla que continúa a la principal con las mismas columnas (p. ej. una fila de totales)
      */
     public function __construct(
         public string $titulo,
@@ -17,5 +18,6 @@ final readonly class TablaDocumento
         public array $filas,
         public ?array $filaTotal = null,
         public ?string $mensajeVacio = null,
+        public bool $conEncabezado = true,
     ) {}
 }
