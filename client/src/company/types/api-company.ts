@@ -4,6 +4,9 @@ export type ApiCompany = {
     nombre_empresa: string;
     nit: string | null;
     direccion: string | null;
+    municipio_id: number | null;
+    /** En el listado del superadmin solo trae `id` y `nombre`; el resto llega en el detalle y en la empresa propia. */
+    municipio: { id: number; nombre: string; estado?: { id: number; pais_id: number; nombre: string } } | null;
     telefono: string | null;
     correo: string | null;
     logo_path: string | null;

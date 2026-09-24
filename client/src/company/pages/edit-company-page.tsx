@@ -9,6 +9,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { API_ROOT } from '../../shared/constants/api';
+import { MunicipalitySelector } from '../../geography/components/municipality-selector';
 import { useCompany } from '../hooks/use-company';
 
 export const EditCompanyPage: FC = () => {
@@ -18,6 +19,7 @@ export const EditCompanyPage: FC = () => {
     const [name, setName] = useState(company?.name ?? '');
     const [taxId, setTaxId] = useState(company?.taxId ?? '');
     const [address, setAddress] = useState(company?.address ?? '');
+    const [municipalityId, setMunicipalityId] = useState(company?.municipality ? String(company.municipality.id) : '');
     const [phone, setPhone] = useState(company?.phone ?? '');
     const [email, setEmail] = useState(company?.email ?? '');
     const [error, setError] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export const EditCompanyPage: FC = () => {
                     nombre_empresa: name,
                     nit: taxId,
                     direccion: address,
+                    municipio_id: Number(municipalityId),
                     telefono: phone,
                     correo: email,
                 },
@@ -130,6 +133,20 @@ export const EditCompanyPage: FC = () => {
                                     />
                                 </div>
 
+                                <MunicipalitySelector
+                                    stacked
+                                    onChange={setMunicipalityId}
+                                    initial={
+                                        company?.municipality?.stateId && company.municipality.countryId
+                                            ? {
+                                                  municipalityId: String(company.municipality.id),
+                                                  stateId: String(company.municipality.stateId),
+                                                  countryId: String(company.municipality.countryId),
+                                              }
+                                            : undefined
+                                    }
+                                />
+
                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
                                         <Label htmlFor="phone">Teléfono</Label>
@@ -191,7 +208,7 @@ export const EditCompanyPage: FC = () => {
                     <div className="mt-8 flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                         <Button
                             type="submit"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || !municipalityId}
                             startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
                         >
                             {isSubmitting ? 'Guardando…' : 'Guardar cambios'}

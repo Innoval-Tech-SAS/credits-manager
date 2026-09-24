@@ -8,6 +8,7 @@ import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Spinner } from '@ui/spinner/components/spinner';
+import { MunicipalitySelector } from '../../geography/components/municipality-selector';
 import { ArrowRight, Lock, User } from 'lucide-react';
 
 export const CreateCompanyPage: FC = () => {
@@ -17,6 +18,7 @@ export const CreateCompanyPage: FC = () => {
     const [name, setName] = useState('');
     const [taxId, setTaxId] = useState('');
     const [address, setAddress] = useState('');
+    const [municipalityId, setMunicipalityId] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
 
@@ -46,6 +48,7 @@ export const CreateCompanyPage: FC = () => {
                     nombre_empresa: name,
                     nit: taxId,
                     direccion: address,
+                    municipio_id: Number(municipalityId),
                     telefono: phone,
                     correo: email,
                     admin_nombre: adminName,
@@ -115,6 +118,8 @@ export const CreateCompanyPage: FC = () => {
                                             onChange={(event) => setAddress(event.target.value)}
                                         />
                                     </div>
+
+                                    <MunicipalitySelector stacked onChange={setMunicipalityId} />
 
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                         <div>
@@ -209,7 +214,7 @@ export const CreateCompanyPage: FC = () => {
                         <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                             <Button
                                 type="submit"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || !municipalityId}
                                 startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
                                 endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
                             >

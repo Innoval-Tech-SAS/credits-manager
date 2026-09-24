@@ -8,9 +8,9 @@ import type { MunicipalitySelectorProps } from '../props/municipality-selector-p
 import type { ApiMunicipality } from '../types/api-municipality';
 import { StateSelector } from './state-selector';
 
-/** País → departamento → municipio del catálogo global. Ocupa una fila completa del formulario. */
-export const MunicipalitySelector: FC<MunicipalitySelectorProps> = ({ onChange }) => {
-    const [stateId, setStateId] = useState('');
+/** País → departamento → municipio del catálogo global. */
+export const MunicipalitySelector: FC<MunicipalitySelectorProps> = ({ onChange, initial, stacked = false }) => {
+    const [stateId, setStateId] = useState(initial?.stateId ?? '');
 
     const { data } = useResource<{ municipios: ApiMunicipality[] }>(stateId ? `/geografia/municipios?estado_id=${stateId}` : null);
     const municipalities = data?.municipios ?? [];
@@ -21,8 +21,8 @@ export const MunicipalitySelector: FC<MunicipalitySelectorProps> = ({ onChange }
     };
 
     return (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <StateSelector onChange={handleStateChange} />
+        <div className={`grid grid-cols-1 gap-6 ${stacked ? '' : 'md:grid-cols-3'}`}>
+            <StateSelector onChange={handleStateChange} initialCountryId={initial?.countryId} initialStateId={initial?.stateId} />
 
             <div>
                 <Label htmlFor="municipio">Municipio</Label>
@@ -30,6 +30,7 @@ export const MunicipalitySelector: FC<MunicipalitySelectorProps> = ({ onChange }
                     key={`municipio-${stateId}-${municipalities.length}`}
                     options={municipalities.map((municipality) => ({ value: String(municipality.id), label: municipality.nombre }))}
                     placeholder="Municipio"
+                    defaultValue={stateId === initial?.stateId ? initial.municipalityId : ''}
                     onChange={onChange}
                 />
             </div>
