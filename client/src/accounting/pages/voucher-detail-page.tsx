@@ -63,9 +63,9 @@ export const VoucherDetailPage: FC = () => {
                                     {comprobante.estado}
                                 </span>
                                 <Button
+                                    iconOnly
                                     variant="outline"
-                                    size="sm"
-                                    className="whitespace-nowrap"
+                                    label="Descargar PDF"
                                     startIcon={<Download className="size-4" />}
                                     disabled={isDownloading}
                                     onClick={() => download(`/contabilidad/comprobantes/${comprobante.id}/pdf`, `comprobante-${comprobante.id}.pdf`)}
