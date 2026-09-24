@@ -81,7 +81,7 @@ export const RolesListPage: FC = () => {
                         />
                     </div>
 
-                    <Button startIcon={<ShieldCheck className="size-4" />} onClick={() => navigate('/roles/crear')}>
+                    <Button collapseBelow="md" startIcon={<ShieldCheck className="size-4" />} onClick={() => navigate('/roles/crear')}>
                         Crear rol
                     </Button>
                 </>

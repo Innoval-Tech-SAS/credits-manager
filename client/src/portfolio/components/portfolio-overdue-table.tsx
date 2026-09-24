@@ -4,12 +4,13 @@ import { formatMoney } from '../../shared/utils/format-money';
 import { Button } from '@ui/button/components/button';
 import { DataTable } from '@ui/table/components/data-table';
 import type { PortfolioOverdueTableProps } from '../props/portfolio-overdue-table-props';
+import { Briefcase, Eye } from 'lucide-react';
 
 export const PortfolioOverdueTable: FC<PortfolioOverdueTableProps> = ({ entradas, onView, onOpenEmployerReport }) => (
     <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
         <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">En mora</h2>
-            <Button variant="outline" onClick={onOpenEmployerReport}>
+            <Button iconOnly startIcon={<Briefcase className="size-4" />} variant="outline" onClick={onOpenEmployerReport}>
                 Reporte por empleador
             </Button>
         </div>
@@ -33,7 +34,7 @@ export const PortfolioOverdueTable: FC<PortfolioOverdueTableProps> = ({ entradas
                     label: '',
                     render: (row) => (
                         <div className="text-right">
-                            <Button variant="outline" onClick={() => onView(row.credito.id)}>
+                            <Button iconOnly startIcon={<Eye className="size-4" />} variant="outline" onClick={() => onView(row.credito.id)}>
                                 Ver
                             </Button>
                         </div>

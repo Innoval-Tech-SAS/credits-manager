@@ -40,7 +40,7 @@ export const ExpensesListPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/crear')}>
+                        <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/crear')}>
                             Causar gasto
                         </Button>
                     )}

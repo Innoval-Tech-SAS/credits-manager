@@ -36,7 +36,7 @@ export const PaymentsListPage: FC = () => {
                     </div>
 
                     {canRegisterPayment && (
-                        <Button startIcon={<HandCoins className="size-4" />} onClick={() => navigate('/pagos/buscar')}>
+                        <Button collapseBelow="md" startIcon={<HandCoins className="size-4" />} onClick={() => navigate('/pagos/buscar')}>
                             Registrar pago
                         </Button>
                     )}

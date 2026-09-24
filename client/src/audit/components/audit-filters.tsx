@@ -94,7 +94,7 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
         )}
 
         <div className="flex items-end">
-            <Button variant="outline" className="w-full" startIcon={<X className="size-4" />} onClick={onReset}>
+            <Button iconOnly variant="outline" className="w-full" startIcon={<X className="size-4" />} onClick={onReset}>
                 Limpiar filtros
             </Button>
         </div>

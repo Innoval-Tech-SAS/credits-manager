@@ -40,7 +40,7 @@ export const CompaniesListPage: FC = () => {
                         />
                     </div>
 
-                    <Button startIcon={<Building2 className="size-4" />} onClick={() => navigate('/empresas/crear')}>
+                    <Button collapseBelow="md" startIcon={<Building2 className="size-4" />} onClick={() => navigate('/empresas/crear')}>
                         Crear empresa
                     </Button>
                 </>

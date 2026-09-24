@@ -28,7 +28,7 @@ export const ReteicaTariffsPage: FC = () => {
             countLabel={`${tarifas.length} ${tarifas.length === 1 ? 'tarifa registrada' : 'tarifas registradas'}`}
             toolbar={
                 canCreate && (
-                    <Button startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/tarifas-reteica/crear')}>
+                    <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/tarifas-reteica/crear')}>
                         Crear tarifa
                     </Button>
                 )

@@ -7,7 +7,7 @@ import { usePermission } from '../../auth/hooks/use-permission';
 import { formatMoney } from '../../shared/utils/format-money';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { ArrowRight, CreditCard, TriangleAlert, Users, Wallet } from 'lucide-react';
+import { ArrowRight, CreditCard, HandCoins, TriangleAlert, Users, Wallet } from 'lucide-react';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { DataTable } from '@ui/table/components/data-table';
 import { DonutChart } from '@ui/charts/components/donut-chart';
@@ -70,7 +70,7 @@ export const HomePage: FC = () => {
                                 render: (row) =>
                                     canRegisterPayment ? (
                                         <div className="text-right">
-                                            <Button size="sm" variant="outline" onClick={() => navigate(`/creditos/${row.credito_id}/pagos/nuevo`)}>
+                                            <Button collapseBelow="md" startIcon={<HandCoins className="size-4" />} size="sm" variant="outline" onClick={() => navigate(`/creditos/${row.credito_id}/pagos/nuevo`)}>
                                                 Registrar pago
                                             </Button>
                                         </div>
@@ -83,7 +83,7 @@ export const HomePage: FC = () => {
                     />
 
                     <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-800">
-                        <Button size="sm" variant="outline" endIcon={<ArrowRight className="size-4" />} onClick={() => navigate('/calendario')}>
+                        <Button iconOnly size="sm" variant="outline" endIcon={<ArrowRight className="size-4" />} onClick={() => navigate('/calendario')}>
                             Ver calendario completo
                         </Button>
                     </div>
@@ -101,7 +101,7 @@ export const HomePage: FC = () => {
                         totalValue={String(resumen.creditos_activos)}
                     />
 
-                    <Button
+                    <Button iconOnly
                         size="sm"
                         variant="outline"
                         className="mt-2 w-full justify-center"

@@ -102,7 +102,7 @@ export const UsersListPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button startIcon={<UserPlus className="size-4" />} onClick={() => navigate('/usuarios/crear')}>
+                        <Button collapseBelow="md" startIcon={<UserPlus className="size-4" />} onClick={() => navigate('/usuarios/crear')}>
                             Crear usuario
                         </Button>
                     )}

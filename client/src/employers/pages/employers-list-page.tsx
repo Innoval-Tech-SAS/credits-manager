@@ -85,7 +85,7 @@ export const EmployersListPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button startIcon={<Briefcase className="size-4" />} onClick={() => navigate('/empleadores/crear')}>
+                        <Button collapseBelow="md" startIcon={<Briefcase className="size-4" />} onClick={() => navigate('/empleadores/crear')}>
                             Crear empleador
                         </Button>
                     )}

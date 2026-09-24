@@ -76,7 +76,7 @@ export const CreditsListPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button startIcon={<CreditCard className="size-4" />} onClick={() => navigate('/creditos/crear')}>
+                        <Button collapseBelow="md" startIcon={<CreditCard className="size-4" />} onClick={() => navigate('/creditos/crear')}>
                             Nuevo crédito
                         </Button>
                     )}

@@ -68,7 +68,7 @@ export const AuditRecoveryPage: FC = () => {
             countLabel={`${totalItems} ${totalItems === 1 ? 'entrada en el log de respaldo' : 'entradas en el log de respaldo'}`}
             toolbar={
                 <>
-                    <Button variant="outline" startIcon={<ArrowLeft className="size-4" />} onClick={() => navigate('/auditoria')}>
+                    <Button iconOnly variant="outline" startIcon={<ArrowLeft className="size-4" />} onClick={() => navigate('/auditoria')}>
                         Bitácora
                     </Button>
 
@@ -85,7 +85,7 @@ export const AuditRecoveryPage: FC = () => {
                         />
                     </div>
 
-                    <Button startIcon={<RotateCcw className="size-4" />} disabled={recoveringId !== null || isRecoveringAll} onClick={() => setIsConfirmOpen(true)}>
+                    <Button collapseBelow="md" startIcon={<RotateCcw className="size-4" />} disabled={recoveringId !== null || isRecoveringAll} onClick={() => setIsConfirmOpen(true)}>
                         Recuperar pendientes
                     </Button>
                 </>

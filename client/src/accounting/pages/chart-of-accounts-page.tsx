@@ -80,7 +80,7 @@ export const ChartOfAccountsPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button startIcon={<ListTree className="size-4" />} onClick={() => navigate('/contabilidad/plan-cuentas/crear')}>
+                        <Button collapseBelow="md" startIcon={<ListTree className="size-4" />} onClick={() => navigate('/contabilidad/plan-cuentas/crear')}>
                             Crear cuenta
                         </Button>
                     )}

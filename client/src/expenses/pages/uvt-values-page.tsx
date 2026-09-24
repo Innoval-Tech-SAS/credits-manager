@@ -27,7 +27,7 @@ export const UvtValuesPage: FC = () => {
             countLabel={`${valoresUvt.length} ${valoresUvt.length === 1 ? 'año registrado' : 'años registrados'}`}
             toolbar={
                 canCreate && (
-                    <Button startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/valores-uvt/crear')}>
+                    <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/valores-uvt/crear')}>
                         Guardar valor UVT
                     </Button>
                 )

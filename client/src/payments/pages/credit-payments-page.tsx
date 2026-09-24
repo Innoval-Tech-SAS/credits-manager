@@ -11,6 +11,7 @@ import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { PaymentHistoryTable } from '../components/payment-history-table';
+import { CircleDollarSign, Eye, HandCoins } from 'lucide-react';
 
 export const CreditPaymentsPage: FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -53,13 +54,13 @@ export const CreditPaymentsPage: FC = () => {
             <div className="mb-6 flex flex-wrap gap-3 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                 {credito.estado === 'desembolsado' && canRegisterPayment && (
                     <>
-                        <Button onClick={() => navigate(`/pagos/creditos/${id}/nuevo`)}>Pagar cuota</Button>
-                        <Button variant="outline" onClick={() => navigate(`/pagos/creditos/${id}/liquidar`)}>
+                        <Button iconOnly startIcon={<HandCoins className="size-4" />} onClick={() => navigate(`/pagos/creditos/${id}/nuevo`)}>Pagar cuota</Button>
+                        <Button iconOnly startIcon={<CircleDollarSign className="size-4" />} variant="outline" onClick={() => navigate(`/pagos/creditos/${id}/liquidar`)}>
                             Liquidar crédito
                         </Button>
                     </>
                 )}
-                <Button variant="outline" onClick={() => navigate(`/creditos/${id}`)}>
+                <Button iconOnly startIcon={<Eye className="size-4" />} variant="outline" onClick={() => navigate(`/creditos/${id}`)}>
                     Ver crédito
                 </Button>
             </div>

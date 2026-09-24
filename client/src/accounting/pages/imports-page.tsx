@@ -50,10 +50,10 @@ export const ImportsPage: FC = () => {
                         />
                     </div>
 
-                    <Button variant="outline" startIcon={<Upload className="size-4" />} onClick={() => setTipoAImportar('plan_cuentas')}>
+                    <Button collapseBelow="md" variant="outline" startIcon={<Upload className="size-4" />} onClick={() => setTipoAImportar('plan_cuentas')}>
                         Importar plan de cuentas
                     </Button>
-                    <Button variant="outline" startIcon={<Upload className="size-4" />} onClick={() => setTipoAImportar('saldos_iniciales')}>
+                    <Button collapseBelow="md" variant="outline" startIcon={<Upload className="size-4" />} onClick={() => setTipoAImportar('saldos_iniciales')}>
                         Importar saldos iniciales
                     </Button>
                 </>

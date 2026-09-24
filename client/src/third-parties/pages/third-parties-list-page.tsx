@@ -73,13 +73,13 @@ export const ThirdPartiesListPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button variant="outline" startIcon={<Upload className="size-4" />} onClick={() => setShowImportModal(true)}>
+                        <Button iconOnly variant="outline" startIcon={<Upload className="size-4" />} onClick={() => setShowImportModal(true)}>
                             Importar
                         </Button>
                     )}
 
                     {canCreate && (
-                        <Button startIcon={<UserPlus className="size-4" />} onClick={() => navigate('/terceros/crear')}>
+                        <Button collapseBelow="md" startIcon={<UserPlus className="size-4" />} onClick={() => navigate('/terceros/crear')}>
                             Crear tercero
                         </Button>
                     )}

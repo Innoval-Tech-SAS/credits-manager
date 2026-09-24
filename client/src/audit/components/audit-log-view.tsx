@@ -58,7 +58,7 @@ export const AuditLogView: FC<AuditLogViewProps> = ({ companies }) => {
             toolbar={
                 <>
                     {user?.isSuperAdmin && (
-                        <Button variant="outline" startIcon={<LifeBuoy className="size-4" />} onClick={() => navigate('/recuperacion-auditoria')}>
+                        <Button iconOnly variant="outline" startIcon={<LifeBuoy className="size-4" />} onClick={() => navigate('/recuperacion-auditoria')}>
                             Recuperación
                         </Button>
                     )}

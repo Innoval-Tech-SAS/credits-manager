@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useParams } from 'react-router';
-import { Download } from 'lucide-react';
+import { Download, Printer } from 'lucide-react';
 
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import { useResource } from '../../shared/hooks/use-resource';
@@ -47,7 +47,7 @@ export const AccountStatementPage: FC = () => {
         <div className="flex min-h-full flex-col pb-6">
             <div className="mb-4 flex flex-wrap items-center gap-3 print:hidden">
                 <PageBreadcrumb pageTitle="Estado de cuenta" />
-                <Button
+                <Button iconOnly
                     variant="outline"
                     startIcon={<Download className="size-4" />}
                     disabled={isDownloading}
@@ -55,7 +55,7 @@ export const AccountStatementPage: FC = () => {
                 >
                     {isDownloading ? 'Generando…' : 'Descargar PDF'}
                 </Button>
-                <Button onClick={() => window.print()}>Imprimir</Button>
+                <Button iconOnly startIcon={<Printer className="size-4" />} onClick={() => window.print()}>Imprimir</Button>
             </div>
 
             {downloadError && (
