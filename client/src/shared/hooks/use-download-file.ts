@@ -7,12 +7,15 @@ import { saveBlob } from '../utils/save-blob';
 
 const GENERIC_ERROR = 'Ocurrió un error inesperado.';
 
-/** Descarga un archivo binario de la API (PDF, Excel…) con la sesión del usuario y lo guarda con el nombre que manda el servidor. */
+/**
+ * Descarga un archivo binario de la API (PDF, Excel…) con la sesión del usuario y lo guarda con el nombre que manda el servidor.
+ * `download` devuelve el mensaje de error, o `null` si salió bien.
+ */
 export function useDownloadFile() {
     const [isDownloading, setIsDownloading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const download = useCallback(async (path: string, fallbackFilename: string): Promise<void> => {
+    const download = useCallback(async (path: string, fallbackFilename: string): Promise<string | null> => {
         setIsDownloading(true);
         setError(null);
 
@@ -24,7 +27,7 @@ export function useDownloadFile() {
 
             if (response.status === 401) {
                 window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
-                return;
+                return null;
             }
 
             if (!response.ok) {
@@ -35,8 +38,13 @@ export function useDownloadFile() {
             const blob = await response.blob();
 
             saveBlob(readFilenameFromDisposition(response.headers.get('Content-Disposition')) ?? fallbackFilename, blob);
+
+            return null;
         } catch (caught) {
-            setError(caught instanceof Error && !(caught instanceof TypeError) ? caught.message : GENERIC_ERROR);
+            const message = caught instanceof Error && !(caught instanceof TypeError) ? caught.message : GENERIC_ERROR;
+            setError(message);
+
+            return message;
         } finally {
             setIsDownloading(false);
         }
