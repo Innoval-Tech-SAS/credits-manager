@@ -48,28 +48,7 @@ export const EmployerReportPage: FC = () => {
 
     return (
         <div className="flex min-h-full flex-col pb-6">
-            <div className="mb-4 flex items-center gap-3 print:hidden">
-                <PageBreadcrumb pageTitle="Reporte por empleador" />
-                {empleadorSeleccionado && canExport && (
-                    <ExportButton
-                        endpoint="/cartera/reporte-empleador/exportar"
-                        filters={{ empleador_id: String(empleadorSeleccionado) }}
-                        formats={['xlsx']}
-                        pdfEndpoint="/cartera/reporte-empleador/pdf"
-                        pdfFilename="relacion-descuento.pdf"
-                        align="left"
-                        disabled={filas.length === 0}
-                        onRequested={() => {
-                            setExportError(null);
-                            setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
-                        }}
-                        onError={(message) => {
-                            setExportMessage(null);
-                            setExportError(message);
-                        }}
-                    />
-                )}
-            </div>
+            <PageBreadcrumb pageTitle="Reporte por empleador" />
 
             {exportMessage && (
                 <div className="mb-4 print:hidden">
@@ -82,15 +61,36 @@ export const EmployerReportPage: FC = () => {
                 </div>
             )}
 
-            <div className="mb-6 max-w-sm rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 print:hidden">
-                {empleadores.length === 0 ? (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">No hay clientes con empleador registrado.</p>
-                ) : (
-                    <Select
-                        key={empleadorSeleccionado ?? ''}
-                        options={empleadores.map((empleador) => ({ value: String(empleador.id), label: empleador.nombre }))}
-                        defaultValue={empleadorSeleccionado ? String(empleadorSeleccionado) : ''}
-                        onChange={(value) => setEmpleadorId(value ? Number(value) : null)}
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
+                <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+                    {empleadores.length === 0 ? (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay clientes con empleador registrado.</p>
+                    ) : (
+                        <Select
+                            key={empleadorSeleccionado ?? ''}
+                            options={empleadores.map((empleador) => ({ value: String(empleador.id), label: empleador.nombre }))}
+                            defaultValue={empleadorSeleccionado ? String(empleadorSeleccionado) : ''}
+                            onChange={(value) => setEmpleadorId(value ? Number(value) : null)}
+                        />
+                    )}
+                </div>
+
+                {empleadorSeleccionado && canExport && (
+                    <ExportButton
+                        endpoint="/cartera/reporte-empleador/exportar"
+                        filters={{ empleador_id: String(empleadorSeleccionado) }}
+                        formats={['xlsx']}
+                        pdfEndpoint="/cartera/reporte-empleador/pdf"
+                        pdfFilename="relacion-descuento.pdf"
+                        disabled={filas.length === 0}
+                        onRequested={() => {
+                            setExportError(null);
+                            setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
+                        }}
+                        onError={(message) => {
+                            setExportMessage(null);
+                            setExportError(message);
+                        }}
                     />
                 )}
             </div>
