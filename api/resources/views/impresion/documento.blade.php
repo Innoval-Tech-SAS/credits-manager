@@ -37,7 +37,7 @@
         .fechas .etiqueta { font-weight: bold; width: 42%; border-right: 1px solid #d1d5db; }
         .fechas .valor { text-align: center; }
 
-        .lineas { margin-top: 18pt; }
+        .lineas { margin-top: 18pt; table-layout: fixed; }
         .lineas th { border: 1px solid #d1d5db; padding: 5pt 6pt; font-weight: bold; text-align: center; }
         .lineas td { border-left: 1px solid #d1d5db; border-right: 1px solid #d1d5db; padding: 4pt 6pt; }
         .lineas tbody tr:last-child td { border-bottom: 1px solid #d1d5db; }
@@ -45,6 +45,7 @@
         .lineas tr { page-break-inside: avoid; }
         .lineas .derecha { text-align: right; }
         .lineas .total td { font-weight: bold; border-top: 1px solid #6b7280; border-bottom: 1px solid #d1d5db; }
+        .horizontal .lineas th, .horizontal .lineas td { font-size: 7pt; padding: 3pt 4pt; }
         .titulo-tabla { font-size: 9.5pt; font-weight: bold; margin-top: 18pt; }
 
         .resumen { margin-top: 12pt; }
@@ -63,7 +64,7 @@
         .pie { margin-top: 24pt; text-align: center; font-size: 6.5pt; color: #4b5563; line-height: 1.4; }
     </style>
 </head>
-<body>
+<body class="{{ $horizontal ? 'horizontal' : '' }}">
     <div class="marco"></div>
 
     <table class="cabecera">
@@ -148,7 +149,7 @@
             @foreach ($filas as $fila)
                 <tr>
                     @foreach ($columnas as $columna)
-                        <td class="{{ $columna->tipo->alineacion() === 'right' ? 'derecha' : '' }}">{{ $formateador->celda($fila[$columna->clave] ?? null, $columna) }}</td>
+                        <td class="{{ $columna->tipo->alineacion() === 'right' ? 'derecha' : '' }}">{!! nl2br(e($formateador->celda($fila[$columna->clave] ?? null, $columna))) !!}</td>
                     @endforeach
                 </tr>
             @endforeach
@@ -162,31 +163,36 @@
     </table>
 
     @foreach ($tablasAdicionales as $tabla)
-        <div class="titulo-tabla" style="margin-top: 16pt;">{{ $tabla->titulo }}</div>
-        <table class="lineas" style="margin-top: 6pt;">
-            <thead>
-                <tr>
-                    @foreach ($tabla->columnas as $columna)
-                        <th @if ($columna->ancho) style="width: {{ $columna->ancho }}%;" @endif>{{ $columna->encabezado }}</th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($tabla->filas as $fila)
+        @if ($tabla->titulo !== '')
+            <div class="titulo-tabla" style="margin-top: 16pt;">{{ $tabla->titulo }}</div>
+        @endif
+        <table class="lineas" style="margin-top: {{ $tabla->titulo !== '' ? '6pt' : '0' }};">
+            @if ($tabla->conEncabezado)
+                <thead>
                     <tr>
                         @foreach ($tabla->columnas as $columna)
-                            <td class="{{ $columna->tipo->alineacion() === 'right' ? 'derecha' : '' }}">{{ $formateador->celda($fila[$columna->clave] ?? null, $columna) }}</td>
+                            <th @if ($columna->ancho) style="width: {{ $columna->ancho }}%;" @endif>{{ $columna->encabezado }}</th>
                         @endforeach
                     </tr>
-                @empty
+                </thead>
+            @endif
+            <tbody>
+                @if ($tabla->filas === [] && $tabla->mensajeVacio !== null)
                     <tr>
-                        <td colspan="{{ count($tabla->columnas) }}" style="text-align: center; padding: 10pt 6pt;">{{ $tabla->mensajeVacio ?? 'Sin registros.' }}</td>
+                        <td colspan="{{ count($tabla->columnas) }}" style="text-align: center; padding: 10pt 6pt;">{{ $tabla->mensajeVacio }}</td>
                     </tr>
-                @endforelse
+                @endif
+                @foreach ($tabla->filas as $fila)
+                    <tr>
+                        @foreach ($tabla->columnas as $columna)
+                            <td class="{{ $columna->tipo->alineacion() === 'right' ? 'derecha' : '' }}">{!! nl2br(e($formateador->celda($fila[$columna->clave] ?? null, $columna))) !!}</td>
+                        @endforeach
+                    </tr>
+                @endforeach
                 @if ($tabla->filaTotal)
                     <tr class="total">
                         @foreach ($tabla->columnas as $columna)
-                            <td class="{{ $columna->tipo->alineacion() === 'right' ? 'derecha' : '' }}">{{ $formateador->celda($tabla->filaTotal[$columna->clave] ?? null, $columna) }}</td>
+                            <td class="{{ $columna->tipo->alineacion() === 'right' ? 'derecha' : '' }}" @if (! $tabla->conEncabezado && $columna->ancho) style="width: {{ $columna->ancho }}%;" @endif>{!! nl2br(e($formateador->celda($tabla->filaTotal[$columna->clave] ?? null, $columna))) !!}</td>
                         @endforeach
                     </tr>
                 @endif
