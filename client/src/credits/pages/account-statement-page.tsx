@@ -1,8 +1,11 @@
 import type { FC } from 'react';
 import { useParams } from 'react-router';
+import { Download } from 'lucide-react';
 
+import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useCompany } from '../../company/hooks/use-company';
+import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Spinner } from '@ui/spinner/components/spinner';
@@ -17,6 +20,7 @@ export const AccountStatementPage: FC = () => {
     const { company } = useCompany();
 
     const { data: estadoCuenta, error } = useResource<ApiAccountStatement>(`/creditos/${id}/estado-cuenta`);
+    const { download, isDownloading, error: downloadError } = useDownloadFile();
 
     if (error) {
         return (
@@ -41,10 +45,24 @@ export const AccountStatementPage: FC = () => {
 
     return (
         <div className="flex min-h-full flex-col pb-6">
-            <div className="mb-4 flex items-center justify-between print:hidden">
+            <div className="mb-4 flex flex-wrap items-center gap-3 print:hidden">
                 <PageBreadcrumb pageTitle="Estado de cuenta" />
+                <Button
+                    variant="outline"
+                    startIcon={<Download className="size-4" />}
+                    disabled={isDownloading}
+                    onClick={() => download(`/creditos/${id}/estado-cuenta/pdf`, `estado-de-cuenta-credito-${id}.pdf`)}
+                >
+                    {isDownloading ? 'Generando…' : 'Descargar PDF'}
+                </Button>
                 <Button onClick={() => window.print()}>Imprimir</Button>
             </div>
+
+            {downloadError && (
+                <div className="mb-4 print:hidden">
+                    <Alert variant="danger" title="No se pudo descargar" message={downloadError} />
+                </div>
+            )}
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3 print:border-0 print:p-0">
                 <AccountStatementHeader company={company} credito={credito} cuotasPagadas={cuotasPagadas} />
