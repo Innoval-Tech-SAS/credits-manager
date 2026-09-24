@@ -2,11 +2,18 @@
 
 namespace Tests\Feature\Impresion;
 
+use App\Core\Dinero\Dinero;
 use App\Empresas\Models\Empresa;
 use App\Geografia\Models\Estado;
 use App\Geografia\Models\Municipio;
 use App\Geografia\Models\Pais;
+use App\Impresion\Data\ColumnaDocumento;
+use App\Impresion\Data\DestinatarioDocumento;
+use App\Impresion\Data\TablaDocumento;
+use App\Impresion\Enums\OrientacionDocumento;
+use App\Impresion\Enums\TipoColumnaDocumento;
 use App\Impresion\Services\GeneradorPdf;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\DocumentoPdfDePrueba;
 use Tests\TestCase;
@@ -61,7 +68,7 @@ class GeneradorPdfTest extends TestCase
         $texto = $this->textoDe($this->generar());
 
         foreach (['DDA INVERSIONES SAS', 'NIT 901.687.377-8', 'Bogota - Colombia', 'Documento de prueba', 'No. DDA 186', 'CLIENTE DE PRUEBA S.A.S.', '15/07/2026', '1,222,380.00', 'Total a Pagar', 'INTERES.AMORT.ADM'] as $esperado) {
-            $this->assertStringContainsString($esperado, $texto, "No aparece «{$esperado}» en el PDF.");
+            $this->assertTrue(str_contains($texto, $esperado), "No aparece «{$esperado}» en el PDF.");
         }
     }
 
@@ -86,6 +93,44 @@ class GeneradorPdfTest extends TestCase
         $this->assertGreaterThan(1, $this->paginasDe($pdf));
         $this->assertSame(1, substr_count($texto, "Total \xEDtems"), 'El resumen y los totales van una sola vez, al final.');
         $this->assertGreaterThan(1, substr_count($texto, 'Vr. Total'));
+    }
+
+    public function test_un_documento_horizontal_sale_en_carta_apaisada(): void
+    {
+        $pdf = app(GeneradorPdf::class)->generar(new DocumentoPdfDePrueba(orientacion: OrientacionDocumento::Horizontal), $this->empresa());
+
+        $this->assertMatchesRegularExpression('/\/MediaBox\s*\[0(\.0+)?\s+0(\.0+)?\s+792(\.0+)?\s+612(\.0+)?\]/', $pdf);
+    }
+
+    public function test_imprime_el_titulo_de_la_tabla_principal_y_las_tablas_adicionales_con_su_total(): void
+    {
+        $pagos = new TablaDocumento(
+            'Detalle de pagos',
+            [
+                new ColumnaDocumento('fecha', 'Fecha', TipoColumnaDocumento::Fecha),
+                new ColumnaDocumento('valor', 'Valor', TipoColumnaDocumento::Monetario),
+            ],
+            [['fecha' => CarbonImmutable::parse('2026-03-05'), 'valor' => Dinero::desdePesos(250000)]],
+            ['fecha' => 'Total pagado', 'valor' => Dinero::desdePesos(250000)],
+        );
+        $sinPagos = new TablaDocumento('Otros cobros', [new ColumnaDocumento('concepto', 'Concepto')], [], null, 'Aun no hay cobros.');
+
+        $texto = $this->textoDe(app(GeneradorPdf::class)->generar(
+            new DocumentoPdfDePrueba(tablasAdicionales: [$pagos, $sinPagos], tituloTabla: 'Plan de cuotas'),
+            $this->empresa(),
+        ));
+
+        foreach (['Plan de cuotas', 'Detalle de pagos', '05/03/2026', '250,000.00', 'Total pagado', 'Otros cobros', 'Aun no hay cobros.'] as $esperado) {
+            $this->assertTrue(str_contains($texto, $esperado), "No aparece «{$esperado}» en el PDF.");
+        }
+    }
+
+    public function test_la_etiqueta_del_documento_del_destinatario_se_puede_cambiar(): void
+    {
+        $destinatario = new DestinatarioDocumento('Ana Perez', 'CC 123456', etiquetaDocumento: 'Documento');
+
+        $this->assertSame('Documento', $destinatario->etiquetaDocumento);
+        $this->assertSame('NIT', (new DestinatarioDocumento('Empresa SAS', '900'))->etiquetaDocumento);
     }
 
     public function test_incrusta_el_logo_cuando_es_una_imagen(): void

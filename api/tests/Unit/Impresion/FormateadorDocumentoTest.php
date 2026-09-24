@@ -26,12 +26,17 @@ class FormateadorDocumentoTest extends TestCase
         $this->assertSame('-2,500.00', $this->formateador->dinero(Dinero::desdePesos(-2500)));
     }
 
-    public function test_las_fechas_salen_en_hora_de_bogota(): void
+    public function test_un_instante_con_hora_sale_en_hora_de_bogota(): void
     {
         $instante = CarbonImmutable::parse('2026-07-16 02:19:00', 'UTC');
 
         $this->assertSame('15/07/2026, 21:19', $this->formateador->fecha($instante, true));
-        $this->assertSame('15/07/2026', $this->formateador->fecha($instante));
+    }
+
+    public function test_una_fecha_de_calendario_no_se_corre_de_dia(): void
+    {
+        $this->assertSame('05/03/2026', $this->formateador->fecha(CarbonImmutable::parse('2026-03-05', 'UTC')));
+        $this->assertSame('05/03/2026', $this->formateador->fecha(CarbonImmutable::parse('2026-03-05', 'America/Bogota')));
     }
 
     public function test_formatea_cada_celda_segun_el_tipo_de_su_columna(): void
@@ -43,7 +48,7 @@ class FormateadorDocumentoTest extends TestCase
         $this->assertSame('1.00', $celda(1, TipoColumnaDocumento::Decimal));
         $this->assertSame('12,345', $celda(12345, TipoColumnaDocumento::Entero));
         $this->assertSame('1.10%', $celda(1.1, TipoColumnaDocumento::Porcentaje));
-        $this->assertSame('15/07/2026', $celda(CarbonImmutable::parse('2026-07-16 02:19:00', 'UTC'), TipoColumnaDocumento::Fecha));
+        $this->assertSame('15/07/2026', $celda(CarbonImmutable::parse('2026-07-15', 'UTC'), TipoColumnaDocumento::Fecha));
         $this->assertSame('Interés', $celda('Interés', TipoColumnaDocumento::Texto));
         $this->assertSame('', $celda(null, TipoColumnaDocumento::Monetario));
     }

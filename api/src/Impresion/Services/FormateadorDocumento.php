@@ -19,11 +19,14 @@ final class FormateadorDocumento
         return ($valor->esNegativo() ? '-' : '').$enteros.'.'.str_pad((string) ($centavos % 100), 2, '0', STR_PAD_LEFT);
     }
 
+    /** Con hora es un instante y se lleva a hora de Bogotá; sin hora es una fecha de calendario y se imprime tal cual, sin correrla de día. */
     public function fecha(CarbonInterface $fecha, bool $conHora = false): string
     {
-        return $fecha->copy()
-            ->setTimezone(ImpresionConstants::ZONA_HORARIA)
-            ->format($conHora ? ImpresionConstants::FORMATO_FECHA_HORA : ImpresionConstants::FORMATO_FECHA);
+        if (! $conHora) {
+            return $fecha->format(ImpresionConstants::FORMATO_FECHA);
+        }
+
+        return $fecha->copy()->setTimezone(ImpresionConstants::ZONA_HORARIA)->format(ImpresionConstants::FORMATO_FECHA_HORA);
     }
 
     public function celda(mixed $valor, ColumnaDocumento $columna): string

@@ -8,6 +8,7 @@ use App\Creditos\Requests\CrearCreditoRequest;
 use App\Creditos\Requests\EditarCreditoRequest;
 use App\Creditos\Services\CreditoService;
 use App\Creditos\Services\CuotaService;
+use App\Creditos\Services\EstadoCuentaService;
 use App\Http\Controllers\Controller;
 use App\Pagos\Services\PagoService;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +21,7 @@ class CreditoController extends Controller
         protected CreditoService $creditos,
         protected CuotaService $cuotas,
         protected PagoService $pagos,
+        protected EstadoCuentaService $estadosCuenta,
     ) {}
 
     public function index(Request $peticion): JsonResponse
@@ -65,14 +67,16 @@ class CreditoController extends Controller
 
     public function estadoCuenta(Credito $credito): JsonResponse
     {
-        $credito = $this->creditos->mostrarCredito($credito);
+        return response()->json($this->estadosCuenta->obtener($credito));
+    }
 
-        return response()->json([
-            'credito' => $credito,
-            'saldo' => $this->cuotas->saldoCredito($credito->id),
-            'refinanciacion' => $this->creditos->vinculoRefinanciacion($credito),
-            'pagos' => $this->pagos->listarPorCredito($credito->id, 'asc'),
-            'resumen_cuotas' => $this->cuotas->resumenAlDia($credito->id, $credito->valor_prestamo),
+    public function estadoCuentaPdf(Credito $credito): Response
+    {
+        $pdf = $this->estadosCuenta->generarPdf($credito);
+
+        return response($pdf->contenido, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$pdf->nombreArchivo.'.pdf"',
         ]);
     }
 

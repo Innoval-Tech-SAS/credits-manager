@@ -8,15 +8,26 @@ use App\Impresion\Data\ColumnaDocumento;
 use App\Impresion\Data\DestinatarioDocumento;
 use App\Impresion\Data\FechaDocumento;
 use App\Impresion\Data\SeccionDocumento;
+use App\Impresion\Data\TablaDocumento;
 use App\Impresion\Data\TotalDocumento;
+use App\Impresion\Enums\OrientacionDocumento;
 use App\Impresion\Enums\TipoColumnaDocumento;
 use Carbon\CarbonImmutable;
 
 /** Documento mínimo con los datos de la plantilla de DDA, para probar el generador sin depender de ningún módulo. */
 final class DocumentoPdfDePrueba implements DocumentoPdf
 {
-    /** @param list<array<string, mixed>>|null $filas */
-    public function __construct(private readonly ?array $filas = null, private readonly ?string $consecutivo = 'DDA 186') {}
+    /**
+     * @param  list<array<string, mixed>>|null  $filas
+     * @param  list<TablaDocumento>  $tablasAdicionales
+     */
+    public function __construct(
+        private readonly ?array $filas = null,
+        private readonly ?string $consecutivo = 'DDA 186',
+        private readonly OrientacionDocumento $orientacion = OrientacionDocumento::Vertical,
+        private readonly array $tablasAdicionales = [],
+        private readonly ?string $tituloTabla = null,
+    ) {}
 
     public function titulo(): string
     {
@@ -33,6 +44,21 @@ final class DocumentoPdfDePrueba implements DocumentoPdf
         return 'documento-de-prueba';
     }
 
+    public function orientacion(): OrientacionDocumento
+    {
+        return $this->orientacion;
+    }
+
+    public function tituloTabla(): ?string
+    {
+        return $this->tituloTabla;
+    }
+
+    public function tablasAdicionales(): array
+    {
+        return $this->tablasAdicionales;
+    }
+
     public function destinatario(): DestinatarioDocumento
     {
         return new DestinatarioDocumento('CLIENTE DE PRUEBA S.A.S.', '900.111.222-3', '(57) 3001112222', 'CRA 9 #23-30', 'Santa Marta - Colombia');
@@ -45,7 +71,7 @@ final class DocumentoPdfDePrueba implements DocumentoPdf
         return [
             new FechaDocumento('Generación', $generacion, true),
             new FechaDocumento('Expedición', $generacion, true),
-            new FechaDocumento('Vencimiento', $generacion),
+            new FechaDocumento('Vencimiento', CarbonImmutable::parse('2026-07-15')),
         ];
     }
 

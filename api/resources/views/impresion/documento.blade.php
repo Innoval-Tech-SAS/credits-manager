@@ -44,6 +44,8 @@
         .lineas thead { display: table-header-group; }
         .lineas tr { page-break-inside: avoid; }
         .lineas .derecha { text-align: right; }
+        .lineas .total td { font-weight: bold; border-top: 1px solid #6b7280; border-bottom: 1px solid #d1d5db; }
+        .titulo-tabla { font-size: 9.5pt; font-weight: bold; margin-top: 18pt; }
 
         .resumen { margin-top: 12pt; }
         .resumen td { vertical-align: top; padding: 0; }
@@ -100,7 +102,7 @@
                     </tr>
                     @if ($destinatario->documento || $destinatario->telefono)
                         <tr>
-                            <td class="etiqueta">NIT</td>
+                            <td class="etiqueta">{{ $destinatario->etiquetaDocumento }}</td>
                             <td style="width: 30%;">{{ $destinatario->documento }}</td>
                             <td class="etiqueta">Teléfono</td>
                             <td>{{ $destinatario->telefono }}</td>
@@ -130,7 +132,11 @@
         </tr>
     </table>
 
-    <table class="lineas">
+    @if ($documento->tituloTabla())
+        <div class="titulo-tabla">{{ $documento->tituloTabla() }}</div>
+    @endif
+
+    <table class="lineas" @if ($documento->tituloTabla()) style="margin-top: 6pt;" @endif>
         <thead>
             <tr>
                 @foreach ($columnas as $columna)
@@ -146,7 +152,7 @@
                     @endforeach
                 </tr>
             @endforeach
-            @php($altoRelleno = max(0, 300 - count($filas) * 18))
+            @php($altoRelleno = ($tablasAdicionales !== [] || $horizontal) ? 0 : max(0, 300 - count($filas) * 18))
             @if ($altoRelleno > 0)
                 <tr>
                     <td colspan="{{ count($columnas) }}" style="height: {{ $altoRelleno }}pt;"></td>
@@ -154,6 +160,39 @@
             @endif
         </tbody>
     </table>
+
+    @foreach ($tablasAdicionales as $tabla)
+        <div class="titulo-tabla" style="margin-top: 16pt;">{{ $tabla->titulo }}</div>
+        <table class="lineas" style="margin-top: 6pt;">
+            <thead>
+                <tr>
+                    @foreach ($tabla->columnas as $columna)
+                        <th @if ($columna->ancho) style="width: {{ $columna->ancho }}%;" @endif>{{ $columna->encabezado }}</th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($tabla->filas as $fila)
+                    <tr>
+                        @foreach ($tabla->columnas as $columna)
+                            <td class="{{ $columna->tipo->alineacion() === 'right' ? 'derecha' : '' }}">{{ $formateador->celda($fila[$columna->clave] ?? null, $columna) }}</td>
+                        @endforeach
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="{{ count($tabla->columnas) }}" style="text-align: center; padding: 10pt 6pt;">{{ $tabla->mensajeVacio ?? 'Sin registros.' }}</td>
+                    </tr>
+                @endforelse
+                @if ($tabla->filaTotal)
+                    <tr class="total">
+                        @foreach ($tabla->columnas as $columna)
+                            <td class="{{ $columna->tipo->alineacion() === 'right' ? 'derecha' : '' }}">{{ $formateador->celda($tabla->filaTotal[$columna->clave] ?? null, $columna) }}</td>
+                        @endforeach
+                    </tr>
+                @endif
+            </tbody>
+        </table>
+    @endforeach
 
     <table class="resumen">
         <tr>
