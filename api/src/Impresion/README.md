@@ -4,7 +4,7 @@ Genera en PDF los **documentos** del sistema (factura, notas, recibo de caja, co
 
 ## Qué es igual en todos los documentos
 
-La vista `resources/views/impresion/documento.blade.php` dibuja siempre lo mismo: carta vertical, marco, encabezado con el logo y los datos de la empresa (módulo Empresas, con su municipio y país), la caja con el nombre y el consecutivo en la misma posición, el bloque "Señores" con los datos del destinatario, la tabla de fechas, "Total ítems", los totales, los textos y el pie. Un cambio de diseño se hace en ese archivo y llega a todos.
+La vista `resources/views/impresion/documento.blade.php` dibuja siempre lo mismo: carta vertical, sin marco, encabezado con el logo y los datos de la empresa (módulo Empresas, con su municipio y país), la caja con el nombre y el consecutivo en la misma posición, el bloque "Señores" con los datos del destinatario, la tabla de fechas, "Total ítems", los totales, los textos y el pie. Un cambio de diseño se hace en ese archivo y llega a todos.
 
 ## Qué decide cada documento
 
