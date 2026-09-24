@@ -8,9 +8,12 @@ use App\Core\Concerns\PerteneceAEmpresa;
 use App\Core\Dinero\DineroCast;
 use App\Creditos\Models\Credito;
 use App\Pagos\Enums\FormaPago;
+use App\Recibos\Models\ReciboCaja;
+use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'credito_id',
@@ -44,6 +47,16 @@ class Pago extends BaseModel
     public function cliente(): BelongsTo
     {
         return $this->belongsTo(Cliente::class);
+    }
+
+    public function registrador(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'registrado_por');
+    }
+
+    public function recibo(): HasOne
+    {
+        return $this->hasOne(ReciboCaja::class);
     }
 
     public function detalles(): HasMany

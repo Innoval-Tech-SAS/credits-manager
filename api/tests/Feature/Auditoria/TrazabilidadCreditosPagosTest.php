@@ -199,7 +199,9 @@ class TrazabilidadCreditosPagosTest extends TestCase
 
         $this->postJson("/api/v1/creditos/{$credito->id}/pagos", ['valor_pago' => 100, 'forma_pago' => 'efectivo'])->assertCreated();
 
-        $this->assertCount(1, $this->eventosDeAuditoria('crear', 'pagos'));
+        $eventos = $this->eventosDeAuditoria('crear', 'pagos');
+
+        $this->assertSame(['pago', 'recibo_caja'], collect($eventos)->pluck('entidad')->sort()->values()->all());
         $this->assertSinEventosDeAuditoria('modificar', 'creditos');
     }
 

@@ -19,7 +19,7 @@ class PagoRepository extends BaseRepository
     public function paginar(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
     {
         $consulta = $this->consulta()
-            ->with(['cliente.tercero', 'credito'])
+            ->with(['cliente.tercero', 'credito', 'recibo:id,pago_id,numero,estado'])
             ->orderByDesc('fecha_pago');
 
         if ($busqueda) {
@@ -32,6 +32,7 @@ class PagoRepository extends BaseRepository
     public function porCredito(int $creditoId, string $direccion = 'desc'): Collection
     {
         return $this->consulta()
+            ->with('recibo:id,pago_id,numero,estado')
             ->where('credito_id', $creditoId)
             ->orderBy('fecha_pago', $direccion)
             ->get();
@@ -40,6 +41,7 @@ class PagoRepository extends BaseRepository
     public function porCliente(int $clienteId, int $limite = 10): Collection
     {
         return $this->consulta()
+            ->with('recibo:id,pago_id,numero,estado')
             ->where('cliente_id', $clienteId)
             ->orderByDesc('fecha_pago')
             ->limit($limite)

@@ -153,7 +153,7 @@
                     @endforeach
                 </tr>
             @endforeach
-            @php($altoRelleno = ($tablasAdicionales !== [] || $horizontal) ? 0 : max(0, 300 - count($filas) * 18))
+            @php($altoRelleno = ($tablasAdicionales !== [] || $horizontal) ? 0 : max(0, 290 - count($filas) * 18 - max(0, count($secciones) - 3) * 40))
             @if ($altoRelleno > 0)
                 <tr>
                     <td colspan="{{ count($columnas) }}" style="height: {{ $altoRelleno }}pt;"></td>

@@ -1,6 +1,7 @@
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
 import { formatDateEs } from '../../shared/utils/format-date-es';
 import { formatMoney } from '../../shared/utils/format-money';
+import { ReceiptDownloadButton } from '../components/receipt-download-button';
 import type { ApiPaymentListItem } from '../types/api-payment-list-item';
 
 export function buildPaymentTableColumns(onViewCredito: (creditoId: number) => void): DataTableColumn<ApiPaymentListItem>[] {
@@ -19,5 +20,6 @@ export function buildPaymentTableColumns(onViewCredito: (creditoId: number) => v
         { key: 'valor_pago', label: 'Valor', render: (row) => formatMoney(row.valor_pago) },
         { key: 'forma_pago', label: 'Forma de pago', render: (row) => <span className="capitalize">{row.forma_pago}</span> },
         { key: 'observacion', label: 'Observación', render: (row) => row.observacion ?? '' },
+        { key: 'recibo', label: 'Recibo', render: (row) => <ReceiptDownloadButton payment={row} /> },
     ];
 }

@@ -15,6 +15,7 @@ use App\Creditos\Repositories\CuotaRepository;
 use App\Pagos\Enums\FormaPago;
 use App\Pagos\Repositories\PagoDetalleRepository;
 use App\Pagos\Repositories\PagoRepository;
+use App\Recibos\Services\ReciboCajaService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -28,6 +29,7 @@ class PagoService
         protected CuotaRepository $cuotas,
         protected CreditoRepository $creditos,
         protected ComprobanteService $comprobantes,
+        protected ReciboCajaService $recibos,
         protected EmisorAuditoria $auditoria,
     ) {}
 
@@ -115,6 +117,7 @@ class PagoService
             }
 
             $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $capitalTotal, $interesTotal);
+            $recibo = $this->recibos->emitir($pago, $comprobante);
 
             $this->auditoria->registrarCreacion(
                 AuditoriaConstants::MODULO_PAGOS,
@@ -126,6 +129,7 @@ class PagoService
                     'sobrante_descartado' => $restante,
                     'cuotas_afectadas' => $cuotasAfectadas,
                     'comprobante_id' => $comprobante?->id,
+                    'recibo' => $recibo->numero,
                 ],
             );
             $this->auditoria->registrarModificacion(
@@ -220,6 +224,7 @@ class PagoService
             $this->recalcularSaldoCapital($credito);
             $this->creditos->marcarComoPagado($credito);
             $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $cotizacion['capital_pendiente'], $cotizacion['interes']);
+            $recibo = $this->recibos->emitir($pago, $comprobante);
 
             $this->auditoria->registrarCreacion(
                 AuditoriaConstants::MODULO_PAGOS,
@@ -229,6 +234,7 @@ class PagoService
                     'capital' => $cotizacion['capital_pendiente'],
                     'interes' => $cotizacion['interes'],
                     'comprobante_id' => $comprobante?->id,
+                    'recibo' => $recibo->numero,
                 ],
             );
             $this->auditoria->registrarModificacion(
