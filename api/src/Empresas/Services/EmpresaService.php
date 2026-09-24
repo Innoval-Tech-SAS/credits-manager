@@ -33,7 +33,13 @@ class EmpresaService
     /** La empresa del usuario autenticado (autoservicio). */
     public function obtenerPropia(): Empresa
     {
-        return $this->empresas->buscarPorIdOFallar(Auth::user()->empresa_id);
+        return $this->conMunicipio($this->empresas->buscarPorIdOFallar(Auth::user()->empresa_id));
+    }
+
+    /** Con el municipio y su estado, lo que el formulario necesita para mostrar la ciudad ya elegida. */
+    public function conMunicipio(Empresa $empresa): Empresa
+    {
+        return $empresa->load(['municipio:id,estado_id,nombre', 'municipio.estado:id,pais_id,nombre']);
     }
 
     /** Crea una empresa nueva junto con su primer usuario admin y sus roles base. */
@@ -44,6 +50,7 @@ class EmpresaService
                 'nombre_empresa' => $datos['nombre_empresa'],
                 'nit' => $datos['nit'],
                 'direccion' => $datos['direccion'],
+                'municipio_id' => $datos['municipio_id'],
                 'telefono' => $datos['telefono'],
                 'correo' => $datos['correo'],
             ]);
@@ -65,10 +72,10 @@ class EmpresaService
                 "Empresa {$empresa->nombre_empresa} creada con su administrador {$datos['admin_usuario']}",
                 'empresa',
                 $empresa->id,
-                nuevos: $empresa->only(['nombre_empresa', 'nit', 'direccion', 'telefono', 'correo']) + ['admin_usuario' => strtolower($datos['admin_usuario'])],
+                nuevos: $empresa->only(['nombre_empresa', 'nit', 'direccion', 'municipio_id', 'telefono', 'correo']) + ['admin_usuario' => strtolower($datos['admin_usuario'])],
             );
 
-            return $empresa;
+            return $this->conMunicipio($empresa);
         });
     }
 
@@ -93,7 +100,7 @@ class EmpresaService
             );
         }
 
-        return $empresa;
+        return $this->conMunicipio($empresa);
     }
 
     public function actualizarLogoPropia(UploadedFile $logo): Empresa

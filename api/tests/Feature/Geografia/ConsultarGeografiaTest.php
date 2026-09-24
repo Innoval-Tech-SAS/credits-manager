@@ -46,15 +46,15 @@ class ConsultarGeografiaTest extends TestCase
     public function test_lista_los_estados_de_un_pais(): void
     {
         $this->actingAsAdmin();
-        $pais = $this->crearPais();
+        $pais = $this->crearPais(['codigo' => 'PE', 'nombre' => 'Perú']);
         $otroPais = $this->crearPais(['codigo' => 'EC', 'nombre' => 'Ecuador']);
-        $this->crearEstado(['pais_id' => $pais->id, 'nombre' => 'Magdalena']);
-        $this->crearEstado(['pais_id' => $pais->id, 'nombre' => 'Atlántico']);
+        $this->crearEstado(['pais_id' => $pais->id, 'nombre' => 'Lima']);
+        $this->crearEstado(['pais_id' => $pais->id, 'nombre' => 'Cusco']);
         $this->crearEstado(['pais_id' => $otroPais->id, 'nombre' => 'Guayas']);
 
         $respuesta = $this->getJson("/api/v1/geografia/estados?pais_id={$pais->id}")->assertOk();
 
-        $this->assertSame(['Atlántico', 'Magdalena'], collect($respuesta->json('estados'))->pluck('nombre')->all());
+        $this->assertSame(['Cusco', 'Lima'], collect($respuesta->json('estados'))->pluck('nombre')->all());
     }
 
     public function test_estados_exige_un_pais_existente(): void
@@ -84,13 +84,13 @@ class ConsultarGeografiaTest extends TestCase
     public function test_busca_municipios_por_texto(): void
     {
         $this->actingAsAdmin();
-        $this->crearMunicipio(['nombre' => 'Santa Marta']);
-        $this->crearMunicipio(['nombre' => 'Santa Rosa']);
+        $this->crearMunicipio(['nombre' => 'Villa Alta']);
+        $this->crearMunicipio(['nombre' => 'Villa Baja']);
         $this->crearMunicipio(['nombre' => 'Barranquilla']);
 
-        $respuesta = $this->getJson('/api/v1/geografia/municipios?buscar=santa')->assertOk();
+        $respuesta = $this->getJson('/api/v1/geografia/municipios?buscar=villa')->assertOk();
 
-        $this->assertSame(['Santa Marta', 'Santa Rosa'], collect($respuesta->json('municipios'))->pluck('nombre')->all());
+        $this->assertSame(['Villa Alta', 'Villa Baja'], collect($respuesta->json('municipios'))->pluck('nombre')->all());
     }
 
     public function test_municipios_exige_estado_o_texto_de_busqueda(): void

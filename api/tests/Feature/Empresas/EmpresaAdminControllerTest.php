@@ -18,6 +18,7 @@ class EmpresaAdminControllerTest extends TestCase
             'nombre_empresa' => 'Empresa nueva SAS',
             'nit' => '900123456-7',
             'direccion' => 'Calle 1 # 2-3',
+            'municipio_id' => $this->municipioDePrueba()->id,
             'telefono' => '3000000000',
             'correo' => 'contacto@empresanueva.com',
             'admin_nombre' => 'Admin Nuevo',
@@ -67,6 +68,7 @@ class EmpresaAdminControllerTest extends TestCase
             'nombre_empresa' => 'Empresa nueva SAS (renombrada)',
             'nit' => $creada['nit'],
             'direccion' => $creada['direccion'],
+            'municipio_id' => $creada['municipio_id'],
             'telefono' => $creada['telefono'],
             'correo' => $creada['correo'],
         ]);

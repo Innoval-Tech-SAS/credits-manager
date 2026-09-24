@@ -47,7 +47,7 @@ Todo servicio con escrituras de negocio emite su evento; los módulos son las co
 | Módulo | Procesos registrados |
 |---|---|
 | `auth` | Inicio y cierre de sesión, intentos de inicio de sesión fallidos (`login_fallido`, con su motivo), cambio de la contraseña propia |
-| `empresas` | Alta, edición y logo |
+| `empresas` | Alta, edición (incluido su municipio) y logo |
 | `usuarios` | Alta, edición, baja y restablecimiento de clave de usuarios; alta, edición y baja de roles; `cambio_permisos` (rol o permisos extra, con antes/después en `modulo.accion`) |
 | `clientes`, `empleadores`, `terceros`, `proveedores` | Alta, edición y baja (cliente/proveedor incluyen los datos del tercero) |
 | `documentos` | Archivos adjuntos subidos |
