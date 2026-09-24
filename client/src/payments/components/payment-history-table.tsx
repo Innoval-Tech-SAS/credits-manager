@@ -5,6 +5,7 @@ import { formatMoney } from '../../shared/utils/format-money';
 import { DataTable } from '@ui/table/components/data-table';
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
 import type { PaymentHistoryTableProps } from '../props/payment-history-table-props';
+import { ReceiptDownloadButton } from './receipt-download-button';
 import type { ApiPayment } from '../types/api-payment';
 
 export const PaymentHistoryTable: FC<PaymentHistoryTableProps> = ({ pagos, showCredito = false, onViewCredito }) => {
@@ -30,6 +31,7 @@ export const PaymentHistoryTable: FC<PaymentHistoryTableProps> = ({ pagos, showC
         { key: 'valor_pago', label: 'Valor', render: (row) => formatMoney(row.valor_pago) },
         { key: 'forma_pago', label: 'Forma de pago', render: (row) => <span className="capitalize">{row.forma_pago}</span> },
         { key: 'observacion', label: 'Observación', render: (row) => row.observacion ?? '' },
+        { key: 'recibo', label: 'Recibo', render: (row) => <ReceiptDownloadButton payment={row} /> },
     ];
 
     return (
