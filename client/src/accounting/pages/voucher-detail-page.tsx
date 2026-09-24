@@ -62,21 +62,23 @@ export const VoucherDetailPage: FC = () => {
                                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${VOUCHER_STATUS_BADGE_CLASSES[comprobante.estado]}`}>
                                     {comprobante.estado}
                                 </span>
-                                <Button
-                                    iconOnly
-                                    variant="outline"
-                                    label="Descargar PDF"
-                                    startIcon={<Download className="size-4" />}
-                                    disabled={isDownloading}
-                                    onClick={() => download(`/contabilidad/comprobantes/${comprobante.id}/pdf`, `comprobante-${comprobante.id}.pdf`)}
-                                >
-                                    {isDownloading ? 'Generando…' : 'Descargar PDF'}
-                                </Button>
-                                {canReverse && comprobante.estado === 'contabilizado' && (
-                                    <Button iconOnly variant="outline" startIcon={<Undo2 className="size-4" />} onClick={() => setIsReversing(true)}>
-                                        Reversar
+                                <div className="ml-auto flex items-center gap-3">
+                                    <Button
+                                        iconOnly
+                                        variant="outline"
+                                        label="Descargar PDF"
+                                        startIcon={<Download className="size-4" />}
+                                        disabled={isDownloading}
+                                        onClick={() => download(`/contabilidad/comprobantes/${comprobante.id}/pdf`, `comprobante-${comprobante.id}.pdf`)}
+                                    >
+                                        {isDownloading ? 'Generando…' : 'Descargar PDF'}
                                     </Button>
-                                )}
+                                    {canReverse && comprobante.estado === 'contabilizado' && (
+                                        <Button iconOnly variant="outline" startIcon={<Undo2 className="size-4" />} onClick={() => setIsReversing(true)}>
+                                            Reversar
+                                        </Button>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
