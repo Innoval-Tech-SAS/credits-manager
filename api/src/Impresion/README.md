@@ -1,0 +1,34 @@
+# Módulo Impresion
+
+Genera en PDF los **documentos** del sistema (factura, notas, recibo de caja, comprobante, estado de cuenta) con una sola plantilla base. No es para reportes: esos se exportan a Excel/CSV con `Exportacion`.
+
+## Qué es igual en todos los documentos
+
+La vista `resources/views/impresion/documento.blade.php` dibuja siempre lo mismo: carta vertical, marco, encabezado con el logo y los datos de la empresa (módulo Empresas, con su municipio y país), la caja con el nombre y el consecutivo en la misma posición, el bloque "Señores" con los datos del destinatario, la tabla de fechas, "Total ítems", los totales, los textos y el pie. Un cambio de diseño se hace en ese archivo y llega a todos.
+
+## Qué decide cada documento
+
+Solo implementa `Contracts/DocumentoPdf` y entrega datos, nunca HTML:
+
+- `titulo()`, `consecutivo()` (nulo si no tiene) y `nombreArchivo()`.
+- `destinatario()` (`DestinatarioDocumento`) y `fechas()` (`FechaDocumento`, con hora o sin ella).
+- `columnas()` (`ColumnaDocumento`: clave, encabezado, tipo y ancho en %) y `filas()`. **Los encabezados de la tabla son libres**: ítem, cantidad, descripción y valor cambian según el documento.
+- `totales()` (`TotalDocumento`, con `Dinero`), `secciones()` (valor en letras, forma de pago, observaciones…) y `pie()`.
+
+`NumeroALetras::pesos(Dinero)` escribe el valor en letras ("Un millón doscientos veintidós mil trescientos ochenta pesos m/cte").
+
+## Cómo generar un documento
+
+```php
+$pdf = app(GeneradorPdf::class)->generar($documento, $empresa); // bytes
+return response($pdf, 200, ['Content-Type' => 'application/pdf', 'Content-Disposition' => 'inline; filename="'.$documento->nombreArchivo().'.pdf"']);
+```
+
+Quien llama entrega la `Empresa` ya resuelta con el scope del usuario; el generador no consulta datos de negocio. Los PDF se generan al momento (sin cola): un documento tiene pocas líneas.
+
+## Reglas
+
+- **Cifras y fechas** las formatea `FormateadorDocumento` como la plantilla de DDA: coma de miles, punto decimal y hora de Bogotá. Los montos viajan como `Dinero`.
+- **Logo**: solo PNG, JPG o GIF. El SVG se omite porque dompdf lo dibuja con fondo negro. Requiere la extensión `gd` (en el `Dockerfile` de `api`).
+- Varias páginas: la cabecera de la tabla se repite, los totales van una sola vez al final y cada página lleva "Página x de y".
+- Probar un documento nuevo: `tests/Support/DocumentoPdfDePrueba` y `tests/Feature/Impresion/GeneradorPdfTest` muestran cómo generar y leer el texto del PDF.
