@@ -5,7 +5,7 @@ import { SidebarContext } from '../hooks/use-sidebar';
 import type { WithChildrenProps } from '../../../shared/props/with-children-props';
 
 export const SidebarProvider: FC<WithChildrenProps> = ({ children }) => {
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
