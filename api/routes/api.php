@@ -24,11 +24,13 @@ use App\Empresas\Controllers\EmpresaController;
 use App\Exportacion\Controllers\ExportacionController;
 use App\Gastos\Controllers\ActividadEconomicaController;
 use App\Gastos\Controllers\GastoController;
-use App\Gastos\Controllers\MunicipioController;
 use App\Gastos\Controllers\ParametrizacionTipoGastoController;
 use App\Gastos\Controllers\TarifaReteIcaMunicipioController;
 use App\Gastos\Controllers\TipoGastoController;
 use App\Gastos\Controllers\ValorUvtController;
+use App\Geografia\Controllers\EstadoController;
+use App\Geografia\Controllers\MunicipioController;
+use App\Geografia\Controllers\PaisController;
 use App\Notificaciones\Controllers\NotificacionController;
 use App\Pagos\Controllers\PagoController;
 use App\Proveedores\Controllers\ProveedorController;
@@ -55,6 +57,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/empresa/logo', [EmpresaController::class, 'uploadLogo'])->middleware('admin');
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
+
+    Route::get('/geografia/paises', [PaisController::class, 'index']);
+    Route::get('/geografia/estados', [EstadoController::class, 'index']);
+    Route::get('/geografia/municipios', [MunicipioController::class, 'index']);
+    Route::post('/geografia/municipios', [MunicipioController::class, 'store'])->middleware('superadmin');
+    Route::patch('/geografia/municipios/{municipio}', [MunicipioController::class, 'update'])->middleware('superadmin');
 
     Route::get('/auditoria/bitacora', [BitacoraAuditoriaController::class, 'index'])->middleware('permiso_o_superadmin:auditoria,listar');
     Route::post('/auditoria/bitacora/exportar', [BitacoraAuditoriaController::class, 'exportar'])->middleware('permiso_o_superadmin:auditoria,exportar');
@@ -168,10 +176,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/gastos/tipos-gasto', [TipoGastoController::class, 'index'])->middleware('permiso:gastos,listar');
     Route::post('/gastos/tipos-gasto', [TipoGastoController::class, 'store'])->middleware('permiso:gastos,parametrizar');
     Route::patch('/gastos/tipos-gasto/{tipoGasto}', [TipoGastoController::class, 'update'])->middleware('permiso:gastos,parametrizar');
-
-    Route::get('/gastos/municipios', [MunicipioController::class, 'index'])->middleware('permiso:gastos,listar');
-    Route::post('/gastos/municipios', [MunicipioController::class, 'store'])->middleware('permiso:gastos,parametrizar');
-    Route::patch('/gastos/municipios/{municipio}', [MunicipioController::class, 'update'])->middleware('permiso:gastos,parametrizar');
 
     Route::get('/gastos/actividades-economicas', [ActividadEconomicaController::class, 'index'])->middleware('permiso:gastos,listar');
     Route::post('/gastos/actividades-economicas', [ActividadEconomicaController::class, 'store'])->middleware('permiso:gastos,parametrizar');

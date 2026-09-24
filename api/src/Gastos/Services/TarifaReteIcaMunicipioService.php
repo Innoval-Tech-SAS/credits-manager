@@ -4,9 +4,9 @@ namespace App\Gastos\Services;
 
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Services\EmisorAuditoria;
-use App\Gastos\Models\Municipio;
 use App\Gastos\Models\TarifaReteIcaMunicipio;
 use App\Gastos\Repositories\TarifaReteIcaMunicipioRepository;
+use App\Geografia\Models\Municipio;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;

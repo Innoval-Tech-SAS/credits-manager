@@ -5,15 +5,19 @@ import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
+import { ToggleSwitchInput } from '@ui/forms/components/toggle-switch-input';
 import { Spinner } from '@ui/spinner/components/spinner';
 import type { MunicipalityFormProps } from '../props/municipality-form-props';
 import type { ApiMunicipality } from '../types/api-municipality';
+import { StateSelector } from './state-selector';
 
 export const MunicipalityForm: FC<MunicipalityFormProps> = ({ onCreated }) => {
     const { sendRequest } = useSendRequest();
 
-    const [codigo, setCodigo] = useState('');
-    const [nombre, setNombre] = useState('');
+    const [stateId, setStateId] = useState('');
+    const [code, setCode] = useState('');
+    const [name, setName] = useState('');
+    const [isCapital, setIsCapital] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,14 +27,12 @@ export const MunicipalityForm: FC<MunicipalityFormProps> = ({ onCreated }) => {
         setIsSubmitting(true);
 
         try {
-            const respuesta = await sendRequest<{ municipio: ApiMunicipality }>('/gastos/municipios', {
+            const response = await sendRequest<{ municipio: ApiMunicipality }>('/geografia/municipios', {
                 method: 'POST',
-                body: { codigo, nombre },
+                body: { estado_id: Number(stateId), codigo: code, nombre: name, es_capital: isCapital },
             });
 
-            onCreated(respuesta.municipio);
-            setCodigo('');
-            setNombre('');
+            onCreated(response.municipio);
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         } finally {
@@ -48,19 +50,29 @@ export const MunicipalityForm: FC<MunicipalityFormProps> = ({ onCreated }) => {
                 )}
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <StateSelector onChange={setStateId} />
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
-                        <Label htmlFor="codigo">Código</Label>
-                        <Input id="codigo" name="codigo" required value={codigo} onChange={(event) => setCodigo(event.target.value)} />
+                        <Label htmlFor="codigo">Código DANE</Label>
+                        <Input id="codigo" name="codigo" required maxLength={10} value={code} onChange={(event) => setCode(event.target.value)} />
                     </div>
 
                     <div className="md:col-span-2">
                         <Label htmlFor="nombre">Nombre</Label>
-                        <Input id="nombre" name="nombre" required value={nombre} onChange={(event) => setNombre(event.target.value)} />
+                        <Input id="nombre" name="nombre" required maxLength={150} value={name} onChange={(event) => setName(event.target.value)} />
                     </div>
                 </div>
 
+                <ToggleSwitchInput id="es-capital" label="Es capital del departamento" checked={isCapital} onChange={setIsCapital} />
+
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
-                    <Button type="submit" disabled={isSubmitting} startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}>
+                    <Button
+                        type="submit"
+                        disabled={isSubmitting || !stateId}
+                        startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
+                    >
                         {isSubmitting ? 'Creando…' : 'Crear municipio'}
                     </Button>
                 </div>

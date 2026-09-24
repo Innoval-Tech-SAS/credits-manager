@@ -1,0 +1,102 @@
+import type { FC } from 'react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import { MapPin, Pencil } from 'lucide-react';
+
+import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
+import { useResource } from '../../shared/hooks/use-resource';
+import { Button } from '@ui/button/components/button';
+import { ModuleListPage } from '@ui/module/components/module-list-page';
+import { DataTable } from '@ui/table/components/data-table';
+import { EditMunicipalityModal } from '../components/edit-municipality-modal';
+import { StateSelector } from '../components/state-selector';
+import type { ApiMunicipality } from '../types/api-municipality';
+import type { MunicipalitiesListLocationState } from '../types/municipalities-list-location-state';
+
+export const MunicipalitiesAdminPage: FC = () => {
+    const navigate = useNavigate();
+
+    const [successMessage, setSuccessMessage] = useLocationSuccessMessage<MunicipalitiesListLocationState>();
+    const [stateId, setStateId] = useState('');
+    const [editing, setEditing] = useState<ApiMunicipality | null>(null);
+
+    const { data, isLoading, refetch } = useResource<{ municipios: ApiMunicipality[] }>(
+        stateId ? `/geografia/municipios?estado_id=${stateId}` : null,
+    );
+    const municipalities = data?.municipios ?? [];
+
+    const handleSaved = () => {
+        setEditing(null);
+        setSuccessMessage('Municipio actualizado correctamente.');
+        refetch();
+    };
+
+    return (
+        <ModuleListPage
+            pageTitle="Municipios"
+            successMessage={successMessage}
+            onDismissSuccess={() => setSuccessMessage(null)}
+            countLabel={
+                stateId
+                    ? `${municipalities.length} ${municipalities.length === 1 ? 'municipio' : 'municipios'} en el departamento`
+                    : 'Elige un país y un departamento para ver sus municipios'
+            }
+            toolbar={
+                <Button startIcon={<MapPin className="size-4" />} onClick={() => navigate('/geografia/municipios/crear')}>
+                    Agregar municipio
+                </Button>
+            }
+            modals={
+                editing && <EditMunicipalityModal municipality={editing} onClose={() => setEditing(null)} onSaved={handleSaved} />
+            }
+        >
+            <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+                <StateSelector onChange={setStateId} />
+            </div>
+
+            <DataTable
+                columns={[
+                    { key: 'codigo', label: 'Código DANE' },
+                    {
+                        key: 'nombre',
+                        label: 'Municipio',
+                        render: (municipality) => (
+                            <span className="text-gray-800 dark:text-white/90">
+                                {municipality.nombre}
+                                {municipality.es_capital && <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">Capital</span>}
+                            </span>
+                        ),
+                    },
+                    {
+                        key: 'activo',
+                        label: 'Estado',
+                        render: (municipality) => (
+                            <span
+                                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                    municipality.activo
+                                        ? 'bg-success-50 text-success-600 dark:bg-success-500/10 dark:text-success-400'
+                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                                }`}
+                            >
+                                {municipality.activo ? 'Activo' : 'Inactivo'}
+                            </span>
+                        ),
+                    },
+                    {
+                        key: 'acciones',
+                        label: 'Acciones',
+                        render: (municipality) => (
+                            <Button size="sm" variant="outline" startIcon={<Pencil className="size-4" />} onClick={() => setEditing(municipality)}>
+                                Editar
+                            </Button>
+                        ),
+                    },
+                ]}
+                rows={municipalities}
+                getRowKey={(row) => row.id}
+                loading={isLoading}
+                emptyMessage={stateId ? 'Este departamento no tiene municipios.' : 'Selecciona un departamento.'}
+            />
+        </ModuleListPage>
+    );
+};

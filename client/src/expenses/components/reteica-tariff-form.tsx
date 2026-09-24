@@ -1,6 +1,7 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
 
+import { MunicipalitySelector } from '../../geography/components/municipality-selector';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { DatePicker } from '@ui/forms/components/date-picker';
@@ -11,10 +12,9 @@ import { Spinner } from '@ui/spinner/components/spinner';
 import type { ReteicaTariffFormProps } from '../props/reteica-tariff-form-props';
 import type { ApiReteicaTariff } from '../types/api-reteica-tariff';
 
-export const ReteicaTariffForm: FC<ReteicaTariffFormProps> = ({ municipios, actividades, onCreated }) => {
+export const ReteicaTariffForm: FC<ReteicaTariffFormProps> = ({ actividades, onCreated }) => {
     const { sendRequest } = useSendRequest();
 
-    const municipioOptions = municipios.map((municipio) => ({ value: String(municipio.id), label: `${municipio.codigo} - ${municipio.nombre}` }));
     const actividadOptions = actividades.map((actividad) => ({ value: String(actividad.id), label: `${actividad.codigo} - ${actividad.nombre}` }));
 
     const [municipioId, setMunicipioId] = useState('');
@@ -58,12 +58,9 @@ export const ReteicaTariffForm: FC<ReteicaTariffFormProps> = ({ municipios, acti
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-                    <div>
-                        <Label htmlFor="municipio">Municipio</Label>
-                        <Select options={municipioOptions} defaultValue={municipioId} onChange={setMunicipioId} />
-                    </div>
+                <MunicipalitySelector onChange={setMunicipioId} />
 
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="actividad">Actividad económica</Label>
                         <Select options={actividadOptions} defaultValue={actividadId} onChange={setActividadId} />

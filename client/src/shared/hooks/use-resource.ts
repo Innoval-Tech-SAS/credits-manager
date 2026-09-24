@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 
 import { useSendRequest } from './use-send-request';
 
-export function useResource<T>(endpoint: string) {
+/** Con `endpoint` nulo no pide nada: sirve para selectores que dependen de otro valor aún no elegido. */
+export function useResource<T>(endpoint: string | null) {
     const { sendRequest, isLoading, error } = useSendRequest();
     const [data, setData] = useState<T | null>(null);
     const [loadedEndpoint, setLoadedEndpoint] = useState<string | null>(null);
@@ -13,6 +14,10 @@ export function useResource<T>(endpoint: string) {
     }
 
     useEffect(() => {
+        if (endpoint === null) {
+            return;
+        }
+
         let isCancelled = false;
 
         sendRequest<T>(endpoint)

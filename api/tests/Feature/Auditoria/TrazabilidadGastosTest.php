@@ -97,14 +97,12 @@ class TrazabilidadGastosTest extends TestCase
 
         $tipoId = $this->postJson('/api/v1/gastos/tipos-gasto', ['codigo' => 'ARR', 'nombre' => 'Arriendo'])->assertCreated()->json('tipo_gasto.id');
         $this->patchJson("/api/v1/gastos/tipos-gasto/{$tipoId}", ['activo' => false])->assertOk();
-        $municipioId = $this->postJson('/api/v1/gastos/municipios', ['codigo' => '11001', 'nombre' => 'Bogotá'])->assertCreated()->json('municipio.id');
         $actividadId = $this->postJson('/api/v1/gastos/actividades-economicas', ['codigo' => '6492', 'nombre' => 'Otras actividades de crédito'])->assertCreated()->json('actividad_economica.id');
 
         $this->assertEventoAuditoria('crear', 'gastos', 'tipo_gasto', $tipoId);
         $edicion = $this->assertEventoAuditoria('modificar', 'gastos', 'tipo_gasto', $tipoId);
         $this->assertSame(['activo' => true], $edicion['valores_anteriores']);
         $this->assertSame(['activo' => false], $edicion['valores_nuevos']);
-        $this->assertEventoAuditoria('crear', 'gastos', 'municipio', $municipioId);
         $this->assertEventoAuditoria('crear', 'gastos', 'actividad_economica', $actividadId);
     }
 

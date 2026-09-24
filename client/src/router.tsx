@@ -25,7 +25,7 @@ import { CalendarPage } from './calendar/pages/calendar-page';
 import { CreateEconomicActivityPage } from './expenses/pages/create-economic-activity-page';
 import { CreateExpensePage } from './expenses/pages/create-expense-page';
 import { CreateExpenseTypePage } from './expenses/pages/create-expense-type-page';
-import { CreateMunicipalityPage } from './expenses/pages/create-municipality-page';
+import { CreateMunicipalityPage } from './geography/pages/create-municipality-page';
 import { CreateParametrizationPage } from './expenses/pages/create-parametrization-page';
 import { CreateReteicaTariffPage } from './expenses/pages/create-reteica-tariff-page';
 import { CreateUvtValuePage } from './expenses/pages/create-uvt-value-page';
@@ -33,7 +33,7 @@ import { EconomicActivitiesPage } from './expenses/pages/economic-activities-pag
 import { ExpenseDetailPage } from './expenses/pages/expense-detail-page';
 import { ExpenseTypesPage } from './expenses/pages/expense-types-page';
 import { ExpensesListPage } from './expenses/pages/expenses-list-page';
-import { MunicipalitiesPage } from './expenses/pages/municipalities-page';
+import { MunicipalitiesAdminPage } from './geography/pages/municipalities-admin-page';
 import { ParametrizationsPage } from './expenses/pages/parametrizations-page';
 import { ReteicaTariffsPage } from './expenses/pages/reteica-tariffs-page';
 import { UvtValuesPage } from './expenses/pages/uvt-values-page';
@@ -286,6 +286,22 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireSuperAdmin>
                                 <CreateCompanyPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
+                        path: 'geografia/municipios',
+                        element: (
+                            <RequireSuperAdmin>
+                                <MunicipalitiesAdminPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
+                        path: 'geografia/municipios/crear',
+                        element: (
+                            <RequireSuperAdmin>
+                                <CreateMunicipalityPage />
                             </RequireSuperAdmin>
                         ),
                     },
@@ -558,22 +574,6 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="gastos" accion="parametrizar">
                                 <CreateExpenseTypePage />
-                            </RequireModulePermission>
-                        ),
-                    },
-                    {
-                        path: 'gastos/municipios',
-                        element: (
-                            <RequireModulePermission modulo="gastos" accion="listar">
-                                <MunicipalitiesPage />
-                            </RequireModulePermission>
-                        ),
-                    },
-                    {
-                        path: 'gastos/municipios/crear',
-                        element: (
-                            <RequireModulePermission modulo="gastos" accion="parametrizar">
-                                <CreateMunicipalityPage />
                             </RequireModulePermission>
                         ),
                     },

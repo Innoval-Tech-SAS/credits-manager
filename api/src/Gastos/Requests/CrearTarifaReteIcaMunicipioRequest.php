@@ -17,7 +17,7 @@ class CrearTarifaReteIcaMunicipioRequest extends FormRequest
         $empresaId = $this->user()->empresa_id;
 
         return [
-            'municipio_id' => ['required', Rule::exists('municipios', 'id')->where('empresa_id', $empresaId)],
+            'municipio_id' => ['required', Rule::exists('municipios', 'id')->where('activo', true)->whereNull('borrado_en')],
             'actividad_economica_id' => ['required', Rule::exists('actividades_economicas', 'id')->where('empresa_id', $empresaId)],
             'fecha_desde' => ['required', 'date'],
             'tarifa' => ['required', 'numeric', 'min:0', 'max:100'],

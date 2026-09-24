@@ -8,12 +8,12 @@ export const CreateMunicipalityPage: FC = () => {
     const navigate = useNavigate();
 
     const handleCreated = () => {
-        navigate('/gastos/municipios', { replace: true, state: { message: 'Municipio creado correctamente.' } });
+        navigate('/geografia/municipios', { replace: true, state: { message: 'Municipio creado correctamente.' } });
     };
 
     return (
         <div className="flex min-h-full flex-col pb-6">
-            <PageBreadcrumb pageTitle="Crear municipio" />
+            <PageBreadcrumb pageTitle="Agregar municipio" />
 
             <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3">
                 <MunicipalityForm onCreated={handleCreated} />

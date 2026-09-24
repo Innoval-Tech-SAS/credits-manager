@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { MunicipalitySelector } from '../../geography/components/municipality-selector';
 import { ThirdPartySelector } from '../../third-parties/components/third-party-selector';
 import type { ApiThirdParty } from '../../third-parties/types/api-third-party';
 import { Button } from '@ui/button/components/button';
@@ -15,12 +16,11 @@ import { ArrowRight } from 'lucide-react';
 import type { ExpenseFormProps } from '../props/expense-form-props';
 import type { ApiExpense } from '../types/api-expense';
 
-export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto, municipios }) => {
+export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
     const navigate = useNavigate();
     const { sendRequest } = useSendRequest();
 
     const tipoGastoOptions = tiposGasto.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }));
-    const municipioOptions = municipios.map((municipio) => ({ value: String(municipio.id), label: municipio.nombre }));
 
     const [tipoGastoId, setTipoGastoId] = useState('');
     const [tercero, setTercero] = useState<ApiThirdParty | null>(null);
@@ -71,7 +71,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto, municipios }) =>
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="tipo-gasto">Tipo de gasto</Label>
                         <Select options={tipoGastoOptions} defaultValue={tipoGastoId} onChange={setTipoGastoId} />
@@ -80,11 +80,6 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto, municipios }) =>
                     <div>
                         <Label htmlFor="tercero">Tercero{requiereTercero ? '' : ' (opcional)'}</Label>
                         <ThirdPartySelector id="tercero" selected={tercero} onSelect={setTercero} />
-                    </div>
-
-                    <div>
-                        <Label htmlFor="municipio">Municipio del documento</Label>
-                        <Select options={municipioOptions} placeholder="--" defaultValue={municipioId} onChange={setMunicipioId} />
                     </div>
 
                     <div>
@@ -122,6 +117,11 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto, municipios }) =>
                         value={valorBruto}
                         onChange={(event) => setValorBruto(event.target.value)}
                     />
+                </div>
+
+                <div>
+                    <p className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-400">Municipio del documento (opcional, define la tarifa de ReteICA)</p>
+                    <MunicipalitySelector onChange={setMunicipioId} />
                 </div>
 
                 <p className="text-xs text-gray-500 dark:text-gray-400">

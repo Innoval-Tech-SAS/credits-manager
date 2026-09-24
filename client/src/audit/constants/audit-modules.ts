@@ -15,6 +15,7 @@ export const AUDIT_MODULE_LABELS: Record<string, string> = {
     cartera: 'Cartera',
     contabilidad: 'Contabilidad',
     gastos: 'Gastos',
+    geografia: 'Geografía',
     auditoria: 'Auditoría',
 };
 
