@@ -7,7 +7,7 @@ certbot/www/
 .vscode/
 .pnpm-store/
 
-resources/
+/resources/
 .mcp.json
 
 CLAUDE.md
