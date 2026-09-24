@@ -15,7 +15,6 @@
         body { font-family: Helvetica, sans-serif; font-size: 8pt; color: #111827; margin: 0; }
         table { border-collapse: collapse; width: 100%; }
         td, th { vertical-align: middle; }
-        .marco { position: fixed; top: -20pt; left: -20pt; right: -20pt; bottom: -30pt; border: 1px solid #d1d5db; border-radius: 10pt; }
 
         .cabecera td { padding: 0; }
         .logo { max-width: 120pt; max-height: 58pt; }
@@ -65,8 +64,6 @@
     </style>
 </head>
 <body class="{{ $horizontal ? 'horizontal' : '' }}">
-    <div class="marco"></div>
-
     <table class="cabecera">
         <tr>
             <td style="width: 30%;">
