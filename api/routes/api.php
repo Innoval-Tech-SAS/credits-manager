@@ -34,6 +34,7 @@ use App\Geografia\Controllers\PaisController;
 use App\Notificaciones\Controllers\NotificacionController;
 use App\Pagos\Controllers\PagoController;
 use App\Proveedores\Controllers\ProveedorController;
+use App\Recibos\Controllers\ReciboCajaController;
 use App\Terceros\Controllers\TerceroController;
 use App\Usuarios\Controllers\PermisoController;
 use App\Usuarios\Controllers\RolController;
@@ -118,6 +119,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/pagos', [PagoController::class, 'listar'])->middleware('permiso:pagos,listar');
     Route::get('/creditos/{credito}/pagos', [PagoController::class, 'index'])->middleware('permiso:pagos,listar');
+    Route::get('/pagos/{pago}/recibo/pdf', [ReciboCajaController::class, 'pdf'])->middleware('permiso:pagos,listar')->whereNumber('pago');
     Route::post('/creditos/{credito}/pagos', [PagoController::class, 'store'])->middleware('permiso:pagos,crear');
     Route::get('/creditos/{credito}/liquidacion', [PagoController::class, 'liquidacion'])->middleware('permiso:pagos,crear');
     Route::post('/creditos/{credito}/liquidacion', [PagoController::class, 'liquidar'])->middleware('permiso:pagos,crear');
