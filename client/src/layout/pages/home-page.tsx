@@ -104,7 +104,7 @@ export const HomePage: FC = () => {
                     <Button iconOnly
                         size="sm"
                         variant="outline"
-                        className="mt-2 w-full justify-center"
+                        className="mt-2"
                         endIcon={<ArrowRight className="size-4" />}
                         onClick={() => navigate('/cartera')}
                     >
