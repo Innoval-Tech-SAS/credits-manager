@@ -65,7 +65,6 @@ import { CreditsListPage } from './credits/pages/credits-list-page';
 import { CompaniesListPage } from './company/pages/companies-list-page';
 import { CreateCompanyPage } from './company/pages/create-company-page';
 import { EditCompanyPage } from './company/pages/edit-company-page';
-import { OnboardingCompanyPage } from './company/pages/onboarding-company-page';
 import { AppLayout } from './layout/components/app-layout';
 import { ErrorPage } from './layout/pages/error-page';
 import { HomePage } from './layout/pages/home-page';
@@ -85,16 +84,6 @@ const routes: RouteObject[] = [
         errorElement: <ErrorPage />,
         children: [
             { path: '/login', element: <LoginPage /> },
-            {
-                path: '/onboarding/empresa',
-                element: (
-                    <RequireAuth>
-                        <RequireAdmin>
-                            <OnboardingCompanyPage />
-                        </RequireAdmin>
-                    </RequireAuth>
-                ),
-            },
             {
                 element: (
                     <RequireAuth>
