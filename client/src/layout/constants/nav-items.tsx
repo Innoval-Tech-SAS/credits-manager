@@ -27,6 +27,7 @@ import type { NavItem } from "../types/nav-item";
 
 export const SUPERADMIN_NAV_ITEMS: NavItem[] = [
     { name: "Empresas", icon: Building2, path: "/empresas" },
+    { name: "Municipios", icon: MapPin, path: "/geografia/municipios" },
     {
         name: "Auditoría",
         icon: ShieldCheck,
@@ -198,13 +199,6 @@ export const NAV_ITEMS: NavItem[] = [
                 name: "Tarifas ReteICA",
                 path: "/gastos/tarifas-reteica",
                 icon: Percent,
-                moduleKey: "gastos",
-                action: "listar",
-            },
-            {
-                name: "Municipios",
-                path: "/gastos/municipios",
-                icon: MapPin,
                 moduleKey: "gastos",
                 action: "listar",
             },

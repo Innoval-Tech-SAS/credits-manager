@@ -55,7 +55,8 @@ Todo servicio con escrituras de negocio emite su evento; los módulos son las co
 | `pagos` | Pago y liquidación anticipada, con capital, interés, sobrante descartado, cuotas afectadas y comprobante |
 | `cartera` | Mora: cuotas que pasaron a vencida (un evento por empresa y corrida) |
 | `contabilidad` | Comprobantes (manuales y automáticos, `contabilizar`/`crear`), reverso, cierre y reapertura de período (con motivo), plan de cuentas, centros de costo, tipos de comprobante, reglas, documentos de terceros (alta, aplicación, anulación) e importación de apertura |
-| `gastos` | Causación y anulación de gastos, tipos de gasto, municipios, actividades, valor UVT, parametrizaciones y tarifas ReteICA (incluida la vigencia que se cierra sola) |
+| `gastos` | Causación y anulación de gastos, tipos de gasto, actividades, valor UVT, parametrizaciones y tarifas ReteICA (incluida la vigencia que se cierra sola) |
+| `geografia` | Alta y edición de municipios del catálogo global (solo superadmin; el evento no lleva empresa) |
 | `auditoria` | Exportaciones y descargas de la bitácora |
 
 **Inicio de sesión fallido.** El cliente siempre recibe el mismo error genérico; la razón real queda solo en la bitácora, en `motivo`: *Usuario inexistente*, *Usuario dado de baja*, *Contraseña incorrecta* o *Usuario inactivo* (`MotivoLoginFallido`). Si el usuario existe el evento lleva su empresa (la ve el administrador de esa empresa); si no existe, `empresa_id` es nulo y solo lo ve el superadmin. Nunca se guarda la clave digitada, y el nombre digitado se recorta a 60 caracteres. Como la bitácora es de solo inserción, el limitador `login` acota las filas que un cliente puede provocar: 5 intentos por minuto por usuario y 30 por IP.

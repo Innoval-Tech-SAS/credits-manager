@@ -5,15 +5,11 @@ import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { ExpenseForm } from '../components/expense-form';
 import type { ApiExpenseType } from '../types/api-expense-type';
-import type { ApiMunicipality } from '../types/api-municipality';
 
 export const CreateExpensePage: FC = () => {
-    const { data: tiposGastoData, isLoading: isLoadingTiposGasto } = useResource<{ tipos_gasto: ApiExpenseType[] }>('/gastos/tipos-gasto');
-    const { data: municipiosData, isLoading: isLoadingMunicipios } = useResource<{ municipios: ApiMunicipality[] }>('/gastos/municipios');
+    const { data: tiposGastoData, isLoading } = useResource<{ tipos_gasto: ApiExpenseType[] }>('/gastos/tipos-gasto');
 
     const tiposGasto = (tiposGastoData?.tipos_gasto ?? []).filter((tipo) => tipo.activo);
-    const municipios = municipiosData?.municipios ?? [];
-    const isLoading = isLoadingTiposGasto || isLoadingMunicipios;
 
     return (
         <div className="flex min-h-full flex-col pb-6">
@@ -25,7 +21,7 @@ export const CreateExpensePage: FC = () => {
                         <Spinner size="lg" />
                     </div>
                 ) : (
-                    <ExpenseForm tiposGasto={tiposGasto} municipios={municipios} />
+                    <ExpenseForm tiposGasto={tiposGasto} />
                 )}
             </div>
         </div>
