@@ -1,28 +1,23 @@
 <?php
 
+use Database\Seeders\GeografiaSeeder;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
  * `municipios` deja de ser un catálogo por empresa y pasa a ser geografía global (país → estado → municipio).
  * Lo contable por empresa vive en `tarifas_reteica_municipio`, que solo apunta al municipio.
+ * Si ya había municipios por empresa, se cruzan por código DANE con el catálogo y sus referencias se reasignan.
  */
 return new class extends Migration
 {
     public function up(): void
     {
-        $conMunicipio = DB::table('gastos')->whereNotNull('municipio_id')->exists()
-            || DB::table('tarifas_reteica_municipio')->exists();
-
-        if ($conMunicipio) {
-            throw new RuntimeException('Hay gastos o tarifas ReteICA ligados a los municipios por empresa: cruzarlos con el catálogo global antes de migrar.');
-        }
-
         $this->soltarClavesAMunicipios();
-
-        Schema::dropIfExists('municipios');
+        Schema::rename('municipios', 'municipios_por_empresa');
 
         Schema::create('municipios', function (Blueprint $table) {
             $table->id();
@@ -39,11 +34,18 @@ return new class extends Migration
             $table->index(['estado_id', 'nombre']);
         });
 
+        $this->reasignarReferencias();
+
+        Schema::drop('municipios_por_empresa');
         $this->ponerClavesAMunicipios();
     }
 
     public function down(): void
     {
+        if (DB::table('gastos')->whereNotNull('municipio_id')->exists() || DB::table('tarifas_reteica_municipio')->exists()) {
+            throw new RuntimeException('No se puede revertir: hay gastos o tarifas ReteICA ligados al catálogo global de municipios.');
+        }
+
         $this->soltarClavesAMunicipios();
 
         Schema::dropIfExists('municipios');
@@ -62,6 +64,42 @@ return new class extends Migration
         });
 
         $this->ponerClavesAMunicipios();
+    }
+
+    private function reasignarReferencias(): void
+    {
+        $antiguos = DB::table('municipios_por_empresa')->get(['id', 'codigo', 'nombre']);
+
+        if ($antiguos->isEmpty()) {
+            return;
+        }
+
+        Artisan::call('db:seed', ['--class' => GeografiaSeeder::class, '--force' => true]);
+
+        $nuevoIdPorAntiguo = [];
+
+        foreach ($antiguos as $antiguo) {
+            $nuevoId = DB::table('municipios')->where('codigo', $antiguo->codigo)->value('id');
+
+            if ($nuevoId === null) {
+                throw new RuntimeException("El municipio {$antiguo->codigo} {$antiguo->nombre} no está en el catálogo DIVIPOLA: agrégalo con su código DANE antes de migrar.");
+            }
+
+            $nuevoIdPorAntiguo[$antiguo->id] = $nuevoId;
+        }
+
+        // Un solo UPDATE por tabla: reasignar de a uno podría pisar un id nuevo que coincide con otro antiguo.
+        $casos = implode(' ', array_fill(0, count($nuevoIdPorAntiguo), 'WHEN ? THEN ?'));
+        $enlaces = collect($nuevoIdPorAntiguo)->flatMap(fn (int $nuevo, int $antiguo) => [$antiguo, $nuevo])->all();
+        $antiguosIds = array_keys($nuevoIdPorAntiguo);
+        $marcas = implode(',', array_fill(0, count($antiguosIds), '?'));
+
+        foreach (['gastos', 'tarifas_reteica_municipio'] as $tabla) {
+            DB::update(
+                "UPDATE {$tabla} SET municipio_id = CASE municipio_id {$casos} END WHERE municipio_id IN ({$marcas})",
+                [...$enlaces, ...$antiguosIds],
+            );
+        }
     }
 
     private function soltarClavesAMunicipios(): void
