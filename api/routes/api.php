@@ -124,6 +124,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/cartera', [CarteraController::class, 'index'])->middleware('permiso:cartera,listar');
     Route::get('/cartera/reporte-empleador', [CarteraController::class, 'reporteEmpleador'])->middleware('permiso:cartera,listar');
+    Route::get('/cartera/reporte-empleador/pdf', [CarteraController::class, 'reporteEmpleadorPdf'])->middleware('permiso:cartera,exportar');
+    Route::post('/cartera/reporte-empleador/exportar', [CarteraController::class, 'exportarReporteEmpleador'])->middleware('permiso:cartera,exportar');
 
     Route::get('/calendario', [CalendarioController::class, 'index'])->middleware('permiso:calendario,listar');
 
