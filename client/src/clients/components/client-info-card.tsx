@@ -42,6 +42,10 @@ export const ClientInfoCard: FC<ClientInfoCardProps> = ({ cliente, canEdit, onEd
                 <p className="text-sm text-gray-500 dark:text-gray-400">Empresa</p>
                 <p className="font-medium text-gray-800 dark:text-white/90">{cliente.empleador?.nombre ?? '—'}</p>
             </div>
+            <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Asesor</p>
+                <p className="font-medium text-gray-800 dark:text-white/90">{cliente.asesor?.nombre ?? '—'}</p>
+            </div>
         </div>
     </div>
 );

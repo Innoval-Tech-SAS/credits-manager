@@ -22,6 +22,7 @@ export function buildClientTableColumns({
         },
         { key: 'celular', label: 'Celular', render: (row) => row.tercero.celular ?? '—' },
         { key: 'empleador', label: 'Empresa', sortable: true, render: (row) => row.empleador?.nombre ?? '—' },
+        { key: 'asesor', label: 'Asesor', render: (row) => row.asesor?.nombre ?? '—' },
         {
             key: 'activo',
             label: 'Estado',

@@ -4,10 +4,12 @@ import { useNavigate, useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { useAuth } from '../../auth/hooks/use-auth';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { PaymentHistoryTable } from '../../payments/components/payment-history-table';
+import { ClientAdvisorHistoryCard } from '../components/client-advisor-history-card';
 import { ClientCreditsTable } from '../components/client-credits-table';
 import { ClientDocuments } from '../components/client-documents';
 import { ClientEmploymentHistoryTable } from '../components/client-employment-history-table';
@@ -20,8 +22,10 @@ export const ClientDetailPage: FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const canEdit = usePermission('clientes', 'editar');
+    const { user } = useAuth();
+    const isAdmin = user?.role === 'admin';
 
-    const { data: resumen, error } = useResource<ApiClientSummary>(`/clientes/${id}/resumen`);
+    const { data: resumen, error, refetch } = useResource<ApiClientSummary>(`/clientes/${id}/resumen`);
     const { sendRequest } = useSendRequest();
 
     const [documentosNuevos, setDocumentosNuevos] = useState<ApiClientDocument[]>([]);
@@ -83,6 +87,8 @@ export const ClientDetailPage: FC = () => {
             <div className="mb-6">
                 <ClientInfoCard cliente={cliente} canEdit={canEdit} onEdit={() => navigate(`/clientes/${cliente.id}/editar`)} />
             </div>
+
+            {isAdmin && <ClientAdvisorHistoryCard clientId={cliente.id} currentAdvisorId={cliente.asesor_id} onReassigned={refetch} />}
 
             <ClientEmploymentHistoryTable historial={historialEmpleadores} />
 
