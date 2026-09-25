@@ -42,6 +42,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
     const [roleId, setRoleId] = useState<number | null>(initialData?.rol?.id ?? null);
     const [overrides, setOverrides] = useState<Record<number, boolean>>({});
     const [active, setActive] = useState(initialData?.activo ?? true);
+    const [isGlobal, setIsGlobal] = useState(initialData?.es_global ?? false);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -111,7 +112,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
             if (isEditMode) {
                 await sendRequest(`/usuarios/${userId}`, {
                     method: 'PATCH',
-                    body: { nombre: name, usuario: username, rol_id: roleId, activo: active, permisos_extra: permisosExtra },
+                    body: { nombre: name, usuario: username, rol_id: roleId, activo: active, es_global: isGlobal, permisos_extra: permisosExtra },
                 });
             } else {
                 await sendRequest('/usuarios', {
@@ -122,6 +123,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                         clave: password,
                         rol_id: roleId,
                         activo: active,
+                        es_global: isGlobal,
                         permisos_extra: permisosExtra,
                     },
                 });
@@ -236,6 +238,23 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                                     Los permisos base del usuario vienen de este rol.
                                 </p>
                             </div>
+
+                            {roles.find((rol) => rol.id === roleId)?.nombre === 'asesor' && (
+                                <div>
+                                    <Label>Alcance</Label>
+                                    <div className="flex h-11 items-center">
+                                        <ToggleSwitchInput
+                                            id="es-global"
+                                            label={isGlobal ? 'Ve todos los clientes' : 'Solo sus clientes asignados'}
+                                            checked={isGlobal}
+                                            onChange={setIsGlobal}
+                                        />
+                                    </div>
+                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                        Con el alcance global el asesor ve los clientes y créditos de toda la empresa; si no, solo los suyos.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </section>
 

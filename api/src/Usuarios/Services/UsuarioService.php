@@ -45,6 +45,7 @@ class UsuarioService
                 'password_hash' => $datos['clave'],
                 'rol_id' => $datos['rol_id'],
                 'activo' => $datos['activo'],
+                'es_global' => $datos['es_global'] ?? false,
             ]);
 
             $this->usuarios->sincronizarPermisosExtra($usuario, $this->mapaPermisosExtra($datos));
@@ -68,6 +69,7 @@ class UsuarioService
                 'usuario' => $datos['usuario'],
                 'rol_id' => $datos['rol_id'],
                 'activo' => $datos['activo'],
+                ...(array_key_exists('es_global', $datos) ? ['es_global' => $datos['es_global']] : []),
             ]);
 
             $this->usuarios->sincronizarPermisosExtra($usuario, $this->mapaPermisosExtra($datos));
