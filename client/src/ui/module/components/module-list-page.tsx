@@ -32,13 +32,13 @@ export const ModuleListPage: FC<ModuleListPageProps> = ({
         )}
 
         <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-            <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">{pageTitle}</h2>
                     <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{countLabel}</p>
                 </div>
 
-                {toolbar && <div className="flex flex-col gap-3 sm:flex-row sm:items-center">{toolbar}</div>}
+                {toolbar && <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">{toolbar}</div>}
             </div>
 
             {children}
