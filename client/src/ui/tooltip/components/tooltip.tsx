@@ -88,7 +88,7 @@ export const Tooltip: FC<TooltipProps> = ({ label, hideFrom, children }) => {
                 createPortal(
                     <div
                         role="tooltip"
-                        className="pointer-events-none fixed z-999999 max-w-64 rounded-lg bg-gray-900 px-2.5 py-1.5 text-center text-xs font-medium text-white shadow-theme-md dark:bg-gray-700"
+                        className="pointer-events-none fixed z-999999 max-w-64 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-center text-xs font-medium text-gray-700 shadow-theme-md dark:border-gray-800 dark:bg-gray-dark dark:text-gray-300"
                         style={{
                             left: center,
                             top: above ? anchor.top - 8 : anchor.bottom + 8,
