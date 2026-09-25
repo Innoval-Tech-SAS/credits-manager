@@ -8,12 +8,13 @@ use App\Creditos\Models\Credito;
 use App\Documentos\Models\ArchivoAdjunto;
 use App\Empleadores\Models\Empleador;
 use App\Terceros\Models\Tercero;
+use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-#[Fillable(['tercero_id', 'empleador_id', 'activo', 'creado_por'])]
+#[Fillable(['tercero_id', 'empleador_id', 'asesor_id', 'activo', 'creado_por'])]
 class Cliente extends BaseModel
 {
     use PerteneceAEmpresa;
@@ -30,6 +31,11 @@ class Cliente extends BaseModel
     public function tercero(): BelongsTo
     {
         return $this->belongsTo(Tercero::class);
+    }
+
+    public function asesor(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'asesor_id');
     }
 
     public function empleador(): BelongsTo

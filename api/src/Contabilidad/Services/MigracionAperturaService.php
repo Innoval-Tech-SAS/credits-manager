@@ -6,7 +6,9 @@ use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Clientes\Constants\ClienteConstants;
+use App\Clientes\Models\Cliente;
 use App\Clientes\Repositories\ClienteRepository;
+use App\Clientes\Services\AsignacionAsesorService;
 use App\Contabilidad\Enums\NaturalezaCuenta;
 use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Models\MigracionApertura;
@@ -46,6 +48,7 @@ class MigracionAperturaService
         protected ConstructorDatosTercero $datosTercero,
         protected OtroTerceroRepository $otrosTerceros,
         protected ClienteRepository $clientes,
+        protected AsignacionAsesorService $asignacionesAsesor,
         protected ProveedorRepository $proveedores,
         protected EmisorAuditoria $auditoria,
     ) {}
@@ -177,6 +180,15 @@ class MigracionAperturaService
         return $tipoPersona;
     }
 
+    /** Los clientes importados quedan a nombre de quien importa; el administrador los reasigna después. */
+    private function crearClienteDeApertura(Tercero $tercero): Cliente
+    {
+        $cliente = $this->clientes->crear(['tercero_id' => $tercero->id, 'asesor_id' => Auth::id(), 'activo' => true]);
+        $this->asignacionesAsesor->registrarInicial($cliente, 'Importación de saldos de apertura');
+
+        return $cliente;
+    }
+
     private function validarFila(array $datos, array $reglas): void
     {
         $validador = Validator::make($datos, $reglas);
@@ -247,7 +259,7 @@ class MigracionAperturaService
             }
 
             $nuevaExtension = match ($tipoTercero) {
-                TipoTercero::Cliente => $this->clientes->crear(['tercero_id' => $tercero->id, 'activo' => true]),
+                TipoTercero::Cliente => $this->crearClienteDeApertura($tercero),
                 TipoTercero::Proveedor => $this->proveedores->crear(['tercero_id' => $tercero->id, 'activo' => true]),
                 TipoTercero::Otro => $this->otrosTerceros->crear(['tercero_id' => $tercero->id, 'activo' => true]),
             };

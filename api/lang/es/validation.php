@@ -240,6 +240,9 @@ return [
         'empleador' => [
             'tiene_clientes_asignados' => 'No se puede eliminar un empleador con clientes asignados actualmente.',
         ],
+        'asesor_id' => [
+            'mismo_asesor' => 'El cliente ya está asignado a ese asesor.',
+        ],
         'cliente' => [
             'tiene_creditos_activos' => 'No se puede eliminar un cliente con créditos activos (no pagados ni cancelados).',
         ],
@@ -343,6 +346,8 @@ return [
         // Contabilidad
         'codigo' => 'código',
         'naturaleza' => 'naturaleza',
+        'asesor_id' => 'asesor',
+        'es_global' => 'alcance global',
         'codigo_cuenta' => 'código de cuenta',
         'fecha_corte' => 'fecha de corte',
         'debito' => 'débito',

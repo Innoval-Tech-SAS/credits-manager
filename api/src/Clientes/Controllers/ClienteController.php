@@ -5,6 +5,8 @@ namespace App\Clientes\Controllers;
 use App\Clientes\Models\Cliente;
 use App\Clientes\Requests\CrearClienteRequest;
 use App\Clientes\Requests\EditarClienteRequest;
+use App\Clientes\Requests\ReasignarAsesorRequest;
+use App\Clientes\Services\AsignacionAsesorService;
 use App\Clientes\Services\ClienteService;
 use App\Creditos\Enums\EstadoCredito;
 use App\Documentos\Requests\SubirArchivoAdjuntoRequest;
@@ -18,6 +20,7 @@ class ClienteController extends Controller
 {
     public function __construct(
         protected ClienteService $clientes,
+        protected AsignacionAsesorService $asignaciones,
         protected ArchivoAdjuntoService $documentos,
     ) {}
 
@@ -43,19 +46,19 @@ class ClienteController extends Controller
     {
         $cliente = $this->clientes->crearCliente($peticion->validated());
 
-        return response()->json(['cliente' => $cliente->load(['tercero', 'empleador'])], 201);
+        return response()->json(['cliente' => $cliente->load(['tercero', 'empleador', 'asesor:id,nombre'])], 201);
     }
 
     public function show(Cliente $cliente): JsonResponse
     {
-        return response()->json(['cliente' => $cliente->load(['tercero', 'empleador'])]);
+        return response()->json(['cliente' => $cliente->load(['tercero', 'empleador', 'asesor:id,nombre'])]);
     }
 
     public function update(EditarClienteRequest $peticion, Cliente $cliente): JsonResponse
     {
         $cliente = $this->clientes->editarCliente($cliente, $peticion->validated());
 
-        return response()->json(['cliente' => $cliente->load(['tercero', 'empleador'])]);
+        return response()->json(['cliente' => $cliente->load(['tercero', 'empleador', 'asesor:id,nombre'])]);
     }
 
     public function destroy(Cliente $cliente): Response
@@ -68,9 +71,26 @@ class ClienteController extends Controller
     public function resumen(Cliente $cliente): JsonResponse
     {
         return response()->json([
-            'cliente' => $cliente->load(['tercero', 'empleador']),
+            'cliente' => $cliente->load(['tercero', 'empleador', 'asesor:id,nombre']),
             ...$this->clientes->resumenCliente($cliente),
         ]);
+    }
+
+    public function asesoresAsignables(): JsonResponse
+    {
+        return response()->json(['asesores' => $this->asignaciones->asesoresAsignables()]);
+    }
+
+    public function reasignarAsesor(ReasignarAsesorRequest $peticion, Cliente $cliente): JsonResponse
+    {
+        $cliente = $this->asignaciones->reasignar($cliente, $peticion->integer('asesor_id'), $peticion->string('motivo')->toString());
+
+        return response()->json(['cliente' => $cliente->load(['tercero', 'empleador', 'asesor:id,nombre'])]);
+    }
+
+    public function historialAsesores(Cliente $cliente): JsonResponse
+    {
+        return response()->json(['historial' => $this->asignaciones->historial($cliente)]);
     }
 
     public function documentos(Cliente $cliente): JsonResponse

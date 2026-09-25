@@ -12,6 +12,7 @@ use App\Creditos\Models\Cuota;
 use App\Empleadores\Models\Empleador;
 use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
+use Illuminate\Support\Facades\Auth;
 
 /**
  * Helpers de fixtures para tests de Créditos/Pagos/Cartera — evita repetir la
@@ -63,6 +64,7 @@ trait CreatesCreditFixtures
         return Cliente::create(array_merge([
             'tercero_id' => $tercero->id,
             'empleador_id' => $this->crearEmpleador()->id,
+            'asesor_id' => Auth::id(),
         ], $datosCliente));
     }
 

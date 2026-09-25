@@ -26,6 +26,7 @@ class HistorialEmpleadorTest extends TestCase
             'celular' => '3001234567',
             'correo' => 'juan@example.com',
             'empleador_id' => $empleadorId ?? $this->crearEmpleador()->id,
+            'asesor_id' => auth()->id(),
         ];
     }
 

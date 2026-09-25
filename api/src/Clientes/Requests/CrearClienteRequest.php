@@ -2,8 +2,10 @@
 
 namespace App\Clientes\Requests;
 
+use App\Clientes\Reglas\ReglasAsesor;
 use App\Terceros\Reglas\ReglasPersona;
 use App\Terceros\Requests\Concerns\ValidaDocumentoNoRegistrado;
+use App\Usuarios\Constants\UsuarioConstants;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,6 +27,10 @@ class CrearClienteRequest extends FormRequest
             'empleador_id' => [
                 'required', 'integer',
                 Rule::exists('empleadores', 'id')->where('empresa_id', $this->user()->empresa_id),
+            ],
+            'asesor_id' => [
+                Rule::requiredIf(fn () => $this->user()->rol?->nombre !== UsuarioConstants::ROL_ASESOR),
+                'nullable', 'integer', ReglasAsesor::asignable($this->user()->empresa_id),
             ],
         ];
     }

@@ -256,7 +256,7 @@ class TerceroControllerTest extends TestCase
 
     public function test_el_listado_incluye_el_tipo_de_extension_de_cada_tercero(): void
     {
-        $this->actingAsAdmin();
+        $admin = $this->actingAsAdmin();
         $terceroSinExtension = $this->crearTercero();
         $terceroOtro = $this->crearTercero();
         OtroTercero::create(['tercero_id' => $terceroOtro->id, 'activo' => true]);
@@ -265,6 +265,7 @@ class TerceroControllerTest extends TestCase
         Cliente::create([
             'tercero_id' => $terceroCliente->id,
             'empleador_id' => $empleador->id,
+            'asesor_id' => $admin->id,
             'activo' => true,
         ]);
 
