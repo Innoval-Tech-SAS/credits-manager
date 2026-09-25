@@ -18,6 +18,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'tipo_documento',
     'numero_documento',
     'nombre',
+    'nombres',
+    'apellidos',
+    'razon_social',
+    'digito_verificacion',
+    'representante_legal',
     'direccion',
     'barrio',
     'ciudad',
@@ -42,6 +47,22 @@ class Tercero extends BaseModel
     /** Solo se cargan para calcular `tipo`; el objeto anidado completo no aporta nada a la API. */
     protected $hidden = ['cliente', 'proveedor', 'otroTercero'];
 
+    /** `nombre` es siempre derivado (nombres y apellidos, o razón social): un único punto para que ningún camino de escritura lo desincronice. */
+    protected static function booted(): void
+    {
+        static::saving(function (Tercero $tercero) {
+            $nombre = match ($tercero->tipo_persona) {
+                TipoPersona::Natural => filled($tercero->nombres) ? trim($tercero->nombres.' '.$tercero->apellidos) : null,
+                TipoPersona::Juridica => $tercero->razon_social,
+                default => null,
+            };
+
+            if (filled($nombre)) {
+                $tercero->nombre = $nombre;
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -62,6 +83,14 @@ class Tercero extends BaseModel
             $this->otroTercero !== null => 'otro',
             default => null,
         });
+    }
+
+    /** Número de documento tal como se imprime: el NIT lleva su dígito de verificación. */
+    public function documentoConDigito(): string
+    {
+        return $this->tipo_persona === TipoPersona::Juridica && $this->digito_verificacion !== null
+            ? "{$this->numero_documento}-{$this->digito_verificacion}"
+            : $this->numero_documento;
     }
 
     public function cliente(): HasOne

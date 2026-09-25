@@ -169,15 +169,19 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/contabilidad/migraciones-apertura', [MigracionAperturaController::class, 'store'])->middleware('admin');
 
     Route::get('/terceros', [TerceroController::class, 'index']);
-    Route::post('/terceros', [TerceroController::class, 'store'])->middleware('permiso:contabilidad,crear');
+    Route::post('/terceros/personas-naturales', [TerceroController::class, 'storeNatural'])->middleware('permiso:contabilidad,crear');
+    Route::post('/terceros/personas-juridicas', [TerceroController::class, 'storeJuridica'])->middleware('permiso:contabilidad,crear');
     Route::get('/terceros/{tercero}', [TerceroController::class, 'show'])->middleware('permiso:contabilidad,listar');
-    Route::patch('/terceros/{tercero}', [TerceroController::class, 'update'])->middleware('permiso:contabilidad,editar');
+    Route::patch('/terceros/personas-naturales/{tercero}', [TerceroController::class, 'updateNatural'])->middleware('permiso:contabilidad,editar');
+    Route::patch('/terceros/personas-juridicas/{tercero}', [TerceroController::class, 'updateJuridica'])->middleware('permiso:contabilidad,editar');
     Route::get('/terceros/{tercero}/documentos-pendientes', [DocumentoTerceroController::class, 'pendientes'])->middleware('permiso:contabilidad,listar');
 
     Route::get('/proveedores', [ProveedorController::class, 'index'])->middleware('permiso:contabilidad,listar');
-    Route::post('/proveedores', [ProveedorController::class, 'store'])->middleware('permiso:contabilidad,crear');
+    Route::post('/proveedores/personas-naturales', [ProveedorController::class, 'storeNatural'])->middleware('permiso:contabilidad,crear');
+    Route::post('/proveedores/personas-juridicas', [ProveedorController::class, 'storeJuridica'])->middleware('permiso:contabilidad,crear');
     Route::get('/proveedores/{proveedor}', [ProveedorController::class, 'show'])->middleware('permiso:contabilidad,listar');
-    Route::patch('/proveedores/{proveedor}', [ProveedorController::class, 'update'])->middleware('permiso:contabilidad,editar');
+    Route::patch('/proveedores/personas-naturales/{proveedor}', [ProveedorController::class, 'updateNatural'])->middleware('permiso:contabilidad,editar');
+    Route::patch('/proveedores/personas-juridicas/{proveedor}', [ProveedorController::class, 'updateJuridica'])->middleware('permiso:contabilidad,editar');
 
     Route::get('/gastos/tipos-gasto', [TipoGastoController::class, 'index'])->middleware('permiso:gastos,listar');
     Route::post('/gastos/tipos-gasto', [TipoGastoController::class, 'store'])->middleware('permiso:gastos,parametrizar');

@@ -5,20 +5,26 @@ namespace App\Contabilidad\Services;
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Clientes\Constants\ClienteConstants;
 use App\Clientes\Repositories\ClienteRepository;
 use App\Contabilidad\Models\MigracionApertura;
 use App\Contabilidad\Repositories\MigracionAperturaRepository;
 use App\Contabilidad\Repositories\PlanCuentaRepository;
 use App\Contabilidad\Repositories\SaldoAperturaRepository;
 use App\Proveedores\Repositories\ProveedorRepository;
+use App\Terceros\Enums\TipoDocumentoTercero;
+use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Enums\TipoTercero;
 use App\Terceros\Models\Tercero;
+use App\Terceros\Reglas\ReglasPersona;
 use App\Terceros\Repositories\OtroTerceroRepository;
 use App\Terceros\Repositories\TerceroRepository;
+use App\Terceros\Services\ConstructorDatosTercero;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use RuntimeException;
 use Throwable;
 
@@ -34,6 +40,7 @@ class MigracionAperturaService
         protected PlanCuentaRepository $cuentas,
         protected SaldoAperturaRepository $saldos,
         protected TerceroRepository $terceros,
+        protected ConstructorDatosTercero $datosTercero,
         protected OtroTerceroRepository $otrosTerceros,
         protected ClienteRepository $clientes,
         protected ProveedorRepository $proveedores,
@@ -123,7 +130,9 @@ class MigracionAperturaService
 
         if ($tipo === 'terceros') {
             $pares = array_map(fn (array $datos) => [
-                'tipo_documento' => $datos['tipo_documento'] ?? '',
+                'tipo_documento' => TipoPersona::tryFrom($datos['tipo_persona'] ?? '') === TipoPersona::Juridica
+                    ? TipoDocumentoTercero::Nit->value
+                    : ($datos['tipo_documento'] ?? ''),
                 'numero_documento' => $datos['numero_documento'] ?? '',
             ], $datosPorFila);
 
@@ -135,6 +144,30 @@ class MigracionAperturaService
         }
 
         return [];
+    }
+
+    /** El tipo de persona nunca se infiere: cada fila lo declara y sus datos se validan con las mismas reglas de los formularios. */
+    private function tipoPersonaDeFila(TipoTercero $tipoTercero, array $datos): TipoPersona
+    {
+        $tipoPersona = TipoPersona::tryFrom($datos['tipo_persona'] ?? '');
+        if (! $tipoPersona) {
+            throw new RuntimeException('Tipo de persona inválido: "'.($datos['tipo_persona'] ?? '').'" (debe ser natural o juridica).');
+        }
+
+        if ($tipoTercero === TipoTercero::Cliente && $tipoPersona !== ClienteConstants::TIPO_PERSONA) {
+            throw new RuntimeException('Los clientes deben ser personas '.ClienteConstants::TIPO_PERSONA->value.'s.');
+        }
+
+        $validador = Validator::make($datos, match ($tipoPersona) {
+            TipoPersona::Natural => ReglasPersona::natural(),
+            TipoPersona::Juridica => ReglasPersona::juridica(),
+        });
+
+        if ($validador->fails()) {
+            throw new RuntimeException(implode(' ', $validador->errors()->all()));
+        }
+
+        return $tipoPersona;
     }
 
     private function claveDocumento(string $tipoDocumento, string $numeroDocumento): string
@@ -163,15 +196,14 @@ class MigracionAperturaService
                 throw new RuntimeException('Tipo de tercero inválido: "'.($datos['tipo'] ?? '').'" (debe ser cliente, proveedor u otro).');
             }
 
-            $clave = $this->claveDocumento($datos['tipo_documento'], $datos['numero_documento']);
+            $tipoPersona = $this->tipoPersonaDeFila($tipoTercero, $datos);
+            $datosTercero = $this->datosTercero->construir($tipoPersona, $datos);
+
+            $clave = $this->claveDocumento($datosTercero['tipo_documento'], $datosTercero['numero_documento']);
             $tercero = $precarga['terceros_por_documento'][$clave] ?? null;
 
             if (! $tercero) {
-                $tercero = $this->terceros->crear([
-                    'tipo_documento' => $datos['tipo_documento'],
-                    'numero_documento' => $datos['numero_documento'],
-                    'nombre' => $datos['nombre'],
-                ]);
+                $tercero = $this->terceros->crear($datosTercero);
                 // Recién creado: no puede tener extensión todavía — evita un lazy-load por fila.
                 $tercero->setRelation('cliente', null);
                 $tercero->setRelation('proveedor', null);

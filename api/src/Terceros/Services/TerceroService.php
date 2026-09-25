@@ -4,6 +4,7 @@ namespace App\Terceros\Services;
 
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
 use App\Terceros\Repositories\OtroTerceroRepository;
 use App\Terceros\Repositories\TerceroRepository;
@@ -15,6 +16,7 @@ class TerceroService
     public function __construct(
         protected TerceroRepository $terceros,
         protected OtroTerceroRepository $otrosTerceros,
+        protected ConstructorDatosTercero $datosTercero,
         protected EmisorAuditoria $auditoria,
     ) {}
 
@@ -24,10 +26,10 @@ class TerceroService
     }
 
     /** Crea un tercero genérico (no cliente, no proveedor) junto con su extensión "otro", reutilizando el tercero si ya existe. */
-    public function crear(array $datos): Tercero
+    public function crear(TipoPersona $tipoPersona, array $datos): Tercero
     {
-        return DB::transaction(function () use ($datos) {
-            $tercero = $this->terceros->obtenerOCrear($datos);
+        return DB::transaction(function () use ($tipoPersona, $datos) {
+            $tercero = $this->terceros->obtenerOCrear($this->datosTercero->construir($tipoPersona, $datos));
 
             $this->otrosTerceros->crear(['tercero_id' => $tercero->id, 'activo' => true]);
 

@@ -66,7 +66,13 @@ class MotorReglasFiscalesService
             return [...$base, 'incluida' => false, 'regla' => 'bajo_base_minima', 'detalle' => "Valor bruto {$valorBruto->aDecimalString()} menor a la base mínima {$baseMinima->aDecimalString()}."];
         }
 
-        $tipoPersona = $tercero->tipo_persona ?? TipoPersona::Natural;
+        $tipoPersona = $tercero->tipo_persona;
+
+        if (! $tipoPersona) {
+            throw ValidationException::withMessages([
+                'tercero_id' => __('validation.custom.tercero.tipo_persona.requerido_para_retefuente'),
+            ]);
+        }
 
         $tarifa = $tipoPersona === TipoPersona::Juridica
             ? $parametrizacion->tarifa_retefuente_persona_juridica

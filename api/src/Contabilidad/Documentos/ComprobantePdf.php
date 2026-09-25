@@ -53,14 +53,7 @@ final class ComprobantePdf implements DocumentoPdf
             return new DestinatarioDocumento('Sin tercero asociado');
         }
 
-        return new DestinatarioDocumento(
-            nombre: $tercero->nombre,
-            documento: $tercero->numero_documento,
-            telefono: $tercero->celular ?: $tercero->telefono_fijo,
-            direccion: $tercero->direccion,
-            ciudad: $tercero->ciudad,
-            etiquetaDocumento: strtoupper($tercero->tipo_documento->value),
-        );
+        return DestinatarioDocumento::desdeTercero($tercero);
     }
 
     public function fechas(): array
