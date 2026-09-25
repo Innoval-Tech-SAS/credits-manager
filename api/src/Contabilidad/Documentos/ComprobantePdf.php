@@ -124,7 +124,7 @@ final class ComprobantePdf implements DocumentoPdf
         }
 
         if ($this->comprobante->modulo_origen && $this->comprobante->modulo_origen !== 'reverso') {
-            $secciones[] = new SeccionDocumento('Origen', "Módulo {$this->comprobante->modulo_origen}, registro #{$this->comprobante->origen_id}");
+            $secciones[] = new SeccionDocumento('Origen', "Módulo {$this->comprobante->modulo_origen}".($this->comprobante->origen_id ? ", registro #{$this->comprobante->origen_id}" : ''));
         }
 
         if ($this->original) {

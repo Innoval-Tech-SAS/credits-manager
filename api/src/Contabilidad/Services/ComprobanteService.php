@@ -133,7 +133,7 @@ class ComprobanteService
                 ]);
             }
 
-            $origen = $moduloOrigen ? " (origen: {$moduloOrigen} #{$origenId})" : '';
+            $origen = $moduloOrigen ? " (origen: {$moduloOrigen}".($origenId ? " #{$origenId}" : '').')' : '';
             $this->auditoria->registrarCreacion(
                 AuditoriaConstants::MODULO_CONTABILIDAD,
                 'Comprobante #'.$comprobante->consecutivo.($contabilizarInmediato ? ' contabilizado' : ' creado en borrador')." por {$totalDebito->aDecimalString()}{$origen}",

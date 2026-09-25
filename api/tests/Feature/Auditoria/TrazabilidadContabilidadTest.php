@@ -47,6 +47,8 @@ class TrazabilidadContabilidadTest extends TestCase
         $this->assertSame('100.00', $evento['valores_nuevos']['total_credito']);
         $this->assertSame(2, $evento['valores_nuevos']['lineas']);
         $this->assertSame('contabilizado', $evento['valores_nuevos']['estado']);
+        $this->assertStringContainsString('(origen: manual)', $evento['descripcion']);
+        $this->assertStringNotContainsString('#)', $evento['descripcion']);
     }
 
     public function test_un_comprobante_descuadrado_no_deja_evento(): void
