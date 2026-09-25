@@ -24,7 +24,7 @@ class ClienteRepository extends BaseRepository
         ?bool $activo = null,
         ?EstadoCredito $estadoCredito = null,
     ): LengthAwarePaginator {
-        $consulta = $this->consulta()->with(['tercero', 'empleador']);
+        $consulta = $this->consulta()->with(['tercero', 'empleador', 'asesor:id,nombre']);
 
         if ($activo !== null) {
             $consulta->where('clientes.activo', $activo);

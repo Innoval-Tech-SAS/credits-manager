@@ -22,6 +22,7 @@ class CrearUsuarioRequest extends FormRequest
             'clave' => ['required', 'string', Password::min(8)->letters()->numbers()->symbols()],
             'rol_id' => ['required', 'integer', Rule::exists('roles', 'id')->where('empresa_id', $this->user()->empresa_id)],
             'activo' => ['required', 'boolean'],
+            'es_global' => ['sometimes', 'boolean'],
             'permisos_extra' => ['sometimes', 'array'],
             'permisos_extra.*.permiso_id' => ['required', 'integer', Rule::in($this->idsPermisosValidos())],
             'permisos_extra.*.concedido' => ['required', 'boolean'],

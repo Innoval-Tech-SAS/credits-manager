@@ -9,4 +9,5 @@ export type ApiUserDetail = {
     rol: ApiRoleRef | null;
     permisos_extra: ApiPermisoExcepcion[];
     activo: boolean;
+    es_global: boolean;
 };

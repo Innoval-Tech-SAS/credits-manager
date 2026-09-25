@@ -33,6 +33,7 @@ class TrazabilidadMaestrosTest extends TestCase
             'celular' => '3001234567',
             'correo' => 'juan@example.com',
             'empleador_id' => $empleadorId,
+            'asesor_id' => auth()->id(),
         ], $cambios);
     }
 

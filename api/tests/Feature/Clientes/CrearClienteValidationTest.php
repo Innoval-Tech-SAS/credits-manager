@@ -28,6 +28,7 @@ class CrearClienteValidationTest extends TestCase
             'telefono_fijo' => '6011234567',
             'correo' => 'juan@example.com',
             'empleador_id' => $empleadorId ?? $this->crearEmpleador()->id,
+            'asesor_id' => auth()->id(),
         ];
     }
 

@@ -47,6 +47,18 @@ class UsuarioRepository extends BaseRepository
             ->values();
     }
 
+    /** Usuarios activos a quienes se puede asignar un cliente. */
+    public function asignables(): Collection
+    {
+        return $this->consulta()
+            ->select(['id', 'nombre', 'usuario', 'rol_id'])
+            ->where('activo', true)
+            ->whereHas('rol', fn (Builder $consulta) => $consulta->whereIn('nombre', UsuarioConstants::ROLES_ASIGNABLES))
+            ->with('rol:id,nombre')
+            ->orderBy('nombre')
+            ->get();
+    }
+
     public function paginar(?string $busqueda, ?string $columna, string $direccion, int $porPagina, int $pagina): LengthAwarePaginator
     {
         $consulta = $this->consulta()->with('rol');

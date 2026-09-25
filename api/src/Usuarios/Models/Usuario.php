@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['empresa_id', 'nombre', 'usuario', 'password_hash', 'rol_id', 'activo', 'es_superadmin'])]
+#[Fillable(['empresa_id', 'nombre', 'usuario', 'password_hash', 'rol_id', 'activo', 'es_global', 'es_superadmin'])]
 #[Hidden(['password_hash'])]
 class Usuario extends BaseModel implements AuthenticatableContract
 {
@@ -78,6 +78,7 @@ class Usuario extends BaseModel implements AuthenticatableContract
         return [
             'password_hash' => 'hashed',
             'activo' => 'boolean',
+            'es_global' => 'boolean',
             'es_superadmin' => 'boolean',
         ];
     }

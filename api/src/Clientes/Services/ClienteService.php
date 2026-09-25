@@ -15,6 +15,7 @@ use App\Pagos\Repositories\PagoRepository;
 use App\Terceros\Models\Tercero;
 use App\Terceros\Repositories\TerceroRepository;
 use App\Terceros\Services\ConstructorDatosTercero;
+use App\Usuarios\Constants\UsuarioConstants;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
@@ -31,6 +32,7 @@ class ClienteService
         protected CuotaRepository $cuotas,
         protected PagoRepository $pagos,
         protected ClienteEmpleadorHistorialRepository $historialEmpleadores,
+        protected AsignacionAsesorService $asignaciones,
         protected EmisorAuditoria $auditoria,
     ) {}
 
@@ -65,9 +67,12 @@ class ClienteService
             $cliente = $this->clientes->crear([
                 'tercero_id' => $tercero->id,
                 'empleador_id' => $datos['empleador_id'],
+                'asesor_id' => $this->asesorDeNuevoCliente($datos),
                 'activo' => true,
                 'creado_por' => Auth::id(),
             ]);
+
+            $this->asignaciones->registrarInicial($cliente);
 
             $this->historialEmpleadores->crear([
                 'cliente_id' => $cliente->id,
@@ -84,6 +89,12 @@ class ClienteService
 
             return $cliente->setAttribute('tercero_reutilizado', ! $tercero->wasRecentlyCreated);
         });
+    }
+
+    /** Un asesor que crea un cliente queda como su asesor; cualquier otro rol debe elegirlo (el Request lo exige). */
+    private function asesorDeNuevoCliente(array $datos): int
+    {
+        return Auth::user()->rol?->nombre === UsuarioConstants::ROL_ASESOR ? Auth::id() : (int) $datos['asesor_id'];
     }
 
     public function editarCliente(Cliente $cliente, array $datos): Cliente

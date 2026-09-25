@@ -93,9 +93,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/clientes', [ClienteController::class, 'index'])->middleware('permiso:clientes,listar');
     Route::post('/clientes', [ClienteController::class, 'store'])->middleware('permiso:clientes,crear');
+    Route::get('/clientes/asesores-asignables', [ClienteController::class, 'asesoresAsignables'])->middleware('permiso:clientes,crear');
     Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->middleware('permiso:clientes,ver');
     Route::patch('/clientes/{cliente}', [ClienteController::class, 'update'])->middleware('permiso:clientes,editar');
     Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->middleware('admin');
+    Route::patch('/clientes/{cliente}/asesor', [ClienteController::class, 'reasignarAsesor'])->middleware('admin');
+    Route::get('/clientes/{cliente}/asesor-historial', [ClienteController::class, 'historialAsesores'])->middleware('admin');
     Route::get('/clientes/{cliente}/resumen', [ClienteController::class, 'resumen'])->middleware('permiso:clientes,ver');
     Route::get('/clientes/{cliente}/documentos', [ClienteController::class, 'documentos'])->middleware('permiso:clientes,ver');
     Route::post('/clientes/{cliente}/documentos', [ClienteController::class, 'subirDocumento'])->middleware('permiso:clientes,editar');

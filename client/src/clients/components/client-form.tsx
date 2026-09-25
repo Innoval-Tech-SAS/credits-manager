@@ -2,6 +2,7 @@ import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { useAuth } from '../../auth/hooks/use-auth';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
@@ -12,6 +13,7 @@ import { Spinner } from '@ui/spinner/components/spinner';
 import { CLIENT_STATUS_BADGE_CLASSES } from '../constants/client-status-badge-classes';
 import { NATURAL_DOCUMENT_TYPE_OPTIONS } from '../../third-parties/constants/natural-document-type-options';
 import { EmployerSelector } from '../../employers/components/employer-selector';
+import { AdvisorSelect } from './advisor-select';
 import { ArrowRight } from 'lucide-react';
 import type { ClientFormProps } from '../props/client-form-props';
 import type { ApiClient } from '../types/api-client';
@@ -23,6 +25,9 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
     const { sendRequest } = useSendRequest();
 
     const isEditMode = clientId !== undefined;
+    const { user } = useAuth();
+    // Un asesor que crea un cliente queda como su asesor; cualquier otro rol debe elegirlo.
+    const mustChooseAdvisor = !isEditMode && user?.role !== 'asesor';
 
     const [nombres, setNombres] = useState(initialData?.tercero.nombres ?? '');
     const [apellidos, setApellidos] = useState(initialData?.tercero.apellidos ?? '');
@@ -37,6 +42,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
     const [telefonoFijo, setTelefonoFijo] = useState(initialData?.tercero.telefono_fijo ?? '');
     const [correo, setCorreo] = useState(initialData?.tercero.correo ?? '');
     const [empleador, setEmpleador] = useState<ApiEmployer | null>(initialData?.empleador ?? null);
+    const [asesorId, setAsesorId] = useState<number | null>(null);
     const [activo, setActivo] = useState<boolean>(initialData?.activo ?? true);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,6 +53,11 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
 
         if (!empleador) {
             setError('Selecciona o crea un empleador.');
+            return;
+        }
+
+        if (mustChooseAdvisor && asesorId === null) {
+            setError('Selecciona el asesor del cliente.');
             return;
         }
 
@@ -64,6 +75,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
             telefono_fijo: telefonoFijo || null,
             correo,
             empleador_id: empleador.id,
+            ...(mustChooseAdvisor ? { asesor_id: asesorId } : {}),
             ...(isEditMode ? { activo } : {}),
         };
 
@@ -150,6 +162,13 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                             <Label htmlFor="empleador">Empresa</Label>
                             <EmployerSelector id="empleador" selected={empleador} onSelect={setEmpleador} />
                         </div>
+
+                        {mustChooseAdvisor && (
+                            <div>
+                                <Label htmlFor="asesor">Asesor</Label>
+                                <AdvisorSelect value={asesorId} onChange={setAsesorId} />
+                            </div>
+                        )}
                     </div>
                 </div>
 
