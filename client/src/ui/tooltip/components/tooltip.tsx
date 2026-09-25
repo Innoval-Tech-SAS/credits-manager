@@ -1,5 +1,5 @@
 import type { FC, FocusEvent, MouseEvent, TouchEvent } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { TooltipProps } from '../props/tooltip-props';
@@ -7,7 +7,7 @@ import type { TooltipProps } from '../props/tooltip-props';
 const LONG_PRESS_MS = 450;
 const TOUCH_VISIBLE_MS = 1800;
 const MD_QUERY = '(min-width: 768px)';
-const EDGE = 96;
+const EDGE = 8;
 
 type Anchor = { top: number; bottom: number; center: number };
 
@@ -20,6 +20,7 @@ export const Tooltip: FC<TooltipProps> = ({ label, hideFrom, children }) => {
     const [anchor, setAnchor] = useState<Anchor | null>(null);
     const pressTimer = useRef<number | undefined>(undefined);
     const hideTimer = useRef<number | undefined>(undefined);
+    const tooltipRef = useRef<HTMLDivElement>(null);
 
     useEffect(
         () => () => {
@@ -60,8 +61,17 @@ export const Tooltip: FC<TooltipProps> = ({ label, hideFrom, children }) => {
         setAnchor(null);
     };
 
+    // Se centra sobre el elemento y solo se corre lo justo para no salirse de la pantalla, según su ancho real.
+    useLayoutEffect(() => {
+        if (!anchor || !tooltipRef.current) {
+            return;
+        }
+
+        const half = tooltipRef.current.offsetWidth / 2;
+        tooltipRef.current.style.left = `${Math.min(Math.max(anchor.center, half + EDGE), window.innerWidth - half - EDGE)}px`;
+    }, [anchor]);
+
     const above = anchor ? anchor.top > 48 : true;
-    const center = anchor ? Math.min(Math.max(anchor.center, EDGE), window.innerWidth - EDGE) : 0;
 
     return (
         <>
@@ -87,10 +97,11 @@ export const Tooltip: FC<TooltipProps> = ({ label, hideFrom, children }) => {
             {anchor &&
                 createPortal(
                     <div
+                        ref={tooltipRef}
                         role="tooltip"
                         className="pointer-events-none fixed z-999999 max-w-64 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-center text-xs font-medium text-gray-700 shadow-theme-md dark:border-gray-800 dark:bg-gray-dark dark:text-gray-300"
                         style={{
-                            left: center,
+                            left: anchor.center,
                             top: above ? anchor.top - 8 : anchor.bottom + 8,
                             transform: above ? 'translate(-50%, -100%)' : 'translate(-50%, 0)',
                         }}
