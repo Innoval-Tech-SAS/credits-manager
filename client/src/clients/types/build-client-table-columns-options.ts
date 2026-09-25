@@ -1,6 +1,7 @@
 import type { ApiClient } from './api-client';
 
 export type BuildClientTableColumnsOptions = {
+    canView: boolean;
     canEdit: boolean;
     canDelete: boolean;
     onEdit: (row: ApiClient) => void;

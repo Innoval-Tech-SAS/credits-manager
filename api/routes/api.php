@@ -93,16 +93,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/clientes', [ClienteController::class, 'index'])->middleware('permiso:clientes,listar');
     Route::post('/clientes', [ClienteController::class, 'store'])->middleware('permiso:clientes,crear');
-    Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->middleware('permiso:clientes,editar');
+    Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->middleware('permiso:clientes,ver');
     Route::patch('/clientes/{cliente}', [ClienteController::class, 'update'])->middleware('permiso:clientes,editar');
     Route::delete('/clientes/{cliente}', [ClienteController::class, 'destroy'])->middleware('admin');
-    Route::get('/clientes/{cliente}/resumen', [ClienteController::class, 'resumen'])->middleware('permiso:clientes,editar');
-    Route::get('/clientes/{cliente}/documentos', [ClienteController::class, 'documentos'])->middleware('permiso:clientes,editar');
+    Route::get('/clientes/{cliente}/resumen', [ClienteController::class, 'resumen'])->middleware('permiso:clientes,ver');
+    Route::get('/clientes/{cliente}/documentos', [ClienteController::class, 'documentos'])->middleware('permiso:clientes,ver');
     Route::post('/clientes/{cliente}/documentos', [ClienteController::class, 'subirDocumento'])->middleware('permiso:clientes,editar');
 
     Route::get('/empleadores', [EmpleadorController::class, 'index'])->middleware('permiso:clientes,listar');
     Route::post('/empleadores', [EmpleadorController::class, 'store'])->middleware('permiso:clientes,crear');
-    Route::get('/empleadores/{empleador}', [EmpleadorController::class, 'show'])->middleware('permiso:clientes,editar');
+    Route::get('/empleadores/{empleador}', [EmpleadorController::class, 'show'])->middleware('permiso:clientes,ver');
     Route::patch('/empleadores/{empleador}', [EmpleadorController::class, 'update'])->middleware('permiso:clientes,editar');
     Route::delete('/empleadores/{empleador}', [EmpleadorController::class, 'destroy'])->middleware('admin');
 
@@ -111,7 +111,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/creditos/{credito}', [CreditoController::class, 'show'])->middleware('permiso:creditos,listar');
     Route::patch('/creditos/{credito}', [CreditoController::class, 'update'])->middleware('permiso:creditos,editar');
     Route::get('/creditos/{credito}/estado-cuenta', [CreditoController::class, 'estadoCuenta'])->middleware('permiso:creditos,listar');
-    Route::get('/creditos/{credito}/estado-cuenta/pdf', [CreditoController::class, 'estadoCuentaPdf'])->middleware('permiso:creditos,listar');
+    Route::get('/creditos/{credito}/estado-cuenta/pdf', [CreditoController::class, 'estadoCuentaPdf'])->middleware('permiso:creditos,imprimir_estado_cuenta');
     Route::post('/creditos/{credito}/aprobar', [CreditoController::class, 'aprobar'])->middleware('permiso:creditos,aprobar');
     Route::post('/creditos/{credito}/desembolsar', [CreditoController::class, 'desembolsar'])->middleware('permiso:creditos,desembolsar');
     Route::post('/creditos/{credito}/cancelar', [CreditoController::class, 'cancelar'])->middleware('permiso:creditos,cancelar');
@@ -119,14 +119,14 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/pagos', [PagoController::class, 'listar'])->middleware('permiso:pagos,listar');
     Route::get('/creditos/{credito}/pagos', [PagoController::class, 'index'])->middleware('permiso:pagos,listar');
-    Route::get('/pagos/{pago}/recibo/pdf', [ReciboCajaController::class, 'pdf'])->middleware('permiso:pagos,listar')->whereNumber('pago');
+    Route::get('/pagos/{pago}/recibo/pdf', [ReciboCajaController::class, 'pdf'])->middleware('permiso:pagos,imprimir_recibo')->whereNumber('pago');
     Route::post('/creditos/{credito}/pagos', [PagoController::class, 'store'])->middleware('permiso:pagos,crear');
     Route::get('/creditos/{credito}/liquidacion', [PagoController::class, 'liquidacion'])->middleware('permiso:pagos,crear');
     Route::post('/creditos/{credito}/liquidacion', [PagoController::class, 'liquidar'])->middleware('permiso:pagos,crear');
 
     Route::get('/cartera', [CarteraController::class, 'index'])->middleware('permiso:cartera,listar');
     Route::get('/cartera/reporte-empleador', [CarteraController::class, 'reporteEmpleador'])->middleware('permiso:cartera,listar');
-    Route::get('/cartera/reporte-empleador/pdf', [CarteraController::class, 'reporteEmpleadorPdf'])->middleware('permiso:cartera,exportar');
+    Route::get('/cartera/reporte-empleador/pdf', [CarteraController::class, 'reporteEmpleadorPdf'])->middleware('permiso:cartera,imprimir_reporte_empleador');
     Route::post('/cartera/reporte-empleador/exportar', [CarteraController::class, 'exportarReporteEmpleador'])->middleware('permiso:cartera,exportar');
 
     Route::get('/calendario', [CalendarioController::class, 'index'])->middleware('permiso:calendario,listar');
@@ -157,7 +157,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/comprobantes', [ComprobanteController::class, 'index'])->middleware('permiso:contabilidad,listar');
     Route::post('/contabilidad/comprobantes', [ComprobanteController::class, 'store'])->middleware('permiso:contabilidad,crear_manual');
     Route::get('/contabilidad/comprobantes/{comprobante}', [ComprobanteController::class, 'show'])->middleware('permiso:contabilidad,listar');
-    Route::get('/contabilidad/comprobantes/{comprobante}/pdf', [ComprobanteController::class, 'pdf'])->middleware('permiso:contabilidad,listar')->whereNumber('comprobante');
+    Route::get('/contabilidad/comprobantes/{comprobante}/pdf', [ComprobanteController::class, 'pdf'])->middleware('permiso:contabilidad,imprimir_comprobante')->whereNumber('comprobante');
     Route::post('/contabilidad/comprobantes/{comprobante}/reversar', [ComprobanteController::class, 'reversar'])->middleware('permiso:contabilidad,anular');
 
     Route::get('/contabilidad/libro-diario', [ReporteContableController::class, 'libroDiario'])->middleware('permiso:contabilidad,listar');

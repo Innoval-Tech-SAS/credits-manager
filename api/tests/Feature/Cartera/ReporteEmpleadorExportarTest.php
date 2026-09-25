@@ -111,13 +111,22 @@ class ReporteEmpleadorExportarTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    public function test_el_permiso_exportar_basta_para_pdf_y_excel(): void
+    public function test_exportar_da_el_excel_pero_no_el_pdf(): void
     {
         $empleador = $this->empleadorConCuotas();
         $this->actingAsRolConPermisos('cartera', ['cartera.exportar'], Empresa::find($empleador->empresa_id));
 
-        $this->getJson(self::PDF.'?empleador_id='.$empleador->id)->assertOk();
         $this->postJson(self::EXPORTAR, ['empleador_id' => $empleador->id, 'formato' => 'xlsx'])->assertStatus(202);
+        $this->getJson(self::PDF.'?empleador_id='.$empleador->id)->assertStatus(403);
+    }
+
+    public function test_imprimir_da_el_pdf_pero_no_el_excel(): void
+    {
+        $empleador = $this->empleadorConCuotas();
+        $this->actingAsRolConPermisos('cartera', ['cartera.imprimir_reporte_empleador'], Empresa::find($empleador->empresa_id));
+
+        $this->getJson(self::PDF.'?empleador_id='.$empleador->id)->assertOk();
+        $this->postJson(self::EXPORTAR, ['empleador_id' => $empleador->id, 'formato' => 'xlsx'])->assertStatus(403);
     }
 
     public function test_valida_el_empleador_y_el_formato(): void

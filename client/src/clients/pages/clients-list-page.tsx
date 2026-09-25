@@ -26,6 +26,7 @@ export const ClientsListPage: FC = () => {
     const { user } = useAuth();
 
     const canCreate = usePermission('clientes', 'crear');
+    const canView = usePermission('clientes', 'ver');
     const canEdit = usePermission('clientes', 'editar');
     const canDelete = user?.role === 'admin';
 
@@ -80,6 +81,7 @@ export const ClientsListPage: FC = () => {
     };
 
     const columns = buildClientTableColumns({
+        canView,
         canEdit,
         canDelete,
         onEdit: handleEdit,

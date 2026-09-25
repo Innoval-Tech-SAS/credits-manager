@@ -19,6 +19,7 @@ export const EmployerReportPage: FC = () => {
     const [exportMessage, setExportMessage] = useState<string | null>(null);
     const [exportError, setExportError] = useState<string | null>(null);
     const canExport = usePermission('cartera', 'exportar');
+    const canPrint = usePermission('cartera', 'imprimir_reporte_empleador');
 
     const params = new URLSearchParams();
     if (empleadorId) {
@@ -75,12 +76,12 @@ export const EmployerReportPage: FC = () => {
                     )}
                 </div>
 
-                {empleadorSeleccionado && canExport && (
+                {empleadorSeleccionado && (canExport || canPrint) && (
                     <ExportButton
                         endpoint="/cartera/reporte-empleador/exportar"
                         filters={{ empleador_id: String(empleadorSeleccionado) }}
-                        formats={['xlsx']}
-                        pdfEndpoint="/cartera/reporte-empleador/pdf"
+                        formats={canExport ? ['xlsx'] : []}
+                        pdfEndpoint={canPrint ? '/cartera/reporte-empleador/pdf' : undefined}
                         pdfFilename="relacion-descuento.pdf"
                         disabled={filas.length === 0}
                         onRequested={() => {
