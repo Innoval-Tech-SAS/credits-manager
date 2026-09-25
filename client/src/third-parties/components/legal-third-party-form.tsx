@@ -49,17 +49,8 @@ export const LegalThirdPartyForm: FC<LegalThirdPartyFormProps> = ({ thirdPartyId
                     </div>
                 )}
 
-                <ThirdPartyFormHeader
-                    tipoPersona="juridica"
-                    isEditMode={isEditMode}
-                    role={rol}
-                    onRoleChange={setRol}
-                    activo={activo}
-                    onActivoChange={setActivo}
-                />
-
                 <div>
-                    <p className="mb-3 text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">Identificación</p>
+                    <p className="mb-3 text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">Identificación · Persona jurídica</p>
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div>
                             <Label htmlFor="razon-social">Razón social</Label>
@@ -94,6 +85,14 @@ export const LegalThirdPartyForm: FC<LegalThirdPartyFormProps> = ({ thirdPartyId
                             <Label htmlFor="digito-verificacion">Dígito de verificación</Label>
                             <Input id="digito-verificacion" name="digito-verificacion" disabled value={digitoVerificacion} hint="Se calcula a partir del NIT." />
                         </div>
+
+                        <ThirdPartyFormHeader
+                            isEditMode={isEditMode}
+                            role={rol}
+                            onRoleChange={setRol}
+                            activo={activo}
+                            onActivoChange={setActivo}
+                        />
                     </div>
                 </div>
 

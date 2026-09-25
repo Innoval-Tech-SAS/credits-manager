@@ -97,19 +97,19 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                     </div>
                 )}
 
-                <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
-                    <div className="flex-1">
+                <div className={`grid grid-cols-1 gap-6 ${isEditMode ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+                    <div>
                         <Label htmlFor="nombres">Nombres</Label>
                         <Input id="nombres" name="nombres" required value={nombres} onChange={(event) => setNombres(event.target.value)} />
                     </div>
 
-                    <div className="flex-1">
+                    <div>
                         <Label htmlFor="apellidos">Apellidos</Label>
                         <Input id="apellidos" name="apellidos" required value={apellidos} onChange={(event) => setApellidos(event.target.value)} />
                     </div>
 
                     {isEditMode && (
-                        <div className="sm:w-36">
+                        <div>
                             <Label htmlFor="activo">Estado</Label>
                             <div className="flex h-11 items-center gap-2.5">
                                 <ToggleSwitchInput id="activo" checked={activo} onChange={setActivo} />

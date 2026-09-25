@@ -50,17 +50,8 @@ export const NaturalThirdPartyForm: FC<NaturalThirdPartyFormProps> = ({ thirdPar
                     </div>
                 )}
 
-                <ThirdPartyFormHeader
-                    tipoPersona="natural"
-                    isEditMode={isEditMode}
-                    role={rol}
-                    onRoleChange={setRol}
-                    activo={activo}
-                    onActivoChange={setActivo}
-                />
-
                 <div>
-                    <p className="mb-3 text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">Identificación</p>
+                    <p className="mb-3 text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">Identificación · Persona natural</p>
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div>
                             <Label htmlFor="nombres">Nombres</Label>
@@ -91,6 +82,14 @@ export const NaturalThirdPartyForm: FC<NaturalThirdPartyFormProps> = ({ thirdPar
                                 onChange={(event) => setNumeroDocumento(event.target.value)}
                             />
                         </div>
+
+                        <ThirdPartyFormHeader
+                            isEditMode={isEditMode}
+                            role={rol}
+                            onRoleChange={setRol}
+                            activo={activo}
+                            onActivoChange={setActivo}
+                        />
                     </div>
                 </div>
 
