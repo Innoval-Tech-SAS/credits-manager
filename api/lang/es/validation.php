@@ -343,6 +343,10 @@ return [
         // Contabilidad
         'codigo' => 'código',
         'naturaleza' => 'naturaleza',
+        'codigo_cuenta' => 'código de cuenta',
+        'fecha_corte' => 'fecha de corte',
+        'debito' => 'débito',
+        'nivel' => 'nivel',
         'cuenta_padre_id' => 'cuenta padre',
         'tipo' => 'tipo',
         'permite_movimiento' => 'permite movimiento',

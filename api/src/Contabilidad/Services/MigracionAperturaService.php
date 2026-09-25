@@ -7,6 +7,8 @@ use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Clientes\Constants\ClienteConstants;
 use App\Clientes\Repositories\ClienteRepository;
+use App\Contabilidad\Enums\NaturalezaCuenta;
+use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Models\MigracionApertura;
 use App\Contabilidad\Repositories\MigracionAperturaRepository;
 use App\Contabilidad\Repositories\PlanCuentaRepository;
@@ -25,6 +27,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use RuntimeException;
 use Throwable;
 
@@ -80,9 +83,13 @@ class MigracionAperturaService
                 try {
                     $this->importarFila($tipo, $datos, $precarga);
                     $aceptados++;
-                } catch (Throwable $e) {
+                } catch (RuntimeException $e) {
                     $rechazados++;
                     $errores[] = 'Fila '.($indice + 2).': '.$e->getMessage();
+                } catch (Throwable $e) {
+                    report($e);
+                    $rechazados++;
+                    $errores[] = 'Fila '.($indice + 2).': no se pudo procesar por un error inesperado';
                 }
             }
         });
@@ -170,6 +177,15 @@ class MigracionAperturaService
         return $tipoPersona;
     }
 
+    private function validarFila(array $datos, array $reglas): void
+    {
+        $validador = Validator::make($datos, $reglas);
+
+        if ($validador->fails()) {
+            throw new RuntimeException(implode(' ', $validador->errors()->all()));
+        }
+    }
+
     private function claveDocumento(string $tipoDocumento, string $numeroDocumento): string
     {
         return $tipoDocumento.'|'.$numeroDocumento;
@@ -178,6 +194,15 @@ class MigracionAperturaService
     private function importarFila(string $tipo, array $datos, array &$precarga): void
     {
         if ($tipo === 'plan_cuentas') {
+            $this->validarFila($datos, [
+                'codigo' => ['required', 'string', 'max:20', Rule::unique('plan_cuentas', 'codigo')
+                    ->where('empresa_id', Auth::user()->empresa_id)->whereNull('borrado_en')],
+                'nombre' => ['required', 'string', 'max:150'],
+                'naturaleza' => ['required', Rule::enum(NaturalezaCuenta::class)],
+                'tipo' => ['required', Rule::enum(TipoCuenta::class)],
+                'nivel' => ['nullable', 'integer', 'min:1'],
+            ]);
+
             $this->cuentas->crear([
                 'codigo' => $datos['codigo'],
                 'nombre' => $datos['nombre'],
@@ -239,6 +264,13 @@ class MigracionAperturaService
         }
 
         if ($tipo === 'saldos_iniciales') {
+            $this->validarFila($datos, [
+                'codigo_cuenta' => ['required', 'string'],
+                'fecha_corte' => ['required', 'date_format:Y-m-d'],
+                'debito' => ['nullable', 'numeric', 'min:0'],
+                'credito' => ['nullable', 'numeric', 'min:0'],
+            ]);
+
             $cuenta = $precarga['cuentas_por_codigo'][$datos['codigo_cuenta']] ?? null;
             if (! $cuenta) {
                 throw new RuntimeException('Cuenta no encontrada: '.$datos['codigo_cuenta']);
