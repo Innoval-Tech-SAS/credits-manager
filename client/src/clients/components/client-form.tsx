@@ -10,13 +10,13 @@ import { Select } from '@ui/forms/components/select';
 import { ToggleSwitchInput } from '@ui/forms/components/toggle-switch-input';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { CLIENT_STATUS_BADGE_CLASSES } from '../constants/client-status-badge-classes';
-import { DOCUMENT_TYPE_OPTIONS } from '../constants/document-type-options';
+import { NATURAL_DOCUMENT_TYPE_OPTIONS } from '../../third-parties/constants/natural-document-type-options';
 import { EmployerSelector } from '../../employers/components/employer-selector';
 import { ArrowRight } from 'lucide-react';
 import type { ClientFormProps } from '../props/client-form-props';
 import type { ApiClient } from '../types/api-client';
 import type { ApiEmployer } from '../../employers/types/api-employer';
-import type { DocumentType } from '../types/document-type';
+import type { NaturalDocumentType } from '../../third-parties/types/natural-document-type';
 
 export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
     const navigate = useNavigate();
@@ -24,8 +24,11 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
 
     const isEditMode = clientId !== undefined;
 
-    const [nombre, setNombre] = useState(initialData?.tercero.nombre ?? '');
-    const [tipoDocumento, setTipoDocumento] = useState<DocumentType>((initialData?.tercero.tipo_documento as DocumentType) ?? 'cc');
+    const [nombres, setNombres] = useState(initialData?.tercero.nombres ?? '');
+    const [apellidos, setApellidos] = useState(initialData?.tercero.apellidos ?? '');
+    const [tipoDocumento, setTipoDocumento] = useState<NaturalDocumentType>(
+        initialData?.tercero.tipo_documento === 'nit' ? 'cc' : (initialData?.tercero.tipo_documento ?? 'cc'),
+    );
     const [numeroDocumento, setNumeroDocumento] = useState(initialData?.tercero.numero_documento ?? '');
     const [direccion, setDireccion] = useState(initialData?.tercero.direccion ?? '');
     const [barrio, setBarrio] = useState(initialData?.tercero.barrio ?? '');
@@ -50,7 +53,8 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
         setIsSubmitting(true);
 
         const body = {
-            nombre,
+            nombres,
+            apellidos,
             tipo_documento: tipoDocumento,
             numero_documento: numeroDocumento,
             direccion,
@@ -72,7 +76,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                 const respuesta = await sendRequest<{ cliente: ApiClient }>('/clientes', { method: 'POST', body });
 
                 if (respuesta.cliente.tercero_reutilizado) {
-                    mensaje = `Cliente creado. Ya existía un tercero con ese documento (${respuesta.cliente.tercero.nombre}); se usaron sus datos existentes.`;
+                    mensaje = `Cliente creado. Ya existía un registro con ese documento (${respuesta.cliente.tercero.nombre}); se usaron sus datos existentes.`;
                 }
             }
 
@@ -95,8 +99,13 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
 
                 <div className="flex flex-col gap-4 sm:flex-row sm:justify-between">
                     <div className="flex-1">
-                        <Label htmlFor="nombre">Nombre completo</Label>
-                        <Input id="nombre" name="nombre" required value={nombre} onChange={(event) => setNombre(event.target.value)} />
+                        <Label htmlFor="nombres">Nombres</Label>
+                        <Input id="nombres" name="nombres" required value={nombres} onChange={(event) => setNombres(event.target.value)} />
+                    </div>
+
+                    <div className="flex-1">
+                        <Label htmlFor="apellidos">Apellidos</Label>
+                        <Input id="apellidos" name="apellidos" required value={apellidos} onChange={(event) => setApellidos(event.target.value)} />
                     </div>
 
                     {isEditMode && (
@@ -120,9 +129,9 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                         <div>
                             <Label htmlFor="tipo-documento">Tipo de documento</Label>
                             <Select
-                                options={DOCUMENT_TYPE_OPTIONS}
+                                options={NATURAL_DOCUMENT_TYPE_OPTIONS}
                                 defaultValue={tipoDocumento}
-                                onChange={(value) => setTipoDocumento(value as DocumentType)}
+                                onChange={(value) => setTipoDocumento(value as NaturalDocumentType)}
                             />
                         </div>
 

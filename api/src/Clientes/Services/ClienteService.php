@@ -14,6 +14,7 @@ use App\Creditos\Repositories\CuotaRepository;
 use App\Pagos\Repositories\PagoRepository;
 use App\Terceros\Models\Tercero;
 use App\Terceros\Repositories\TerceroRepository;
+use App\Terceros\Services\ConstructorDatosTercero;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
@@ -26,6 +27,7 @@ class ClienteService
     public function __construct(
         protected ClienteRepository $clientes,
         protected TerceroRepository $terceros,
+        protected ConstructorDatosTercero $datosTercero,
         protected CuotaRepository $cuotas,
         protected PagoRepository $pagos,
         protected ClienteEmpleadorHistorialRepository $historialEmpleadores,
@@ -58,7 +60,7 @@ class ClienteService
     public function crearCliente(array $datos): Cliente
     {
         return DB::transaction(function () use ($datos) {
-            $tercero = $this->terceros->obtenerOCrear($this->datosTercero($datos));
+            $tercero = $this->terceros->obtenerOCrear($this->datosTercero->construir(ClienteConstants::TIPO_PERSONA, $datos));
 
             $cliente = $this->clientes->crear([
                 'tercero_id' => $tercero->id,
@@ -89,7 +91,7 @@ class ClienteService
         return DB::transaction(function () use ($cliente, $datos) {
             $anteriores = [...$this->auditoria->instantanea($cliente), ...$this->datosDelTercero($cliente->tercero, $cliente)];
 
-            $this->terceros->actualizar($cliente->tercero, $this->datosTercero($datos));
+            $this->terceros->actualizar($cliente->tercero, $this->datosTercero->construir(ClienteConstants::TIPO_PERSONA, $datos));
 
             if ((int) $datos['empleador_id'] !== (int) $cliente->empleador_id) {
                 $this->registrarCambioEmpleador($cliente, (int) $datos['empleador_id']);
@@ -130,26 +132,6 @@ class ClienteService
             'empleador_id' => $nuevoEmpleadorId,
             'fecha_inicio' => $hoy,
         ]);
-    }
-
-    private function datosTercero(array $datos): array
-    {
-        return [
-            'nombre' => $datos['nombre'],
-            'tipo_documento' => $datos['tipo_documento'],
-            'numero_documento' => $datos['numero_documento'],
-            'direccion' => $datos['direccion'],
-            'barrio' => $datos['barrio'] ?? null,
-            'ciudad' => $datos['ciudad'],
-            'celular' => $datos['celular'],
-            'telefono_fijo' => $datos['telefono_fijo'] ?? null,
-            'correo' => $datos['correo'],
-            'regimen_tributario' => $datos['regimen_tributario'] ?? null,
-            'tipo_persona' => $datos['tipo_persona'] ?? null,
-            'autorretenedor' => $datos['autorretenedor'] ?? false,
-            'responsable_iva' => $datos['responsable_iva'] ?? false,
-            'actividad_economica_id' => $datos['actividad_economica_id'] ?? null,
-        ];
     }
 
     public function eliminar(Cliente $cliente): bool

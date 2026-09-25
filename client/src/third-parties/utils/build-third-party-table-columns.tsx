@@ -3,7 +3,9 @@ import { Link } from 'react-router';
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
 import { Pencil } from 'lucide-react';
 import { THIRD_PARTY_TYPE_BADGE_CLASSES, THIRD_PARTY_TYPE_BADGE_LABEL } from '../constants/third-party-type-badge-styles';
+import { PERSON_TYPE_LABELS } from '../constants/person-type-choices';
 import type { ApiThirdParty } from '../types/api-third-party';
+import { formatThirdPartyDocument } from './format-third-party-document';
 
 export function buildThirdPartyTableColumns(canEdit: boolean): DataTableColumn<ApiThirdParty>[] {
     const columns: DataTableColumn<ApiThirdParty>[] = [
@@ -22,7 +24,8 @@ export function buildThirdPartyTableColumns(canEdit: boolean): DataTableColumn<A
                     <span className="text-gray-400 dark:text-gray-500">Sin asignar</span>
                 ),
         },
-        { key: 'numero_documento', label: 'Documento', render: (row) => `${row.tipo_documento.toUpperCase()} ${row.numero_documento}` },
+        { key: 'tipo_persona', label: 'Persona', render: (row) => PERSON_TYPE_LABELS[row.tipo_persona] },
+        { key: 'numero_documento', label: 'Documento', render: (row) => formatThirdPartyDocument(row) },
         { key: 'ciudad', label: 'Ciudad', render: (row) => row.ciudad ?? '—' },
         { key: 'correo', label: 'Correo', render: (row) => row.correo ?? '—' },
         {

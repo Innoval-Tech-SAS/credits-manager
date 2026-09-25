@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auditoria;
 
 use App\Terceros\Enums\TipoDocumentoTercero;
+use App\Terceros\Services\DigitoVerificacionNit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -23,7 +24,8 @@ class TrazabilidadMaestrosTest extends TestCase
     private function payloadCliente(int $empleadorId, array $cambios = []): array
     {
         return array_merge([
-            'nombre' => 'Juan Pérez',
+            'nombres' => 'Juan',
+            'apellidos' => 'Pérez',
             'tipo_documento' => TipoDocumentoTercero::Cc->value,
             'numero_documento' => '1000000001',
             'direccion' => 'Calle 10 # 20-30',
@@ -57,7 +59,8 @@ class TrazabilidadMaestrosTest extends TestCase
         $otroEmpleador = $this->crearEmpleador();
 
         $this->patchJson("/api/v1/clientes/{$cliente->id}", $this->payloadCliente($otroEmpleador->id, [
-            'nombre' => $tercero->nombre,
+            'nombres' => $tercero->nombres,
+            'apellidos' => $tercero->apellidos,
             'numero_documento' => $tercero->numero_documento,
             'direccion' => $tercero->direccion,
             'ciudad' => $tercero->ciudad,
@@ -136,39 +139,38 @@ class TrazabilidadMaestrosTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $id = $this->postJson('/api/v1/terceros', [
-            'tipo_documento' => TipoDocumentoTercero::Nit->value, 'numero_documento' => '900555666', 'nombre' => 'Tercero uno',
+        $id = $this->postJson('/api/v1/terceros/personas-juridicas', [
+            'numero_documento' => '900555666', 'digito_verificacion' => (string) DigitoVerificacionNit::calcular('900555666'),
+            'razon_social' => 'Tercero uno', 'representante_legal' => 'Rep Uno',
         ])->assertCreated()->json('tercero.id');
         $creacion = $this->assertEventoAuditoria('crear', 'terceros', 'tercero', $id);
         $this->assertSame('otro', $creacion['valores_nuevos']['tipo']);
         $this->assertSame('900555666', $creacion['valores_nuevos']['numero_documento']);
 
-        $this->patchJson("/api/v1/terceros/{$id}", [
-            'tipo_documento' => TipoDocumentoTercero::Nit->value, 'numero_documento' => '900555666', 'nombre' => 'Tercero dos',
-        ])->assertOk();
+        $this->patchJson("/api/v1/terceros/personas-juridicas/{$id}", ['razon_social' => 'Tercero dos'])->assertOk();
 
         $edicion = $this->assertEventoAuditoria('modificar', 'terceros', 'tercero', $id);
-        $this->assertSame(['nombre' => 'Tercero uno'], $edicion['valores_anteriores']);
-        $this->assertSame(['nombre' => 'Tercero dos'], $edicion['valores_nuevos']);
+        $this->assertEquals(['razon_social' => 'Tercero uno', 'nombre' => 'Tercero uno'], $edicion['valores_anteriores']);
+        $this->assertEquals(['razon_social' => 'Tercero dos', 'nombre' => 'Tercero dos'], $edicion['valores_nuevos']);
     }
 
     public function test_crear_y_editar_un_proveedor_dejan_evento_con_los_datos_del_tercero(): void
     {
         $this->actingAsAdmin();
         $payload = [
-            'tipo_documento' => TipoDocumentoTercero::Nit->value, 'numero_documento' => '900123456', 'nombre' => 'Proveedor SAS',
+            'numero_documento' => '900123456', 'digito_verificacion' => '8', 'razon_social' => 'Proveedor SAS', 'representante_legal' => 'Rep Uno',
             'celular' => '3000000000', 'correo' => 'proveedor@example.com',
         ];
 
-        $id = $this->postJson('/api/v1/proveedores', $payload)->assertCreated()->json('proveedor.id');
+        $id = $this->postJson('/api/v1/proveedores/personas-juridicas', $payload)->assertCreated()->json('proveedor.id');
         $creacion = $this->assertEventoAuditoria('crear', 'proveedores', 'proveedor', $id);
         $this->assertSame('Proveedor SAS', $creacion['valores_nuevos']['nombre']);
 
-        $this->patchJson("/api/v1/proveedores/{$id}", [...$payload, 'nombre' => 'Proveedor Renombrado SAS', 'activo' => false])->assertOk();
+        $this->patchJson("/api/v1/proveedores/personas-juridicas/{$id}", [...$payload, 'razon_social' => 'Proveedor Renombrado SAS', 'activo' => false])->assertOk();
 
         $edicion = $this->assertEventoAuditoria('modificar', 'proveedores', 'proveedor', $id);
-        $this->assertEquals(['nombre' => 'Proveedor SAS', 'activo' => true], $edicion['valores_anteriores']);
-        $this->assertEquals(['nombre' => 'Proveedor Renombrado SAS', 'activo' => false], $edicion['valores_nuevos']);
+        $this->assertEquals(['razon_social' => 'Proveedor SAS', 'nombre' => 'Proveedor SAS', 'activo' => true], $edicion['valores_anteriores']);
+        $this->assertEquals(['razon_social' => 'Proveedor Renombrado SAS', 'nombre' => 'Proveedor Renombrado SAS', 'activo' => false], $edicion['valores_nuevos']);
     }
 
     public function test_cambiar_el_logo_de_la_empresa_deja_un_evento_con_la_ruta_anterior_y_la_nueva(): void

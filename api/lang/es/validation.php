@@ -230,6 +230,12 @@ return [
                 'ya_es_proveedor' => 'Ya existe un proveedor registrado con este documento.',
                 'ya_registrado' => 'Este documento ya está registrado como tercero.',
             ],
+            'digito_verificacion' => [
+                'invalido' => 'El dígito de verificación no corresponde al NIT.',
+            ],
+            'tipo_persona' => [
+                'requerido_para_retefuente' => 'El tercero no tiene tipo de persona: edítalo y elige si es persona natural o jurídica para calcular la ReteFuente.',
+            ],
         ],
         'empleador' => [
             'tiene_clientes_asignados' => 'No se puede eliminar un empleador con clientes asignados actualmente.',
@@ -382,6 +388,11 @@ return [
         'tarifa' => 'tarifa',
         'regimen_tributario' => 'régimen tributario',
         'tipo_persona' => 'tipo de persona',
+        'nombres' => 'nombres',
+        'apellidos' => 'apellidos',
+        'razon_social' => 'razón social',
+        'digito_verificacion' => 'dígito de verificación',
+        'representante_legal' => 'representante legal',
         'autorretenedor' => 'autorretenedor',
         'responsable_iva' => 'responsable de IVA',
     ],

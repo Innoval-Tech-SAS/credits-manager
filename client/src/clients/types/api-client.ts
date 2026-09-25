@@ -10,6 +10,6 @@ export type ApiClient = {
     empleador: ApiEmployer | null;
     activo: boolean;
     creado_en: string | null;
-    /** Solo presente en la respuesta de `POST /clientes`: si el tercero ya existía (por documento) y se reutilizó. */
+    /** Solo presente en la respuesta de `POST /clientes`: si ya existía un registro con ese documento y se reutilizaron sus datos. */
     tercero_reutilizado?: boolean;
 };

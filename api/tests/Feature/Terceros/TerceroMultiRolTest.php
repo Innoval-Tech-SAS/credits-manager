@@ -3,6 +3,7 @@
 namespace Tests\Feature\Terceros;
 
 use App\Terceros\Enums\TipoDocumentoTercero;
+use App\Terceros\Services\DigitoVerificacionNit;
 use App\Usuarios\Models\Permiso;
 use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
@@ -45,10 +46,11 @@ class TerceroMultiRolTest extends TestCase
         $this->actingAsAdmin();
         $cliente = $this->crearCliente(['numero_documento' => '900555555']);
 
-        $respuesta = $this->postJson('/api/v1/proveedores', [
+        $respuesta = $this->postJson('/api/v1/proveedores/personas-naturales', [
             'tipo_documento' => TipoDocumentoTercero::Cc->value,
             'numero_documento' => '900555555',
-            'nombre' => 'Nombre distinto al del cliente',
+            'nombres' => 'Nombre distinto',
+            'apellidos' => 'al del cliente',
         ]);
 
         $respuesta->assertStatus(201);
@@ -61,10 +63,11 @@ class TerceroMultiRolTest extends TestCase
         $this->actingAsAdmin();
         $cliente = $this->crearCliente();
         $this->crearTercero(); // "otro" sin extensión: no debe contar como cliente ni proveedor
-        $this->postJson('/api/v1/proveedores', [
-            'tipo_documento' => TipoDocumentoTercero::Nit->value,
+        $this->postJson('/api/v1/proveedores/personas-juridicas', [
             'numero_documento' => '900777777',
-            'nombre' => 'Proveedor de prueba',
+            'digito_verificacion' => (string) DigitoVerificacionNit::calcular('900777777'),
+            'razon_social' => 'Proveedor de prueba',
+            'representante_legal' => 'Rep Uno',
         ])->assertStatus(201);
 
         $respuesta = $this->getJson('/api/v1/terceros?tipo=cliente');

@@ -4,9 +4,12 @@ namespace App\Terceros\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Terceros\Constants\TerceroConstants;
+use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
-use App\Terceros\Requests\CrearTerceroRequest;
-use App\Terceros\Requests\EditarTerceroRequest;
+use App\Terceros\Requests\CrearTerceroJuridicaRequest;
+use App\Terceros\Requests\CrearTerceroNaturalRequest;
+use App\Terceros\Requests\EditarTerceroJuridicaRequest;
+use App\Terceros\Requests\EditarTerceroNaturalRequest;
 use App\Terceros\Services\TerceroService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,11 +43,14 @@ class TerceroController extends Controller
         return response()->json($terceros);
     }
 
-    public function store(CrearTerceroRequest $peticion): JsonResponse
+    public function storeNatural(CrearTerceroNaturalRequest $peticion): JsonResponse
     {
-        $tercero = $this->terceros->crear($peticion->validated());
+        return response()->json(['tercero' => $this->terceros->crear(TipoPersona::Natural, $peticion->validated())], 201);
+    }
 
-        return response()->json(['tercero' => $tercero], 201);
+    public function storeJuridica(CrearTerceroJuridicaRequest $peticion): JsonResponse
+    {
+        return response()->json(['tercero' => $this->terceros->crear(TipoPersona::Juridica, $peticion->validated())], 201);
     }
 
     public function show(Tercero $tercero): JsonResponse
@@ -52,10 +58,17 @@ class TerceroController extends Controller
         return response()->json(['tercero' => $tercero]);
     }
 
-    public function update(EditarTerceroRequest $peticion, Tercero $tercero): JsonResponse
+    public function updateNatural(EditarTerceroNaturalRequest $peticion, Tercero $tercero): JsonResponse
     {
-        $tercero = $this->terceros->editar($tercero, $peticion->validated());
+        abort_unless($tercero->tipo_persona === TipoPersona::Natural, 404);
 
-        return response()->json(['tercero' => $tercero]);
+        return response()->json(['tercero' => $this->terceros->editar($tercero, $peticion->validated())]);
+    }
+
+    public function updateJuridica(EditarTerceroJuridicaRequest $peticion, Tercero $tercero): JsonResponse
+    {
+        abort_unless($tercero->tipo_persona === TipoPersona::Juridica, 404);
+
+        return response()->json(['tercero' => $this->terceros->editar($tercero, $peticion->validated())]);
     }
 }

@@ -10,7 +10,7 @@ use App\Creditos\Enums\TipoPago;
 use App\Creditos\Models\Credito;
 use App\Creditos\Models\Cuota;
 use App\Empleadores\Models\Empleador;
-use App\Terceros\Enums\TipoDocumentoTercero;
+use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
 
 /**
@@ -21,6 +21,8 @@ use App\Terceros\Models\Tercero;
  */
 trait CreatesCreditFixtures
 {
+    use ArmaDatosDeTercero;
+
     protected function crearEmpleador(array $overrides = []): Empleador
     {
         static $contador = 0;
@@ -43,15 +45,20 @@ trait CreatesCreditFixtures
         $datosTercero = array_intersect_key($overrides, array_flip($camposTercero));
         $datosCliente = array_diff_key($overrides, array_flip($camposTercero));
 
-        $tercero = Tercero::create(array_merge([
-            'nombre' => "Cliente de prueba {$contador}",
-            'tipo_documento' => TipoDocumentoTercero::Cc,
-            'numero_documento' => "100000{$contador}",
-            'direccion' => 'Calle falsa 123',
-            'ciudad' => 'Bogotá',
-            'celular' => '3000000000',
-            'correo' => "cliente{$contador}@example.com",
-        ], $datosTercero));
+        $tercero = Tercero::create(array_merge(
+            $this->datosDePersona(
+                TipoPersona::Natural,
+                $datosTercero['nombre'] ?? "Cliente de prueba {$contador}",
+                $datosTercero['numero_documento'] ?? "100000{$contador}",
+            ),
+            [
+                'direccion' => 'Calle falsa 123',
+                'ciudad' => 'Bogotá',
+                'celular' => '3000000000',
+                'correo' => "cliente{$contador}@example.com",
+            ],
+            array_diff_key($datosTercero, array_flip(['nombre', 'numero_documento'])),
+        ));
 
         return Cliente::create(array_merge([
             'tercero_id' => $tercero->id,

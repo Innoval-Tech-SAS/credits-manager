@@ -43,14 +43,7 @@ final class ReciboCajaPdf implements DocumentoPdf
     {
         $tercero = $this->pago->cliente->tercero;
 
-        return new DestinatarioDocumento(
-            nombre: $tercero->nombre,
-            documento: $tercero->numero_documento,
-            telefono: $tercero->celular ?: $tercero->telefono_fijo,
-            direccion: $tercero->direccion,
-            ciudad: $tercero->ciudad,
-            etiquetaDocumento: strtoupper($tercero->tipo_documento->value),
-        );
+        return DestinatarioDocumento::desdeTercero($tercero);
     }
 
     public function fechas(): array

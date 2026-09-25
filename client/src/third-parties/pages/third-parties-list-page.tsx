@@ -92,8 +92,8 @@ export const ThirdPartiesListPage: FC = () => {
                         onClose={() => setShowImportModal(false)}
                         tipo="terceros"
                         titulo="Importar terceros"
-                        columnas={['tipo_documento', 'numero_documento', 'nombre', 'tipo']}
-                        notas='La columna "tipo" debe ser: cliente, proveedor u otro.'
+                        columnas={['tipo', 'tipo_persona', 'tipo_documento', 'numero_documento', 'nombres', 'apellidos', 'razon_social', 'digito_verificacion', 'representante_legal']}
+                        notas='"tipo": cliente, proveedor u otro. "tipo_persona": natural o juridica. Naturales: tipo_documento (cc, ce o pasaporte), nombres y apellidos. Jurídicas: razon_social, NIT sin dígito en numero_documento, digito_verificacion y representante_legal. Los clientes solo pueden ser naturales.'
                         onImported={handleImported}
                     />
                 )

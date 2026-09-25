@@ -8,7 +8,7 @@ use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Models\ReglaContabilizacion;
 use App\Contabilidad\Models\TipoComprobante;
-use App\Terceros\Enums\TipoDocumentoTercero;
+use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
 
 /**
@@ -17,6 +17,8 @@ use App\Terceros\Models\Tercero;
  */
 trait CreatesContabilidadFixtures
 {
+    use ArmaDatosDeTercero;
+
     protected function crearCuenta(array $overrides = []): PlanCuenta
     {
         static $contador = 0;
@@ -57,10 +59,12 @@ trait CreatesContabilidadFixtures
         static $contador = 0;
         $contador++;
 
-        return Tercero::create(array_merge([
-            'tipo_documento' => TipoDocumentoTercero::Nit,
-            'numero_documento' => "90000000{$contador}",
-            'nombre' => "Tercero de prueba {$contador}",
-        ], $overrides));
+        $tipoPersona = $overrides['tipo_persona'] ?? TipoPersona::Juridica;
+        $nombre = $overrides['nombre'] ?? "Tercero de prueba {$contador}";
+        unset($overrides['nombre']);
+
+        $numero = $overrides['numero_documento'] ?? ($tipoPersona === TipoPersona::Juridica ? '90000000' : '100000').$contador;
+
+        return Tercero::create(array_merge($this->datosDePersona($tipoPersona, $nombre, $numero), $overrides));
     }
 }
