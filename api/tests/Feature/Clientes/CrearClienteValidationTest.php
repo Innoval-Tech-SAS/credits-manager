@@ -17,7 +17,8 @@ class CrearClienteValidationTest extends TestCase
     private function payloadValido(?int $empleadorId = null): array
     {
         return [
-            'nombre' => 'Juan Pérez',
+            'nombres' => 'Juan',
+            'apellidos' => 'Pérez',
             'tipo_documento' => TipoDocumentoTercero::Cc->value,
             'numero_documento' => '1000000001',
             'direccion' => 'Calle 10 # 20-30',
@@ -39,6 +40,10 @@ class CrearClienteValidationTest extends TestCase
         $respuesta->assertStatus(201);
         $this->assertDatabaseHas('terceros', [
             'numero_documento' => '1000000001',
+            'tipo_persona' => 'natural',
+            'nombres' => 'Juan',
+            'apellidos' => 'Pérez',
+            'nombre' => 'Juan Pérez',
             'direccion' => 'Calle 10 # 20-30',
             'ciudad' => 'Bogotá',
             'celular' => '3001234567',
@@ -57,6 +62,37 @@ class CrearClienteValidationTest extends TestCase
         $respuesta = $this->postJson('/api/v1/clientes', $payload);
 
         $respuesta->assertStatus(201);
+    }
+
+    public function test_rechaza_un_nit_porque_los_clientes_son_personas_naturales(): void
+    {
+        $this->actingAsAdmin();
+
+        $respuesta = $this->postJson('/api/v1/clientes', [...$this->payloadValido(), 'tipo_documento' => TipoDocumentoTercero::Nit->value]);
+
+        $respuesta->assertStatus(422)->assertJsonValidationErrors('tipo_documento');
+        $this->assertDatabaseCount('clientes', 0);
+    }
+
+    public function test_rechaza_nombres_o_apellidos_faltantes(): void
+    {
+        $this->actingAsAdmin();
+
+        foreach (['nombres', 'apellidos'] as $campo) {
+            $payload = $this->payloadValido();
+            unset($payload[$campo]);
+
+            $this->postJson('/api/v1/clientes', $payload)->assertStatus(422)->assertJsonValidationErrors($campo);
+        }
+    }
+
+    public function test_el_cliente_siempre_queda_como_persona_natural_aunque_el_payload_diga_otra_cosa(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson('/api/v1/clientes', [...$this->payloadValido(), 'tipo_persona' => 'juridica', 'razon_social' => 'Intruso SAS'])->assertStatus(201);
+
+        $this->assertDatabaseHas('terceros', ['numero_documento' => '1000000001', 'tipo_persona' => 'natural', 'razon_social' => null]);
     }
 
     public function test_rechaza_numero_documento_duplicado(): void

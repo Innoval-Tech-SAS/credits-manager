@@ -17,7 +17,8 @@ class EditarClienteTest extends TestCase
     private function payloadValido(?int $empleadorId = null): array
     {
         return [
-            'nombre' => 'Juan Pérez Editado',
+            'nombres' => 'Juan',
+            'apellidos' => 'Pérez Editado',
             'tipo_documento' => TipoDocumentoTercero::Cc->value,
             'numero_documento' => '1000000001',
             'direccion' => 'Calle 10 # 20-30',
@@ -39,6 +40,8 @@ class EditarClienteTest extends TestCase
         $this->assertDatabaseHas('terceros', [
             'id' => $cliente->fresh()->tercero_id,
             'nombre' => 'Juan Pérez Editado',
+            'nombres' => 'Juan',
+            'apellidos' => 'Pérez Editado',
             'ciudad' => 'Bogotá',
         ]);
     }

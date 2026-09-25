@@ -17,7 +17,8 @@ class HistorialEmpleadorTest extends TestCase
     private function payloadValido(?int $empleadorId = null): array
     {
         return [
-            'nombre' => 'Juan Pérez',
+            'nombres' => 'Juan',
+            'apellidos' => 'Pérez',
             'tipo_documento' => TipoDocumentoTercero::Cc->value,
             'numero_documento' => '1000000001',
             'direccion' => 'Calle 10 # 20-30',
@@ -81,7 +82,8 @@ class HistorialEmpleadorTest extends TestCase
 
         $respuesta = $this->patchJson("/api/v1/clientes/{$clienteId}", [
             ...$this->payloadValido($empleador->id),
-            'nombre' => 'Juan Pérez Editado',
+            'nombres' => 'Juan',
+            'apellidos' => 'Pérez Editado',
         ]);
 
         $respuesta->assertStatus(200);
