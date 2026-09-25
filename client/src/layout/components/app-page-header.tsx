@@ -7,7 +7,7 @@ import { GoBackButton } from '@ui/go-back/components/go-back-button';
 import { Tooltip } from '@ui/tooltip/components/tooltip';
 import { findNavBreadcrumb } from '../utils/find-nav-breadcrumb';
 
-/** La ruta de migas va solo con iconos (el nombre sale en el tooltip): el título de la página ya dice dónde estás y así nunca se parte en móvil. */
+/** Desde `md` la ruta de migas muestra icono y nombre; en móvil y tablet solo el icono, con el nombre en el tooltip, para que nunca se parta. */
 export const AppPageHeader: FC = () => {
     const { title, hideTitle } = usePageHeader();
     const location = useLocation();
@@ -27,9 +27,10 @@ export const AppPageHeader: FC = () => {
             <nav aria-label="Ruta de navegación">
                 <ol className="flex items-center gap-1.5">
                     <li className="flex items-center gap-1.5">
-                        <Tooltip label="Inicio">
-                            <Link to="/" aria-label="Inicio" className="inline-flex size-6 items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90">
+                        <Tooltip label="Inicio" hideFrom="md">
+                            <Link to="/" aria-label="Inicio" className="inline-flex min-h-6 items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90">
                                 <Home className="size-4" />
+                                <span className="hidden md:inline">Inicio</span>
                             </Link>
                         </Tooltip>
                         {trail.length > 0 && <ChevronRight className="size-4 text-gray-400" />}
@@ -40,16 +41,17 @@ export const AppPageHeader: FC = () => {
 
                         return (
                             <li key={crumb.name} className="flex items-center gap-1.5">
-                                <Tooltip label={crumb.name}>
+                                <Tooltip label={crumb.name} hideFrom="md">
                                     <span
                                         tabIndex={0}
                                         aria-label={crumb.name}
                                         aria-current={isLast ? 'page' : undefined}
-                                        className={`inline-flex min-h-6 items-center text-sm ${
+                                        className={`inline-flex min-h-6 items-center gap-1.5 text-sm ${
                                             isLast ? 'text-gray-800 dark:text-white/90' : 'text-gray-500 dark:text-gray-400'
                                         }`}
                                     >
-                                        {Icon ? <Icon className="size-4" /> : crumb.name}
+                                        {Icon && <Icon className="size-4" />}
+                                        <span className={Icon ? 'hidden md:inline' : undefined}>{crumb.name}</span>
                                     </span>
                                 </Tooltip>
                                 {!isLast && <ChevronRight className="size-4 text-gray-400" />}
