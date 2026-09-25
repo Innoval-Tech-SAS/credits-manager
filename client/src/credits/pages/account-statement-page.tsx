@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { useParams } from 'react-router';
 import { Download, Printer } from 'lucide-react';
 
+import { usePermission } from '../../auth/hooks/use-permission';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useCompany } from '../../company/hooks/use-company';
@@ -18,6 +19,7 @@ import type { ApiAccountStatement } from '../types/api-account-statement';
 export const AccountStatementPage: FC = () => {
     const { id } = useParams<{ id: string }>();
     const { company } = useCompany();
+    const canPrint = usePermission('creditos', 'imprimir_estado_cuenta');
 
     const { data: estadoCuenta, error } = useResource<ApiAccountStatement>(`/creditos/${id}/estado-cuenta`);
     const { download, isDownloading, error: downloadError } = useDownloadFile();
@@ -47,15 +49,19 @@ export const AccountStatementPage: FC = () => {
         <div className="flex min-h-full flex-col pb-6">
             <div className="mb-4 flex flex-wrap items-center gap-3 print:hidden">
                 <PageBreadcrumb pageTitle="Estado de cuenta" />
-                <Button iconOnly
-                    variant="outline"
-                    startIcon={<Download className="size-4" />}
-                    disabled={isDownloading}
-                    onClick={() => download(`/creditos/${id}/estado-cuenta/pdf`, `estado-de-cuenta-credito-${id}.pdf`)}
-                >
-                    {isDownloading ? 'Generando…' : 'Descargar PDF'}
-                </Button>
-                <Button iconOnly startIcon={<Printer className="size-4" />} onClick={() => window.print()}>Imprimir</Button>
+                {canPrint && (
+                    <>
+                        <Button iconOnly
+                            variant="outline"
+                            startIcon={<Download className="size-4" />}
+                            disabled={isDownloading}
+                            onClick={() => download(`/creditos/${id}/estado-cuenta/pdf`, `estado-de-cuenta-credito-${id}.pdf`)}
+                        >
+                            {isDownloading ? 'Generando…' : 'Descargar PDF'}
+                        </Button>
+                        <Button iconOnly startIcon={<Printer className="size-4" />} onClick={() => window.print()}>Imprimir</Button>
+                    </>
+                )}
             </div>
 
             {downloadError && (

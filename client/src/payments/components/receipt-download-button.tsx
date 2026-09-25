@@ -1,18 +1,24 @@
 import type { FC } from 'react';
 import { FileDown } from 'lucide-react';
 
+import { usePermission } from '../../auth/hooks/use-permission';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import type { ReceiptDownloadButtonProps } from '../props/receipt-download-button-props';
 
 /** Número del recibo de caja del pago y descarga de su PDF. */
 export const ReceiptDownloadButton: FC<ReceiptDownloadButtonProps> = ({ payment }) => {
     const { download, isDownloading, error } = useDownloadFile();
+    const canPrint = usePermission('pagos', 'imprimir_recibo');
 
     if (!payment.recibo) {
         return <span className="text-gray-400 dark:text-gray-600">—</span>;
     }
 
     const receiptNumber = payment.recibo.numero;
+
+    if (!canPrint) {
+        return <span>{receiptNumber}</span>;
+    }
 
     return (
         <button

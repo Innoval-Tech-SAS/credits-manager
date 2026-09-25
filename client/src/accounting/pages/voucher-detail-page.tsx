@@ -19,6 +19,7 @@ export const VoucherDetailPage: FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const canReverse = usePermission('contabilidad', 'anular');
+    const canPrint = usePermission('contabilidad', 'imprimir_comprobante');
 
     const { data, error, isLoading } = useResource<{ comprobante: ApiVoucher }>(`/contabilidad/comprobantes/${id}`);
     const comprobante = data?.comprobante ?? null;
@@ -63,16 +64,18 @@ export const VoucherDetailPage: FC = () => {
                                     {comprobante.estado}
                                 </span>
                                 <div className="ml-auto flex items-center gap-3">
-                                    <Button
-                                        iconOnly
-                                        variant="outline"
-                                        label="Descargar PDF"
-                                        startIcon={<Download className="size-4" />}
-                                        disabled={isDownloading}
-                                        onClick={() => download(`/contabilidad/comprobantes/${comprobante.id}/pdf`, `comprobante-${comprobante.id}.pdf`)}
-                                    >
-                                        {isDownloading ? 'Generando…' : 'Descargar PDF'}
-                                    </Button>
+                                    {canPrint && (
+                                        <Button
+                                            iconOnly
+                                            variant="outline"
+                                            label="Descargar PDF"
+                                            startIcon={<Download className="size-4" />}
+                                            disabled={isDownloading}
+                                            onClick={() => download(`/contabilidad/comprobantes/${comprobante.id}/pdf`, `comprobante-${comprobante.id}.pdf`)}
+                                        >
+                                            {isDownloading ? 'Generando…' : 'Descargar PDF'}
+                                        </Button>
+                                    )}
                                     {canReverse && comprobante.estado === 'contabilizado' && (
                                         <Button iconOnly variant="outline" startIcon={<Undo2 className="size-4" />} onClick={() => setIsReversing(true)}>
                                             Reversar

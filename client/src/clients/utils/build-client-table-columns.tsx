@@ -5,6 +5,7 @@ import type { ApiClient } from '../types/api-client';
 import type { BuildClientTableColumnsOptions } from '../types/build-client-table-columns-options';
 
 export function buildClientTableColumns({
+    canView,
     canEdit,
     canDelete,
     onEdit,
@@ -37,13 +38,15 @@ export function buildClientTableColumns({
             label: 'Acción',
             render: (row) => (
                 <div className="flex w-full items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => onView(row)}
-                        className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90"
-                    >
-                        <Eye className="size-5" />
-                    </button>
+                    {canView && (
+                        <button
+                            type="button"
+                            onClick={() => onView(row)}
+                            className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90"
+                        >
+                            <Eye className="size-5" />
+                        </button>
+                    )}
 
                     {canEdit && (
                         <button

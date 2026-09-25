@@ -129,7 +129,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'clientes/:id',
                         element: (
-                            <RequireModulePermission modulo="clientes" accion="editar">
+                            <RequireModulePermission modulo="clientes" accion="ver">
                                 <ClientDetailPage />
                             </RequireModulePermission>
                         ),
