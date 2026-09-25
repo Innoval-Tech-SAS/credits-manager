@@ -21,7 +21,9 @@ class AuthService
 
     public function iniciarSesion(Request $peticion, string $usuario, string $clave): void
     {
-        if (Auth::check()) {
+        // Se cierra antes de autenticar: el scope de empresa de la sesión vigente ocultaría al usuario que intenta entrar.
+        if ($sesionPrevia = Auth::user()) {
+            $this->auditoria->registrar(AccionAuditoria::Logout, 'auth', 'Cierre de sesión de '.$sesionPrevia->nombre.' por un nuevo intento de inicio de sesión', 'usuario', $sesionPrevia->id);
             Auth::guard('web')->logout();
         }
 

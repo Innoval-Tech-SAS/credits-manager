@@ -190,6 +190,40 @@ class AuthAuditoriaTest extends TestCase
         $this->assertSame($admin->empresa_id, $payloads[0]['empresa_id']);
     }
 
+    public function test_un_nuevo_intento_de_login_con_sesion_activa_deja_el_evento_de_cierre_de_la_anterior(): void
+    {
+        $anterior = $this->crearAdminConClave('Clave123!');
+        $nuevo = $this->crearAdminConClave('OtraClave456!');
+        $this->withHeader('Referer', $this->referer())
+            ->postJson('/api/v1/login', ['usuario' => $anterior->usuario, 'clave' => 'Clave123!'])
+            ->assertOk();
+
+        $this->withHeader('Referer', $this->referer())
+            ->postJson('/api/v1/login', ['usuario' => $nuevo->usuario, 'clave' => 'OtraClave456!'])
+            ->assertOk();
+
+        $logouts = $this->eventosDeAuditoria('logout');
+        $this->assertCount(1, $logouts);
+        $this->assertSame($anterior->id, $logouts[0]['autor']['usuario_id']);
+        $this->assertSame($anterior->empresa_id, $logouts[0]['empresa_id']);
+        $this->assertCount(2, $this->eventosDeAuditoria('login'));
+    }
+
+    public function test_un_login_fallido_con_sesion_activa_deja_el_cierre_y_el_intento_fallido(): void
+    {
+        $usuario = $this->crearAdminConClave('Clave123!');
+        $this->withHeader('Referer', $this->referer())
+            ->postJson('/api/v1/login', ['usuario' => $usuario->usuario, 'clave' => 'Clave123!'])
+            ->assertOk();
+
+        $this->withHeader('Referer', $this->referer())
+            ->postJson('/api/v1/login', ['usuario' => $usuario->usuario, 'clave' => 'incorrecta'])
+            ->assertStatus(422);
+
+        $this->assertCount(1, $this->eventosDeAuditoria('logout'));
+        $this->assertCount(1, $this->eventosDeAuditoria('login_fallido'));
+    }
+
     public function test_el_login_del_superadmin_no_pertenece_a_ninguna_empresa(): void
     {
         Usuario::create([
