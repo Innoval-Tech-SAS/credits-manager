@@ -20,9 +20,9 @@ class EmpresaConstants
      */
     public const PERMISOS_POR_ROL = [
         'asesor' => [
-            'clientes.listar', 'clientes.ver', 'clientes.crear', 'clientes.editar',
-            'creditos.listar', 'creditos.crear', 'creditos.imprimir_estado_cuenta',
-            'pagos.listar', 'pagos.crear', 'pagos.imprimir_recibo',
+            'clientes.listar', 'clientes.ver', 'clientes.crear',
+            'creditos.listar', 'creditos.imprimir_estado_cuenta',
+            'pagos.listar', 'pagos.imprimir_recibo',
             'cartera.listar',
             'calendario.listar',
         ],
