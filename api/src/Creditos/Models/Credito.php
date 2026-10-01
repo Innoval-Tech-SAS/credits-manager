@@ -5,6 +5,7 @@ namespace App\Creditos\Models;
 use App\Clientes\Models\Cliente;
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
+use App\Core\Concerns\RestringidoPorAsesor;
 use App\Core\Dinero\Dinero;
 use App\Core\Dinero\DineroCast;
 use App\Creditos\Enums\EstadoCredito;
@@ -35,8 +36,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Credito extends BaseModel
 {
     use PerteneceAEmpresa;
+    use RestringidoPorAsesor;
 
     protected $table = 'creditos';
+
+    protected static function columnaDeClienteParaAlcance(): ?string
+    {
+        return 'cliente_id';
+    }
 
     protected function casts(): array
     {

@@ -5,6 +5,7 @@ namespace App\Pagos\Models;
 use App\Clientes\Models\Cliente;
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
+use App\Core\Concerns\RestringidoPorAsesor;
 use App\Core\Dinero\DineroCast;
 use App\Creditos\Models\Credito;
 use App\Pagos\Enums\FormaPago;
@@ -27,8 +28,14 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class Pago extends BaseModel
 {
     use PerteneceAEmpresa;
+    use RestringidoPorAsesor;
 
     protected $table = 'pagos';
+
+    protected static function columnaDeClienteParaAlcance(): ?string
+    {
+        return 'cliente_id';
+    }
 
     protected function casts(): array
     {

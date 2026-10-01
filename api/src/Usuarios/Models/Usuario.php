@@ -52,6 +52,12 @@ class Usuario extends BaseModel implements AuthenticatableContract
             ->withPivot(['concedido']);
     }
 
+    /** Solo el rol asesor sin `es_global` queda limitado a sus clientes asignados; los demás roles ven toda su empresa. */
+    public function restringidoAClientesPropios(): bool
+    {
+        return $this->rol?->nombre === UsuarioConstants::ROL_ASESOR && ! $this->es_global;
+    }
+
     public function tienePermiso(string $modulo, string $accion): bool
     {
         if ($this->rol?->nombre === UsuarioConstants::ROL_ADMIN) {
