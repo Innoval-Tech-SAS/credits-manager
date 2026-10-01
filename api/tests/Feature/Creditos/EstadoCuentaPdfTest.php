@@ -55,7 +55,7 @@ class EstadoCuentaPdfTest extends TestCase
     public function test_sin_permiso_de_listar_creditos_no_descarga_el_pdf(): void
     {
         $credito = $this->creditoConPagos();
-        $this->actingAsAsesor(Empresa::find($credito->empresa_id));
+        $this->actingAsAsesor(Empresa::find($credito->empresa_id))->update(['es_global' => true]);
 
         $this->getJson("/api/v1/creditos/{$credito->id}/estado-cuenta/pdf")->assertStatus(403);
     }
