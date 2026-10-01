@@ -4,6 +4,7 @@ namespace App\Clientes\Models;
 
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
+use App\Core\Concerns\RestringidoPorAsesor;
 use App\Creditos\Models\Credito;
 use App\Documentos\Models\ArchivoAdjunto;
 use App\Empleadores\Models\Empleador;
@@ -18,8 +19,14 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 class Cliente extends BaseModel
 {
     use PerteneceAEmpresa;
+    use RestringidoPorAsesor;
 
     protected $table = 'clientes';
+
+    protected static function columnaDeClienteParaAlcance(): ?string
+    {
+        return null;
+    }
 
     protected function casts(): array
     {

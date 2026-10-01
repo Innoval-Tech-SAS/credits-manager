@@ -93,7 +93,7 @@ class EditarCreditoTest extends TestCase
         $empresa = $this->crearEmpresaDePrueba();
         $this->actingAsAdmin($empresa);
         $credito = $this->creditoSolicitado();
-        $this->actingAsAsesor($empresa);
+        $this->actingAsAsesor($empresa)->update(['es_global' => true]);
 
         $this->patchJson("/api/v1/creditos/{$credito->id}", $this->nuevasCondiciones())->assertStatus(403);
 

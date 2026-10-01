@@ -7,7 +7,9 @@ use App\Creditos\Enums\TipoCredito;
 use App\Creditos\Enums\TipoPago;
 use App\Creditos\Repositories\CreditoRepository;
 use Illuminate\Contracts\Validation\Validator as ValidatorContract;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CrearCreditoRequest extends FormRequest
@@ -27,12 +29,17 @@ class CrearCreditoRequest extends FormRequest
         return [
             'cliente_id' => [
                 'required', 'integer',
-                Rule::exists('clientes', 'id')->where('empresa_id', $this->user()->empresa_id),
+                Rule::exists('clientes', 'id')->where(fn (Builder $consulta) => $consulta
+                    ->where('empresa_id', $this->user()->empresa_id)
+                    ->when($this->user()->restringidoAClientesPropios(), fn (Builder $propios) => $propios->where('asesor_id', $this->user()->id))),
             ],
             'tipo_credito' => ['required', Rule::enum(TipoCredito::class)],
             'credito_origen_id' => [
                 'nullable', 'required_if:tipo_credito,refinanciacion', 'integer',
-                Rule::exists('creditos', 'id')->where('empresa_id', $this->user()->empresa_id),
+                Rule::exists('creditos', 'id')->where(fn (Builder $consulta) => $consulta
+                    ->where('empresa_id', $this->user()->empresa_id)
+                    ->when($this->user()->restringidoAClientesPropios(), fn (Builder $propios) => $propios
+                        ->whereIn('cliente_id', DB::table('clientes')->select('id')->where('asesor_id', $this->user()->id)))),
             ],
             // En una refinanciación el valor del préstamo lo calcula el servidor: saldo de capital del original + `valor_adicional`.
             'valor_prestamo' => ['required_unless:tipo_credito,refinanciacion', 'prohibited_if:tipo_credito,refinanciacion', 'numeric', 'min:0.01'],

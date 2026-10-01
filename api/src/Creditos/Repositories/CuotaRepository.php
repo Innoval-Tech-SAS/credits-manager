@@ -3,6 +3,7 @@
 namespace App\Creditos\Repositories;
 
 use App\Core\Base\BaseRepository;
+use App\Core\Scopes\AlcanceAsesorScope;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Models\Cuota;
@@ -79,6 +80,8 @@ class CuotaRepository extends BaseRepository
      * vía `whereHas('credito')`, que hereda el `EmpresaScope` de `Credito`. Sin este filtro,
      * esta actualización corría sobre las cuotas de TODAS las empresas del sistema.
      * Solo entran en mora los créditos desembolsados: un solicitado, cancelado o refinanciado no cobra.
+     * Excepción declarada al alcance por asesor: la mora es un proceso de toda la empresa, así que no se
+     * limita a los clientes del asesor que dispara la lectura.
      */
     public function marcarVencidas(): Collection
     {
@@ -87,7 +90,7 @@ class CuotaRepository extends BaseRepository
             $cuotas = $this->consulta()
                 ->where('estado', EstadoCuota::Pendiente)
                 ->where('fecha_vencimiento', '<', now()->toDateString())
-                ->whereHas('credito', fn ($consultaCredito) => $consultaCredito->where('estado', EstadoCredito::Desembolsado))
+                ->whereHas('credito', fn ($consultaCredito) => $consultaCredito->withoutGlobalScope(AlcanceAsesorScope::class)->where('estado', EstadoCredito::Desembolsado))
                 ->with('credito:id,empresa_id')
                 ->lockForUpdate()
                 ->get(['id', 'credito_id']);

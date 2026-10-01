@@ -3,6 +3,7 @@
 namespace App\Terceros\Repositories;
 
 use App\Core\Base\BaseRepository;
+use App\Core\Scopes\AlcanceAsesorScope;
 use App\Terceros\Models\Tercero;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
@@ -31,9 +32,14 @@ class TerceroRepository extends BaseRepository
             ->paginate($porPagina, ['*'], 'page', $pagina);
     }
 
+    /**
+     * Excepción declarada al alcance por asesor: para saber si el documento ya es cliente hay que ver los
+     * clientes de todos los asesores; si no, un asesor podría intentar duplicar un cliente ajeno.
+     */
     public function buscarPorDocumento(string $tipoDocumento, string $numeroDocumento): ?Tercero
     {
         return $this->consulta()
+            ->with(['cliente' => fn ($consulta) => $consulta->withoutGlobalScope(AlcanceAsesorScope::class)])
             ->where('tipo_documento', $tipoDocumento)
             ->where('numero_documento', $numeroDocumento)
             ->first();
