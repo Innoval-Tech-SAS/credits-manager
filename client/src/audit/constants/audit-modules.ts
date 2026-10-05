@@ -13,6 +13,7 @@ export const AUDIT_MODULE_LABELS: Record<string, string> = {
     creditos: 'Créditos',
     pagos: 'Pagos',
     cartera: 'Cartera',
+    metas: 'Metas',
     contabilidad: 'Contabilidad',
     gastos: 'Gastos',
     geografia: 'Geografía',

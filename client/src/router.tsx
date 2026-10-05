@@ -82,6 +82,8 @@ import { SearchCreditsPage } from './payments/pages/search-credits-page';
 import { SettleCreditPage } from './payments/pages/settle-credit-page';
 import { EmployerReportPage } from './portfolio/pages/employer-report-page';
 import { PortfolioPage } from './portfolio/pages/portfolio-page';
+import { GoalsPage } from './goals/pages/goals-page';
+import { GoalSettingsPage } from './goals/pages/goal-settings-page';
 import { CreateThirdPartyPage } from './third-parties/pages/create-third-party-page';
 import { EditThirdPartyPage } from './third-parties/pages/edit-third-party-page';
 import { ThirdPartiesListPage } from './third-parties/pages/third-parties-list-page';
@@ -101,6 +103,22 @@ const routes: RouteObject[] = [
                 ),
                 children: [
                     { index: true, element: <HomePage /> },
+                    {
+                        path: 'metas',
+                        element: (
+                            <RequireModulePermission modulo="metas" accion="listar">
+                                <GoalsPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'metas/configuracion',
+                        element: (
+                            <RequireModulePermission modulo="metas" accion="configurar">
+                                <GoalSettingsPage />
+                            </RequireModulePermission>
+                        ),
+                    },
                     {
                         path: 'calendario',
                         element: (

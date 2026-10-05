@@ -12,6 +12,7 @@ import { Spinner } from '@ui/spinner/components/spinner';
 import { DataTable } from '@ui/table/components/data-table';
 import { DonutChart } from '@ui/charts/components/donut-chart';
 import { StatCard } from '../components/stat-card';
+import { GoalsDashboardSection } from '../../goals/components/goals-dashboard-section';
 import type { ApiDashboardSummary } from '../types/api-dashboard-summary';
 
 export const HomePage: FC = () => {
@@ -53,6 +54,8 @@ export const HomePage: FC = () => {
                 <StatCard label="Cartera pendiente" value={formatMoney(resumen.cartera_pendiente)} icon={Wallet} accent="success" />
                 <StatCard label="Créditos en mora" value={String(resumen.creditos_en_mora)} icon={TriangleAlert} accent="error" />
             </div>
+
+            <GoalsDashboardSection />
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 xl:col-span-2">
