@@ -32,7 +32,7 @@ export const ClientSelector: FC<ClientSelectorProps> = ({ selected, onSelect }) 
                 onChange={(event) => setQuery(event.target.value)}
             />
 
-            <Dropdown isOpen={isOpen} onClose={() => setIsOpen(false)} className="max-h-64 w-full overflow-y-auto left-0">
+            <Dropdown isOpen={isOpen} onClose={() => setIsOpen(false)} className="max-h-64 w-full overflow-y-auto custom-scrollbar left-0">
                 {isLoading && <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">Buscando…</div>}
 
                 {!isLoading && results.length === 0 && (
