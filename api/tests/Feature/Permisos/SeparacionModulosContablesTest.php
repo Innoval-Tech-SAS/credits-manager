@@ -153,7 +153,7 @@ class SeparacionModulosContablesTest extends TestCase
             ['PATCH', "/api/v1/contabilidad/centros-costo/{$this->centroId}", 'configuracion_contable.editar', []],
             ['GET', '/api/v1/contabilidad/reglas', 'configuracion_contable.configurar', []],
             ['POST', '/api/v1/contabilidad/reglas', 'configuracion_contable.configurar', []],
-            ['GET', '/api/v1/contabilidad/migraciones-apertura', 'configuracion_contable.listar', []],
+            ['GET', '/api/v1/importaciones', 'importaciones.listar', []],
 
             ['GET', '/api/v1/contabilidad/comprobantes', 'contabilidad.listar', []],
             ['POST', '/api/v1/contabilidad/comprobantes', 'contabilidad.crear_manual', []],
