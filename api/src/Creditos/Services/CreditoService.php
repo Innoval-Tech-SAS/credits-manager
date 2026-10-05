@@ -56,6 +56,7 @@ class CreditoService
     {
         return DB::transaction(function () use ($datos) {
             [$valorPrestamo, $saldoTomado] = $this->valorDelPrestamo($datos);
+            $porcentajeGastos = (float) ($datos['gastos_administracion_pct'] ?? 0);
 
             $credito = $this->creditos->crear([
                 'cliente_id' => $datos['cliente_id'],
@@ -64,6 +65,7 @@ class CreditoService
                 'valor_prestamo' => $valorPrestamo,
                 'saldo_refinanciado' => $saldoTomado,
                 'tasa_interes' => $datos['tasa_interes'],
+                'gastos_administracion_pct' => $porcentajeGastos,
                 'plazo' => $datos['plazo'],
                 'tipo_pago' => $datos['tipo_pago'],
                 'valor_cuota' => 0,
@@ -81,7 +83,7 @@ class CreditoService
                 $datos['fecha_desembolso'],
             );
 
-            $this->cuotas->crearVarias($credito->id, $resultado['cuotas']);
+            $this->cuotas->crearVarias($credito->id, $this->conOtrosGastos($resultado['cuotas'], $valorPrestamo, $porcentajeGastos));
 
             $this->creditos->actualizar($credito, [
                 'valor_cuota' => $resultado['valor_cuota'],
@@ -121,6 +123,8 @@ class CreditoService
                 throw ValidationException::withMessages(['valor_adicional' => __('validation.custom.valor_adicional.sin_valor')]);
             }
 
+            $porcentajeGastos = (float) ($datos['gastos_administracion_pct'] ?? $credito->gastos_administracion_pct);
+
             $anteriores = $this->auditoria->instantanea($credito);
             $cuotasReemplazadas = $this->cuotas->todasOrdenadasParaActualizar($credito->id)->count();
 
@@ -133,11 +137,12 @@ class CreditoService
             );
 
             $this->cuotas->eliminarTodasDeCredito($credito->id);
-            $this->cuotas->crearVarias($credito->id, $resultado['cuotas']);
+            $this->cuotas->crearVarias($credito->id, $this->conOtrosGastos($resultado['cuotas'], $valorPrestamo, $porcentajeGastos));
 
             $credito = $this->creditos->actualizar($credito, [
                 'valor_prestamo' => $valorPrestamo,
                 'tasa_interes' => $datos['tasa_interes'],
+                'gastos_administracion_pct' => $porcentajeGastos,
                 'plazo' => (int) $datos['plazo'],
                 'tipo_pago' => $datos['tipo_pago'],
                 'fecha_desembolso' => $datos['fecha_desembolso'],
@@ -160,6 +165,50 @@ class CreditoService
 
             return $this->creditos->obtenerConRelaciones($credito);
         });
+    }
+
+    /**
+     * Cambia el % de otros gastos de un crédito desembolsado y recalcula solo las cuotas no pagadas.
+     * Capital, interés, `valor` y las cuotas pagadas no cambian; no se regenera la amortización.
+     */
+    public function actualizarGastosAdministracion(Credito $credito, float $porcentaje, string $motivo): Credito
+    {
+        return DB::transaction(function () use ($credito, $porcentaje, $motivo) {
+            $credito = $this->creditos->bloquear($credito->id);
+            $this->exigirEstado($credito, EstadoCredito::Desembolsado);
+
+            $anteriores = $this->auditoria->instantanea($credito);
+            $otrosGastos = OtrosGastosCalculator::valorPorCuota($credito->valor_prestamo, $porcentaje);
+
+            $pendientes = $this->cuotas->pendientesOrdenadasParaActualizar($credito->id);
+            foreach ($pendientes as $cuota) {
+                $this->cuotas->actualizar($cuota, ['valor_otros_gastos' => $otrosGastos]);
+            }
+
+            $credito = $this->creditos->actualizar($credito, ['gastos_administracion_pct' => $porcentaje]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CREDITOS,
+                "Otros gastos del crédito #{$credito->id} cambiados a {$porcentaje} %",
+                $credito,
+                $anteriores,
+                motivo: $motivo,
+                adicionales: [
+                    'cuotas_recalculadas' => $pendientes->count(),
+                    'valor_otros_gastos_por_cuota' => $otrosGastos->aDecimalString(),
+                ],
+            );
+
+            return $this->creditos->obtenerConRelaciones($credito);
+        });
+    }
+
+    /** Cada cuota lleva el mismo valor de otros gastos: capital inicial × porcentaje, sin tocar capital ni interés. */
+    private function conOtrosGastos(array $cuotas, Dinero $capitalInicial, float $porcentaje): array
+    {
+        $otrosGastos = OtrosGastosCalculator::valorPorCuota($capitalInicial, $porcentaje);
+
+        return array_map(fn (array $cuota) => [...$cuota, 'valor_otros_gastos' => $otrosGastos], $cuotas);
     }
 
     /**
