@@ -193,11 +193,17 @@ export const NAV_ITEMS: NavItem[] = [
                 moduleKey: "configuracion_contable",
                 action: "listar",
             },
+        ],
+    },
+    {
+        name: "Configuración",
+        icon: Settings2,
+        subItems: [
             {
                 name: "Importaciones",
-                path: "/contabilidad/migraciones-apertura",
+                path: "/importaciones",
                 icon: FileInput,
-                moduleKey: "configuracion_contable",
+                moduleKey: "importaciones",
                 action: "listar",
             },
         ],

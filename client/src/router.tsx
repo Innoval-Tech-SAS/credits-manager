@@ -10,7 +10,9 @@ import { CreateCostCenterPage } from './accounting/pages/create-cost-center-page
 import { CreateVoucherPage } from './accounting/pages/create-voucher-page';
 import { CreateVoucherTypePage } from './accounting/pages/create-voucher-type-page';
 import { FinancialStatementsPage } from './accounting/pages/financial-statements-page';
-import { ImportsPage } from './accounting/pages/imports-page';
+import { ImportsPage } from './imports/pages/imports-page';
+import { NewImportPage } from './imports/pages/new-import-page';
+import { ImportDetailPage } from './imports/pages/import-detail-page';
 import { JournalPage } from './accounting/pages/journal-page';
 import { LedgerPage } from './accounting/pages/ledger-page';
 import { PeriodsPage } from './accounting/pages/periods-page';
@@ -523,10 +525,26 @@ const routes: RouteObject[] = [
                         ),
                     },
                     {
-                        path: 'contabilidad/migraciones-apertura',
+                        path: 'importaciones',
                         element: (
-                            <RequireModulePermission modulo="configuracion_contable" accion="listar">
+                            <RequireModulePermission modulo="importaciones" accion="listar">
                                 <ImportsPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'importaciones/nueva',
+                        element: (
+                            <RequireModulePermission modulo="importaciones" accion="ejecutar">
+                                <NewImportPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'importaciones/:id',
+                        element: (
+                            <RequireModulePermission modulo="importaciones" accion="listar">
+                                <ImportDetailPage />
                             </RequireModulePermission>
                         ),
                     },
