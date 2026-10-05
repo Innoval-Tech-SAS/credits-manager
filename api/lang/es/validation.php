@@ -172,6 +172,13 @@ return [
     */
 
     'custom' => [
+        'metas' => [
+            'periodo_tipo_repetido' => 'Ya existe una meta de este tipo para el período.',
+            'sin_meta' => 'No existe una meta de este tipo para el período.',
+            'periodo_no_cerrado' => 'El período no está cerrado; solo se recalcula un período cerrado.',
+            'distribucion_supera' => 'La distribución suma :suma y supera la meta de :meta.',
+            'distribucion_incompleta' => 'La distribución debe sumar exactamente la meta de :meta.',
+        ],
         'correo' => [
             'sin_configurar' => 'La empresa no tiene configurado el correo de cobranza.',
             'cuota_no_del_cliente' => 'La cuota no pertenece a este cliente.',
@@ -307,6 +314,20 @@ return [
     */
 
     'attributes' => [
+        // Metas
+        'tolerancia_riesgo_puntos' => 'tolerancia de riesgo',
+        'cumplimiento_parcial_minimo' => 'cumplimiento parcial mínimo',
+        'alerta_alcanzada_activa' => 'alerta de meta alcanzada',
+        'umbral_alcanzada' => 'umbral de meta alcanzada',
+        'modo_colocacion_refinanciaciones' => 'modo de colocación de refinanciaciones',
+        'base_recaudo' => 'base del recaudo',
+        'distribucion_obligatoria_completa' => 'distribución obligatoria completa',
+        'meta_consolidada_visible_asesor' => 'meta consolidada visible al asesor',
+        'dia_de_cierre' => 'día de cierre',
+        'valor_objetivo' => 'valor objetivo',
+        'asesores.*.usuario_id' => 'asesor',
+        'asesores.*.valor_objetivo' => 'valor objetivo del asesor',
+
         // Créditos
         'cliente_id' => 'cliente',
         'tipo_credito' => 'tipo de crédito',

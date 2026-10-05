@@ -35,6 +35,10 @@ use App\Geografia\Controllers\EstadoController;
 use App\Geografia\Controllers\MunicipioController;
 use App\Geografia\Controllers\PaisController;
 use App\Importacion\Controllers\ImportacionController;
+use App\Metas\Controllers\AlertaMetaController;
+use App\Metas\Controllers\CierreMetaController;
+use App\Metas\Controllers\ConfiguracionMetaController;
+use App\Metas\Controllers\MetaController;
 use App\Notificaciones\Controllers\NotificacionController;
 use App\Pagos\Controllers\PagoController;
 use App\Proveedores\Controllers\ProveedorController;
@@ -152,6 +156,27 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/clientes/{cliente}/recordatorios-correo', [RecordatorioCorreoController::class, 'historial'])->middleware('permiso:clientes,ver');
     Route::post('/clientes/{cliente}/recordatorios-correo/vista-previa', [RecordatorioCorreoController::class, 'vistaPrevia'])->middleware('permiso:cartera,enviar_recordatorio');
     Route::post('/clientes/{cliente}/recordatorios-correo', [RecordatorioCorreoController::class, 'enviar'])->middleware('permiso:cartera,enviar_recordatorio');
+
+    // Metas: la lectura admite al asesor solo con la meta consolidada activa (`acceso_metas`); el resto exige su permiso.
+    Route::prefix('metas')->group(function () {
+        Route::middleware('acceso_metas')->group(function () {
+            Route::get('/', [MetaController::class, 'index']);
+            Route::get('/alertas', [AlertaMetaController::class, 'index']);
+            Route::post('/alertas/{alerta}/vista', [AlertaMetaController::class, 'marcarVista'])->whereNumber('alerta');
+        });
+
+        Route::get('/configuracion', [ConfiguracionMetaController::class, 'show'])->middleware('permiso:metas,listar');
+        Route::get('/cierres', [CierreMetaController::class, 'index'])->middleware('permiso:metas,listar');
+
+        Route::middleware('permiso:metas,configurar')->group(function () {
+            Route::post('/', [MetaController::class, 'store']);
+            Route::put('/configuracion', [ConfiguracionMetaController::class, 'update']);
+            Route::put('/{meta}', [MetaController::class, 'update'])->whereNumber('meta');
+            Route::put('/{meta}/asesores', [MetaController::class, 'distribuir'])->whereNumber('meta');
+        });
+
+        Route::post('/cierres/recalcular', [CierreMetaController::class, 'recalcular'])->middleware('permiso:metas,recalcular');
+    });
 
     Route::get('/calendario', [CalendarioController::class, 'index'])->middleware('permiso:calendario,listar');
 

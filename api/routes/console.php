@@ -24,6 +24,12 @@ Schedule::command('exportaciones:limpiar')
     ->name('exportaciones:limpiar')
     ->withoutOverlapping(30);
 
+/** Cierra las metas vencidas y genera alertas, empresa por empresa (cada una con su `empresa_id` explícito). */
+Schedule::command('metas:evaluar')
+    ->dailyAt('23:55')
+    ->name('metas:evaluar')
+    ->withoutOverlapping(30);
+
 Schedule::command('importaciones:limpiar')
     ->dailyAt('03:15')
     ->name('importaciones:limpiar')

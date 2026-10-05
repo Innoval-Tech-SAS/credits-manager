@@ -4,6 +4,7 @@ use App\Auth\Middleware\EsAdmin;
 use App\Auth\Middleware\EsSuperAdmin;
 use App\Auth\Middleware\TienePermiso;
 use App\Auth\Middleware\TienePermisoOSuperAdmin;
+use App\Metas\Middleware\AccesoMetas;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'superadmin' => EsSuperAdmin::class,
             'permiso' => TienePermiso::class,
             'permiso_o_superadmin' => TienePermisoOSuperAdmin::class,
+            'acceso_metas' => AccesoMetas::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
