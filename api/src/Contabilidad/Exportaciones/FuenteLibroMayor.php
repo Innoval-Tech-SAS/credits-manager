@@ -124,6 +124,6 @@ final class FuenteLibroMayor implements FuenteExportable
 
     public function autorizadoPara(Usuario $usuario): bool
     {
-        return $usuario->empresa_id !== null && $usuario->tienePermiso('contabilidad', 'exportar');
+        return $usuario->empresa_id !== null && $usuario->tienePermiso('informes_contables', 'exportar');
     }
 }

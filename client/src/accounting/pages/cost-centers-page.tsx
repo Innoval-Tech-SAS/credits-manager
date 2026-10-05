@@ -16,7 +16,7 @@ import type { ApiCostCenter } from '../types/api-cost-center';
 export const CostCentersPage: FC = () => {
     const navigate = useNavigate();
 
-    const canCreate = usePermission('contabilidad', 'crear');
+    const canCreate = usePermission('configuracion_contable', 'crear');
 
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<CostCentersListLocationState>();
 

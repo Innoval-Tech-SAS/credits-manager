@@ -22,8 +22,8 @@ import type { ThirdPartiesListLocationState } from '../types/third-parties-list-
 export const ThirdPartiesListPage: FC = () => {
     const navigate = useNavigate();
 
-    const canCreate = usePermission('contabilidad', 'crear');
-    const canEdit = usePermission('contabilidad', 'editar');
+    const canCreate = usePermission('terceros', 'crear');
+    const canEdit = usePermission('terceros', 'editar');
 
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<ThirdPartiesListLocationState>();
 

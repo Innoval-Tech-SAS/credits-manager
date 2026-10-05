@@ -142,28 +142,28 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/calendario', [CalendarioController::class, 'index'])->middleware('permiso:calendario,listar');
 
-    Route::get('/contabilidad/plan-cuentas', [PlanCuentaController::class, 'index'])->middleware('permiso:contabilidad,listar');
-    Route::post('/contabilidad/plan-cuentas', [PlanCuentaController::class, 'store'])->middleware('permiso:contabilidad,crear');
-    Route::patch('/contabilidad/plan-cuentas/{cuenta}', [PlanCuentaController::class, 'update'])->middleware('permiso:contabilidad,editar');
+    Route::get('/contabilidad/plan-cuentas', [PlanCuentaController::class, 'index'])->middleware('permiso:configuracion_contable,listar');
+    Route::post('/contabilidad/plan-cuentas', [PlanCuentaController::class, 'store'])->middleware('permiso:configuracion_contable,crear');
+    Route::patch('/contabilidad/plan-cuentas/{cuenta}', [PlanCuentaController::class, 'update'])->middleware('permiso:configuracion_contable,editar');
 
-    Route::get('/contabilidad/periodos', [PeriodoContableController::class, 'index'])->middleware('permiso:contabilidad,listar');
-    Route::post('/contabilidad/periodos/{periodo}/cerrar', [PeriodoContableController::class, 'cerrar'])->middleware('permiso:contabilidad,cerrar_periodo');
-    Route::post('/contabilidad/periodos/{periodo}/reabrir', [PeriodoContableController::class, 'reabrir'])->middleware('permiso:contabilidad,reabrir_periodo');
+    Route::get('/contabilidad/periodos', [PeriodoContableController::class, 'index'])->middleware('permiso:configuracion_contable,listar');
+    Route::post('/contabilidad/periodos/{periodo}/cerrar', [PeriodoContableController::class, 'cerrar'])->middleware('permiso:configuracion_contable,cerrar_periodo');
+    Route::post('/contabilidad/periodos/{periodo}/reabrir', [PeriodoContableController::class, 'reabrir'])->middleware('permiso:configuracion_contable,reabrir_periodo');
 
-    Route::get('/contabilidad/solicitudes-reapertura', [SolicitudReaperturaPeriodoController::class, 'index'])->middleware('permiso:contabilidad,listar');
-    Route::post('/contabilidad/periodos/{periodo}/solicitar-reapertura', [SolicitudReaperturaPeriodoController::class, 'store'])->middleware('permiso:contabilidad,cerrar_periodo');
-    Route::post('/contabilidad/solicitudes-reapertura/{solicitud}/autorizar', [SolicitudReaperturaPeriodoController::class, 'autorizar'])->middleware('permiso:contabilidad,reabrir_periodo');
-    Route::post('/contabilidad/solicitudes-reapertura/{solicitud}/rechazar', [SolicitudReaperturaPeriodoController::class, 'rechazar'])->middleware('permiso:contabilidad,reabrir_periodo');
+    Route::get('/contabilidad/solicitudes-reapertura', [SolicitudReaperturaPeriodoController::class, 'index'])->middleware('permiso:configuracion_contable,listar');
+    Route::post('/contabilidad/periodos/{periodo}/solicitar-reapertura', [SolicitudReaperturaPeriodoController::class, 'store'])->middleware('permiso:configuracion_contable,cerrar_periodo');
+    Route::post('/contabilidad/solicitudes-reapertura/{solicitud}/autorizar', [SolicitudReaperturaPeriodoController::class, 'autorizar'])->middleware('permiso:configuracion_contable,reabrir_periodo');
+    Route::post('/contabilidad/solicitudes-reapertura/{solicitud}/rechazar', [SolicitudReaperturaPeriodoController::class, 'rechazar'])->middleware('permiso:configuracion_contable,reabrir_periodo');
 
-    Route::get('/contabilidad/tipos-comprobante', [TipoComprobanteController::class, 'index'])->middleware('permiso:contabilidad,listar');
-    Route::post('/contabilidad/tipos-comprobante', [TipoComprobanteController::class, 'store'])->middleware('permiso:contabilidad,crear');
+    Route::get('/contabilidad/tipos-comprobante', [TipoComprobanteController::class, 'index'])->middleware('permiso:configuracion_contable,listar');
+    Route::post('/contabilidad/tipos-comprobante', [TipoComprobanteController::class, 'store'])->middleware('permiso:configuracion_contable,crear');
 
-    Route::get('/contabilidad/centros-costo', [CentroCostoController::class, 'index'])->middleware('permiso:contabilidad,listar');
-    Route::post('/contabilidad/centros-costo', [CentroCostoController::class, 'store'])->middleware('permiso:contabilidad,crear');
-    Route::patch('/contabilidad/centros-costo/{centro}', [CentroCostoController::class, 'update'])->middleware('permiso:contabilidad,editar');
+    Route::get('/contabilidad/centros-costo', [CentroCostoController::class, 'index'])->middleware('permiso:configuracion_contable,listar');
+    Route::post('/contabilidad/centros-costo', [CentroCostoController::class, 'store'])->middleware('permiso:configuracion_contable,crear');
+    Route::patch('/contabilidad/centros-costo/{centro}', [CentroCostoController::class, 'update'])->middleware('permiso:configuracion_contable,editar');
 
-    Route::get('/contabilidad/reglas', [ReglaContabilizacionController::class, 'index'])->middleware('permiso:contabilidad,configurar');
-    Route::post('/contabilidad/reglas', [ReglaContabilizacionController::class, 'store'])->middleware('permiso:contabilidad,configurar');
+    Route::get('/contabilidad/reglas', [ReglaContabilizacionController::class, 'index'])->middleware('permiso:configuracion_contable,configurar');
+    Route::post('/contabilidad/reglas', [ReglaContabilizacionController::class, 'store'])->middleware('permiso:configuracion_contable,configurar');
 
     Route::get('/contabilidad/comprobantes', [ComprobanteController::class, 'index'])->middleware('permiso:contabilidad,listar');
     Route::post('/contabilidad/comprobantes', [ComprobanteController::class, 'store'])->middleware('permiso:contabilidad,crear_manual');
@@ -171,49 +171,49 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/comprobantes/{comprobante}/pdf', [ComprobanteController::class, 'pdf'])->middleware('permiso:contabilidad,imprimir_comprobante')->whereNumber('comprobante');
     Route::post('/contabilidad/comprobantes/{comprobante}/reversar', [ComprobanteController::class, 'reversar'])->middleware('permiso:contabilidad,anular');
 
-    Route::get('/contabilidad/libro-diario', [ReporteContableController::class, 'libroDiario'])->middleware('permiso:contabilidad,listar');
-    Route::get('/contabilidad/libro-mayor', [ReporteContableController::class, 'libroMayor'])->middleware('permiso:contabilidad,listar');
-    Route::get('/contabilidad/balance-prueba', [ReporteContableController::class, 'balancePrueba'])->middleware('permiso:contabilidad,listar');
-    Route::get('/contabilidad/estados-financieros', [ReporteContableController::class, 'estadosFinancieros'])->middleware('permiso:contabilidad,listar');
-    Route::post('/contabilidad/libro-diario/exportar', [ReporteContableController::class, 'exportarLibroDiario'])->middleware('permiso:contabilidad,exportar');
-    Route::post('/contabilidad/libro-mayor/exportar', [ReporteContableController::class, 'exportarLibroMayor'])->middleware('permiso:contabilidad,exportar');
-    Route::post('/contabilidad/balance-prueba/exportar', [ReporteContableController::class, 'exportarBalancePrueba'])->middleware('permiso:contabilidad,exportar');
-    Route::post('/contabilidad/estados-financieros/exportar', [ReporteContableController::class, 'exportarEstadosFinancieros'])->middleware('permiso:contabilidad,exportar');
+    Route::get('/contabilidad/libro-diario', [ReporteContableController::class, 'libroDiario'])->middleware('permiso:informes_contables,listar');
+    Route::get('/contabilidad/libro-mayor', [ReporteContableController::class, 'libroMayor'])->middleware('permiso:informes_contables,listar');
+    Route::get('/contabilidad/balance-prueba', [ReporteContableController::class, 'balancePrueba'])->middleware('permiso:informes_contables,listar');
+    Route::get('/contabilidad/estados-financieros', [ReporteContableController::class, 'estadosFinancieros'])->middleware('permiso:informes_contables,listar');
+    Route::post('/contabilidad/libro-diario/exportar', [ReporteContableController::class, 'exportarLibroDiario'])->middleware('permiso:informes_contables,exportar');
+    Route::post('/contabilidad/libro-mayor/exportar', [ReporteContableController::class, 'exportarLibroMayor'])->middleware('permiso:informes_contables,exportar');
+    Route::post('/contabilidad/balance-prueba/exportar', [ReporteContableController::class, 'exportarBalancePrueba'])->middleware('permiso:informes_contables,exportar');
+    Route::post('/contabilidad/estados-financieros/exportar', [ReporteContableController::class, 'exportarEstadosFinancieros'])->middleware('permiso:informes_contables,exportar');
 
-    Route::get('/contabilidad/migraciones-apertura', [MigracionAperturaController::class, 'index'])->middleware('permiso:contabilidad,listar');
+    Route::get('/contabilidad/migraciones-apertura', [MigracionAperturaController::class, 'index'])->middleware('permiso:configuracion_contable,listar');
     Route::post('/contabilidad/migraciones-apertura', [MigracionAperturaController::class, 'store'])->middleware('admin');
 
     Route::get('/terceros', [TerceroController::class, 'index']);
-    Route::post('/terceros/personas-naturales', [TerceroController::class, 'storeNatural'])->middleware('permiso:contabilidad,crear');
-    Route::post('/terceros/personas-juridicas', [TerceroController::class, 'storeJuridica'])->middleware('permiso:contabilidad,crear');
-    Route::get('/terceros/{tercero}', [TerceroController::class, 'show'])->middleware('permiso:contabilidad,listar');
-    Route::patch('/terceros/personas-naturales/{tercero}', [TerceroController::class, 'updateNatural'])->middleware('permiso:contabilidad,editar');
-    Route::patch('/terceros/personas-juridicas/{tercero}', [TerceroController::class, 'updateJuridica'])->middleware('permiso:contabilidad,editar');
+    Route::post('/terceros/personas-naturales', [TerceroController::class, 'storeNatural'])->middleware('permiso:terceros,crear');
+    Route::post('/terceros/personas-juridicas', [TerceroController::class, 'storeJuridica'])->middleware('permiso:terceros,crear');
+    Route::get('/terceros/{tercero}', [TerceroController::class, 'show'])->middleware('permiso:terceros,listar');
+    Route::patch('/terceros/personas-naturales/{tercero}', [TerceroController::class, 'updateNatural'])->middleware('permiso:terceros,editar');
+    Route::patch('/terceros/personas-juridicas/{tercero}', [TerceroController::class, 'updateJuridica'])->middleware('permiso:terceros,editar');
     Route::get('/terceros/{tercero}/documentos-pendientes', [DocumentoTerceroController::class, 'pendientes'])->middleware('permiso:contabilidad,listar');
 
-    Route::get('/proveedores', [ProveedorController::class, 'index'])->middleware('permiso:contabilidad,listar');
-    Route::post('/proveedores/personas-naturales', [ProveedorController::class, 'storeNatural'])->middleware('permiso:contabilidad,crear');
-    Route::post('/proveedores/personas-juridicas', [ProveedorController::class, 'storeJuridica'])->middleware('permiso:contabilidad,crear');
-    Route::get('/proveedores/{proveedor}', [ProveedorController::class, 'show'])->middleware('permiso:contabilidad,listar');
-    Route::patch('/proveedores/personas-naturales/{proveedor}', [ProveedorController::class, 'updateNatural'])->middleware('permiso:contabilidad,editar');
-    Route::patch('/proveedores/personas-juridicas/{proveedor}', [ProveedorController::class, 'updateJuridica'])->middleware('permiso:contabilidad,editar');
+    Route::get('/proveedores', [ProveedorController::class, 'index'])->middleware('permiso:terceros,listar');
+    Route::post('/proveedores/personas-naturales', [ProveedorController::class, 'storeNatural'])->middleware('permiso:terceros,crear');
+    Route::post('/proveedores/personas-juridicas', [ProveedorController::class, 'storeJuridica'])->middleware('permiso:terceros,crear');
+    Route::get('/proveedores/{proveedor}', [ProveedorController::class, 'show'])->middleware('permiso:terceros,listar');
+    Route::patch('/proveedores/personas-naturales/{proveedor}', [ProveedorController::class, 'updateNatural'])->middleware('permiso:terceros,editar');
+    Route::patch('/proveedores/personas-juridicas/{proveedor}', [ProveedorController::class, 'updateJuridica'])->middleware('permiso:terceros,editar');
 
     Route::get('/gastos/tipos-gasto', [TipoGastoController::class, 'index'])->middleware('permiso:gastos,listar');
     Route::post('/gastos/tipos-gasto', [TipoGastoController::class, 'store'])->middleware('permiso:gastos,parametrizar');
     Route::patch('/gastos/tipos-gasto/{tipoGasto}', [TipoGastoController::class, 'update'])->middleware('permiso:gastos,parametrizar');
 
-    Route::get('/gastos/actividades-economicas', [ActividadEconomicaController::class, 'index'])->middleware('permiso:gastos,listar');
-    Route::post('/gastos/actividades-economicas', [ActividadEconomicaController::class, 'store'])->middleware('permiso:gastos,parametrizar');
-    Route::patch('/gastos/actividades-economicas/{actividadEconomica}', [ActividadEconomicaController::class, 'update'])->middleware('permiso:gastos,parametrizar');
+    Route::get('/gastos/actividades-economicas', [ActividadEconomicaController::class, 'index'])->middleware('permiso:tributario,listar');
+    Route::post('/gastos/actividades-economicas', [ActividadEconomicaController::class, 'store'])->middleware('permiso:tributario,parametrizar');
+    Route::patch('/gastos/actividades-economicas/{actividadEconomica}', [ActividadEconomicaController::class, 'update'])->middleware('permiso:tributario,parametrizar');
 
-    Route::get('/gastos/valores-uvt', [ValorUvtController::class, 'index'])->middleware('permiso:gastos,listar');
-    Route::post('/gastos/valores-uvt', [ValorUvtController::class, 'store'])->middleware('permiso:gastos,parametrizar');
+    Route::get('/gastos/valores-uvt', [ValorUvtController::class, 'index'])->middleware('permiso:tributario,listar');
+    Route::post('/gastos/valores-uvt', [ValorUvtController::class, 'store'])->middleware('permiso:tributario,parametrizar');
 
     Route::get('/gastos/parametrizaciones', [ParametrizacionTipoGastoController::class, 'index'])->middleware('permiso:gastos,listar');
     Route::post('/gastos/parametrizaciones', [ParametrizacionTipoGastoController::class, 'store'])->middleware('permiso:gastos,parametrizar');
 
-    Route::get('/gastos/tarifas-reteica', [TarifaReteIcaMunicipioController::class, 'index'])->middleware('permiso:gastos,listar');
-    Route::post('/gastos/tarifas-reteica', [TarifaReteIcaMunicipioController::class, 'store'])->middleware('permiso:gastos,parametrizar');
+    Route::get('/gastos/tarifas-reteica', [TarifaReteIcaMunicipioController::class, 'index'])->middleware('permiso:tributario,listar');
+    Route::post('/gastos/tarifas-reteica', [TarifaReteIcaMunicipioController::class, 'store'])->middleware('permiso:tributario,parametrizar');
 
     Route::get('/gastos', [GastoController::class, 'index'])->middleware('permiso:gastos,listar');
     Route::post('/gastos/exportar', [GastoController::class, 'exportar'])->middleware('permiso:gastos,exportar');

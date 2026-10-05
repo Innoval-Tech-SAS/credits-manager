@@ -19,8 +19,8 @@ import { MONTHS } from '../constants/months';
 type ReopenMode = 'reabrir' | 'solicitar';
 
 export const PeriodsPage: FC = () => {
-    const canClose = usePermission('contabilidad', 'cerrar_periodo');
-    const canReopen = usePermission('contabilidad', 'reabrir_periodo');
+    const canClose = usePermission('configuracion_contable', 'cerrar_periodo');
+    const canReopen = usePermission('configuracion_contable', 'reabrir_periodo');
     const { sendRequest } = useSendRequest();
 
     const [refreshToken, setRefreshToken] = useState(0);

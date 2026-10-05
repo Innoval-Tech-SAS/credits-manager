@@ -16,7 +16,7 @@ import type { ApiVoucherType } from '../types/api-voucher-type';
 export const VoucherTypesPage: FC = () => {
     const navigate = useNavigate();
 
-    const canCreate = usePermission('contabilidad', 'crear');
+    const canCreate = usePermission('configuracion_contable', 'crear');
 
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<VoucherTypesListLocationState>();
 

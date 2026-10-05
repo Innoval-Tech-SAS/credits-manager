@@ -18,8 +18,8 @@ import type { ApiAccount } from '../types/api-account';
 export const ChartOfAccountsPage: FC = () => {
     const navigate = useNavigate();
 
-    const canCreate = usePermission('contabilidad', 'crear');
-    const canEdit = usePermission('contabilidad', 'editar');
+    const canCreate = usePermission('configuracion_contable', 'crear');
+    const canEdit = usePermission('configuracion_contable', 'editar');
     const { sendRequest } = useSendRequest();
 
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<ChartOfAccountsListLocationState>();

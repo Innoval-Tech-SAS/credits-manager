@@ -365,7 +365,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'terceros',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="listar">
+                            <RequireModulePermission modulo="terceros" accion="listar">
                                 <ThirdPartiesListPage />
                             </RequireModulePermission>
                         ),
@@ -373,7 +373,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'terceros/crear',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="crear">
+                            <RequireModulePermission modulo="terceros" accion="crear">
                                 <CreateThirdPartyPage />
                             </RequireModulePermission>
                         ),
@@ -381,7 +381,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'terceros/:id/editar',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="editar">
+                            <RequireModulePermission modulo="terceros" accion="editar">
                                 <EditThirdPartyPage />
                             </RequireModulePermission>
                         ),
@@ -389,7 +389,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/plan-cuentas',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="listar">
+                            <RequireModulePermission modulo="configuracion_contable" accion="listar">
                                 <ChartOfAccountsPage />
                             </RequireModulePermission>
                         ),
@@ -397,7 +397,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/plan-cuentas/crear',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="crear">
+                            <RequireModulePermission modulo="configuracion_contable" accion="crear">
                                 <CreateAccountPage />
                             </RequireModulePermission>
                         ),
@@ -405,7 +405,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/periodos',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="listar">
+                            <RequireModulePermission modulo="configuracion_contable" accion="listar">
                                 <PeriodsPage />
                             </RequireModulePermission>
                         ),
@@ -413,7 +413,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/tipos-comprobante',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="listar">
+                            <RequireModulePermission modulo="configuracion_contable" accion="listar">
                                 <VoucherTypesPage />
                             </RequireModulePermission>
                         ),
@@ -421,7 +421,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/tipos-comprobante/crear',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="crear">
+                            <RequireModulePermission modulo="configuracion_contable" accion="crear">
                                 <CreateVoucherTypePage />
                             </RequireModulePermission>
                         ),
@@ -429,7 +429,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/centros-costo',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="listar">
+                            <RequireModulePermission modulo="configuracion_contable" accion="listar">
                                 <CostCentersPage />
                             </RequireModulePermission>
                         ),
@@ -437,7 +437,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/centros-costo/crear',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="crear">
+                            <RequireModulePermission modulo="configuracion_contable" accion="crear">
                                 <CreateCostCenterPage />
                             </RequireModulePermission>
                         ),
@@ -445,7 +445,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/reglas',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="configurar">
+                            <RequireModulePermission modulo="configuracion_contable" accion="configurar">
                                 <PostingRulesPage />
                             </RequireModulePermission>
                         ),
@@ -477,7 +477,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/libro-diario',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="listar">
+                            <RequireModulePermission modulo="informes_contables" accion="listar">
                                 <JournalPage />
                             </RequireModulePermission>
                         ),
@@ -485,7 +485,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/libro-mayor',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="listar">
+                            <RequireModulePermission modulo="informes_contables" accion="listar">
                                 <LedgerPage />
                             </RequireModulePermission>
                         ),
@@ -509,7 +509,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/balance-prueba',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="listar">
+                            <RequireModulePermission modulo="informes_contables" accion="listar">
                                 <TrialBalancePage />
                             </RequireModulePermission>
                         ),
@@ -517,7 +517,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/estados-financieros',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="listar">
+                            <RequireModulePermission modulo="informes_contables" accion="listar">
                                 <FinancialStatementsPage />
                             </RequireModulePermission>
                         ),
@@ -525,7 +525,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'contabilidad/migraciones-apertura',
                         element: (
-                            <RequireModulePermission modulo="contabilidad" accion="listar">
+                            <RequireModulePermission modulo="configuracion_contable" accion="listar">
                                 <ImportsPage />
                             </RequireModulePermission>
                         ),
@@ -605,7 +605,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'gastos/actividades-economicas',
                         element: (
-                            <RequireModulePermission modulo="gastos" accion="listar">
+                            <RequireModulePermission modulo="tributario" accion="listar">
                                 <EconomicActivitiesPage />
                             </RequireModulePermission>
                         ),
@@ -613,7 +613,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'gastos/actividades-economicas/crear',
                         element: (
-                            <RequireModulePermission modulo="gastos" accion="parametrizar">
+                            <RequireModulePermission modulo="tributario" accion="parametrizar">
                                 <CreateEconomicActivityPage />
                             </RequireModulePermission>
                         ),
@@ -621,7 +621,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'gastos/valores-uvt',
                         element: (
-                            <RequireModulePermission modulo="gastos" accion="listar">
+                            <RequireModulePermission modulo="tributario" accion="listar">
                                 <UvtValuesPage />
                             </RequireModulePermission>
                         ),
@@ -629,7 +629,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'gastos/valores-uvt/crear',
                         element: (
-                            <RequireModulePermission modulo="gastos" accion="parametrizar">
+                            <RequireModulePermission modulo="tributario" accion="parametrizar">
                                 <CreateUvtValuePage />
                             </RequireModulePermission>
                         ),
@@ -653,7 +653,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'gastos/tarifas-reteica',
                         element: (
-                            <RequireModulePermission modulo="gastos" accion="listar">
+                            <RequireModulePermission modulo="tributario" accion="listar">
                                 <ReteicaTariffsPage />
                             </RequireModulePermission>
                         ),
@@ -661,7 +661,7 @@ const routes: RouteObject[] = [
                     {
                         path: 'gastos/tarifas-reteica/crear',
                         element: (
-                            <RequireModulePermission modulo="gastos" accion="parametrizar">
+                            <RequireModulePermission modulo="tributario" accion="parametrizar">
                                 <CreateReteicaTariffPage />
                             </RequireModulePermission>
                         ),
