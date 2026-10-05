@@ -19,6 +19,7 @@ import { IMPORT_TRANSITIONAL_STATUSES, type ImportStatus } from '../constants/im
 import { IMPORT_TYPE_LABELS } from '../constants/import-types';
 import type { ApiImportDetails } from '../types/api-import-details';
 import { formatImportDate } from '../utils/format-import-date';
+import { importStepIndex } from '../utils/import-step-index';
 
 const STEPS = ['Preparar', 'Subir', 'Validar', 'Decidir', 'Escribir', 'Resultado'];
 
@@ -27,20 +28,6 @@ const TRANSITIONAL_MESSAGES: Partial<Record<ImportStatus, string>> = {
     validando: 'Estamos validando cada fila. No se escribe nada todavía.',
     importando: 'Estamos escribiendo las filas aceptadas. Puedes salir de esta página: te avisaremos al terminar.',
 };
-
-function pasoDeEstado(estado: ImportStatus): number {
-    switch (estado) {
-        case 'pendiente':
-        case 'validando':
-            return 2;
-        case 'pendiente_decision':
-            return 3;
-        case 'importando':
-            return 4;
-        default:
-            return 5;
-    }
-}
 
 export const ImportDetailPage: FC = () => {
     const { id } = useParams();
@@ -120,7 +107,7 @@ export const ImportDetailPage: FC = () => {
                 <ImportStatusBadge status={importacion.estado} />
             </div>
 
-            <ImportSteps steps={STEPS} currentStep={pasoDeEstado(importacion.estado)} />
+            <ImportSteps steps={STEPS} currentStep={importStepIndex(importacion.estado)} />
 
             {actionError && <Alert variant="danger" title="No se pudo completar la acción" message={actionError} onDismiss={() => setActionError(null)} />}
 
