@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { FileText } from 'lucide-react';
+import { FileText, Settings } from 'lucide-react';
 
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { usePermission } from '../../auth/hooks/use-permission';
@@ -15,6 +15,7 @@ export const InvoicesListPage: FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const canCreate = usePermission('facturacion', 'crear');
+    const puedeConfigurar = usePermission('facturacion', 'configurar');
 
     const { items, isLoading, page, setPage, totalPages, totalItems } = usePaginatedResource<ApiInvoice>('/facturacion/documentos');
 
@@ -26,11 +27,18 @@ export const InvoicesListPage: FC = () => {
             successMessage={mensaje}
             countLabel={`${totalItems} ${totalItems === 1 ? 'documento' : 'documentos'}`}
             toolbar={
-                canCreate && (
-                    <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/facturacion/crear')}>
-                        Nueva factura
-                    </Button>
-                )
+                <>
+                    {puedeConfigurar && (
+                        <Button variant="outline" collapseBelow="md" startIcon={<Settings className="size-4" />} onClick={() => navigate('/facturacion/consecutivos')}>
+                            Consecutivos
+                        </Button>
+                    )}
+                    {canCreate && (
+                        <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/facturacion/crear')}>
+                            Nueva factura
+                        </Button>
+                    )}
+                </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
         >

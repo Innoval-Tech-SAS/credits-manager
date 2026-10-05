@@ -35,6 +35,7 @@ import { ExpenseTypesPage } from './expenses/pages/expense-types-page';
 import { ExpensesListPage } from './expenses/pages/expenses-list-page';
 import { CreateInvoicePage } from './invoicing/pages/create-invoice-page';
 import { InvoiceDetailPage } from './invoicing/pages/invoice-detail-page';
+import { InvoiceSequencesPage } from './invoicing/pages/invoice-sequences-page';
 import { InvoicesListPage } from './invoicing/pages/invoices-list-page';
 import { MunicipalitiesAdminPage } from './geography/pages/municipalities-admin-page';
 import { ParametrizationsPage } from './expenses/pages/parametrizations-page';
@@ -534,6 +535,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="facturacion" accion="listar">
                                 <InvoicesListPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'facturacion/consecutivos',
+                        element: (
+                            <RequireModulePermission modulo="facturacion" accion="configurar">
+                                <InvoiceSequencesPage />
                             </RequireModulePermission>
                         ),
                     },
