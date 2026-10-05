@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Auditoria\Commands\EscucharAuditoriaCommand;
 use App\Auditoria\Commands\EstadoAuditoriaCommand;
 use App\Exportacion\Commands\LimpiarExportacionesCommand;
+use App\Importacion\Commands\LimpiarImportacionesCommand;
 use App\Redis\Contracts\RedisClienteInterface;
 use App\Redis\Services\RedisCliente;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -28,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->commands([EscucharAuditoriaCommand::class, EstadoAuditoriaCommand::class, LimpiarExportacionesCommand::class]);
+        $this->commands([EscucharAuditoriaCommand::class, EstadoAuditoriaCommand::class, LimpiarExportacionesCommand::class, LimpiarImportacionesCommand::class]);
 
         RateLimiter::for('login', function (Request $peticion) {
             $usuario = Str::lower((string) $peticion->input('usuario'));

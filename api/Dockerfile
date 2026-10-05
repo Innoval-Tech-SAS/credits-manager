@@ -25,8 +25,8 @@ RUN chmod +x /entrypoint.sh
 
 COPY --from=vendor /app ./
 
-RUN mkdir -p /var/exportaciones \
-    && chown -R www-data:www-data storage bootstrap/cache /var/exportaciones
+RUN mkdir -p /var/exportaciones /var/importaciones \
+    && chown -R www-data:www-data storage bootstrap/cache /var/exportaciones /var/importaciones
 
 EXPOSE 9000
 ENTRYPOINT ["/entrypoint.sh"]

@@ -48,6 +48,14 @@ return [
         ],
 
         // Volumen `exportaciones_data`: no lo monta nginx; la descarga pasa por un endpoint autenticado.
+        // Volumen `importaciones_data`: archivos CSV subidos. Ningún endpoint los sirve; solo el worker los lee.
+        'importaciones' => [
+            'driver' => 'local',
+            'root' => env('IMPORTACIONES_PATH', '/var/importaciones'),
+            'throw' => true,
+            'report' => false,
+        ],
+
         'exportaciones' => [
             'driver' => 'local',
             'root' => env('EXPORTACIONES_PATH', '/var/exportaciones'),

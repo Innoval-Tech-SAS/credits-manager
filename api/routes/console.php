@@ -23,3 +23,8 @@ Schedule::command('exportaciones:limpiar')
     ->dailyAt('03:00')
     ->name('exportaciones:limpiar')
     ->withoutOverlapping(30);
+
+Schedule::command('importaciones:limpiar')
+    ->dailyAt('03:15')
+    ->name('importaciones:limpiar')
+    ->withoutOverlapping(30);

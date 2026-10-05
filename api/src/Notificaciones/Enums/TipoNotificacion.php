@@ -9,4 +9,7 @@ enum TipoNotificacion: string
     case ReaperturaSolicitada = 'reapertura_solicitada';
     case ReaperturaAutorizada = 'reapertura_autorizada';
     case ReaperturaRechazada = 'reapertura_rechazada';
+    case ImportacionValidada = 'importacion_validada';
+    case ImportacionCompletada = 'importacion_completada';
+    case ImportacionFallida = 'importacion_fallida';
 }
