@@ -53,11 +53,6 @@ final class ContextoEjecucion
         $this->asientoAcumulado = Dinero::cero();
     }
 
-    public function reportar(string $severidad, ?string $columna, string $motivo): void
-    {
-        $this->reportes[] = ['severidad' => $severidad, 'columna' => $columna, 'motivo' => $motivo];
-    }
-
     /** Devuelve true la primera vez que ve la clave; false si ya apareció antes en el archivo. */
     public function primeraVez(string $clave): bool
     {

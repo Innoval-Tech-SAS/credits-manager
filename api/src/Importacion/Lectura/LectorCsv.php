@@ -82,7 +82,7 @@ final class LectorCsv
 
     private function abrir(): void
     {
-        $this->handle = fopen($this->ruta, 'rb');
+        $this->handle = is_file($this->ruta) ? fopen($this->ruta, 'rb') : false;
 
         if ($this->handle === false) {
             throw new RuntimeException('No se pudo abrir el archivo de importación.');

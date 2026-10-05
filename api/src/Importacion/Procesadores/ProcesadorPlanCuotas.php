@@ -10,7 +10,6 @@ use App\Importacion\Data\ContextoEjecucion;
 use App\Importacion\Data\FilaRechazada;
 use App\Importacion\Lectura\ConvertidorValor;
 use App\Importacion\Repositories\DatosImportacionRepository;
-use DateTimeInterface;
 
 /**
  * Plan de cuotas del archivo: cada fila corrige una cuota del plan del crédito. Solo se acepta mientras el crédito no
@@ -97,11 +96,7 @@ final class ProcesadorPlanCuotas implements ProcesadorFila
 
     private function coincide(Cuota $cuota, string $fecha, Dinero $total, Dinero $capital, Dinero $interes): bool
     {
-        $fechaActual = $cuota->fecha_vencimiento instanceof DateTimeInterface
-            ? $cuota->fecha_vencimiento->format('Y-m-d')
-            : (string) $cuota->fecha_vencimiento;
-
-        return $fechaActual === $fecha
+        return $cuota->fecha_vencimiento->format('Y-m-d') === $fecha
             && $cuota->valor->igualA($total)
             && $cuota->valor_capital->igualA($capital)
             && $cuota->valor_interes->igualA($interes);

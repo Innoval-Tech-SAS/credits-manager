@@ -55,10 +55,6 @@ class ImportacionService
     ): Importacion {
         $this->exigirPermisoDeTipo($usuario, $tipo);
 
-        if ($crearEmpleadores && ! $usuario->tienePermiso(...ImportacionConstants::PERMISO_EMPLEADORES)) {
-            abort(403, 'No tienes permiso para realizar esta acción.');
-        }
-
         if ($generarAsiento) {
             if (! $usuario->tienePermiso(...ImportacionConstants::PERMISO_CONTABILIZAR)) {
                 abort(403, 'No tienes permiso para realizar esta acción.');
@@ -135,16 +131,12 @@ class ImportacionService
                     abort(403, 'No tienes permiso para realizar esta acción.');
                 }
 
-                if ($importacion->cuenta_contrapartida_id === null) {
+                if ($importacion->tipo === TipoImportacion::Creditos && $importacion->cuenta_contrapartida_id === null) {
                     throw ValidationException::withMessages(['generar_asiento' => 'Elige la cuenta de contrapartida al subir el archivo para generar el asiento.']);
                 }
             }
 
             $cambios['decision_generar_asiento'] = $generarAsiento;
-        }
-
-        if ($cambios === []) {
-            throw ValidationException::withMessages(['decision' => 'Indica al menos una decisión.']);
         }
 
         $importacion = $this->importaciones->actualizar($importacion, $cambios);

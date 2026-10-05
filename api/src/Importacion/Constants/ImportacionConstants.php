@@ -24,4 +24,6 @@ class ImportacionConstants
     public const ESTADO_PENDIENTE_DECISION = 'pendiente_decision';
 
     public const MOTIVO_ERROR_INESPERADO = 'No se pudo procesar el archivo por un error inesperado.';
+
+    public const MOTIVO_FILA_INESPERADA = 'No se pudo procesar la fila por un error inesperado.';
 }

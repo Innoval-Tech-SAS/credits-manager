@@ -153,10 +153,6 @@ final class ProcesadorClientes implements ProcesadorFila
             throw new FilaRechazada("Empleador «{$nombre}» no creado: decidiste no crearlo.", 'empresa');
         }
 
-        if (! $ctx->escribir) {
-            return 0;
-        }
-
         /** @var Empleador $empleador */
         $empleador = $this->empleadores->crear(['nombre' => trim($nombre)]);
         $ctx->empleadoresPorNombre[$clave] = $empleador->id;

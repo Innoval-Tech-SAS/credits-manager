@@ -19,6 +19,7 @@ RUN apk add --no-cache icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo
     && apk del .build-deps
 
 COPY docker/php/opcache-custom.ini /usr/local/etc/php/conf.d/zz-opcache-custom.ini
+COPY docker/php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 COPY docker/php-fpm/www.conf /usr/local/etc/php-fpm.d/www.conf
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
