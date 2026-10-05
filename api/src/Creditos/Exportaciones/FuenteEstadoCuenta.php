@@ -46,9 +46,10 @@ final class FuenteEstadoCuenta implements FuenteExportable
         return [
             new ColumnaExportable('numero', 'Cuota', TipoColumna::Entero),
             new ColumnaExportable('vencimiento', 'Vencimiento', TipoColumna::Fecha),
-            new ColumnaExportable('interes', 'Interés', TipoColumna::Monetario),
             new ColumnaExportable('capital', 'Capital', TipoColumna::Monetario),
-            new ColumnaExportable('cuota', 'Valor de la cuota', TipoColumna::Monetario),
+            new ColumnaExportable('intereses', 'Intereses', TipoColumna::Monetario),
+            new ColumnaExportable('otros_gastos', 'Otros gastos', TipoColumna::Monetario),
+            new ColumnaExportable('total', 'Total de la cuota', TipoColumna::Monetario),
             new ColumnaExportable('pagado', 'Pagado', TipoColumna::Monetario),
             new ColumnaExportable('saldo_capital', 'Saldo de capital', TipoColumna::Monetario),
             new ColumnaExportable('estado', 'Estado'),
@@ -63,15 +64,16 @@ final class FuenteEstadoCuenta implements FuenteExportable
         $totalPagado = Dinero::cero();
 
         foreach (app(CuotaRepository::class)->cursorDelCredito($this->creditoId) as $cuota) {
-            $total = $total->sumar($cuota->valor);
+            $total = $total->sumar($cuota->valor_total_cuota);
             $totalPagado = $totalPagado->sumar($cuota->valor_pagado);
 
             yield [
                 'numero' => $cuota->numero_cuota,
                 'vencimiento' => $cuota->fecha_vencimiento,
-                'interes' => $cuota->valor_interes,
                 'capital' => $cuota->valor_capital,
-                'cuota' => $cuota->valor,
+                'intereses' => $cuota->valor_interes,
+                'otros_gastos' => $cuota->valor_otros_gastos,
+                'total' => $cuota->valor_total_cuota,
                 'pagado' => $cuota->valor_pagado,
                 'saldo_capital' => $cuota->saldo_capital,
                 'estado' => $cuota->estado->value,
@@ -81,9 +83,10 @@ final class FuenteEstadoCuenta implements FuenteExportable
         yield [
             'numero' => null,
             'vencimiento' => null,
-            'interes' => null,
             'capital' => null,
-            'cuota' => $total,
+            'intereses' => null,
+            'otros_gastos' => null,
+            'total' => $total,
             'pagado' => $totalPagado,
             'saldo_capital' => null,
             'estado' => 'Total',
