@@ -62,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/geografia/paises', [PaisController::class, 'index']);
     Route::get('/geografia/estados', [EstadoController::class, 'index']);
     Route::get('/geografia/municipios', [MunicipioController::class, 'index']);
+    Route::get('/geografia/municipios/listado', [MunicipioController::class, 'listado']);
     Route::post('/geografia/municipios', [MunicipioController::class, 'store'])->middleware('superadmin');
     Route::patch('/geografia/municipios/{municipio}', [MunicipioController::class, 'update'])->middleware('superadmin');
 

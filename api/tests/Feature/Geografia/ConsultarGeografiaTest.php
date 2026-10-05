@@ -101,4 +101,48 @@ class ConsultarGeografiaTest extends TestCase
         $this->getJson('/api/v1/geografia/municipios?buscar=s')->assertStatus(422)->assertJsonValidationErrors(['buscar']);
         $this->getJson('/api/v1/geografia/municipios?estado_id=9999')->assertStatus(422)->assertJsonValidationErrors(['estado_id']);
     }
+
+    public function test_listado_paginado_sin_autenticar_responde_401(): void
+    {
+        $this->getJson('/api/v1/geografia/municipios/listado?estado_id=1')->assertStatus(401);
+    }
+
+    public function test_listado_paginado_exige_un_estado_existente(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->getJson('/api/v1/geografia/municipios/listado')->assertStatus(422)->assertJsonValidationErrors(['estado_id']);
+        $this->getJson('/api/v1/geografia/municipios/listado?estado_id=9999')->assertStatus(422)->assertJsonValidationErrors(['estado_id']);
+    }
+
+    public function test_listado_paginado_devuelve_la_pagina_pedida_con_el_total(): void
+    {
+        $this->actingAsAdmin();
+        $estado = $this->crearEstado(['nombre' => 'Antioquia']);
+        foreach (range(1, 12) as $numero) {
+            $this->crearMunicipio(['estado_id' => $estado->id, 'nombre' => sprintf('Municipio %02d', $numero)]);
+        }
+
+        $primera = $this->getJson("/api/v1/geografia/municipios/listado?estado_id={$estado->id}&per_page=10&page=1")->assertOk();
+        $segunda = $this->getJson("/api/v1/geografia/municipios/listado?estado_id={$estado->id}&per_page=10&page=2")->assertOk();
+
+        $this->assertCount(10, $primera->json('data'));
+        $this->assertSame(12, $primera->json('total'));
+        $this->assertSame(2, $primera->json('last_page'));
+        $this->assertCount(2, $segunda->json('data'));
+        $this->assertSame('Antioquia', $segunda->json('data.0.estado.nombre'));
+    }
+
+    public function test_listado_paginado_oculta_inactivos_salvo_al_superadmin(): void
+    {
+        $estado = $this->crearEstado(['nombre' => 'Magdalena']);
+        $this->crearMunicipio(['estado_id' => $estado->id, 'nombre' => 'Ciénaga']);
+        $this->crearMunicipio(['estado_id' => $estado->id, 'nombre' => 'Inactivo', 'activo' => false]);
+
+        $this->actingAsAdmin();
+        $this->getJson("/api/v1/geografia/municipios/listado?estado_id={$estado->id}")->assertOk()->assertJsonPath('total', 1);
+
+        $this->actingAsSuperAdmin();
+        $this->getJson("/api/v1/geografia/municipios/listado?estado_id={$estado->id}")->assertOk()->assertJsonPath('total', 2);
+    }
 }
