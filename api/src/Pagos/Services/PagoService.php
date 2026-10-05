@@ -12,10 +12,15 @@ use App\Creditos\Enums\TipoPago;
 use App\Creditos\Models\Credito;
 use App\Creditos\Repositories\CreditoRepository;
 use App\Creditos\Repositories\CuotaRepository;
+use App\Exportacion\Enums\FormatoExportacion;
+use App\Exportacion\Models\Exportacion;
+use App\Exportacion\Services\ExportacionService;
 use App\Pagos\Enums\FormaPago;
+use App\Pagos\Exportaciones\FuentePagos;
 use App\Pagos\Repositories\PagoDetalleRepository;
 use App\Pagos\Repositories\PagoRepository;
 use App\Recibos\Services\ReciboCajaService;
+use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +36,17 @@ class PagoService
         protected ComprobanteService $comprobantes,
         protected ReciboCajaService $recibos,
         protected EmisorAuditoria $auditoria,
+        protected ExportacionService $exportaciones,
     ) {}
+
+    public function solicitarExportacion(Usuario $usuario, ?string $busqueda, FormatoExportacion $formato): Exportacion
+    {
+        return $this->exportaciones->solicitar(
+            new FuentePagos((int) $usuario->empresa_id, $usuario->idAsesorConAlcance(), $busqueda),
+            $formato,
+            $usuario,
+        );
+    }
 
     public function listarPorCredito(int $creditoId, string $direccion = 'desc'): Collection
     {

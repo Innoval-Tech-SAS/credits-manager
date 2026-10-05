@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Search, UserPlus } from 'lucide-react';
 
+import { PermissionExportButton } from '../../shared/components/permission-export-button';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
@@ -33,6 +34,8 @@ export const ClientsListPage: FC = () => {
     const [clientToDelete, setClientToDelete] = useState<ApiClient | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState<string | null>(null);
+    const [exportMessage, setExportMessage] = useState<string | null>(null);
+    const [exportError, setExportError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<ClientsListLocationState>();
 
     const [estado, setEstado] = useState('');
@@ -92,10 +95,16 @@ export const ClientsListPage: FC = () => {
     return (
         <ModuleListPage
             pageTitle="Clientes"
-            successMessage={successMessage}
-            onDismissSuccess={() => setSuccessMessage(null)}
-            errorMessage={deleteError}
-            onDismissError={() => setDeleteError(null)}
+            successMessage={successMessage ?? exportMessage}
+            onDismissSuccess={() => {
+                setSuccessMessage(null);
+                setExportMessage(null);
+            }}
+            errorMessage={deleteError ?? exportError}
+            onDismissError={() => {
+                setDeleteError(null);
+                setExportError(null);
+            }}
             countLabel={`${totalItems} ${totalItems === 1 ? 'cliente registrado' : 'clientes registrados'}`}
             toolbar={
                 <>
@@ -131,6 +140,20 @@ export const ClientsListPage: FC = () => {
                             }}
                         />
                     </div>
+
+                    <PermissionExportButton
+                        modulo="clientes"
+                        endpoint="/clientes/exportar"
+                        filters={{ search, estado, estado_credito: estadoCredito }}
+                        onRequested={() => {
+                            setExportError(null);
+                            setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
+                        }}
+                        onError={(message) => {
+                            setExportMessage(null);
+                            setExportError(message);
+                        }}
+                    />
 
                     {canCreate && (
                         <Button collapseBelow="md" startIcon={<UserPlus className="size-4" />} onClick={() => navigate('/clientes/crear')}>

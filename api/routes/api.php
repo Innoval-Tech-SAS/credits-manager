@@ -93,6 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/permisos', [PermisoController::class, 'index'])->middleware('permiso:usuarios,listar');
 
     Route::get('/clientes', [ClienteController::class, 'index'])->middleware('permiso:clientes,listar');
+    Route::post('/clientes/exportar', [ClienteController::class, 'exportar'])->middleware('permiso:clientes,exportar');
     Route::post('/clientes', [ClienteController::class, 'store'])->middleware('permiso:clientes,crear');
     Route::get('/clientes/asesores-asignables', [ClienteController::class, 'asesoresAsignables'])->middleware('permiso:clientes,crear');
     Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->middleware('permiso:clientes,ver');
@@ -124,6 +125,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/creditos/{credito}', [CreditoController::class, 'destroy'])->middleware('permiso:creditos,eliminar');
 
     Route::get('/pagos', [PagoController::class, 'listar'])->middleware('permiso:pagos,listar');
+    Route::post('/pagos/exportar', [PagoController::class, 'exportar'])->middleware('permiso:pagos,exportar');
     Route::get('/creditos/{credito}/pagos', [PagoController::class, 'index'])->middleware('permiso:pagos,listar');
     Route::get('/pagos/{pago}/recibo/pdf', [ReciboCajaController::class, 'pdf'])->middleware('permiso:pagos,imprimir_recibo')->whereNumber('pago');
     Route::post('/creditos/{credito}/pagos', [PagoController::class, 'store'])->middleware('permiso:pagos,crear');
@@ -212,6 +214,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/gastos/tarifas-reteica', [TarifaReteIcaMunicipioController::class, 'store'])->middleware('permiso:gastos,parametrizar');
 
     Route::get('/gastos', [GastoController::class, 'index'])->middleware('permiso:gastos,listar');
+    Route::post('/gastos/exportar', [GastoController::class, 'exportar'])->middleware('permiso:gastos,exportar');
     Route::post('/gastos', [GastoController::class, 'store'])->middleware('permiso:gastos,crear');
     Route::get('/gastos/{gasto}', [GastoController::class, 'show'])->middleware('permiso:gastos,listar');
     Route::delete('/gastos/{gasto}', [GastoController::class, 'destroy'])->middleware('permiso:gastos,anular');

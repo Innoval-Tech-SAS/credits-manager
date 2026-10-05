@@ -5,17 +5,22 @@ namespace App\Clientes\Services;
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Clientes\Constants\ClienteConstants;
+use App\Clientes\Exportaciones\FuenteClientes;
 use App\Clientes\Models\Cliente;
 use App\Clientes\Repositories\ClienteEmpleadorHistorialRepository;
 use App\Clientes\Repositories\ClienteRepository;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Repositories\CuotaRepository;
+use App\Exportacion\Enums\FormatoExportacion;
+use App\Exportacion\Models\Exportacion;
+use App\Exportacion\Services\ExportacionService;
 use App\Pagos\Repositories\PagoRepository;
 use App\Terceros\Models\Tercero;
 use App\Terceros\Repositories\TerceroRepository;
 use App\Terceros\Services\ConstructorDatosTercero;
 use App\Usuarios\Constants\UsuarioConstants;
+use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
@@ -34,7 +39,22 @@ class ClienteService
         protected ClienteEmpleadorHistorialRepository $historialEmpleadores,
         protected AsignacionAsesorService $asignaciones,
         protected EmisorAuditoria $auditoria,
+        protected ExportacionService $exportaciones,
     ) {}
+
+    public function solicitarExportacion(
+        Usuario $usuario,
+        ?string $busqueda,
+        ?bool $activo,
+        ?EstadoCredito $estadoCredito,
+        FormatoExportacion $formato,
+    ): Exportacion {
+        return $this->exportaciones->solicitar(
+            new FuenteClientes((int) $usuario->empresa_id, $usuario->idAsesorConAlcance(), $busqueda, $activo, $estadoCredito?->value),
+            $formato,
+            $usuario,
+        );
+    }
 
     public function listarClientes(
         ?string $busqueda,

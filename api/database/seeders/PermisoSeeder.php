@@ -15,13 +15,13 @@ class PermisoSeeder extends Seeder
 {
     public const CATALOGO = [
         'usuarios' => ['listar', 'crear', 'editar', 'eliminar'],
-        'clientes' => ['listar', 'ver', 'crear', 'editar'],
+        'clientes' => ['listar', 'ver', 'crear', 'editar', 'exportar'],
         'creditos' => ['listar', 'crear', 'editar', 'aprobar', 'desembolsar', 'cancelar', 'eliminar', 'exportar', 'imprimir_estado_cuenta'],
-        'pagos' => ['listar', 'crear', 'imprimir_recibo'],
+        'pagos' => ['listar', 'crear', 'imprimir_recibo', 'exportar'],
         'cartera' => ['listar', 'exportar', 'imprimir_reporte_empleador'],
         'calendario' => ['listar'],
         'contabilidad' => ['listar', 'crear', 'editar', 'configurar', 'crear_manual', 'anular', 'cerrar_periodo', 'reabrir_periodo', 'exportar', 'imprimir_comprobante'],
-        'gastos' => ['listar', 'crear', 'anular', 'parametrizar'],
+        'gastos' => ['listar', 'crear', 'anular', 'parametrizar', 'exportar'],
         'auditoria' => ['listar', 'exportar'],
     ];
 

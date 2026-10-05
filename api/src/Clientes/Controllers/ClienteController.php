@@ -5,12 +5,14 @@ namespace App\Clientes\Controllers;
 use App\Clientes\Models\Cliente;
 use App\Clientes\Requests\CrearClienteRequest;
 use App\Clientes\Requests\EditarClienteRequest;
+use App\Clientes\Requests\ExportarClientesRequest;
 use App\Clientes\Requests\ReasignarAsesorRequest;
 use App\Clientes\Services\AsignacionAsesorService;
 use App\Clientes\Services\ClienteService;
 use App\Creditos\Enums\EstadoCredito;
 use App\Documentos\Requests\SubirArchivoAdjuntoRequest;
 use App\Documentos\Services\ArchivoAdjuntoService;
+use App\Exportacion\Enums\FormatoExportacion;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,6 +25,22 @@ class ClienteController extends Controller
         protected AsignacionAsesorService $asignaciones,
         protected ArchivoAdjuntoService $documentos,
     ) {}
+
+    public function exportar(ExportarClientesRequest $peticion): JsonResponse
+    {
+        $estado = $peticion->validated('estado');
+        $estadoCredito = $peticion->validated('estado_credito');
+
+        $exportacion = $this->clientes->solicitarExportacion(
+            $peticion->user(),
+            $peticion->validated('search'),
+            $estado === null ? null : $estado === 'activo',
+            $estadoCredito ? EstadoCredito::from($estadoCredito) : null,
+            FormatoExportacion::from($peticion->validated('formato')),
+        );
+
+        return response()->json(['exportacion' => $exportacion], 202);
+    }
 
     public function index(Request $peticion): JsonResponse
     {

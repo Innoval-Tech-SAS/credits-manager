@@ -10,7 +10,11 @@ use App\Contabilidad\Models\AplicacionDocumento;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Contabilidad\Services\DocumentoTerceroService;
 use App\Core\Dinero\Dinero;
+use App\Exportacion\Enums\FormatoExportacion;
+use App\Exportacion\Models\Exportacion;
+use App\Exportacion\Services\ExportacionService;
 use App\Gastos\Enums\EstadoGasto;
+use App\Gastos\Exportaciones\FuenteGastos;
 use App\Gastos\Models\Gasto;
 use App\Gastos\Models\ParametrizacionTipoGasto;
 use App\Gastos\Repositories\GastoReglaFiscalAplicadaRepository;
@@ -20,6 +24,7 @@ use App\Gastos\Repositories\TarifaReteIcaMunicipioRepository;
 use App\Gastos\Repositories\TipoGastoRepository;
 use App\Gastos\Repositories\ValorUvtRepository;
 use App\Terceros\Repositories\TerceroRepository;
+use App\Usuarios\Models\Usuario;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -40,7 +45,13 @@ class GastoService
         protected ComprobanteService $comprobantes,
         protected DocumentoTerceroService $documentosTercero,
         protected EmisorAuditoria $auditoria,
+        protected ExportacionService $exportaciones,
     ) {}
+
+    public function solicitarExportacion(Usuario $usuario, ?string $busqueda, FormatoExportacion $formato): Exportacion
+    {
+        return $this->exportaciones->solicitar(new FuenteGastos((int) $usuario->empresa_id, $busqueda), $formato, $usuario);
+    }
 
     public function listar(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
     {
