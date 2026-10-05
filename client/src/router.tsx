@@ -33,6 +33,9 @@ import { EconomicActivitiesPage } from './expenses/pages/economic-activities-pag
 import { ExpenseDetailPage } from './expenses/pages/expense-detail-page';
 import { ExpenseTypesPage } from './expenses/pages/expense-types-page';
 import { ExpensesListPage } from './expenses/pages/expenses-list-page';
+import { CreateInvoicePage } from './invoicing/pages/create-invoice-page';
+import { InvoiceDetailPage } from './invoicing/pages/invoice-detail-page';
+import { InvoicesListPage } from './invoicing/pages/invoices-list-page';
 import { MunicipalitiesAdminPage } from './geography/pages/municipalities-admin-page';
 import { ParametrizationsPage } from './expenses/pages/parametrizations-page';
 import { ReteicaTariffsPage } from './expenses/pages/reteica-tariffs-page';
@@ -523,6 +526,30 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="contabilidad" accion="listar">
                                 <ImportsPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'facturacion',
+                        element: (
+                            <RequireModulePermission modulo="facturacion" accion="listar">
+                                <InvoicesListPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'facturacion/crear',
+                        element: (
+                            <RequireModulePermission modulo="facturacion" accion="crear">
+                                <CreateInvoicePage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'facturacion/:id',
+                        element: (
+                            <RequireModulePermission modulo="facturacion" accion="listar">
+                                <InvoiceDetailPage />
                             </RequireModulePermission>
                         ),
                     },
