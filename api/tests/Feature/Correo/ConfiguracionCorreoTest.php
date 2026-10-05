@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Correo;
 
+use App\Correo\Constants\CorreoConstants;
 use App\Correo\Mail\CorreoCobranza;
 use App\Correo\Models\ConfiguracionCorreo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -79,6 +80,7 @@ class ConfiguracionCorreoTest extends TestCase
             ->assertJsonPath('configuracion.estado', 'sin_configurar')
             ->assertJsonPath('configuracion.clave_estado', 'sin_configurar')
             ->assertJsonPath('configuracion.plantilla.asunto', 'Recordatorio de pago - {empresa}')
+            ->assertJsonPath('configuracion.plantilla.cuerpo', CorreoConstants::PLANTILLA_INICIAL_CUERPO)
             ->assertJsonCount(6, 'configuracion.variables');
     }
 

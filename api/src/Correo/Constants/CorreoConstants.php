@@ -25,10 +25,101 @@ class CorreoConstants
     public const PLANTILLA_INICIAL_ASUNTO = 'Recordatorio de pago - {empresa}';
 
     public const PLANTILLA_INICIAL_CUERPO = <<<'HTML'
-<p>Estimado(a) {cliente}:</p>
-<p>Le recordamos que la cuota {cuota} de su crédito {credito}, por valor de <strong>{valor}</strong>, tiene fecha de vencimiento <strong>{fecha_vencimiento}</strong>.</p>
-<p>Si ya realizó el pago, por favor omita este mensaje. Ante cualquier duda, comuníquese con nosotros.</p>
-<p>{empresa}</p>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Recordatorio de cuota</title>
+</head>
+<body style="margin:0; padding:0; background-color:#f3f5f8; -webkit-text-size-adjust:100%;">
+
+  <!-- Texto de vista previa (preheader) -->
+  <div style="display:none; max-height:0; overflow:hidden; opacity:0; font-size:1px; line-height:1px; color:#f3f5f8;">
+    Recordatorio: su cuota {cuota} vence el {fecha_vencimiento}.
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f3f5f8" style="background-color:#f3f5f8;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; overflow:hidden; border:1px solid #e3e8ef;">
+
+          <!-- Encabezado -->
+          <tr>
+            <td bgcolor="#1f3a5f" style="background-color:#1f3a5f; padding:28px 40px;">
+              <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:#a9bcd6;">
+                Recordatorio de pago
+              </p>
+              <h1 style="margin:8px 0 0 0; font-family:Arial, Helvetica, sans-serif; font-size:22px; line-height:28px; font-weight:bold; color:#ffffff;">
+                {empresa}
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Contenido -->
+          <tr>
+            <td style="padding:36px 40px 8px 40px; font-family:Arial, Helvetica, sans-serif; font-size:15px; line-height:24px; color:#2d3748;">
+              <p style="margin:0 0 16px 0;">Estimado(a) <strong>{cliente}</strong>:</p>
+              <p style="margin:0 0 24px 0;">
+                Le recordamos que se acerca la fecha de vencimiento de una de las cuotas de su crédito. A continuación encontrará el detalle:
+              </p>
+            </td>
+          </tr>
+
+          <!-- Detalle de la cuota -->
+          <tr>
+            <td style="padding:0 40px 8px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #e3e8ef; border-radius:6px; background-color:#f8fafc;">
+                <tr>
+                  <td style="padding:14px 20px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#718096; border-bottom:1px solid #e3e8ef;">Crédito</td>
+                  <td align="right" style="padding:14px 20px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#1a202c; font-weight:bold; border-bottom:1px solid #e3e8ef;">{credito}</td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#718096; border-bottom:1px solid #e3e8ef;">Cuota</td>
+                  <td align="right" style="padding:14px 20px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#1a202c; font-weight:bold; border-bottom:1px solid #e3e8ef;">{cuota}</td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 20px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#718096; border-bottom:1px solid #e3e8ef;">Fecha de vencimiento</td>
+                  <td align="right" style="padding:14px 20px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#1a202c; font-weight:bold; border-bottom:1px solid #e3e8ef;">{fecha_vencimiento}</td>
+                </tr>
+                <tr>
+                  <td style="padding:18px 20px; font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#718096;">Valor a pagar</td>
+                  <td align="right" style="padding:18px 20px; font-family:Arial, Helvetica, sans-serif; font-size:20px; color:#1f3a5f; font-weight:bold;">{valor}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Nota final -->
+          <tr>
+            <td style="padding:24px 40px 36px 40px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#4a5568;">
+              <p style="margin:0 0 16px 0;">
+                Si ya realizó el pago, por favor omita este mensaje. Ante cualquier duda, comuníquese con nosotros; con gusto le ayudaremos.
+              </p>
+              <p style="margin:0;">
+                Cordialmente,<br>
+                <strong style="color:#1a202c;">{empresa}</strong>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Pie -->
+          <tr>
+            <td bgcolor="#f8fafc" style="background-color:#f8fafc; padding:20px 40px; border-top:1px solid #e3e8ef; font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:18px; color:#8a94a6; text-align:center;">
+              Este es un mensaje automático, por favor no responda directamente a este correo.
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
 HTML;
 
     /**
