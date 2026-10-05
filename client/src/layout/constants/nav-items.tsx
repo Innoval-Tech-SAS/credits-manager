@@ -14,6 +14,7 @@ import {
     CreditCard,
     FileCheck,
     FileInput,
+    Mail,
     FileText,
     HandCoins,
     House,
@@ -321,6 +322,7 @@ export const NAV_ITEMS: NavItem[] = [
                 moduleKey: "importaciones",
                 action: "listar",
             },
+            { name: "Correo de cobranza", path: "/correo", icon: Mail, adminOnly: true },
         ],
     },
 ];

@@ -115,6 +115,28 @@ class CuotaRepository extends BaseRepository
         return (int) ($saldo ?? 0);
     }
 
+    /** Cuotas del cliente que aún se pueden cobrar. El crédito aplica el scope de empresa y de asesor. */
+    public function cobrablesDelCliente(int $clienteId, int $limite = 50): Collection
+    {
+        return $this->consulta()
+            ->with('credito:id,codigo,cliente_id')
+            ->whereIn('estado', [EstadoCuota::Pendiente, EstadoCuota::Vencida])
+            ->whereHas('credito', fn ($consulta) => $consulta->where('cliente_id', $clienteId))
+            ->orderBy('fecha_vencimiento')
+            ->orderBy('id')
+            ->limit($limite)
+            ->get();
+    }
+
+    public function delClienteConCredito(int $cuotaId, int $clienteId): ?Cuota
+    {
+        return $this->consulta()
+            ->with('credito:id,codigo,cliente_id,empresa_id')
+            ->whereKey($cuotaId)
+            ->whereHas('credito', fn ($consulta) => $consulta->where('cliente_id', $clienteId))
+            ->first();
+    }
+
     public function contarVencidas(int $creditoId): int
     {
         return $this->consulta()

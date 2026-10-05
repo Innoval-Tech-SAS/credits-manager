@@ -71,6 +71,7 @@ import { CreditsListPage } from './credits/pages/credits-list-page';
 import { CompaniesListPage } from './company/pages/companies-list-page';
 import { CreateCompanyPage } from './company/pages/create-company-page';
 import { EditCompanyPage } from './company/pages/edit-company-page';
+import { EmailSettingsPage } from './email/pages/email-settings-page';
 import { AppLayout } from './layout/components/app-layout';
 import { ErrorPage } from './layout/pages/error-page';
 import { HomePage } from './layout/pages/home-page';
@@ -265,6 +266,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireAdmin>
                                 <EditCompanyPage />
+                            </RequireAdmin>
+                        ),
+                    },
+                    {
+                        path: 'correo',
+                        element: (
+                            <RequireAdmin>
+                                <EmailSettingsPage />
                             </RequireAdmin>
                         ),
                     },

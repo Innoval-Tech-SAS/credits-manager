@@ -15,6 +15,8 @@ use App\Contabilidad\Controllers\ReglaContabilizacionController;
 use App\Contabilidad\Controllers\ReporteContableController;
 use App\Contabilidad\Controllers\SolicitudReaperturaPeriodoController;
 use App\Contabilidad\Controllers\TipoComprobanteController;
+use App\Correo\Controllers\ConfiguracionCorreoController;
+use App\Correo\Controllers\RecordatorioCorreoController;
 use App\Creditos\Controllers\CreditoController;
 use App\Dashboard\Controllers\DashboardController;
 use App\Empleadores\Controllers\EmpleadorController;
@@ -139,6 +141,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cartera/reporte-empleador', [CarteraController::class, 'reporteEmpleador'])->middleware('permiso:cartera,listar');
     Route::get('/cartera/reporte-empleador/pdf', [CarteraController::class, 'reporteEmpleadorPdf'])->middleware('permiso:cartera,imprimir_reporte_empleador');
     Route::post('/cartera/reporte-empleador/exportar', [CarteraController::class, 'exportarReporteEmpleador'])->middleware('permiso:cartera,exportar');
+
+    // Correo de cobranza: la configuración (credenciales) es solo de admin; los recordatorios los envía quien tiene cartera.
+    Route::prefix('correo')->middleware('admin')->group(function () {
+        Route::get('/configuracion', [ConfiguracionCorreoController::class, 'show']);
+        Route::put('/configuracion', [ConfiguracionCorreoController::class, 'update']);
+        Route::post('/configuracion/prueba', [ConfiguracionCorreoController::class, 'prueba']);
+        Route::post('/vista-previa', [ConfiguracionCorreoController::class, 'vistaPrevia']);
+    });
+    Route::get('/clientes/{cliente}/recordatorios-correo', [RecordatorioCorreoController::class, 'historial'])->middleware('permiso:clientes,ver');
+    Route::post('/clientes/{cliente}/recordatorios-correo/vista-previa', [RecordatorioCorreoController::class, 'vistaPrevia'])->middleware('permiso:cartera,enviar_recordatorio');
+    Route::post('/clientes/{cliente}/recordatorios-correo', [RecordatorioCorreoController::class, 'enviar'])->middleware('permiso:cartera,enviar_recordatorio');
 
     Route::get('/calendario', [CalendarioController::class, 'index'])->middleware('permiso:calendario,listar');
 

@@ -43,7 +43,7 @@ class EmpresaConstants
             'clientes.listar', 'clientes.ver', 'clientes.editar', 'clientes.exportar',
             'creditos.listar', 'creditos.imprimir_estado_cuenta',
             'pagos.listar', 'pagos.crear', 'pagos.imprimir_recibo', 'pagos.exportar',
-            'cartera.listar',
+            'cartera.listar', 'cartera.enviar_recordatorio',
             'calendario.listar',
         ],
         'consulta' => [

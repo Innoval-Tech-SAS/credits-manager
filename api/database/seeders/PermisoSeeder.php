@@ -18,7 +18,7 @@ class PermisoSeeder extends Seeder
         'clientes' => ['listar', 'ver', 'crear', 'editar', 'exportar'],
         'creditos' => ['listar', 'crear', 'editar', 'aprobar', 'desembolsar', 'cancelar', 'eliminar', 'exportar', 'imprimir_estado_cuenta'],
         'pagos' => ['listar', 'crear', 'imprimir_recibo', 'exportar'],
-        'cartera' => ['listar', 'exportar', 'imprimir_reporte_empleador'],
+        'cartera' => ['listar', 'exportar', 'imprimir_reporte_empleador', 'enviar_recordatorio'],
         'calendario' => ['listar'],
         'terceros' => ['listar', 'crear', 'editar'],
         'contabilidad' => ['listar', 'crear_manual', 'anular', 'imprimir_comprobante'],

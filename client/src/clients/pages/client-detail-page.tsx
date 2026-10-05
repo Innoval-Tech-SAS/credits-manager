@@ -16,6 +16,9 @@ import { ClientEmploymentHistoryTable } from '../components/client-employment-hi
 import { ClientInfoCard } from '../components/client-info-card';
 import { ClientSummaryCards } from '../components/client-summary-cards';
 import { WhatsAppButton } from '../components/whatsapp-button';
+import { EmailDispatchesCard } from '../../email/components/email-dispatches-card';
+import { EmailReminderButton } from '../../email/components/email-reminder-button';
+import type { ApiReminderHistory } from '../../email/types/api-email-dispatch';
 import type { ApiClientDocument } from '../types/api-client-document';
 import type { ApiClientSummary } from '../types/api-client-summary';
 
@@ -27,6 +30,8 @@ export const ClientDetailPage: FC = () => {
     const isAdmin = user?.role === 'admin';
 
     const { data: resumen, error, refetch } = useResource<ApiClientSummary>(`/clientes/${id}/resumen`);
+    const canSendReminder = usePermission('cartera', 'enviar_recordatorio');
+    const { data: recordatorios, refetch: refetchRecordatorios } = useResource<ApiReminderHistory>(`/clientes/${id}/recordatorios-correo`);
     const { sendRequest } = useSendRequest();
 
     const [documentosNuevos, setDocumentosNuevos] = useState<ApiClientDocument[]>([]);
@@ -83,7 +88,17 @@ export const ClientDetailPage: FC = () => {
         <div className="flex min-h-full flex-col pb-6">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <PageBreadcrumb pageTitle={cliente.tercero.nombre} />
-                <WhatsAppButton variant="boton" nombre={cliente.tercero.nombre} celular={cliente.tercero.celular} />
+                <div className="flex flex-wrap items-center gap-2">
+                    <WhatsAppButton variant="boton" nombre={cliente.tercero.nombre} celular={cliente.tercero.celular} />
+                    {canSendReminder && recordatorios && (
+                        <EmailReminderButton
+                            clienteId={cliente.id}
+                            correo={cliente.tercero.correo}
+                            cuotasCobrables={recordatorios.cuotas_cobrables}
+                            onSent={refetchRecordatorios}
+                        />
+                    )}
+                </div>
             </div>
 
             <ClientSummaryCards cliente={cliente} saldoConsolidado={saldoConsolidado} creditosCount={creditos.length} />
@@ -101,6 +116,8 @@ export const ClientDetailPage: FC = () => {
             <div className="mb-6">
                 <PaymentHistoryTable pagos={ultimosPagos} showCredito onViewCredito={(creditoId) => navigate(`/creditos/${creditoId}`)} />
             </div>
+
+            {recordatorios && <EmailDispatchesCard envios={recordatorios.envios} />}
 
             <ClientDocuments
                 documentos={documentos}
