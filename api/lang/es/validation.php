@@ -172,6 +172,13 @@ return [
     */
 
     'custom' => [
+        'correo' => [
+            'sin_configurar' => 'La empresa no tiene configurado el correo de cobranza.',
+            'cuota_no_del_cliente' => 'La cuota no pertenece a este cliente.',
+            'cuota_pagada' => 'La cuota ya está pagada; no se le envía recordatorio.',
+            'cliente_sin_correo' => 'El cliente no tiene un correo registrado.',
+            'variable_desconocida' => 'La plantilla usa variables que no existen: :variables.',
+        ],
         'exportacion' => [
             'excede_limite' => 'La exportación tiene :filas filas y el máximo es :maximo (límite de Excel). Acota los filtros e inténtalo de nuevo.',
         ],
@@ -261,7 +268,7 @@ return [
             'cancelacion_con_pagos' => 'No se puede cancelar un crédito con pagos registrados.',
             'refinanciado_no_eliminable' => 'No se puede eliminar un crédito refinanciado: es el historial del crédito que lo reemplazó.',
             'no_editable' => 'Solo se pueden modificar las condiciones de un crédito solicitado o aprobado. Después del desembolso, la corrección se hace refinanciando.',
-            'refinanciacion_desembolsada' =>'No se puede cancelar ni eliminar una refinanciación desembolsada: el crédito original ya quedó congelado.',
+            'refinanciacion_desembolsada' => 'No se puede cancelar ni eliminar una refinanciación desembolsada: el crédito original ya quedó congelado.',
         ],
         'documento' => [
             'naturaleza_invalida' => 'Debe indicar una naturaleza válida (por_pagar o por_cobrar).',
