@@ -6,8 +6,9 @@ use App\Contabilidad\Enums\EstadoComprobante;
 use App\Contabilidad\Models\AsientoContable;
 use App\Core\Base\BaseRepository;
 use App\Core\Dinero\Dinero;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\LazyCollection;
 
 class AsientoContableRepository extends BaseRepository
 {
@@ -44,15 +45,24 @@ class AsientoContableRepository extends BaseRepository
         return $valor instanceof Dinero ? $valor->centavos() : $valor;
     }
 
-    public function movimientosLibroDiario(string $desde, string $hasta): Collection
+    /**
+     * La empresa se recibe explícita: los reportes también corren en el worker de exportación, sin sesión,
+     * donde el scope de empresa no filtra.
+     */
+    private function consultaLibroDiario(int $empresaId, string $desde, string $hasta): Builder
     {
         return $this->consulta()
             ->join('comprobantes', 'comprobantes.id', '=', 'asientos_contables.comprobante_id')
             ->join('tipos_comprobante', 'tipos_comprobante.id', '=', 'comprobantes.tipo_comprobante_id')
             ->join('plan_cuentas', 'plan_cuentas.id', '=', 'asientos_contables.cuenta_id')
-            ->where('comprobantes.empresa_id', Auth::user()->empresa_id)
+            ->where('comprobantes.empresa_id', $empresaId)
             ->where('comprobantes.estado', EstadoComprobante::Contabilizado)
-            ->whereBetween('comprobantes.fecha', [$desde, $hasta])
+            ->whereBetween('comprobantes.fecha', [$desde, $hasta]);
+    }
+
+    private function filasLibroDiario(int $empresaId, string $desde, string $hasta): Builder
+    {
+        return $this->consultaLibroDiario($empresaId, $desde, $hasta)
             ->orderBy('comprobantes.fecha')
             ->orderBy('comprobantes.id')
             ->orderBy('asientos_contables.orden')
@@ -65,16 +75,41 @@ class AsientoContableRepository extends BaseRepository
                 'asientos_contables.descripcion',
                 'asientos_contables.debito',
                 'asientos_contables.credito',
-            ])
-            ->get();
+            ]);
     }
 
-    public function saldoAntesDeFecha(int $cuentaId, string $fecha): array
+    public function movimientosLibroDiario(int $empresaId, string $desde, string $hasta): Collection
+    {
+        return $this->filasLibroDiario($empresaId, $desde, $hasta)->get();
+    }
+
+    public function cursorLibroDiario(int $empresaId, string $desde, string $hasta): LazyCollection
+    {
+        return $this->filasLibroDiario($empresaId, $desde, $hasta)->lazy();
+    }
+
+    public function contarLibroDiario(int $empresaId, string $desde, string $hasta): int
+    {
+        return $this->consultaLibroDiario($empresaId, $desde, $hasta)->count();
+    }
+
+    /** @return array{debitos: int, creditos: int} */
+    public function totalesLibroDiario(int $empresaId, string $desde, string $hasta): array
+    {
+        $totales = $this->consultaLibroDiario($empresaId, $desde, $hasta)
+            ->selectRaw('COALESCE(SUM(asientos_contables.debito),0) as debitos, COALESCE(SUM(asientos_contables.credito),0) as creditos')
+            ->first();
+
+        return ['debitos' => (int) $totales->debitos, 'creditos' => (int) $totales->creditos];
+    }
+
+    /** @return array{debitos: int, creditos: int} */
+    public function saldoAntesDeFecha(int $empresaId, int $cuentaId, string $fecha): array
     {
         $totales = $this->consulta()
             ->join('comprobantes', 'comprobantes.id', '=', 'asientos_contables.comprobante_id')
             ->where('asientos_contables.cuenta_id', $cuentaId)
-            ->where('comprobantes.empresa_id', Auth::user()->empresa_id)
+            ->where('comprobantes.empresa_id', $empresaId)
             ->where('comprobantes.estado', EstadoComprobante::Contabilizado)
             ->where('comprobantes.fecha', '<', $fecha)
             ->selectRaw('COALESCE(SUM(asientos_contables.debito),0) as debitos, COALESCE(SUM(asientos_contables.credito),0) as creditos')
@@ -83,18 +118,24 @@ class AsientoContableRepository extends BaseRepository
         return ['debitos' => (int) $totales->debitos, 'creditos' => (int) $totales->creditos];
     }
 
-    public function movimientosLibroMayor(int $cuentaId, string $desde, string $hasta): Collection
+    private function consultaLibroMayor(int $empresaId, int $cuentaId, string $desde, string $hasta): Builder
     {
         return $this->consulta()
             ->join('comprobantes', 'comprobantes.id', '=', 'asientos_contables.comprobante_id')
             ->join('tipos_comprobante', 'tipos_comprobante.id', '=', 'comprobantes.tipo_comprobante_id')
             ->leftJoin('terceros', 'terceros.id', '=', 'asientos_contables.tercero_id')
             ->where('asientos_contables.cuenta_id', $cuentaId)
-            ->where('comprobantes.empresa_id', Auth::user()->empresa_id)
+            ->where('comprobantes.empresa_id', $empresaId)
             ->where('comprobantes.estado', EstadoComprobante::Contabilizado)
-            ->whereBetween('comprobantes.fecha', [$desde, $hasta])
+            ->whereBetween('comprobantes.fecha', [$desde, $hasta]);
+    }
+
+    private function filasLibroMayor(int $empresaId, int $cuentaId, string $desde, string $hasta): Builder
+    {
+        return $this->consultaLibroMayor($empresaId, $cuentaId, $desde, $hasta)
             ->orderBy('comprobantes.fecha')
             ->orderBy('comprobantes.id')
+            ->orderBy('asientos_contables.orden')
             ->select([
                 'comprobantes.fecha',
                 'comprobantes.consecutivo',
@@ -103,7 +144,21 @@ class AsientoContableRepository extends BaseRepository
                 'asientos_contables.debito',
                 'asientos_contables.credito',
                 'terceros.nombre as tercero',
-            ])
-            ->get();
+            ]);
+    }
+
+    public function movimientosLibroMayor(int $empresaId, int $cuentaId, string $desde, string $hasta): Collection
+    {
+        return $this->filasLibroMayor($empresaId, $cuentaId, $desde, $hasta)->get();
+    }
+
+    public function cursorLibroMayor(int $empresaId, int $cuentaId, string $desde, string $hasta): LazyCollection
+    {
+        return $this->filasLibroMayor($empresaId, $cuentaId, $desde, $hasta)->lazy();
+    }
+
+    public function contarLibroMayor(int $empresaId, int $cuentaId, string $desde, string $hasta): int
+    {
+        return $this->consultaLibroMayor($empresaId, $cuentaId, $desde, $hasta)->count();
     }
 }
