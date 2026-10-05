@@ -130,6 +130,22 @@ services:
       - importaciones_data:/var/importaciones
     restart: unless-stopped
 
+  # Envía los recordatorios de cobranza por correo (cola `correos`). Worker propio: un SMTP lento no retrasa importaciones ni exportaciones.
+  correos-worker:
+    image: credits-manager-api:latest
+    container_name: credits-manager-correos-worker
+    entrypoint: ["php", "artisan", "queue:work", "redis", "--queue=correos", "--timeout=120", "--tries=1", "--sleep=1"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    environment: *api-worker-env
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   # Ejecuta las tareas programadas de Laravel (`routes/console.php`): mora diaria y limpieza de exportaciones.
   # Una sola instancia: con dos réplicas cada tarea correría duplicada.
   scheduler:
