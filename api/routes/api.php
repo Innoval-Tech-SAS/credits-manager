@@ -23,6 +23,7 @@ use App\Empleadores\Controllers\EmpleadorController;
 use App\Empresas\Controllers\EmpresaAdminController;
 use App\Empresas\Controllers\EmpresaController;
 use App\Exportacion\Controllers\ExportacionController;
+use App\Facturacion\Controllers\CobroFacturacionController;
 use App\Facturacion\Controllers\ConsecutivoFacturacionController;
 use App\Facturacion\Controllers\DocumentoFacturacionController;
 use App\Gastos\Controllers\ActividadEconomicaController;
@@ -270,6 +271,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'destroy'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/documentos/{documento}/emitir', [DocumentoFacturacionController::class, 'emitir'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/documentos/{documento}/notas', [DocumentoFacturacionController::class, 'nota'])->middleware('permiso:facturacion,anular');
+    Route::post('/facturacion/documentos/{documento}/anular', [DocumentoFacturacionController::class, 'anular'])->middleware('permiso:facturacion,anular');
+    Route::post('/facturacion/documentos/{documento}/cobros', [CobroFacturacionController::class, 'store'])->middleware('permiso:facturacion,crear');
+    Route::post('/facturacion/cobros/{cobro}/reversar', [CobroFacturacionController::class, 'reversar'])->middleware('permiso:facturacion,anular');
     Route::get('/facturacion/documentos/{documento}/pdf', [DocumentoFacturacionController::class, 'pdf'])->middleware('permiso:facturacion,imprimir');
     Route::get('/facturacion/consecutivos', [ConsecutivoFacturacionController::class, 'index'])->middleware('permiso:facturacion,listar');
     Route::patch('/facturacion/consecutivos/{tipo}', [ConsecutivoFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');

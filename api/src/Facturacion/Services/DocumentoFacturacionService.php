@@ -13,15 +13,18 @@ use App\Creditos\Repositories\CreditoRepository;
 use App\Empresas\Services\EmpresaService;
 use App\Facturacion\Documentos\FacturaPdf;
 use App\Facturacion\Enums\EstadoDocumentoFacturacion;
+use App\Facturacion\Enums\SituacionFactura;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Models\LineaDocumentoFacturacion;
+use App\Facturacion\Repositories\CobroFacturacionRepository;
 use App\Facturacion\Repositories\DocumentoFacturacionRepository;
 use App\Facturacion\Repositories\LineaDocumentoFacturacionRepository;
 use App\Impresion\Data\PdfGenerado;
 use App\Impresion\Services\GeneradorPdf;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -29,16 +32,19 @@ use Illuminate\Validation\ValidationException;
  * Facturas y notas internas. Reglas que el Service garantiza (la base no puede expresarlas):
  * - un borrador se edita y se borra; un documento emitido no cambia;
  * - el número sale de la secuencia del tipo dentro de la misma transacción de la emisión (sin huecos);
- * - una nota crédito no acredita más que lo que queda de la línea original, contando las notas ya emitidas;
- * - la factura «anulada» es derivada: sus notas crédito cubren su total. No se guarda como estado.
+ * - una nota crédito no acredita más que lo que queda de la línea original ni más que el saldo pendiente;
+ * - cada emisión y nota genera su asiento en la misma transacción; sin regla contable, no se opera;
+ * - la situación de la factura (emitida, parcialmente pagada, pagada, anulada) es derivada de sus notas y cobros.
  */
 class DocumentoFacturacionService
 {
     public function __construct(
         protected DocumentoFacturacionRepository $documentos,
         protected LineaDocumentoFacturacionRepository $lineas,
+        protected CobroFacturacionRepository $cobros,
         protected CreditoRepository $creditos,
         protected ConsecutivoDocumentoService $consecutivos,
+        protected AsientosFacturacionService $asientos,
         protected EmpresaService $empresas,
         protected GeneradorPdf $generador,
         protected EmisorAuditoria $auditoria,
@@ -70,6 +76,15 @@ class DocumentoFacturacionService
 
             $this->lineas->sincronizar($documento, $this->lineasDeEntrada($lineas));
 
+            $this->auditoria->registrar(
+                AccionAuditoria::Crear,
+                AuditoriaConstants::MODULO_FACTURACION,
+                "Borrador de factura #{$documento->id} creado sobre el crédito #{$credito->id}",
+                'documento_facturacion',
+                $documento->id,
+                nuevos: ['credito_id' => $credito->id, 'fecha' => $documento->fecha->toDateString()],
+            );
+
             return $this->conLineas($documento->refresh());
         });
     }
@@ -88,6 +103,15 @@ class DocumentoFacturacionService
 
             $this->lineas->sincronizar($bloqueado, $this->lineasDeEntrada($lineas));
 
+            $this->auditoria->registrar(
+                AccionAuditoria::Modificar,
+                AuditoriaConstants::MODULO_FACTURACION,
+                "Borrador de factura #{$bloqueado->id} modificado",
+                'documento_facturacion',
+                $bloqueado->id,
+                nuevos: ['fecha' => $bloqueado->fecha->toDateString(), 'lineas' => count($lineas)],
+            );
+
             return $this->conLineas($bloqueado);
         });
     }
@@ -102,10 +126,18 @@ class DocumentoFacturacionService
 
             $this->lineas->sincronizar($bloqueado, []);
             $bloqueado->delete();
+
+            $this->auditoria->registrar(
+                AccionAuditoria::Eliminar,
+                AuditoriaConstants::MODULO_FACTURACION,
+                "Borrador de factura #{$bloqueado->id} eliminado",
+                'documento_facturacion',
+                $bloqueado->id,
+            );
         });
     }
 
-    /** Emite la factura: asigna el número de la secuencia de facturas y la deja inmutable. */
+    /** Emite la factura: asigna el número de la secuencia de facturas, la deja inmutable y la asienta. */
     public function emitirFactura(DocumentoFacturacion $documento, Usuario $usuario): DocumentoFacturacion
     {
         $this->exigirBorrador($documento);
@@ -119,6 +151,8 @@ class DocumentoFacturacionService
             }
 
             $emitido = $this->emitir($bloqueado, $usuario);
+            $asiento = $this->asientos->contabilizarEmision($emitido, $this->sumaLineas($emitido));
+            $emitido->update(['comprobante_id' => $asiento->id]);
 
             $this->auditoria->registrar(
                 AccionAuditoria::Crear,
@@ -126,7 +160,7 @@ class DocumentoFacturacionService
                 "Factura {$emitido->numero} emitida",
                 'documento_facturacion',
                 $emitido->id,
-                nuevos: ['numero' => $emitido->numero, 'credito_id' => $emitido->credito_id],
+                nuevos: ['numero' => $emitido->numero, 'credito_id' => $emitido->credito_id, 'total' => $this->sumaLineas($emitido)->aDecimalString()],
                 autor: $usuario,
             );
 
@@ -154,7 +188,7 @@ class DocumentoFacturacionService
         }
 
         return DB::transaction(function () use ($origen, $tipo, $motivo, $lineas, $usuario) {
-            // Bloquear el origen: dos notas simultáneas sobre la misma factura se serializan y no acreditan dos veces el mismo saldo.
+            // Bloquear el origen: dos notas o cobros simultáneos sobre la misma factura se serializan y no acreditan dos veces el mismo saldo.
             $bloqueado = $this->documentos->bloquear($origen->id);
             $this->exigirEmitido($bloqueado);
 
@@ -162,42 +196,70 @@ class DocumentoFacturacionService
                 ? $this->lineasDeNotaCredito($bloqueado, $lineas)
                 : $this->lineasDeNotaDebito($bloqueado, $lineas);
 
-            $nota = $this->documentos->crear([
-                'tipo' => $tipo,
-                'estado' => EstadoDocumentoFacturacion::Borrador,
-                'fecha' => now('America/Bogota')->toDateString(),
-                'cliente_id' => $bloqueado->cliente_id,
-                'credito_id' => $bloqueado->credito_id,
-                'documento_origen_id' => $bloqueado->id,
-                'motivo' => $motivo,
-            ]);
-
-            $this->lineas->crearParaDocumento($nota, $lineasNota);
-
-            $emitida = $this->emitir($nota, $usuario);
-
-            $this->auditoria->registrar(
-                $tipo === TipoDocumentoFacturacion::NotaCredito ? AccionAuditoria::Anular : AccionAuditoria::Crear,
-                AuditoriaConstants::MODULO_FACTURACION,
-                "{$tipo->etiqueta()} {$emitida->numero} sobre {$bloqueado->numero}",
-                'documento_facturacion',
-                $emitida->id,
-                nuevos: ['numero' => $emitida->numero, 'origen' => $bloqueado->numero, 'total' => $this->sumaLineas($emitida)->aDecimalString()],
-                motivo: $motivo,
-                autor: $usuario,
-            );
-
-            return $this->conLineas($emitida);
+            return $this->crearNota($bloqueado, $tipo, $motivo, $lineasNota, $usuario);
         });
     }
 
-    /** @return array{documento: DocumentoFacturacion, totales: array} */
-    public function detalle(DocumentoFacturacion $documento): array
+    /**
+     * Anula una factura con una nota crédito por el saldo de cada una de sus líneas. Exige que no tenga cobros
+     * vigentes ni notas débito: esos movimientos se reversan primero, para que el asiento de la anulación sea el
+     * reverso exacto del saldo. La factura conserva su número.
+     */
+    public function anular(DocumentoFacturacion $factura, string $motivo, Usuario $usuario): DocumentoFacturacion
     {
-        return ['documento' => $this->conLineas($documento), 'totales' => $this->totales($documento)];
+        return DB::transaction(function () use ($factura, $motivo, $usuario) {
+            $bloqueado = $this->documentos->bloquear($factura->id);
+            $this->exigirEmitido($bloqueado);
+
+            if ($bloqueado->tipo !== TipoDocumentoFacturacion::Factura) {
+                throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.solo_factura_anulable')]);
+            }
+
+            $totales = $this->totales($bloqueado);
+
+            if ($totales['anulada']) {
+                throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.ya_anulada')]);
+            }
+
+            if ($totales['total_cobrado']->esPositivo()) {
+                throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.con_cobros')]);
+            }
+
+            if ($totales['total_nota_debito']->esPositivo()) {
+                throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.con_notas_debito')]);
+            }
+
+            $porLinea = [];
+
+            foreach ($bloqueado->lineas as $linea) {
+                $restante = $linea->valor->restar(Dinero::desdeCentavos($this->lineas->acreditado($bloqueado->empresa_id, $linea->id)));
+
+                if ($restante->esPositivo()) {
+                    $porLinea[] = ['linea_origen_id' => $linea->id, 'valor' => $restante->aDecimalString()];
+                }
+            }
+
+            $this->crearNota($bloqueado, TipoDocumentoFacturacion::NotaCredito, $motivo, $this->lineasDeNotaCredito($bloqueado, $porLinea), $usuario, anulacion: true);
+
+            return $this->conLineas($bloqueado->refresh());
+        });
     }
 
-    /** Totales del documento. Las notas se cuentan solo sobre la factura; la factura queda «anulada» cuando sus notas crédito la cubren. */
+    /** @return array{documento: DocumentoFacturacion, totales: array, cobros: Collection} */
+    public function detalle(DocumentoFacturacion $documento): array
+    {
+        return [
+            'documento' => $this->conLineas($documento),
+            'totales' => $this->totales($documento),
+            'cobros' => $this->cobros->listarDelDocumento($documento->id),
+        ];
+    }
+
+    /**
+     * Totales del documento. Las notas y los cobros se cuentan solo sobre la factura.
+     * La situación se deriva: anulada (las notas crédito cubren el total), pagada (saldo cero o menos),
+     * parcialmente pagada (hay notas crédito o cobros y queda saldo) o emitida.
+     */
     public function totales(DocumentoFacturacion $documento): array
     {
         $total = $this->sumaLineas($documento);
@@ -208,13 +270,19 @@ class DocumentoFacturacionService
 
         $totalNotaCredito = Dinero::desdeCentavos($this->documentos->sumaNotas($documento->empresa_id, $documento->id, TipoDocumentoFacturacion::NotaCredito));
         $totalNotaDebito = Dinero::desdeCentavos($this->documentos->sumaNotas($documento->empresa_id, $documento->id, TipoDocumentoFacturacion::NotaDebito));
+        $totalCobrado = Dinero::desdeCentavos($this->cobros->cobradoNeto($documento->id));
+
+        $saldo = $total->restar($totalNotaCredito)->sumar($totalNotaDebito)->restar($totalCobrado);
+        $anulada = $total->mayorQue(Dinero::cero()) && $totalNotaCredito->mayorOIgualQue($total);
 
         return [
             'total' => $total,
             'total_nota_credito' => $totalNotaCredito,
             'total_nota_debito' => $totalNotaDebito,
-            'saldo' => $total->restar($totalNotaCredito)->sumar($totalNotaDebito),
-            'anulada' => $total->mayorQue(Dinero::cero()) && $totalNotaCredito->mayorOIgualQue($total),
+            'total_cobrado' => $totalCobrado,
+            'saldo' => $saldo,
+            'anulada' => $anulada,
+            'situacion' => $this->situacion($anulada, $saldo, $totalNotaCredito->sumar($totalCobrado)),
         ];
     }
 
@@ -237,6 +305,55 @@ class DocumentoFacturacionService
         );
 
         return $pdf;
+    }
+
+    /** Crea la nota emitida y su asiento. Una nota débito no se emite sobre una factura anulada; una crédito no supera el saldo. */
+    private function crearNota(DocumentoFacturacion $origen, TipoDocumentoFacturacion $tipo, string $motivo, array $lineasNota, Usuario $usuario, bool $anulacion = false): DocumentoFacturacion
+    {
+        if ($origen->tipo === TipoDocumentoFacturacion::Factura) {
+            $totales = $this->totales($origen);
+
+            if ($tipo === TipoDocumentoFacturacion::NotaDebito && $totales['anulada']) {
+                throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.ya_anulada')]);
+            }
+
+            if ($tipo === TipoDocumentoFacturacion::NotaCredito && Dinero::sumarVarios(...array_column($lineasNota, 'valor'))->mayorQue($totales['saldo'])) {
+                throw ValidationException::withMessages(['lineas' => __('validation.custom.facturacion.excede_saldo_pendiente')]);
+            }
+        }
+
+        $nota = $this->documentos->crear([
+            'tipo' => $tipo,
+            'estado' => EstadoDocumentoFacturacion::Borrador,
+            'fecha' => now('America/Bogota')->toDateString(),
+            'cliente_id' => $origen->cliente_id,
+            'credito_id' => $origen->credito_id,
+            'documento_origen_id' => $origen->id,
+            'motivo' => $motivo,
+        ]);
+
+        $this->lineas->crearParaDocumento($nota, $lineasNota);
+
+        $emitida = $this->emitir($nota, $usuario);
+        $asiento = $this->asientos->contabilizarNota($emitida, $this->sumaLineas($emitida));
+        $emitida->update(['comprobante_id' => $asiento->id]);
+
+        $descripcion = $anulacion
+            ? "Factura {$origen->numero} anulada con {$emitida->numero}"
+            : "{$tipo->etiqueta()} {$emitida->numero} sobre {$origen->numero}";
+
+        $this->auditoria->registrar(
+            $tipo === TipoDocumentoFacturacion::NotaCredito ? AccionAuditoria::Anular : AccionAuditoria::Crear,
+            AuditoriaConstants::MODULO_FACTURACION,
+            $descripcion,
+            'documento_facturacion',
+            $emitida->id,
+            nuevos: ['numero' => $emitida->numero, 'origen' => $origen->numero, 'total' => $this->sumaLineas($emitida)->aDecimalString()],
+            motivo: $motivo,
+            autor: $usuario,
+        );
+
+        return $this->conLineas($emitida);
     }
 
     private function emitir(DocumentoFacturacion $documento, Usuario $usuario): DocumentoFacturacion
@@ -325,6 +442,19 @@ class DocumentoFacturacionService
             'descripcion' => $entrada['descripcion'],
             'valor' => Dinero::desdePesos($entrada['valor']),
         ], $lineas);
+    }
+
+    private function situacion(bool $anulada, Dinero $saldo, Dinero $liquidado): SituacionFactura
+    {
+        if ($anulada) {
+            return SituacionFactura::Anulada;
+        }
+
+        if (! $saldo->esPositivo()) {
+            return SituacionFactura::Pagada;
+        }
+
+        return $liquidado->esPositivo() ? SituacionFactura::ParcialmentePagada : SituacionFactura::Emitida;
     }
 
     private function sumaLineas(DocumentoFacturacion $documento): Dinero

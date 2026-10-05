@@ -3,6 +3,7 @@
 namespace App\Facturacion\Models;
 
 use App\Clientes\Models\Cliente;
+use App\Contabilidad\Models\Comprobante;
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
 use App\Creditos\Models\Credito;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * El total no se guarda: sale de las líneas. Las invariantes de número, origen y valor están en la base
  * (ver la migración de documentos); los montos acumulados los controla DocumentoFacturacionService.
  */
-#[Fillable(['tipo', 'estado', 'consecutivo', 'numero', 'fecha', 'cliente_id', 'credito_id', 'documento_origen_id', 'motivo', 'emitido_en', 'emitido_por'])]
+#[Fillable(['tipo', 'estado', 'consecutivo', 'numero', 'fecha', 'cliente_id', 'credito_id', 'documento_origen_id', 'motivo', 'emitido_en', 'emitido_por', 'comprobante_id'])]
 class DocumentoFacturacion extends BaseModel
 {
     use PerteneceAEmpresa;
@@ -59,6 +60,16 @@ class DocumentoFacturacion extends BaseModel
     public function lineas(): HasMany
     {
         return $this->hasMany(LineaDocumentoFacturacion::class, 'documento_id')->orderBy('orden');
+    }
+
+    public function comprobante(): BelongsTo
+    {
+        return $this->belongsTo(Comprobante::class);
+    }
+
+    public function cobros(): HasMany
+    {
+        return $this->hasMany(CobroFacturacion::class, 'documento_id');
     }
 
     public function emisor(): BelongsTo
