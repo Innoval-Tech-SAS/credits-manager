@@ -29,11 +29,13 @@ export const LedgerPage: FC = () => {
         cuentaId ? `/contabilidad/libro-mayor?cuenta_id=${cuentaId}&desde=${desde}&hasta=${hasta}` : '',
     );
 
-    // Igual que el legado: el saldo corrido acumula débito - crédito sin
-    // ajustar por naturaleza (simplificación visual, no afecta el saldo inicial).
+    // Mismo criterio que el export: una cuenta débito sube con el débito, una crédito sube con el crédito.
+    const esDebito = data?.cuenta.naturaleza === 'debito';
     const movimientosConSaldo = (data?.movimientos ?? []).reduce<Array<ApiLedgerMovement & { saldo: number }>>((filas, movimiento) => {
         const saldoAnterior = filas.length > 0 ? filas[filas.length - 1].saldo : Number(data?.saldo_inicial ?? 0);
-        const saldo = saldoAnterior + parseFloat(movimiento.debito) - parseFloat(movimiento.credito);
+        const debito = parseFloat(movimiento.debito);
+        const credito = parseFloat(movimiento.credito);
+        const saldo = esDebito ? saldoAnterior + debito - credito : saldoAnterior + credito - debito;
 
         return [...filas, { ...movimiento, saldo }];
     }, []);
