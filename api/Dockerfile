@@ -1,4 +1,4 @@
-FROM composer:2 AS vendor
+FROM docker.io/library/composer:2 AS vendor
 WORKDIR /app
 
 COPY composer.json composer.lock* ./
@@ -7,7 +7,7 @@ RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignor
 COPY . .
 RUN composer dump-autoload --optimize --no-dev
 
-FROM php:8.4-fpm-alpine
+FROM docker.io/library/php:8.4-fpm-alpine
 WORKDIR /var/www/html
 
 RUN apk add --no-cache icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev \

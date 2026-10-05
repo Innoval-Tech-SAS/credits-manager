@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', 'app.creditos.local')),
+    'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', 'app.ddasolucionescredicias.tech')),
 
     /*
     |--------------------------------------------------------------------------

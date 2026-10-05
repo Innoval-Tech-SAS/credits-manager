@@ -1,11 +1,13 @@
 services:
   database:
-    image: mysql:8.4
+    image: docker.io/library/mysql:8.4
     container_name: credits-manager-database
     command: ["mysqld", "--default-time-zone=-05:00", "--log-bin-trust-function-creators=1"]
     environment:
       TZ: America/Bogota
       MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
       - "127.0.0.1:3306:3306"
@@ -20,7 +22,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
+    image: docker.io/library/redis:7-alpine
     container_name: credits-manager-redis
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
@@ -33,7 +35,7 @@ services:
     restart: unless-stopped
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: docker.io/phpmyadmin/phpmyadmin:latest
     container_name: credits-manager-phpmyadmin
     environment:
       TZ: America/Bogota
@@ -47,7 +49,7 @@ services:
 
   # Suscriptor de larga duración de la bitácora: lee el stream de Redis e inserta en la tabla.
   auditoria-listener:
-    image: credits-manager-api:latest
+    image: localhost/credits-manager-api:latest
     container_name: credits-manager-auditoria-listener
     entrypoint: ["php", "artisan", "auditoria:escuchar"]
     user: www-data
@@ -92,7 +94,7 @@ services:
 
   # Genera en segundo plano los archivos de exportación (cola `redis`, sin tocar QUEUE_CONNECTION).
   exportaciones-worker:
-    image: credits-manager-api:latest
+    image: localhost/credits-manager-api:latest
     container_name: credits-manager-exportaciones-worker
     entrypoint: ["php", "artisan", "queue:work", "redis", "--queue=exportaciones", "--timeout=3600", "--tries=1", "--sleep=1"]
     user: www-data
@@ -112,7 +114,7 @@ services:
   # Ejecuta las tareas programadas de Laravel (`routes/console.php`): mora diaria y limpieza de exportaciones.
   # Una sola instancia: con dos réplicas cada tarea correría duplicada.
   scheduler:
-    image: credits-manager-api:latest
+    image: localhost/credits-manager-api:latest
     container_name: credits-manager-scheduler
     entrypoint: ["php", "artisan", "schedule:work"]
     user: www-data
@@ -129,9 +131,9 @@ services:
       - exportaciones_data:/var/exportaciones
     restart: unless-stopped
 
-  # Servidor WebSocket (Laravel Reverb). El navegador entra por nginx (wss://api.creditos.local/app).
+  # Servidor WebSocket (Laravel Reverb). El navegador entra por nginx (wss://api.ddasolucionescredicias.tech/app).
   reverb:
-    image: credits-manager-api:latest
+    image: localhost/credits-manager-api:latest
     container_name: credits-manager-reverb
     entrypoint: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
     user: www-data
@@ -155,7 +157,7 @@ services:
     build:
       context: ./api
       dockerfile: Dockerfile
-    image: credits-manager-api:latest
+    image: localhost/credits-manager-api:latest
     container_name: credits-manager-api
     environment:
       TZ: America/Bogota

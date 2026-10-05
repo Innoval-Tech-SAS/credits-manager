@@ -1,4 +1,4 @@
-FROM node:22-alpine AS client-builder
+FROM docker.io/library/node:22-alpine AS client-builder
 WORKDIR /app
 
 ARG VITE_API_URL
@@ -21,7 +21,7 @@ RUN pnpm install --frozen-lockfile
 COPY client/ .
 RUN pnpm run build
 
-FROM nginx:alpine
+FROM docker.io/library/nginx:alpine
 
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 COPY api/public /var/www/html/public

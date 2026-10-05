@@ -6,7 +6,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['https://'.env('SANCTUM_STATEFUL_DOMAINS', 'app.creditos.local')],
+    'allowed_origins' => ['https://'.env('SANCTUM_STATEFUL_DOMAINS', 'app.ddasolucionescredicias.tech')],
 
     'allowed_origins_patterns' => [],
 
