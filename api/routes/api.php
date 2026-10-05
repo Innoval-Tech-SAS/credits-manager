@@ -168,6 +168,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/libro-mayor', [ReporteContableController::class, 'libroMayor'])->middleware('permiso:contabilidad,listar');
     Route::get('/contabilidad/balance-prueba', [ReporteContableController::class, 'balancePrueba'])->middleware('permiso:contabilidad,listar');
     Route::get('/contabilidad/estados-financieros', [ReporteContableController::class, 'estadosFinancieros'])->middleware('permiso:contabilidad,listar');
+    Route::post('/contabilidad/libro-diario/exportar', [ReporteContableController::class, 'exportarLibroDiario'])->middleware('permiso:contabilidad,exportar');
+    Route::post('/contabilidad/libro-mayor/exportar', [ReporteContableController::class, 'exportarLibroMayor'])->middleware('permiso:contabilidad,exportar');
+    Route::post('/contabilidad/balance-prueba/exportar', [ReporteContableController::class, 'exportarBalancePrueba'])->middleware('permiso:contabilidad,exportar');
+    Route::post('/contabilidad/estados-financieros/exportar', [ReporteContableController::class, 'exportarEstadosFinancieros'])->middleware('permiso:contabilidad,exportar');
 
     Route::get('/contabilidad/migraciones-apertura', [MigracionAperturaController::class, 'index'])->middleware('permiso:contabilidad,listar');
     Route::post('/contabilidad/migraciones-apertura', [MigracionAperturaController::class, 'store'])->middleware('admin');

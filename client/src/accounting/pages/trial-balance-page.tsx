@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { useState } from 'react';
 
 import { useResource } from '../../shared/hooks/use-resource';
+import { ReportExportButton } from '../components/report-export-button';
 import { formatMoney } from '../../shared/utils/format-money';
 import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
@@ -25,6 +26,10 @@ export const TrialBalancePage: FC = () => {
                 <div className="max-w-xs">
                     <Label htmlFor="hasta">Corte al</Label>
                     <DatePicker id="hasta" value={hasta} onChange={setHasta} />
+                </div>
+
+                <div className="mt-6">
+                    <ReportExportButton endpoint="/contabilidad/balance-prueba/exportar" filters={{ hasta }} />
                 </div>
             </div>
 

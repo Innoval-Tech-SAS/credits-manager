@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { useState } from 'react';
 
 import { useResource } from '../../shared/hooks/use-resource';
+import { ReportExportButton } from '../components/report-export-button';
 import { formatMoney } from '../../shared/utils/format-money';
 import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
@@ -34,6 +35,10 @@ export const FinancialStatementsPage: FC = () => {
                         <Label htmlFor="hasta">Corte al</Label>
                         <DatePicker id="hasta" value={hasta} onChange={setHasta} />
                     </div>
+                </div>
+
+                <div className="mt-6">
+                    <ReportExportButton endpoint="/contabilidad/estados-financieros/exportar" filters={{ desde, hasta }} />
                 </div>
             </div>
 

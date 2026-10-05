@@ -44,21 +44,29 @@ class PlanCuentaRepository extends BaseRepository
     }
 
     /** Precarga de una sola vez las cuentas de varios códigos (evita una consulta por fila en importaciones). */
+    /** La empresa va explícita: el libro mayor también corre en el worker de exportación, sin sesión. */
+    public function buscarDeEmpresaOFallar(int $empresaId, int $id): PlanCuenta
+    {
+        return $this->consulta()->where('empresa_id', $empresaId)->findOrFail($id);
+    }
+
     public function porCodigos(array $codigos): Collection
     {
         return $this->consulta()->whereIn('codigo', $codigos)->get();
     }
 
     /** Balance de prueba: saldo de cada cuenta de detalle con movimiento hasta la fecha de corte. */
-    public function saldosParaBalancePrueba(string $hasta): Collection
+    public function saldosParaBalancePrueba(int $empresaId, string $hasta): Collection
     {
         return $this->consulta()
             ->leftJoin('asientos_contables', 'asientos_contables.cuenta_id', '=', 'plan_cuentas.id')
-            ->leftJoin('comprobantes', function ($join) use ($hasta) {
+            ->leftJoin('comprobantes', function ($join) use ($empresaId, $hasta) {
                 $join->on('comprobantes.id', '=', 'asientos_contables.comprobante_id')
+                    ->where('comprobantes.empresa_id', $empresaId)
                     ->where('comprobantes.estado', EstadoComprobante::Contabilizado->value)
                     ->where('comprobantes.fecha', '<=', $hasta);
             })
+            ->where('plan_cuentas.empresa_id', $empresaId)
             ->where('plan_cuentas.permite_movimiento', true)
             ->groupBy('plan_cuentas.id', 'plan_cuentas.codigo', 'plan_cuentas.nombre', 'plan_cuentas.naturaleza', 'plan_cuentas.tipo')
             ->havingRaw('COALESCE(SUM(asientos_contables.debito),0) > 0 OR COALESCE(SUM(asientos_contables.credito),0) > 0')
@@ -75,12 +83,13 @@ class PlanCuentaRepository extends BaseRepository
      * rango (P&G: ingresos/gastos del período); sin `$desde` filtra "hasta la fecha de corte"
      * (balance general: activo/pasivo/patrimonio, saldo acumulado).
      */
-    public function saldosPorTipo(array $tipos, ?string $desde, string $hasta): Collection
+    public function saldosPorTipo(int $empresaId, array $tipos, ?string $desde, string $hasta): Collection
     {
         return $this->consulta()
             ->leftJoin('asientos_contables', 'asientos_contables.cuenta_id', '=', 'plan_cuentas.id')
-            ->leftJoin('comprobantes', function ($join) use ($desde, $hasta) {
+            ->leftJoin('comprobantes', function ($join) use ($empresaId, $desde, $hasta) {
                 $join->on('comprobantes.id', '=', 'asientos_contables.comprobante_id')
+                    ->where('comprobantes.empresa_id', $empresaId)
                     ->where('comprobantes.estado', EstadoComprobante::Contabilizado->value);
                 if ($desde !== null) {
                     $join->whereBetween('comprobantes.fecha', [$desde, $hasta]);
@@ -88,6 +97,7 @@ class PlanCuentaRepository extends BaseRepository
                     $join->where('comprobantes.fecha', '<=', $hasta);
                 }
             })
+            ->where('plan_cuentas.empresa_id', $empresaId)
             ->whereIn('plan_cuentas.tipo', $tipos)
             ->where('plan_cuentas.permite_movimiento', true)
             ->groupBy('plan_cuentas.id', 'plan_cuentas.codigo', 'plan_cuentas.nombre', 'plan_cuentas.naturaleza')
