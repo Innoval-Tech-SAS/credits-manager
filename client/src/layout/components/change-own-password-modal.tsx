@@ -6,7 +6,7 @@ import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
-import { Eye, EyeOff, Lock } from 'lucide-react';
+import { Eye, EyeOff, KeyRound } from 'lucide-react';
 import { Modal } from '@ui/modal/components/modal';
 import { Spinner } from '@ui/spinner/components/spinner';
 import type { ChangeOwnPasswordModalProps } from '../props/change-own-password-modal-props';
@@ -72,7 +72,7 @@ export const ChangeOwnPasswordModal: FC<ChangeOwnPasswordModalProps> = ({ onClos
                                 id="current-password"
                                 name="current-password"
                                 type={showPassword ? 'text' : 'password'}
-                                startIcon={<Lock className="size-5" />}
+                                startIcon={<KeyRound className="size-5" />}
                                 endIcon={
                                     <button
                                         type="button"
@@ -97,7 +97,7 @@ export const ChangeOwnPasswordModal: FC<ChangeOwnPasswordModalProps> = ({ onClos
                                 id="new-password"
                                 name="new-password"
                                 type={showPassword ? 'text' : 'password'}
-                                startIcon={<Lock className="size-5" />}
+                                startIcon={<KeyRound className="size-5" />}
                                 minLength={8}
                                 hint="Mínimo 8 caracteres, con letras, números y un carácter especial."
                                 value={newPassword}
@@ -111,7 +111,7 @@ export const ChangeOwnPasswordModal: FC<ChangeOwnPasswordModalProps> = ({ onClos
                                 id="confirm-new-password"
                                 name="confirm-new-password"
                                 type={showPassword ? 'text' : 'password'}
-                                startIcon={<Lock className="size-5" />}
+                                startIcon={<KeyRound className="size-5" />}
                                 minLength={8}
                                 value={confirmPassword}
                                 onChange={(event) => setConfirmPassword(event.target.value)}

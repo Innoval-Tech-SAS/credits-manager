@@ -11,7 +11,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { ArrowRight, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Save } from 'lucide-react';
 import type { VoucherFormProps } from '../props/voucher-form-props';
 import type { ApiVoucher } from '../types/api-voucher';
 import type { VoucherFormLine } from '../types/voucher-form-line';
@@ -221,7 +221,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
                         type="submit"
                         disabled={isSubmitting || !tipoComprobanteId}
                         startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
-                        endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
+                        endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                     >
                         {isSubmitting ? 'Contabilizando…' : 'Contabilizar comprobante'}
                     </Button>

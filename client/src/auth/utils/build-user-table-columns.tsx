@@ -1,5 +1,5 @@
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
-import { Lock, Pencil, Trash2 } from 'lucide-react';
+import { KeyRound, Pencil, Trash2 } from 'lucide-react';
 import type { ApiUserListItem } from '../types/api-user-list-item';
 import type { BuildUserTableColumnsOptions } from '../types/build-user-table-columns-options';
 
@@ -84,7 +84,7 @@ export function buildUserTableColumns({
                             onClick={() => onChangePassword(row)}
                             className="text-gray-500 hover:text-warning-500 dark:text-gray-400 dark:hover:text-warning-500"
                         >
-                            <Lock className="size-5" />
+                            <KeyRound className="size-5" />
                         </button>
                     )}
                 </div>

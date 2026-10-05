@@ -14,7 +14,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { ArrowRight } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { formatMoney } from '../../shared/utils/format-money';
 import { RefinancingBaseCard } from '../components/refinancing-base-card';
 import { CREDIT_TYPE_OPTIONS } from '../constants/credit-type-options';
@@ -230,7 +230,7 @@ export const CreateCreditPage: FC = () => {
                                 type="submit"
                                 disabled={isSubmitting}
                                 startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
-                                endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
+                                endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                             >
                                 {isSubmitting ? 'Creando…' : 'Crear crédito y generar cuotas'}
                             </Button>

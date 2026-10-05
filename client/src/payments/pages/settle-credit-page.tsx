@@ -10,7 +10,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { ArrowRight } from 'lucide-react';
+import { Save } from 'lucide-react';
 import type { ApiCreditDetail } from '../../credits/types/api-credit-detail';
 import { SettlementQuoteCard } from '../components/settlement-quote-card';
 import { PAYMENT_METHOD_OPTIONS } from '../constants/payment-method-options';
@@ -110,7 +110,7 @@ export const SettleCreditPage: FC = () => {
                                 type="submit"
                                 disabled={isSubmitting}
                                 startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
-                                endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
+                                endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                             >
                                 {isSubmitting ? 'Liquidando…' : 'Confirmar liquidación'}
                             </Button>

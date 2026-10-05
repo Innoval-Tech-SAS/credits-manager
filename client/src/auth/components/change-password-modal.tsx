@@ -7,7 +7,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Modal } from '@ui/modal/components/modal';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { Eye, EyeOff, Lock } from 'lucide-react';
+import { Eye, EyeOff, KeyRound } from 'lucide-react';
 import type { ChangePasswordModalProps } from '../props/change-password-modal-props';
 
 export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ user, onClose, onSuccess }) => {
@@ -60,7 +60,7 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ user, onClos
                             id="new-password"
                             name="new-password"
                             type={showPassword ? 'text' : 'password'}
-                            startIcon={<Lock className="size-4" />}
+                            startIcon={<KeyRound className="size-4" />}
                             endIcon={
                                 <button
                                     type="button"
@@ -87,7 +87,7 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ user, onClos
                             id="confirm-new-password"
                             name="confirm-new-password"
                             type={showPassword ? 'text' : 'password'}
-                            startIcon={<Lock className="size-4" />}
+                            startIcon={<KeyRound className="size-4" />}
                             minLength={8}
                             value={confirmPassword}
                             onChange={(event) => setConfirmPassword(event.target.value)}

@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 import { Button } from '@ui/button/components/button';
 import { Spinner } from '@ui/spinner/components/spinner';
@@ -12,7 +12,7 @@ export const ThirdPartyFormFooter: FC<ThirdPartyFormFooterProps> = ({ isEditMode
                 type="submit"
                 disabled={isSubmitting}
                 startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
-                endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
+                endIcon={isSubmitting ? undefined : <Save className="size-4" />}
             >
                 {isSubmitting
                     ? isEditMode

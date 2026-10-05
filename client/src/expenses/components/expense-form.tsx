@@ -12,7 +12,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { ArrowRight } from 'lucide-react';
+import { Save } from 'lucide-react';
 import type { ExpenseFormProps } from '../props/expense-form-props';
 import type { ApiExpense } from '../types/api-expense';
 
@@ -134,7 +134,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                         type="submit"
                         disabled={isSubmitting || !tipoGastoId || (requiereTercero && !tercero)}
                         startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
-                        endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
+                        endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                     >
                         {isSubmitting ? 'Causando…' : 'Causar gasto'}
                     </Button>
