@@ -175,6 +175,16 @@ return [
         'exportacion' => [
             'excede_limite' => 'La exportación tiene :filas filas y el máximo es :maximo (límite de Excel). Acota los filtros e inténtalo de nuevo.',
         ],
+        'facturacion' => [
+            'credito_no_desembolsado' => 'La factura solo se puede crear sobre un crédito desembolsado o pagado.',
+            'no_borrador' => 'Solo se puede modificar o eliminar un borrador. Un documento emitido no cambia.',
+            'no_emitido' => 'Esta acción requiere un documento emitido.',
+            'sin_lineas' => 'La factura necesita al menos una línea con valor.',
+            'origen_tipo_invalido' => 'El documento de origen no admite este tipo de nota.',
+            'lineas_origen_invalidas' => 'Una línea no pertenece al documento de origen.',
+            'excede_saldo' => 'El valor supera lo que queda por acreditar de «:concepto».',
+            'numeracion_bloqueada' => 'No se puede cambiar el número inicial: ya hay documentos emitidos de este tipo.',
+        ],
         'credito_origen_id' => [
             'pertenece_a_otro_cliente' => 'El crédito seleccionado no pertenece a este cliente.',
             'no_desembolsado' => 'Solo se puede refinanciar un crédito desembolsado.',

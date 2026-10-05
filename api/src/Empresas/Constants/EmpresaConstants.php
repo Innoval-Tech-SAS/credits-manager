@@ -30,6 +30,7 @@ class EmpresaConstants
             'contabilidad.listar', 'contabilidad.crear', 'contabilidad.editar',
             'contabilidad.configurar', 'contabilidad.crear_manual',
             'contabilidad.anular', 'contabilidad.cerrar_periodo', 'contabilidad.exportar', 'contabilidad.imprimir_comprobante',
+            'facturacion.listar', 'facturacion.crear', 'facturacion.anular', 'facturacion.imprimir', 'facturacion.configurar',
             'gastos.listar', 'gastos.crear', 'gastos.anular', 'gastos.parametrizar', 'gastos.exportar',
             'cartera.listar', 'cartera.exportar', 'cartera.imprimir_reporte_empleador',
             'clientes.listar', 'clientes.ver', 'clientes.exportar',
