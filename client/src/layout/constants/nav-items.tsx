@@ -8,6 +8,7 @@ import {
     CreditCard,
     Eye,
     FileMinus,
+    FileText,
     Home,
     Info,
     Lock,
@@ -179,6 +180,13 @@ export const NAV_ITEMS: NavItem[] = [
                 path: "/gastos",
                 icon: FileMinus,
                 moduleKey: "gastos",
+                action: "listar",
+            },
+            {
+                name: "Facturación",
+                path: "/facturacion",
+                icon: FileText,
+                moduleKey: "facturacion",
                 action: "listar",
             },
             {

@@ -28,6 +28,8 @@ class AuditoriaConstants
 
     public const MODULO_GASTOS = 'gastos';
 
+    public const MODULO_FACTURACION = 'facturacion';
+
     public const MODULO_GEOGRAFIA = 'geografia';
 
     /** Tope de ids que un evento masivo (p. ej. mora) lista de forma explícita; el conteo siempre va completo. */
