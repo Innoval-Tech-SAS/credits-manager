@@ -58,6 +58,12 @@ class Usuario extends BaseModel implements AuthenticatableContract
         return $this->rol?->nombre === UsuarioConstants::ROL_ASESOR && ! $this->es_global;
     }
 
+    /** Id del asesor cuyo alcance limita los datos, o null si el usuario ve toda su empresa. */
+    public function idAsesorConAlcance(): ?int
+    {
+        return $this->restringidoAClientesPropios() ? $this->id : null;
+    }
+
     public function tienePermiso(string $modulo, string $accion): bool
     {
         if ($this->rol?->nombre === UsuarioConstants::ROL_ADMIN) {

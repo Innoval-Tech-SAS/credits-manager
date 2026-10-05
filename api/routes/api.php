@@ -112,6 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/creditos', [CreditoController::class, 'index'])->middleware('permiso:creditos,listar');
     Route::post('/creditos', [CreditoController::class, 'store'])->middleware('permiso:creditos,crear');
+    Route::post('/creditos/exportar', [CreditoController::class, 'exportar'])->middleware('permiso:creditos,exportar');
     Route::get('/creditos/{credito}', [CreditoController::class, 'show'])->middleware('permiso:creditos,listar');
     Route::patch('/creditos/{credito}', [CreditoController::class, 'update'])->middleware('permiso:creditos,editar');
     Route::get('/creditos/{credito}/estado-cuenta', [CreditoController::class, 'estadoCuenta'])->middleware('permiso:creditos,listar');
@@ -129,6 +130,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/creditos/{credito}/liquidacion', [PagoController::class, 'liquidar'])->middleware('permiso:pagos,crear');
 
     Route::get('/cartera', [CarteraController::class, 'index'])->middleware('permiso:cartera,listar');
+    Route::post('/cartera/exportar', [CarteraController::class, 'exportar'])->middleware('permiso:cartera,exportar');
     Route::get('/cartera/reporte-empleador', [CarteraController::class, 'reporteEmpleador'])->middleware('permiso:cartera,listar');
     Route::get('/cartera/reporte-empleador/pdf', [CarteraController::class, 'reporteEmpleadorPdf'])->middleware('permiso:cartera,imprimir_reporte_empleador');
     Route::post('/cartera/reporte-empleador/exportar', [CarteraController::class, 'exportarReporteEmpleador'])->middleware('permiso:cartera,exportar');

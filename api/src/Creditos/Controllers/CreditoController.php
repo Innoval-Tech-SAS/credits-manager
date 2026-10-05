@@ -6,9 +6,11 @@ use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Models\Credito;
 use App\Creditos\Requests\CrearCreditoRequest;
 use App\Creditos\Requests\EditarCreditoRequest;
+use App\Creditos\Requests\ExportarCreditosRequest;
 use App\Creditos\Services\CreditoService;
 use App\Creditos\Services\CuotaService;
 use App\Creditos\Services\EstadoCuentaService;
+use App\Exportacion\Enums\FormatoExportacion;
 use App\Http\Controllers\Controller;
 use App\Pagos\Services\PagoService;
 use Illuminate\Http\JsonResponse;
@@ -37,6 +39,18 @@ class CreditoController extends Controller
         );
 
         return response()->json($creditos);
+    }
+
+    public function exportar(ExportarCreditosRequest $peticion): JsonResponse
+    {
+        $exportacion = $this->creditos->solicitarExportacion(
+            $peticion->user(),
+            $peticion->validated('search'),
+            $peticion->validated('estado') ? EstadoCredito::from($peticion->validated('estado')) : null,
+            FormatoExportacion::from($peticion->validated('formato')),
+        );
+
+        return response()->json(['exportacion' => $exportacion], 202);
     }
 
     public function store(CrearCreditoRequest $peticion): JsonResponse

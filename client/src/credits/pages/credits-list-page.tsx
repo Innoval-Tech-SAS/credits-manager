@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { CreditCard, Search } from 'lucide-react';
 
+import { PermissionExportButton } from '../../shared/components/permission-export-button';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
@@ -27,6 +28,8 @@ export const CreditsListPage: FC = () => {
     const [isCancelling, setIsCancelling] = useState(false);
     const [cancelError, setCancelError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<CreditsListLocationState>();
+    const [exportMessage, setExportMessage] = useState<string | null>(null);
+    const [exportError, setExportError] = useState<string | null>(null);
 
     const { items, isLoading, page, setPage, totalPages, totalItems, search, setSearch, sortKey, sortDirection, toggleSort, refetch } =
         usePaginatedResource<ApiCredit>('/creditos');
@@ -59,10 +62,16 @@ export const CreditsListPage: FC = () => {
     return (
         <ModuleListPage
             pageTitle="Créditos"
-            successMessage={successMessage}
-            onDismissSuccess={() => setSuccessMessage(null)}
-            errorMessage={cancelError}
-            onDismissError={() => setCancelError(null)}
+            successMessage={successMessage ?? exportMessage}
+            onDismissSuccess={() => {
+                setSuccessMessage(null);
+                setExportMessage(null);
+            }}
+            errorMessage={cancelError ?? exportError}
+            onDismissError={() => {
+                setCancelError(null);
+                setExportError(null);
+            }}
             countLabel={`${totalItems} ${totalItems === 1 ? 'crédito registrado' : 'créditos registrados'}`}
             toolbar={
                 <>
@@ -74,6 +83,20 @@ export const CreditsListPage: FC = () => {
                             onChange={(event) => setSearch(event.target.value)}
                         />
                     </div>
+
+                    <PermissionExportButton
+                        modulo="creditos"
+                        endpoint="/creditos/exportar"
+                        filters={{ search }}
+                        onRequested={() => {
+                            setExportError(null);
+                            setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
+                        }}
+                        onError={(message) => {
+                            setExportMessage(null);
+                            setExportError(message);
+                        }}
+                    />
 
                     {canCreate && (
                         <Button collapseBelow="md" startIcon={<CreditCard className="size-4" />} onClick={() => navigate('/creditos/crear')}>
