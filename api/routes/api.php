@@ -214,6 +214,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/gastos/tarifas-reteica', [TarifaReteIcaMunicipioController::class, 'store'])->middleware('permiso:gastos,parametrizar');
 
     Route::get('/gastos', [GastoController::class, 'index'])->middleware('permiso:gastos,listar');
+    Route::post('/gastos/exportar', [GastoController::class, 'exportar'])->middleware('permiso:gastos,exportar');
     Route::post('/gastos', [GastoController::class, 'store'])->middleware('permiso:gastos,crear');
     Route::get('/gastos/{gasto}', [GastoController::class, 'show'])->middleware('permiso:gastos,listar');
     Route::delete('/gastos/{gasto}', [GastoController::class, 'destroy'])->middleware('permiso:gastos,anular');

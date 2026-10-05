@@ -2,8 +2,10 @@
 
 namespace App\Gastos\Controllers;
 
+use App\Exportacion\Enums\FormatoExportacion;
 use App\Gastos\Models\Gasto;
 use App\Gastos\Requests\CrearGastoRequest;
+use App\Gastos\Requests\ExportarGastosRequest;
 use App\Gastos\Services\GastoService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +25,17 @@ class GastoController extends Controller
         );
 
         return response()->json($gastos);
+    }
+
+    public function exportar(ExportarGastosRequest $peticion): JsonResponse
+    {
+        $exportacion = $this->gastos->solicitarExportacion(
+            $peticion->user(),
+            $peticion->validated('search'),
+            FormatoExportacion::from($peticion->validated('formato')),
+        );
+
+        return response()->json(['exportacion' => $exportacion], 202);
     }
 
     public function store(CrearGastoRequest $peticion): JsonResponse
