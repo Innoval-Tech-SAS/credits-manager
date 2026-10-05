@@ -93,6 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/permisos', [PermisoController::class, 'index'])->middleware('permiso:usuarios,listar');
 
     Route::get('/clientes', [ClienteController::class, 'index'])->middleware('permiso:clientes,listar');
+    Route::post('/clientes/exportar', [ClienteController::class, 'exportar'])->middleware('permiso:clientes,exportar');
     Route::post('/clientes', [ClienteController::class, 'store'])->middleware('permiso:clientes,crear');
     Route::get('/clientes/asesores-asignables', [ClienteController::class, 'asesoresAsignables'])->middleware('permiso:clientes,crear');
     Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->middleware('permiso:clientes,ver');
