@@ -84,6 +84,7 @@ class PagoService
             ]);
 
             $aplicacion = $this->aplicarAlPlan($credito, $pago, $valorPago);
+            $this->pagos->actualizar($pago, ['valor_capital' => $aplicacion['capital'], 'valor_interes' => $aplicacion['interes']]);
             $restante = $aplicacion['sobrante'];
             $capitalTotal = $aplicacion['capital'];
             $interesTotal = $aplicacion['interes'];
@@ -193,6 +194,8 @@ class PagoService
                 'credito_id' => $credito->id,
                 'cliente_id' => $credito->cliente_id,
                 'valor_pago' => $cotizacion['total'],
+                'valor_capital' => $cotizacion['capital_pendiente'],
+                'valor_interes' => $cotizacion['interes'],
                 'fecha_pago' => now(),
                 'forma_pago' => $formaPago,
                 'observacion' => $observacion ?? 'Liquidación anticipada del crédito',
@@ -257,6 +260,7 @@ class PagoService
             ]);
 
             $aplicacion = $this->aplicarAlPlan($credito, $pago, $valor);
+            $this->pagos->actualizar($pago, ['valor_capital' => $aplicacion['capital'], 'valor_interes' => $aplicacion['interes']]);
 
             if (! $aplicacion['sobrante']->esCero()) {
                 throw ValidationException::withMessages(['valor' => 'El valor supera el saldo pendiente del crédito.']);

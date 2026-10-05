@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'credito_id',
     'cliente_id',
     'valor_pago',
+    'valor_capital',
+    'valor_interes',
     'fecha_pago',
     'forma_pago',
     'observacion',
@@ -42,6 +44,8 @@ class Pago extends BaseModel
         return [
             'forma_pago' => FormaPago::class,
             'valor_pago' => DineroCast::class,
+            'valor_capital' => DineroCast::class,
+            'valor_interes' => DineroCast::class,
             'fecha_pago' => 'datetime:Y-m-d',
         ];
     }
