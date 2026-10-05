@@ -8,7 +8,7 @@ import type { ReportExportButtonProps } from '../props/report-export-button-prop
 
 /** Exportación de un reporte contable. Solo aparece con el permiso `contabilidad.exportar`. */
 export const ReportExportButton: FC<ReportExportButtonProps> = ({ endpoint, filters, disabled = false }) => {
-    const canExport = usePermission('contabilidad', 'exportar');
+    const canExport = usePermission('informes_contables', 'exportar');
     const [message, setMessage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
