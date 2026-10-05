@@ -3,11 +3,17 @@
 namespace App\Cartera\Services;
 
 use App\Cartera\Constants\CarteraConstants;
+use App\Cartera\Exportaciones\FuenteCartera;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Repositories\CreditoRepository;
 use App\Creditos\Repositories\CuotaRepository;
 use App\Creditos\Services\CuotaService;
 use App\Empleadores\Repositories\EmpleadorRepository;
+use App\Exportacion\Enums\FormatoExportacion;
+use App\Exportacion\Models\Exportacion;
+use App\Exportacion\Services\ExportacionService;
+use App\Usuarios\Models\Usuario;
+use Illuminate\Support\Collection;
 
 /**
  * Sin tabla propia — solo lectura sobre créditos/cuotas activos. Reusa
@@ -20,13 +26,67 @@ class CarteraService
         protected CreditoRepository $creditos,
         protected EmpleadorRepository $empleadores,
         protected CuotaRepository $cuotas,
+        protected ExportacionService $exportaciones,
     ) {}
 
     public function resumen(): array
     {
         $this->cuotaService->actualizarVencidas();
 
-        $creditos = $this->creditos->activosConCliente();
+        $clasificados = $this->clasificar($this->creditos->activosConCliente());
+        $alDia = $clasificados['al_dia'];
+        $enMora = $clasificados['en_mora'];
+
+        return [
+            'al_dia' => $alDia,
+            'en_mora' => $enMora,
+            'totales' => [
+                'al_dia' => $this->totalConPromedio($alDia),
+                'en_mora' => $this->totalConPromedio($enMora),
+            ],
+            'envejecimiento_mora' => $this->envejecimientoMora($enMora),
+        ];
+    }
+
+    public function solicitarExportacion(Usuario $usuario, FormatoExportacion $formato): Exportacion
+    {
+        $this->cuotaService->actualizarVencidas();
+
+        return $this->exportaciones->solicitar(
+            new FuenteCartera((int) $usuario->empresa_id, $usuario->idAsesorConAlcance()),
+            $formato,
+            $usuario,
+        );
+    }
+
+    /**
+     * Filas de la cartera de la empresa (o del asesor), con la misma clasificación que la pantalla.
+     * Se llama desde el worker: la empresa y el asesor llegan explícitos, sin sesión.
+     *
+     * @return list<array{credito: int, cliente: string, estado: string, dias_mora: ?int, saldo: Dinero}>
+     */
+    public function filasParaExportar(int $empresaId, ?int $asesorId): array
+    {
+        $clasificados = $this->clasificar($this->creditos->activosDeEmpresa($empresaId, $asesorId));
+
+        $filas = [];
+
+        foreach ($clasificados['al_dia'] as $fila) {
+            $filas[] = $this->filaExportable($fila, 'Al día', null);
+        }
+
+        foreach ($clasificados['en_mora'] as $fila) {
+            $filas[] = $this->filaExportable($fila, 'En mora', $fila['dias_mora']);
+        }
+
+        usort($filas, fn (array $a, array $b) => strcmp($a['cliente'], $b['cliente']));
+
+        return $filas;
+    }
+
+    /** @return array{al_dia: list<array>, en_mora: list<array>} */
+    private function clasificar(Collection $creditos): array
+    {
         $resumenPorCredito = $this->cuotas->resumenPorCreditos($creditos->pluck('id')->all());
 
         $alDia = [];
@@ -44,14 +104,18 @@ class CarteraService
             }
         }
 
+        return ['al_dia' => $alDia, 'en_mora' => $enMora];
+    }
+
+    /** @return array{credito: int, cliente: string, estado: string, dias_mora: ?int, saldo: Dinero} */
+    private function filaExportable(array $fila, string $estado, ?int $diasMora): array
+    {
         return [
-            'al_dia' => $alDia,
-            'en_mora' => $enMora,
-            'totales' => [
-                'al_dia' => $this->totalConPromedio($alDia),
-                'en_mora' => $this->totalConPromedio($enMora),
-            ],
-            'envejecimiento_mora' => $this->envejecimientoMora($enMora),
+            'credito' => $fila['credito']->id,
+            'cliente' => $fila['credito']->cliente->tercero->nombre,
+            'estado' => $estado,
+            'dias_mora' => $diasMora,
+            'saldo' => $fila['saldo'],
         ];
     }
 

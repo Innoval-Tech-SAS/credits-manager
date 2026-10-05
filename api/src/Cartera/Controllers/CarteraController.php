@@ -3,6 +3,7 @@
 namespace App\Cartera\Controllers;
 
 use App\Cartera\Requests\DescargarReporteEmpleadorRequest;
+use App\Cartera\Requests\ExportarCarteraRequest;
 use App\Cartera\Requests\ExportarReporteEmpleadorRequest;
 use App\Cartera\Services\CarteraService;
 use App\Cartera\Services\ReporteEmpleadorService;
@@ -22,6 +23,16 @@ class CarteraController extends Controller
     public function index(): JsonResponse
     {
         return response()->json($this->cartera->resumen());
+    }
+
+    public function exportar(ExportarCarteraRequest $peticion): JsonResponse
+    {
+        $exportacion = $this->cartera->solicitarExportacion(
+            $peticion->user(),
+            FormatoExportacion::from($peticion->validated('formato')),
+        );
+
+        return response()->json(['exportacion' => $exportacion], 202);
     }
 
     public function reporteEmpleador(Request $peticion): JsonResponse

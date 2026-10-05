@@ -6,8 +6,11 @@ use App\Core\Base\BaseRepository;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Models\Credito;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\LazyCollection;
 
 class CreditoRepository extends BaseRepository
 {
@@ -19,6 +22,20 @@ class CreditoRepository extends BaseRepository
     public function activosConCliente(): Collection
     {
         return $this->consulta()
+            ->where('estado', EstadoCredito::Desembolsado)
+            ->with('cliente.tercero')
+            ->get()
+            ->sortBy(fn (Credito $credito) => $credito->cliente->tercero->nombre)
+            ->values();
+    }
+
+    /**
+     * Créditos desembolsados de la empresa, con su cliente. La empresa y el asesor van explícitos: la cartera
+     * para exportar corre en el worker, sin sesión, donde los scopes no filtran.
+     */
+    public function activosDeEmpresa(int $empresaId, ?int $asesorId): Collection
+    {
+        return $this->restringirAAsesor($this->consultaDeEmpresa($empresaId), $empresaId, $asesorId)
             ->where('estado', EstadoCredito::Desembolsado)
             ->with('cliente.tercero')
             ->get()
@@ -39,6 +56,48 @@ class CreditoRepository extends BaseRepository
             ->withCount('pagos')
             ->orderByDesc('creado_en');
 
+        return $this->filtrar($consulta, $busqueda, $clienteId, $estado)->paginate(perPage: $porPagina, page: $pagina);
+    }
+
+    /** Mismo listado que la pantalla, con empresa y asesor explícitos, para exportar. */
+    public function consultaParaExportar(int $empresaId, ?int $asesorId, ?string $busqueda, ?EstadoCredito $estado): Builder
+    {
+        $consulta = $this->restringirAAsesor($this->consultaDeEmpresa($empresaId), $empresaId, $asesorId)
+            ->with('cliente.tercero')
+            ->orderByDesc('creado_en');
+
+        return $this->filtrar($consulta, $busqueda, null, $estado);
+    }
+
+    public function cursorParaExportar(int $empresaId, ?int $asesorId, ?string $busqueda, ?EstadoCredito $estado): LazyCollection
+    {
+        return $this->consultaParaExportar($empresaId, $asesorId, $busqueda, $estado)->lazy();
+    }
+
+    public function contarParaExportar(int $empresaId, ?int $asesorId, ?string $busqueda, ?EstadoCredito $estado): int
+    {
+        return $this->consultaParaExportar($empresaId, $asesorId, $busqueda, $estado)->reorder()->count();
+    }
+
+    private function consultaDeEmpresa(int $empresaId): Builder
+    {
+        return $this->consulta()->where('creditos.empresa_id', $empresaId);
+    }
+
+    private function restringirAAsesor(Builder $consulta, int $empresaId, ?int $asesorId): Builder
+    {
+        if ($asesorId === null) {
+            return $consulta;
+        }
+
+        return $consulta->whereIn(
+            'creditos.cliente_id',
+            DB::table('clientes')->select('id')->where('empresa_id', $empresaId)->where('asesor_id', $asesorId),
+        );
+    }
+
+    private function filtrar(Builder $consulta, ?string $busqueda, ?int $clienteId, ?EstadoCredito $estado): Builder
+    {
         if ($busqueda) {
             $consulta->whereHas('cliente.tercero', fn ($q) => $q->where('nombre', 'like', "%{$busqueda}%"));
         }
@@ -51,7 +110,7 @@ class CreditoRepository extends BaseRepository
             $consulta->where('estado', $estado);
         }
 
-        return $consulta->paginate(perPage: $porPagina, page: $pagina);
+        return $consulta;
     }
 
     public function obtenerConRelaciones(Credito $credito): Credito
