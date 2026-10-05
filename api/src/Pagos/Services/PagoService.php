@@ -17,10 +17,12 @@ use App\Exportacion\Models\Exportacion;
 use App\Exportacion\Services\ExportacionService;
 use App\Pagos\Enums\FormaPago;
 use App\Pagos\Exportaciones\FuentePagos;
+use App\Pagos\Models\Pago;
 use App\Pagos\Repositories\PagoDetalleRepository;
 use App\Pagos\Repositories\PagoRepository;
 use App\Recibos\Services\ReciboCajaService;
 use App\Usuarios\Models\Usuario;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -81,49 +83,11 @@ class PagoService
                 'registrado_por' => $usuarioId,
             ]);
 
-            $restante = $valorPago;
-            $capitalTotal = Dinero::cero();
-            $interesTotal = Dinero::cero();
-            $cuotasAfectadas = [];
-
-            foreach ($this->cuotas->pendientesOrdenadasParaActualizar($credito->id) as $cuota) {
-                if (! $restante->esPositivo()) {
-                    break;
-                }
-
-                $saldoCuota = $cuota->valor->restar($cuota->valor_pagado);
-                if (! $saldoCuota->esPositivo()) {
-                    continue;
-                }
-
-                $aplicar = $restante->menorEntre($saldoCuota);
-                $nuevoPagado = $cuota->valor_pagado->sumar($aplicar);
-
-                // Interés primero: la cuota ya trae fijo su valor_interes/valor_capital
-                // (AmortizacionCalculator); pago_detalle no guarda ese desglose por línea
-                // (a diferencia del legado), así que se deriva aquí para la contabilización.
-                $interesYaPagado = $cuota->valor_pagado->menorEntre($cuota->valor_interes);
-                $interesPendiente = $cuota->valor_interes->restar($interesYaPagado);
-                $interesEnEstePago = $aplicar->menorEntre($interesPendiente->noNegativo());
-                $capitalEnEstePago = $aplicar->restar($interesEnEstePago);
-                $capitalTotal = $capitalTotal->sumar($capitalEnEstePago);
-                $interesTotal = $interesTotal->sumar($interesEnEstePago);
-
-                $this->pagoDetalles->crear([
-                    'pago_id' => $pago->id,
-                    'cuota_id' => $cuota->id,
-                    'valor_aplicado' => $aplicar,
-                ]);
-
-                $cuotasAfectadas[] = $cuota->id;
-
-                $this->cuotas->actualizar($cuota, [
-                    'valor_pagado' => $nuevoPagado,
-                    'estado' => $nuevoPagado->mayorOIgualQue($cuota->valor) ? EstadoCuota::Pagada : EstadoCuota::Pendiente,
-                ]);
-
-                $restante = $restante->restar($aplicar);
-            }
+            $aplicacion = $this->aplicarAlPlan($credito, $pago, $valorPago);
+            $restante = $aplicacion['sobrante'];
+            $capitalTotal = $aplicacion['capital'];
+            $interesTotal = $aplicacion['interes'];
+            $cuotasAfectadas = $aplicacion['cuotas'];
 
             $this->recalcularSaldoCapital($credito);
 
@@ -261,6 +225,118 @@ class PagoService
 
             return ['pago' => $pago, ...$cotizacion];
         });
+    }
+
+    /**
+     * Pago de la importación histórica: fecha del archivo, sin recibo de caja. Solo contabiliza si la carga lo pidió.
+     * Un valor que excede el saldo pendiente no se descarta: revierte la transacción con el mensaje correspondiente.
+     *
+     * @param  array<string, mixed>  $datosOrigen  texto del archivo que no es columna del pago (cuenta, registrado por)
+     */
+    public function registrarPagoHistorico(
+        Credito $credito,
+        Dinero $valor,
+        string $fechaPago,
+        array $datosOrigen,
+        ?int $registradoPor,
+        bool $contabilizar,
+    ): Pago {
+        $this->exigirDesembolsado($credito);
+
+        return DB::transaction(function () use ($credito, $valor, $fechaPago, $datosOrigen, $registradoPor, $contabilizar) {
+            $creditoAnteriores = $this->auditoria->instantanea($credito);
+
+            $pago = $this->pagos->crear([
+                'credito_id' => $credito->id,
+                'cliente_id' => $credito->cliente_id,
+                'valor_pago' => $valor,
+                'fecha_pago' => CarbonImmutable::parse($fechaPago, 'America/Bogota')->startOfDay(),
+                'forma_pago' => FormaPago::Otro,
+                'observacion' => $datosOrigen['observaciones'] ?? null,
+                'registrado_por' => $registradoPor,
+            ]);
+
+            $aplicacion = $this->aplicarAlPlan($credito, $pago, $valor);
+
+            if (! $aplicacion['sobrante']->esCero()) {
+                throw ValidationException::withMessages(['valor' => 'El valor supera el saldo pendiente del crédito.']);
+            }
+
+            $this->recalcularSaldoCapital($credito);
+
+            if ($this->cuotas->contarNoPagadas($credito->id) === 0) {
+                $this->creditos->marcarComoPagado($credito);
+            }
+
+            $comprobante = $contabilizar
+                ? $this->comprobantes->contabilizarRecaudoPago($pago, $aplicacion['capital'], $aplicacion['interes'])
+                : null;
+
+            $this->auditoria->registrarCreacion(
+                AuditoriaConstants::MODULO_PAGOS,
+                "Pago #{$pago->id} de {$valor->aDecimalString()} importado en el crédito #{$credito->id}",
+                $pago,
+                [
+                    'capital' => $aplicacion['capital'],
+                    'interes' => $aplicacion['interes'],
+                    'cuotas_afectadas' => $aplicacion['cuotas'],
+                    'comprobante_id' => $comprobante?->id,
+                    'importado' => true,
+                    'origen_archivo' => $datosOrigen,
+                ],
+            );
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CREDITOS,
+                "Crédito #{$credito->id} actualizado por pago importado #{$pago->id}",
+                $credito,
+                $creditoAnteriores,
+            );
+
+            return $pago;
+        });
+    }
+
+    /**
+     * @return array{sobrante: Dinero, capital: Dinero, interes: Dinero, cuotas: list<int>}
+     */
+    private function aplicarAlPlan(Credito $credito, Pago $pago, Dinero $valor): array
+    {
+        $cuotas = $this->cuotas->pendientesOrdenadasParaActualizar($credito->id)->values();
+
+        $aplicacion = AplicadorPagoPlan::aplicar(
+            $cuotas->map(fn ($cuota) => [
+                'valor' => $cuota->valor,
+                'valor_pagado' => $cuota->valor_pagado,
+                'valor_interes' => $cuota->valor_interes,
+            ])->all(),
+            $valor,
+        );
+
+        $cuotasAfectadas = [];
+
+        foreach ($aplicacion['asignaciones'] as $asignacion) {
+            $cuota = $cuotas[$asignacion['posicion']];
+
+            $this->pagoDetalles->crear([
+                'pago_id' => $pago->id,
+                'cuota_id' => $cuota->id,
+                'valor_aplicado' => $asignacion['aplicado'],
+            ]);
+
+            $cuotasAfectadas[] = $cuota->id;
+
+            $this->cuotas->actualizar($cuota, [
+                'valor_pagado' => $asignacion['nuevo_pagado'],
+                'estado' => $asignacion['nuevo_pagado']->mayorOIgualQue($cuota->valor) ? EstadoCuota::Pagada : EstadoCuota::Pendiente,
+            ]);
+        }
+
+        return [
+            'sobrante' => $aplicacion['sobrante'],
+            'capital' => $aplicacion['capital'],
+            'interes' => $aplicacion['interes'],
+            'cuotas' => $cuotasAfectadas,
+        ];
     }
 
     private function exigirDesembolsado(Credito $credito): void
