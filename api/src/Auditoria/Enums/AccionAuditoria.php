@@ -24,5 +24,6 @@ enum AccionAuditoria: string
     case Contabilizar = 'contabilizar';
     case Reversar = 'reversar';
     case CerrarPeriodo = 'cerrar_periodo';
+    case Recalcular = 'recalcular';
     case ReabrirPeriodo = 'reabrir_periodo';
 }
