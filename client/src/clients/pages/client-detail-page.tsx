@@ -15,6 +15,7 @@ import { ClientDocuments } from '../components/client-documents';
 import { ClientEmploymentHistoryTable } from '../components/client-employment-history-table';
 import { ClientInfoCard } from '../components/client-info-card';
 import { ClientSummaryCards } from '../components/client-summary-cards';
+import { WhatsAppButton } from '../components/whatsapp-button';
 import type { ApiClientDocument } from '../types/api-client-document';
 import type { ApiClientSummary } from '../types/api-client-summary';
 
@@ -80,7 +81,10 @@ export const ClientDetailPage: FC = () => {
 
     return (
         <div className="flex min-h-full flex-col pb-6">
-            <PageBreadcrumb pageTitle={cliente.tercero.nombre} />
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <PageBreadcrumb pageTitle={cliente.tercero.nombre} />
+                <WhatsAppButton variant="boton" nombre={cliente.tercero.nombre} celular={cliente.tercero.celular} />
+            </div>
 
             <ClientSummaryCards cliente={cliente} saldoConsolidado={saldoConsolidado} creditosCount={creditos.length} />
 
