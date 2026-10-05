@@ -1,8 +1,10 @@
 import type { FC } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router';
 import { Download, Printer } from 'lucide-react';
 
 import { usePermission } from '../../auth/hooks/use-permission';
+import { PermissionExportButton } from '../../shared/components/permission-export-button';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useCompany } from '../../company/hooks/use-company';
@@ -23,6 +25,8 @@ export const AccountStatementPage: FC = () => {
 
     const { data: estadoCuenta, error } = useResource<ApiAccountStatement>(`/creditos/${id}/estado-cuenta`);
     const { download, isDownloading, error: downloadError } = useDownloadFile();
+    const [exportMessage, setExportMessage] = useState<string | null>(null);
+    const [exportError, setExportError] = useState<string | null>(null);
 
     if (error) {
         return (
@@ -62,7 +66,31 @@ export const AccountStatementPage: FC = () => {
                         <Button iconOnly startIcon={<Printer className="size-4" />} onClick={() => window.print()}>Imprimir</Button>
                     </>
                 )}
+                <PermissionExportButton
+                    modulo="creditos"
+                    endpoint={`/creditos/${id}/estado-cuenta/exportar`}
+                    filters={{}}
+                    onRequested={() => {
+                        setExportError(null);
+                        setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
+                    }}
+                    onError={(message) => {
+                        setExportMessage(null);
+                        setExportError(message);
+                    }}
+                />
             </div>
+
+            {exportMessage && (
+                <div className="mb-4 print:hidden">
+                    <Alert variant="success" title="Listo" message={exportMessage} onDismiss={() => setExportMessage(null)} />
+                </div>
+            )}
+            {exportError && (
+                <div className="mb-4 print:hidden">
+                    <Alert variant="danger" title="No se pudo exportar" message={exportError} onDismiss={() => setExportError(null)} />
+                </div>
+            )}
 
             {downloadError && (
                 <div className="mb-4 print:hidden">
