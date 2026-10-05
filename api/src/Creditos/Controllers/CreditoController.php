@@ -7,6 +7,7 @@ use App\Creditos\Models\Credito;
 use App\Creditos\Requests\CrearCreditoRequest;
 use App\Creditos\Requests\EditarCreditoRequest;
 use App\Creditos\Requests\ExportarCreditosRequest;
+use App\Creditos\Requests\ExportarEstadoCuentaRequest;
 use App\Creditos\Services\CreditoService;
 use App\Creditos\Services\CuotaService;
 use App\Creditos\Services\EstadoCuentaService;
@@ -82,6 +83,17 @@ class CreditoController extends Controller
     public function estadoCuenta(Credito $credito): JsonResponse
     {
         return response()->json($this->estadosCuenta->obtener($credito));
+    }
+
+    public function estadoCuentaExportar(Credito $credito, ExportarEstadoCuentaRequest $peticion): JsonResponse
+    {
+        $exportacion = $this->estadosCuenta->solicitarExportacion(
+            $credito,
+            $peticion->user(),
+            FormatoExportacion::from($peticion->validated('formato')),
+        );
+
+        return response()->json(['exportacion' => $exportacion], 202);
     }
 
     public function estadoCuentaPdf(Credito $credito): Response

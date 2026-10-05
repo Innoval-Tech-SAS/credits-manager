@@ -7,11 +7,16 @@ use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Documentos\EstadoCuentaPdf;
+use App\Creditos\Exportaciones\FuenteEstadoCuenta;
 use App\Creditos\Models\Credito;
 use App\Empresas\Services\EmpresaService;
+use App\Exportacion\Enums\FormatoExportacion;
+use App\Exportacion\Models\Exportacion;
+use App\Exportacion\Services\ExportacionService;
 use App\Impresion\Data\PdfGenerado;
 use App\Impresion\Services\GeneradorPdf;
 use App\Pagos\Services\PagoService;
+use App\Usuarios\Models\Usuario;
 use Illuminate\Support\Collection;
 
 class EstadoCuentaService
@@ -23,7 +28,15 @@ class EstadoCuentaService
         protected EmpresaService $empresas,
         protected GeneradorPdf $generador,
         protected EmisorAuditoria $auditoria,
+        protected ExportacionService $exportaciones,
     ) {}
+
+    public function solicitarExportacion(Credito $credito, Usuario $usuario, FormatoExportacion $formato): Exportacion
+    {
+        $this->cuotas->actualizarVencidas();
+
+        return $this->exportaciones->solicitar(new FuenteEstadoCuenta((int) $usuario->empresa_id, $credito->id), $formato, $usuario);
+    }
 
     /** @return array{credito: Credito, saldo: Dinero, refinanciacion: array<string, mixed>|null, pagos: Collection, resumen_cuotas: array<string, mixed>} */
     public function obtener(Credito $credito): array
