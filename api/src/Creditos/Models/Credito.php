@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'cliente_id',
+    'codigo',
     'tipo_credito',
     'credito_origen_id',
     'valor_prestamo',
