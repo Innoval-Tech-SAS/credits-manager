@@ -111,6 +111,25 @@ services:
       - exportaciones_data:/var/exportaciones
     restart: unless-stopped
 
+  # Valida y escribe las importaciones históricas (cola `importaciones`). Worker propio: una carga grande no retrasa exportaciones.
+  importaciones-worker:
+    image: credits-manager-api:latest
+    container_name: credits-manager-importaciones-worker
+    entrypoint: ["php", "artisan", "queue:work", "redis", "--queue=importaciones", "--timeout=3600", "--tries=1", "--sleep=1"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    environment: *api-worker-env
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_storage:/var/www/html/storage
+      - importaciones_data:/var/importaciones
+    restart: unless-stopped
+
   # Ejecuta las tareas programadas de Laravel (`routes/console.php`): mora diaria y limpieza de exportaciones.
   # Una sola instancia: con dos réplicas cada tarea correría duplicada.
   scheduler:
@@ -129,6 +148,7 @@ services:
     volumes:
       - api_storage:/var/www/html/storage
       - exportaciones_data:/var/exportaciones
+      - importaciones_data:/var/importaciones
     restart: unless-stopped
 
   # Servidor WebSocket (Laravel Reverb). El navegador entra por nginx (wss://api.ddasolucionescredicias.tech/app).
@@ -201,11 +221,14 @@ services:
         condition: service_started
       exportaciones-worker:
         condition: service_started
+      importaciones-worker:
+        condition: service_started
       reverb:
         condition: service_started
     volumes:
       - api_storage:/var/www/html/storage
       - exportaciones_data:/var/exportaciones
+      - importaciones_data:/var/importaciones
     healthcheck:
       test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
       interval: 5s
@@ -248,3 +271,4 @@ volumes:
   redis_data:
   api_storage:
   exportaciones_data:
+  importaciones_data:
