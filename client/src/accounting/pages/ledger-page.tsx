@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { useState } from 'react';
 
 import { useResource } from '../../shared/hooks/use-resource';
+import { ReportExportButton } from '../components/report-export-button';
 import { formatDateEs } from '../../shared/utils/format-date-es';
 import { formatMoney } from '../../shared/utils/format-money';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
@@ -60,6 +61,14 @@ export const LedgerPage: FC = () => {
                         <Label htmlFor="hasta">Hasta</Label>
                         <DatePicker id="hasta" value={hasta} onChange={setHasta} />
                     </div>
+                </div>
+
+                <div className="mt-6">
+                    <ReportExportButton
+                        endpoint="/contabilidad/libro-mayor/exportar"
+                        filters={{ cuenta_id: cuentaId, desde, hasta }}
+                        disabled={!cuentaId}
+                    />
                 </div>
             </div>
 
