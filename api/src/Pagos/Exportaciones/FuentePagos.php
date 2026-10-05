@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Pagos\Exportaciones;
+
+use App\Core\Dinero\Dinero;
+use App\Exportacion\Contracts\FuenteExportable;
+use App\Exportacion\Data\ColumnaExportable;
+use App\Exportacion\Enums\TipoColumna;
+use App\Pagos\Repositories\PagoRepository;
+use App\Usuarios\Models\Usuario;
+
+/**
+ * Historial de pagos a Excel/CSV, con los mismos filtros de la pantalla. Serializable: empresa, asesor con
+ * alcance (null = toda la empresa) y búsqueda; las filas se leen con cursor en el worker.
+ */
+final class FuentePagos implements FuenteExportable
+{
+    public function __construct(
+        private readonly int $empresaId,
+        private readonly ?int $asesorId,
+        private readonly ?string $busqueda,
+    ) {}
+
+    public function reporte(): string
+    {
+        return 'pagos.listado';
+    }
+
+    public function modulo(): string
+    {
+        return 'pagos';
+    }
+
+    public function titulo(): string
+    {
+        return 'Pagos';
+    }
+
+    public function nombreArchivo(): string
+    {
+        return 'pagos-'.now('America/Bogota')->format('Y-m-d');
+    }
+
+    public function columnas(): array
+    {
+        return [
+            new ColumnaExportable('pago', 'Pago (id)', TipoColumna::Entero),
+            new ColumnaExportable('fecha', 'Fecha', TipoColumna::Fecha),
+            new ColumnaExportable('cliente', 'Cliente'),
+            new ColumnaExportable('credito', 'Crédito (id)', TipoColumna::Entero),
+            new ColumnaExportable('forma_pago', 'Forma de pago'),
+            new ColumnaExportable('valor', 'Valor', TipoColumna::Monetario),
+            new ColumnaExportable('recibo', 'Recibo (número)', TipoColumna::Entero),
+            new ColumnaExportable('observacion', 'Observación'),
+        ];
+    }
+
+    public function filas(): iterable
+    {
+        $total = Dinero::cero();
+
+        foreach (app(PagoRepository::class)->cursorParaExportar($this->empresaId, $this->asesorId, $this->busqueda) as $pago) {
+            $total = $total->sumar($pago->valor_pago);
+
+            yield [
+                'pago' => $pago->id,
+                'fecha' => $pago->fecha_pago,
+                'cliente' => $pago->cliente->tercero->nombre,
+                'credito' => $pago->credito_id,
+                'forma_pago' => $pago->forma_pago->value,
+                'valor' => $pago->valor_pago,
+                'recibo' => $pago->recibo?->numero,
+                'observacion' => $pago->observacion,
+            ];
+        }
+
+        yield [
+            'pago' => null,
+            'fecha' => null,
+            'cliente' => 'Total',
+            'credito' => null,
+            'forma_pago' => null,
+            'valor' => $total,
+            'recibo' => null,
+            'observacion' => null,
+        ];
+    }
+
+    public function totalFilas(): int
+    {
+        return app(PagoRepository::class)->contarParaExportar($this->empresaId, $this->asesorId, $this->busqueda) + 1;
+    }
+
+    public function filtrosAplicados(): array
+    {
+        return ['busqueda' => $this->busqueda, 'asesor_id' => $this->asesorId];
+    }
+
+    public function autorizadoPara(Usuario $usuario): bool
+    {
+        return $usuario->empresa_id !== null && $usuario->tienePermiso('pagos', 'exportar');
+    }
+}

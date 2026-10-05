@@ -4,8 +4,11 @@ namespace App\Pagos\Repositories;
 
 use App\Core\Base\BaseRepository;
 use App\Pagos\Models\Pago;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\LazyCollection;
 
 class PagoRepository extends BaseRepository
 {
@@ -22,11 +25,41 @@ class PagoRepository extends BaseRepository
             ->with(['cliente.tercero', 'credito', 'recibo:id,pago_id,numero,estado'])
             ->orderByDesc('fecha_pago');
 
+        return $this->filtrar($consulta, $busqueda)->paginate(perPage: $porPagina, page: $pagina);
+    }
+
+    /** Mismo listado que la pantalla, con empresa y asesor explícitos, para exportar. */
+    public function consultaParaExportar(int $empresaId, ?int $asesorId, ?string $busqueda): Builder
+    {
+        $consulta = $this->consulta()
+            ->where('pagos.empresa_id', $empresaId)
+            ->with(['cliente.tercero', 'recibo:id,pago_id,numero,estado'])
+            ->orderByDesc('fecha_pago');
+
+        if ($asesorId !== null) {
+            $consulta->whereIn('pagos.cliente_id', DB::table('clientes')->select('id')->where('empresa_id', $empresaId)->where('asesor_id', $asesorId));
+        }
+
+        return $this->filtrar($consulta, $busqueda);
+    }
+
+    public function cursorParaExportar(int $empresaId, ?int $asesorId, ?string $busqueda): LazyCollection
+    {
+        return $this->consultaParaExportar($empresaId, $asesorId, $busqueda)->lazy();
+    }
+
+    public function contarParaExportar(int $empresaId, ?int $asesorId, ?string $busqueda): int
+    {
+        return $this->consultaParaExportar($empresaId, $asesorId, $busqueda)->reorder()->count();
+    }
+
+    private function filtrar(Builder $consulta, ?string $busqueda): Builder
+    {
         if ($busqueda) {
             $consulta->whereHas('cliente.tercero', fn ($q) => $q->where('nombre', 'like', "%{$busqueda}%"));
         }
 
-        return $consulta->paginate(perPage: $porPagina, page: $pagina);
+        return $consulta;
     }
 
     public function porCredito(int $creditoId, string $direccion = 'desc'): Collection

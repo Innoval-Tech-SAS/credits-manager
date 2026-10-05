@@ -4,9 +4,11 @@ namespace App\Pagos\Controllers;
 
 use App\Core\Dinero\Dinero;
 use App\Creditos\Models\Credito;
+use App\Exportacion\Enums\FormatoExportacion;
 use App\Http\Controllers\Controller;
 use App\Pagos\Enums\FormaPago;
 use App\Pagos\Requests\CrearPagoRequest;
+use App\Pagos\Requests\ExportarPagosRequest;
 use App\Pagos\Requests\LiquidarCreditoRequest;
 use App\Pagos\Services\PagoService;
 use Illuminate\Http\JsonResponse;
@@ -26,6 +28,17 @@ class PagoController extends Controller
         );
 
         return response()->json($pagos);
+    }
+
+    public function exportar(ExportarPagosRequest $peticion): JsonResponse
+    {
+        $exportacion = $this->pagoService->solicitarExportacion(
+            $peticion->user(),
+            $peticion->validated('search'),
+            FormatoExportacion::from($peticion->validated('formato')),
+        );
+
+        return response()->json(['exportacion' => $exportacion], 202);
     }
 
     public function index(Credito $credito): JsonResponse
