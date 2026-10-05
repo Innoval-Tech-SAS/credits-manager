@@ -16,5 +16,6 @@ export type ApiEmailSettings = {
     variables: {
         clave: string;
         descripcion: string;
+        origen: string;
     }[];
 };
