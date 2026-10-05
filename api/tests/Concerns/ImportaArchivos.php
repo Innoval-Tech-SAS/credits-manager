@@ -6,6 +6,7 @@ use App\Importacion\Constants\ImportacionConstants;
 use App\Importacion\Models\Importacion;
 use App\Importacion\Models\ImportacionError;
 use App\Importacion\Services\ImportacionEjecutorService;
+use Database\Seeders\PermisoSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -18,6 +19,7 @@ trait ImportaArchivos
 {
     protected function prepararImportaciones(): void
     {
+        $this->seed(PermisoSeeder::class);
         Queue::fake();
         Storage::fake(ImportacionConstants::DISCO);
     }

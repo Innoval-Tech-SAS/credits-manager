@@ -196,19 +196,6 @@ export const NAV_ITEMS: NavItem[] = [
         ],
     },
     {
-        name: "Configuración",
-        icon: Settings2,
-        subItems: [
-            {
-                name: "Importaciones",
-                path: "/importaciones",
-                icon: FileInput,
-                moduleKey: "importaciones",
-                action: "listar",
-            },
-        ],
-    },
-    {
         name: "Gastos",
         icon: Receipt,
         subItems: [
@@ -326,6 +313,13 @@ export const NAV_ITEMS: NavItem[] = [
                 path: "/empresa",
                 icon: Building2,
                 adminOnly: true,
+            },
+            {
+                name: "Importaciones",
+                path: "/importaciones",
+                icon: FileInput,
+                moduleKey: "importaciones",
+                action: "listar",
             },
         ],
     },

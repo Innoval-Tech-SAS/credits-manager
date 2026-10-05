@@ -95,6 +95,8 @@ class ImportacionController extends Controller
 
     public function guia(string $tipo): StreamedResponse
     {
-        return $this->importaciones->guia(TipoImportacion::from($tipo));
+        $tipoImportacion = TipoImportacion::tryFrom($tipo) ?? abort(404);
+
+        return $this->importaciones->guia($tipoImportacion);
     }
 }

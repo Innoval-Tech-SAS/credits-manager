@@ -102,7 +102,7 @@ class ImportacionEjecutorService
                 $contabilizar = $this->puedeContabilizar($importacion->tipo);
                 $generarAsiento = $contabilizar
                     && $importacion->decision_generar_asiento === true
-                    && $importacion->cuenta_contrapartida_id !== null
+                    && ($importacion->tipo !== TipoImportacion::Creditos || $importacion->cuenta_contrapartida_id !== null)
                     && $usuario->tienePermiso(...ImportacionConstants::PERMISO_CONTABILIZAR);
 
                 if ($generarAsiento && $importacion->tipo === TipoImportacion::Creditos && $this->datos->empresaTieneSaldosApertura($importacion->empresa_id)) {
@@ -247,7 +247,7 @@ class ImportacionEjecutorService
             } catch (Throwable $excepcion) {
                 report($excepcion);
                 $conteo['rechazadas']++;
-                $pendientesDeErrores[] = $this->error($importacion, $fila, null, ImportacionSeveridad::Error, ImportacionConstants::MOTIVO_ERROR_INESPERADO, $fase);
+                $pendientesDeErrores[] = $this->error($importacion, $fila, null, ImportacionSeveridad::Error, ImportacionConstants::MOTIVO_FILA_INESPERADA, $fase);
             }
 
             foreach ($ctx->reportes as $reporte) {
