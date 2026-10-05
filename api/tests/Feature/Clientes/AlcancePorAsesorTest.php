@@ -137,8 +137,8 @@ class AlcancePorAsesorTest extends TestCase
     {
         $respuesta = $this->getJson('/api/v1/dashboard')->assertOk();
 
-        $this->assertSame(1, $respuesta->json('clientes_activos'));
-        $this->assertSame(1, $respuesta->json('creditos_activos'));
+        $this->assertSame(1, $respuesta->json('metricas.clientes_activos'));
+        $this->assertSame(1, $respuesta->json('metricas.creditos_activos'));
     }
 
     public function test_el_reporte_por_empleador_no_muestra_clientes_de_otro_asesor(): void
@@ -183,7 +183,7 @@ class AlcancePorAsesorTest extends TestCase
         $this->assertCount(2, $this->getJson('/api/v1/clientes')->json('data'));
         $this->assertCount(2, $this->getJson('/api/v1/creditos')->json('data'));
         $this->assertCount(2, $this->getJson('/api/v1/pagos')->json('data'));
-        $this->assertSame(2, $this->getJson('/api/v1/dashboard')->json('clientes_activos'));
+        $this->assertSame(2, $this->getJson('/api/v1/dashboard')->json('metricas.clientes_activos'));
         $this->getJson("/api/v1/clientes/{$this->clienteB->id}")->assertOk();
     }
 
@@ -197,7 +197,7 @@ class AlcancePorAsesorTest extends TestCase
 
         $this->actingAsAdmin($empresa);
         $this->assertCount(2, $this->getJson('/api/v1/clientes')->json('data'));
-        $this->assertSame(2, $this->getJson('/api/v1/dashboard')->json('clientes_activos'));
+        $this->assertSame(2, $this->getJson('/api/v1/dashboard')->json('metricas.clientes_activos'));
     }
 
     public function test_otra_empresa_no_ve_clientes_de_esta_aunque_tenga_el_mismo_asesor_global(): void

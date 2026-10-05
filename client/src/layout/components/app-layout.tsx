@@ -41,7 +41,7 @@ const LayoutContent: FC = () => {
                 </div>
                 <div
                     ref={scrollerRef}
-                    className="custom-scrollbar mx-auto w-full max-w-(--breakpoint-2xl) min-h-0 flex-1 overflow-y-auto print:overflow-visible"
+                    className={`custom-scrollbar mx-auto w-full ${pathname === '/' ? '' : 'max-w-(--breakpoint-2xl)'} min-h-0 flex-1 overflow-y-auto print:overflow-visible`}
                 >
                     {/* Contenedor normal (no flex-1/min-h-0) a propósito: si este wrapper puede
                         quedar más chico que su contenido, el `pb-6` de cada página deja de contar
