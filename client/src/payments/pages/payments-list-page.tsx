@@ -1,7 +1,9 @@
 import type { FC } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { HandCoins, Search } from 'lucide-react';
 
+import { PermissionExportButton } from '../../shared/components/permission-export-button';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Button } from '@ui/button/components/button';
@@ -16,6 +18,9 @@ export const PaymentsListPage: FC = () => {
     const navigate = useNavigate();
     const canRegisterPayment = usePermission('pagos', 'crear');
 
+    const [exportMessage, setExportMessage] = useState<string | null>(null);
+    const [exportError, setExportError] = useState<string | null>(null);
+
     const { items, isLoading, page, setPage, totalPages, totalItems, search, setSearch } = usePaginatedResource<ApiPaymentListItem>('/pagos');
 
     const columns = buildPaymentTableColumns((creditoId) => navigate(`/creditos/${creditoId}`));
@@ -23,6 +28,10 @@ export const PaymentsListPage: FC = () => {
     return (
         <ModuleListPage
             pageTitle="Pagos"
+            successMessage={exportMessage}
+            onDismissSuccess={() => setExportMessage(null)}
+            errorMessage={exportError}
+            onDismissError={() => setExportError(null)}
             countLabel={`${totalItems} ${totalItems === 1 ? 'pago registrado' : 'pagos registrados'}`}
             toolbar={
                 <>
@@ -34,6 +43,20 @@ export const PaymentsListPage: FC = () => {
                             onChange={(event) => setSearch(event.target.value)}
                         />
                     </div>
+
+                    <PermissionExportButton
+                        modulo="pagos"
+                        endpoint="/pagos/exportar"
+                        filters={{ search }}
+                        onRequested={() => {
+                            setExportError(null);
+                            setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
+                        }}
+                        onError={(message) => {
+                            setExportMessage(null);
+                            setExportError(message);
+                        }}
+                    />
 
                     {canRegisterPayment && (
                         <Button collapseBelow="md" startIcon={<HandCoins className="size-4" />} onClick={() => navigate('/pagos/buscar')}>
