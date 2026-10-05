@@ -1,6 +1,7 @@
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { CLIENT_STATUS_BADGE_CLASSES } from '../constants/client-status-badge-classes';
+import { WhatsAppButton } from '../components/whatsapp-button';
 import type { ApiClient } from '../types/api-client';
 import type { BuildClientTableColumnsOptions } from '../types/build-client-table-columns-options';
 
@@ -20,7 +21,16 @@ export function buildClientTableColumns({
             sortable: true,
             render: (row) => `${row.tercero.tipo_documento.toUpperCase()} ${row.tercero.numero_documento}`,
         },
-        { key: 'celular', label: 'Celular', render: (row) => row.tercero.celular ?? '—' },
+        {
+            key: 'celular',
+            label: 'Celular',
+            render: (row) => (
+                <span className="inline-flex items-center gap-2">
+                    {row.tercero.celular ?? '—'}
+                    {row.tercero.celular && <WhatsAppButton variant="icono" nombre={row.tercero.nombre} celular={row.tercero.celular} />}
+                </span>
+            ),
+        },
         { key: 'empleador', label: 'Empresa', sortable: true, render: (row) => row.empleador?.nombre ?? '—' },
         { key: 'asesor', label: 'Asesor', render: (row) => row.asesor?.nombre ?? '—' },
         {
@@ -39,6 +49,8 @@ export function buildClientTableColumns({
             label: 'Acción',
             render: (row) => (
                 <div className="flex w-full items-center gap-3">
+                    <WhatsAppButton variant="icono" nombre={row.tercero.nombre} celular={row.tercero.celular} />
+
                     {canView && (
                         <button
                             type="button"
