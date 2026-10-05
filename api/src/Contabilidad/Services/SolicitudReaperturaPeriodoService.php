@@ -35,7 +35,7 @@ class SolicitudReaperturaPeriodoService
     /** Quien puede reabrir ve todas las de su empresa; el resto, solo las que él mismo pidió. */
     public function listar(Usuario $usuario): Collection
     {
-        return $this->solicitudes->listar($usuario->tienePermiso('contabilidad', 'reabrir_periodo') ? null : $usuario->id);
+        return $this->solicitudes->listar($usuario->tienePermiso('configuracion_contable', 'reabrir_periodo') ? null : $usuario->id);
     }
 
     public function solicitar(PeriodoContable $periodo, string $motivo, Usuario $solicitante): SolicitudReaperturaPeriodo
@@ -62,7 +62,7 @@ class SolicitudReaperturaPeriodoService
                 $solicitud,
             );
 
-            foreach ($this->usuarios->activosConPermiso('contabilidad', 'reabrir_periodo') as $administrador) {
+            foreach ($this->usuarios->activosConPermiso('configuracion_contable', 'reabrir_periodo') as $administrador) {
                 if ($administrador->id === $solicitante->id) {
                     continue;
                 }

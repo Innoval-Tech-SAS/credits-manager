@@ -20,16 +20,16 @@ class TerceroController extends Controller
 
     /**
      * El permiso requerido depende de qué tipo se está listando: un asesor
-     * (permiso `clientes.listar`, sin `contabilidad.listar`) solo puede ver
+     * (permiso `clientes.listar`, sin `terceros.listar`) solo puede ver
      * los terceros tipo cliente; listar proveedores, otros o el catálogo
-     * completo sigue requiriendo `contabilidad.listar`.
+     * completo sigue requiriendo `terceros.listar`.
      */
     public function index(Request $peticion): JsonResponse
     {
         $tipo = $peticion->string('tipo')->toString() ?: null;
         $tipo = in_array($tipo, TerceroConstants::TIPOS_FILTRO, true) ? $tipo : null;
 
-        $modulo = $tipo === 'cliente' ? 'clientes' : 'contabilidad';
+        $modulo = $tipo === 'cliente' ? 'clientes' : 'terceros';
 
         abort_unless($peticion->user()->tienePermiso($modulo, 'listar'), 403, 'No tienes permiso para realizar esta acción.');
 

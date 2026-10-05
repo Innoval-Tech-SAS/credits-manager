@@ -14,7 +14,9 @@ class PermisosExportarReportesTest extends TestCase
     use ActsAsAdmin;
     use RefreshDatabase;
 
-    private const PERMISOS = ['cartera', 'contabilidad', 'creditos'];
+    private const PERMISOS = ['cartera', 'contabilidad', 'creditos', 'informes_contables'];
+
+    private const MODULOS_HISTORICOS = ['cartera', 'contabilidad', 'creditos'];
 
     /** @return list<string> claves "modulo.accion" de exportar de estos reportes que tiene el rol */
     private function exportarDelRol(int $empresaId, string $rol): array
@@ -35,7 +37,7 @@ class PermisosExportarReportesTest extends TestCase
     {
         $this->seed(PermisoSeeder::class);
 
-        foreach (self::PERMISOS as $modulo) {
+        foreach (['cartera', 'creditos', 'informes_contables'] as $modulo) {
             $this->assertDatabaseHas('permisos', ['modulo' => $modulo, 'accion' => 'exportar']);
         }
     }
@@ -50,9 +52,10 @@ class PermisosExportarReportesTest extends TestCase
             'correo' => 'exportadora@example.com', 'admin_nombre' => 'Admin', 'admin_usuario' => 'admin_exportador', 'admin_password' => 'Clave123!',
         ])->assertCreated()->json('empresa.id');
 
-        $this->assertSame(['cartera.exportar', 'contabilidad.exportar', 'creditos.exportar'], $this->exportarDelRol($empresaId, 'admin'));
-        $this->assertSame(['cartera.exportar', 'contabilidad.exportar'], $this->exportarDelRol($empresaId, 'contable'));
-        $this->assertSame(['cartera.exportar', 'contabilidad.exportar'], $this->exportarDelRol($empresaId, 'auditoria'));
+        // El admin recibe todas las filas de `permisos`, incluido el `contabilidad.exportar` que dejó la migración de 2026-09-21.
+        $this->assertSame(['cartera.exportar', 'contabilidad.exportar', 'creditos.exportar', 'informes_contables.exportar'], $this->exportarDelRol($empresaId, 'admin'));
+        $this->assertSame(['cartera.exportar', 'informes_contables.exportar'], $this->exportarDelRol($empresaId, 'contable'));
+        $this->assertSame(['cartera.exportar', 'informes_contables.exportar'], $this->exportarDelRol($empresaId, 'auditoria'));
 
         foreach (['asesor', 'cartera', 'consulta'] as $rol) {
             $this->assertSame([], $this->exportarDelRol($empresaId, $rol), "El rol {$rol} no debe exportar.");
@@ -76,11 +79,11 @@ class PermisosExportarReportesTest extends TestCase
         $this->assertSame(['cartera.exportar', 'contabilidad.exportar'], $this->exportarDelRol($empresa->id, 'contable'));
         $this->assertSame(['cartera.exportar', 'contabilidad.exportar'], $this->exportarDelRol($empresa->id, 'auditoria'));
         $this->assertSame([], $this->exportarDelRol($empresa->id, 'asesor'));
-        $this->assertSame(3, DB::table('permisos')->where('accion', 'exportar')->whereIn('modulo', self::PERMISOS)->count(), 'Aplicarla dos veces no duplica.');
+        $this->assertSame(3, DB::table('permisos')->where('accion', 'exportar')->whereIn('modulo', self::MODULOS_HISTORICOS)->count(), 'Aplicarla dos veces no duplica.');
 
         $migracion->down();
 
-        $this->assertSame(0, DB::table('permisos')->where('accion', 'exportar')->whereIn('modulo', self::PERMISOS)->count());
+        $this->assertSame(0, DB::table('permisos')->where('accion', 'exportar')->whereIn('modulo', self::MODULOS_HISTORICOS)->count());
         $this->assertSame(0, DB::table('rol_permiso')->count());
     }
 }
