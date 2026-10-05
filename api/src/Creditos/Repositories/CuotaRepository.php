@@ -9,6 +9,7 @@ use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Models\Cuota;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\LazyCollection;
 
 class CuotaRepository extends BaseRepository
 {
@@ -131,6 +132,12 @@ class CuotaRepository extends BaseRepository
     }
 
     /** @return array<int, array{saldo: int, vencidas: int, primera_fecha_vencida: ?string}> `saldo` en centavos enteros. */
+    /** Plan de cuotas del crédito en orden, en streaming para exportar. */
+    public function cursorDelCredito(int $creditoId): LazyCollection
+    {
+        return $this->consulta()->where('credito_id', $creditoId)->orderBy('numero_cuota')->lazy();
+    }
+
     public function resumenPorCreditos(array $creditoIds): array
     {
         return $this->consulta()

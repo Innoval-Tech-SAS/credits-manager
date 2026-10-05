@@ -59,6 +59,12 @@ class CreditoRepository extends BaseRepository
         return $this->filtrar($consulta, $busqueda, $clienteId, $estado)->paginate(perPage: $porPagina, page: $pagina);
     }
 
+    /** Con la empresa explícita: el estado de cuenta para exportar se resuelve en el worker, sin sesión. */
+    public function buscarDeEmpresaOFallar(int $empresaId, int $id): Credito
+    {
+        return $this->consultaDeEmpresa($empresaId)->findOrFail($id);
+    }
+
     /** Mismo listado que la pantalla, con empresa y asesor explícitos, para exportar. */
     public function consultaParaExportar(int $empresaId, ?int $asesorId, ?string $busqueda, ?EstadoCredito $estado): Builder
     {
