@@ -10,9 +10,14 @@ use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\TipoCredito;
 use App\Creditos\Enums\TipoPago;
+use App\Creditos\Exportaciones\FuenteCreditos;
 use App\Creditos\Models\Credito;
 use App\Creditos\Repositories\CreditoRepository;
 use App\Creditos\Repositories\CuotaRepository;
+use App\Exportacion\Enums\FormatoExportacion;
+use App\Exportacion\Models\Exportacion;
+use App\Exportacion\Services\ExportacionService;
+use App\Usuarios\Models\Usuario;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -26,6 +31,7 @@ class CreditoService
         protected CuotaService $cuotaService,
         protected ComprobanteService $comprobantes,
         protected EmisorAuditoria $auditoria,
+        protected ExportacionService $exportaciones,
     ) {}
 
     public function listarCreditos(?string $busqueda, int $porPagina, int $pagina, ?int $clienteId = null, ?EstadoCredito $estado = null): LengthAwarePaginator
@@ -33,6 +39,17 @@ class CreditoService
         $this->cuotaService->actualizarVencidas();
 
         return $this->creditos->paginar($busqueda, max(1, min(100, $porPagina)), max(1, $pagina), $clienteId, $estado);
+    }
+
+    public function solicitarExportacion(Usuario $usuario, ?string $busqueda, ?EstadoCredito $estado, FormatoExportacion $formato): Exportacion
+    {
+        $this->cuotaService->actualizarVencidas();
+
+        return $this->exportaciones->solicitar(
+            new FuenteCreditos((int) $usuario->empresa_id, $usuario->idAsesorConAlcance(), $busqueda, $estado?->value),
+            $formato,
+            $usuario,
+        );
     }
 
     public function crearCredito(array $datos): Credito

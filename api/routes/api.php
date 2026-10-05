@@ -112,6 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/creditos', [CreditoController::class, 'index'])->middleware('permiso:creditos,listar');
     Route::post('/creditos', [CreditoController::class, 'store'])->middleware('permiso:creditos,crear');
+    Route::post('/creditos/exportar', [CreditoController::class, 'exportar'])->middleware('permiso:creditos,exportar');
     Route::get('/creditos/{credito}', [CreditoController::class, 'show'])->middleware('permiso:creditos,listar');
     Route::patch('/creditos/{credito}', [CreditoController::class, 'update'])->middleware('permiso:creditos,editar');
     Route::get('/creditos/{credito}/estado-cuenta', [CreditoController::class, 'estadoCuenta'])->middleware('permiso:creditos,listar');
