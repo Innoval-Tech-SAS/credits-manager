@@ -5,6 +5,7 @@ namespace App\Geografia\Controllers;
 use App\Geografia\Models\Municipio;
 use App\Geografia\Requests\CrearMunicipioRequest;
 use App\Geografia\Requests\EditarMunicipioRequest;
+use App\Geografia\Requests\ListarMunicipiosPaginadosRequest;
 use App\Geografia\Requests\ListarMunicipiosRequest;
 use App\Geografia\Services\MunicipioService;
 use App\Http\Controllers\Controller;
@@ -23,6 +24,18 @@ class MunicipioController extends Controller
         );
 
         return response()->json(['municipios' => $municipios]);
+    }
+
+    public function listado(ListarMunicipiosPaginadosRequest $peticion): JsonResponse
+    {
+        $municipios = $this->municipios->listarPaginados(
+            $peticion->integer('estado_id'),
+            ! $peticion->user()->es_superadmin,
+            $peticion->integer('per_page', 10),
+            $peticion->integer('page', 1),
+        );
+
+        return response()->json($municipios);
     }
 
     public function store(CrearMunicipioRequest $peticion): JsonResponse

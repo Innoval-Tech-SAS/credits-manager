@@ -4,7 +4,7 @@ import type { PaginatedResponse } from '../types/paginated-response';
 import type { SortDirection } from '../types/sort-direction';
 import { useSendRequest } from './use-send-request';
 
-export function usePaginatedResource<T>(endpoint: string, filters: Record<string, string> = {}) {
+export function usePaginatedResource<T>(endpoint: string | null, filters: Record<string, string> = {}) {
     const { sendRequest, isLoading, error } = useSendRequest();
 
     const [items, setItems] = useState<T[]>([]);
@@ -17,6 +17,10 @@ export function usePaginatedResource<T>(endpoint: string, filters: Record<string
     const [refreshToken, setRefreshToken] = useState(0);
 
     useEffect(() => {
+        if (!endpoint) {
+            return;
+        }
+
         let isCancelled = false;
 
         async function fetchPage() {

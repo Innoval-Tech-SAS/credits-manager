@@ -4,10 +4,11 @@ import { useNavigate } from 'react-router';
 import { MapPin, Pencil } from 'lucide-react';
 
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
-import { useResource } from '../../shared/hooks/use-resource';
+import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { Button } from '@ui/button/components/button';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
+import { Pagination } from '@ui/table/components/pagination';
 import { EditMunicipalityModal } from '../components/edit-municipality-modal';
 import { StateSelector } from '../components/state-selector';
 import type { ApiMunicipality } from '../types/api-municipality';
@@ -20,10 +21,16 @@ export const MunicipalitiesAdminPage: FC = () => {
     const [stateId, setStateId] = useState('');
     const [editing, setEditing] = useState<ApiMunicipality | null>(null);
 
-    const { data, isLoading, refetch } = useResource<{ municipios: ApiMunicipality[] }>(
-        stateId ? `/geografia/municipios?estado_id=${stateId}` : null,
+    const { items, isLoading, page, setPage, totalPages, totalItems, refetch } = usePaginatedResource<ApiMunicipality>(
+        stateId ? '/geografia/municipios/listado' : null,
+        { estado_id: stateId },
     );
-    const municipalities = data?.municipios ?? [];
+    const municipalities = stateId ? items : [];
+
+    const handleStateChange = (id: string) => {
+        setStateId(id);
+        setPage(1);
+    };
 
     const handleSaved = () => {
         setEditing(null);
@@ -38,9 +45,10 @@ export const MunicipalitiesAdminPage: FC = () => {
             onDismissSuccess={() => setSuccessMessage(null)}
             countLabel={
                 stateId
-                    ? `${municipalities.length} ${municipalities.length === 1 ? 'municipio' : 'municipios'} en el departamento`
+                    ? `${totalItems} ${totalItems === 1 ? 'municipio' : 'municipios'} en el departamento`
                     : 'Elige un país y un departamento para ver sus municipios'
             }
+            pagination={stateId ? <Pagination page={page} totalPages={totalPages} onPageChange={setPage} /> : undefined}
             toolbar={
                 <Button collapseBelow="md" startIcon={<MapPin className="size-4" />} onClick={() => navigate('/geografia/municipios/crear')}>
                     Agregar municipio
@@ -51,7 +59,7 @@ export const MunicipalitiesAdminPage: FC = () => {
             }
         >
             <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-3">
-                <StateSelector onChange={setStateId} />
+                <StateSelector onChange={handleStateChange} />
             </div>
 
             <DataTable

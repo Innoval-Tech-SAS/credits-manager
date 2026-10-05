@@ -7,6 +7,7 @@ use App\Auditoria\Services\EmisorAuditoria;
 use App\Geografia\Models\Municipio;
 use App\Geografia\Repositories\MunicipioRepository;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class MunicipioService
 {
@@ -18,6 +19,11 @@ class MunicipioService
     public function buscar(?int $estadoId, ?string $texto, bool $soloActivos): Collection
     {
         return $this->municipios->buscar($estadoId, $texto, $soloActivos);
+    }
+
+    public function listarPaginados(int $estadoId, bool $soloActivos, int $porPagina, int $pagina): LengthAwarePaginator
+    {
+        return $this->municipios->paginarPorEstado($estadoId, $soloActivos, $porPagina, $pagina);
     }
 
     public function crear(array $datos): Municipio
