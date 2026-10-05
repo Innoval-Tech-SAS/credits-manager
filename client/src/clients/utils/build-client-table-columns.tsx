@@ -49,8 +49,6 @@ export function buildClientTableColumns({
             label: 'Acción',
             render: (row) => (
                 <div className="flex w-full items-center gap-3">
-                    <WhatsAppButton variant="icono" nombre={row.tercero.nombre} celular={row.tercero.celular} />
-
                     {canView && (
                         <button
                             type="button"
@@ -60,6 +58,8 @@ export function buildClientTableColumns({
                             <Eye className="size-5" />
                         </button>
                     )}
+
+                    <WhatsAppButton variant="icono" nombre={row.tercero.nombre} celular={row.tercero.celular} />
 
                     {canEdit && (
                         <button
