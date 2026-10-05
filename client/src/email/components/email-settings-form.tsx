@@ -1,35 +1,45 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
+import { ChevronLeft, ChevronRight, Eye, Save, Send } from 'lucide-react';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
-import { Input } from '@ui/forms/components/input';
-import { Label } from '@ui/forms/components/label';
-import { Select } from '@ui/forms/components/select';
-import { CIFRADO_OPTIONS, DRIVER_OPTIONS } from '../constants/email-options';
-import { HtmlPreview } from './html-preview';
+import { EMAIL_SETTINGS_LAST_STEP, EMAIL_SETTINGS_STEPS } from '../constants/email-settings-steps';
+import { EmailPreviewModal } from './email-preview-modal';
+import { EmailSettingsAccountStep } from './email-settings-account-step';
+import { EmailSettingsServerStep } from './email-settings-server-step';
+import { EmailSettingsStepper } from './email-settings-stepper';
+import { EmailSettingsTemplateStep } from './email-settings-template-step';
+import { EmailTestSendModal } from './email-test-send-modal';
 import type { EmailSettingsFormProps } from '../props/email-settings-form-props';
-import type { ApiEmailPreview, ApiEmailTestResult } from '../types/api-email-preview';
+import type { ApiEmailPreview } from '../types/api-email-preview';
 import type { ApiEmailSettings } from '../types/api-email-settings';
+import type { EmailSettingsDraft } from '../types/email-settings-draft';
+import type { EmailSettingsErrors } from '../utils/validate-email-settings-step';
+import { validarPasoCorreo } from '../utils/validate-email-settings-step';
 
-const CAMPO_TEXTO =
-    'w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90 dark:focus:border-brand-800';
+function borradorDesde(settings: ApiEmailSettings): EmailSettingsDraft {
+    return {
+        driver: settings.driver,
+        host: settings.host ?? '',
+        puerto: settings.puerto === null ? '' : String(settings.puerto),
+        cifrado: settings.cifrado,
+        remitente: settings.remitente ?? '',
+        nombreRemitente: settings.nombre_remitente ?? '',
+        usuario: settings.usuario ?? '',
+        clave: '',
+        asunto: settings.plantilla.asunto,
+        cuerpo: settings.plantilla.cuerpo,
+    };
+}
 
-/** Edita la configuración SMTP y la plantilla HTML. La clave nunca llega del servidor: vacía significa "conservar". */
+/** Asistente de tres pasos. Cada paso valida antes de avanzar; la configuración se guarda solo al final. */
 export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSaved }) => {
     const { sendRequest } = useSendRequest();
 
-    const [driver, setDriver] = useState(settings.driver);
-    const [remitente, setRemitente] = useState(settings.remitente ?? '');
-    const [nombreRemitente, setNombreRemitente] = useState(settings.nombre_remitente ?? '');
-    const [host, setHost] = useState(settings.host ?? '');
-    const [puerto, setPuerto] = useState(settings.puerto === null ? '' : String(settings.puerto));
-    const [cifrado, setCifrado] = useState(settings.cifrado);
-    const [usuario, setUsuario] = useState(settings.usuario ?? '');
-    const [clave, setClave] = useState('');
-    const [asunto, setAsunto] = useState(settings.plantilla.asunto);
-    const [cuerpo, setCuerpo] = useState(settings.plantilla.cuerpo);
-
+    const [draft, setDraft] = useState<EmailSettingsDraft>(() => borradorDesde(settings));
+    const [paso, setPaso] = useState(0);
+    const [errores, setErrores] = useState<EmailSettingsErrors>({});
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -37,38 +47,83 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSave
     const [preview, setPreview] = useState<ApiEmailPreview | null>(null);
     const [previewError, setPreviewError] = useState<string | null>(null);
     const [isPreviewing, setIsPreviewing] = useState(false);
+    const [pruebaAbierta, setPruebaAbierta] = useState(false);
 
-    const [destinatarioPrueba, setDestinatarioPrueba] = useState('');
-    const [resultadoPrueba, setResultadoPrueba] = useState<ApiEmailTestResult | null>(null);
-    const [errorPrueba, setErrorPrueba] = useState<string | null>(null);
-    const [isTesting, setIsTesting] = useState(false);
+    const actualizar = (cambios: Partial<EmailSettingsDraft>) => {
+        setDraft((anterior) => ({ ...anterior, ...cambios }));
+        setErrores({});
+        setSuccess(false);
+    };
 
-    const esSmtp = driver === 'smtp';
+    const siguiente = () => {
+        const erroresPaso = validarPasoCorreo(paso, draft);
+        setErrores(erroresPaso);
+
+        if (Object.keys(erroresPaso).length === 0) {
+            setPaso((actual) => Math.min(actual + 1, EMAIL_SETTINGS_LAST_STEP));
+        }
+    };
+
+    const anterior = () => {
+        setErrores({});
+        setPaso((actual) => Math.max(actual - 1, 0));
+    };
+
+    /** Antes de guardar se revisan todos los pasos: si hay un error, se vuelve al paso que lo tiene. */
+    const primerPasoConErrores = (): { paso: number; errores: EmailSettingsErrors } | null => {
+        for (let indice = 0; indice <= EMAIL_SETTINGS_LAST_STEP; indice++) {
+            const erroresPaso = validarPasoCorreo(indice, draft);
+
+            if (Object.keys(erroresPaso).length > 0) {
+                return { paso: indice, errores: erroresPaso };
+            }
+        }
+
+        return null;
+    };
 
     const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
+
+        if (paso !== EMAIL_SETTINGS_LAST_STEP) {
+            siguiente();
+
+            return;
+        }
+
+        const conError = primerPasoConErrores();
+
+        if (conError) {
+            setPaso(conError.paso);
+            setErrores(conError.errores);
+
+            return;
+        }
+
         setError(null);
         setSuccess(false);
         setIsSubmitting(true);
+
+        const esSmtp = draft.driver === 'smtp';
 
         try {
             await sendRequest('/correo/configuracion', {
                 method: 'PUT',
                 body: {
-                    remitente,
-                    nombre_remitente: nombreRemitente,
-                    driver,
-                    host: esSmtp ? host : null,
-                    puerto: esSmtp && puerto !== '' ? Number(puerto) : null,
-                    cifrado,
-                    usuario: usuario === '' ? null : usuario,
-                    clave: clave === '' ? null : clave,
-                    plantilla_asunto: asunto,
-                    plantilla_cuerpo: cuerpo,
+                    remitente: draft.remitente,
+                    nombre_remitente: draft.nombreRemitente,
+                    driver: draft.driver,
+                    host: esSmtp ? draft.host : null,
+                    puerto: esSmtp && draft.puerto !== '' ? Number(draft.puerto) : null,
+                    cifrado: draft.cifrado,
+                    usuario: esSmtp && draft.usuario !== '' ? draft.usuario : null,
+                    clave: esSmtp && draft.clave !== '' ? draft.clave : null,
+                    plantilla_asunto: draft.asunto,
+                    plantilla_cuerpo: draft.cuerpo,
                 },
             });
 
-            setClave('');
+            setDraft((anterior) => ({ ...anterior, clave: '' }));
             setSuccess(true);
             onSaved();
         } catch (caught) {
@@ -85,7 +140,7 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSave
         try {
             const respuesta = await sendRequest<{ vista_previa: ApiEmailPreview }>('/correo/vista-previa', {
                 method: 'POST',
-                body: { asunto, cuerpo },
+                body: { asunto: draft.asunto, cuerpo: draft.cuerpo },
             });
             setPreview(respuesta.vista_previa);
         } catch (caught) {
@@ -95,28 +150,13 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSave
         }
     };
 
-    const handleTest = async () => {
-        setErrorPrueba(null);
-        setResultadoPrueba(null);
-        setIsTesting(true);
-
-        try {
-            setResultadoPrueba(
-                await sendRequest<ApiEmailTestResult>('/correo/configuracion/prueba', {
-                    method: 'POST',
-                    body: { destinatario: destinatarioPrueba },
-                }),
-            );
-        } catch (caught) {
-            setErrorPrueba(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
-        } finally {
-            setIsTesting(false);
-        }
-    };
+    const esUltimo = paso === EMAIL_SETTINGS_LAST_STEP;
 
     return (
         <div className="flex flex-col gap-8">
-            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6" noValidate>
+                <EmailSettingsStepper pasos={EMAIL_SETTINGS_STEPS} pasoActual={paso} />
+
                 {error && (
                     <div className="rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400">
                         {error}
@@ -127,132 +167,56 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSave
                         Configuración guardada correctamente.
                     </div>
                 )}
+                {previewError && (
+                    <div className="rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400">
+                        {previewError}
+                    </div>
+                )}
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <div>
-                        <Label htmlFor="remitente">Correo remitente</Label>
-                        <Input id="remitente" name="remitente" type="email" required value={remitente} onChange={(event) => setRemitente(event.target.value)} />
+                {paso === 0 && <EmailSettingsServerStep draft={draft} errores={errores} onChange={actualizar} />}
+                {paso === 1 && (
+                    <EmailSettingsAccountStep draft={draft} errores={errores} claveGuardada={settings.clave_estado === 'configurada'} onChange={actualizar} />
+                )}
+                {paso === 2 && <EmailSettingsTemplateStep draft={draft} errores={errores} variables={settings.variables} onChange={actualizar} />}
+
+                {esUltimo && (
+                    <div className="flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row dark:border-gray-800">
+                        <Button type="button" variant="outline" startIcon={<Eye className="size-4" />} disabled={isPreviewing} onClick={() => void handlePreview()}>
+                            {isPreviewing ? 'Generando...' : 'Ver'}
+                        </Button>
+                        {settings.estado === 'configurada' && (
+                            <Button type="button" variant="outline" startIcon={<Send className="size-4" />} onClick={() => setPruebaAbierta(true)}>
+                                Probar
+                            </Button>
+                        )}
                     </div>
+                )}
+
+                <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:justify-between dark:border-gray-800">
                     <div>
-                        <Label htmlFor="nombre-remitente">Nombre del remitente</Label>
-                        <Input id="nombre-remitente" name="nombre-remitente" required value={nombreRemitente} onChange={(event) => setNombreRemitente(event.target.value)} />
+                        {paso > 0 && (
+                            <Button type="button" variant="outline" startIcon={<ChevronLeft className="size-4" />} onClick={anterior}>
+                                Anterior
+                            </Button>
+                        )}
                     </div>
-                    <div>
-                        <Label htmlFor="driver">Proveedor</Label>
-                        <Select options={DRIVER_OPTIONS} defaultValue={settings.driver} onChange={(valor) => setDriver(valor as ApiEmailSettings['driver'])} />
-                    </div>
-                    {esSmtp && (
-                        <div>
-                            <Label htmlFor="cifrado">Cifrado</Label>
-                            <Select options={CIFRADO_OPTIONS} defaultValue={settings.cifrado} onChange={(valor) => setCifrado(valor as ApiEmailSettings['cifrado'])} />
-                        </div>
+
+                    {/* Keys distintas: sin ellas React reutiliza el mismo <button> y al cambiar su type a "submit" el clic envía el formulario. */}
+                    {esUltimo ? (
+                        <Button key="guardar" type="submit" startIcon={<Save className="size-4" />} disabled={isSubmitting}>
+                            {isSubmitting ? 'Guardando...' : 'Guardar'}
+                        </Button>
+                    ) : (
+                        <Button key="siguiente" type="button" endIcon={<ChevronRight className="size-4" />} onClick={siguiente}>
+                            Siguiente
+                        </Button>
                     )}
-                    {esSmtp && (
-                        <>
-                            <div>
-                                <Label htmlFor="host">Servidor (host)</Label>
-                                <Input id="host" name="host" required value={host} onChange={(event) => setHost(event.target.value)} />
-                            </div>
-                            <div>
-                                <Label htmlFor="puerto">Puerto</Label>
-                                <Input id="puerto" name="puerto" type="number" min="1" max="65535" required value={puerto} onChange={(event) => setPuerto(event.target.value)} />
-                            </div>
-                            <div>
-                                <Label htmlFor="usuario">Usuario</Label>
-                                <Input id="usuario" name="usuario" autoComplete="off" value={usuario} onChange={(event) => setUsuario(event.target.value)} />
-                            </div>
-                            <div>
-                                <Label htmlFor="clave">Clave</Label>
-                                <Input
-                                    id="clave"
-                                    name="clave"
-                                    type="password"
-                                    autoComplete="new-password"
-                                    placeholder={settings.clave_estado === 'configurada' ? 'Configurada: escriba una nueva para cambiarla' : 'Sin configurar'}
-                                    value={clave}
-                                    onChange={(event) => setClave(event.target.value)}
-                                />
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <Label htmlFor="asunto">Asunto del recordatorio</Label>
-                    <Input id="asunto" name="asunto" required value={asunto} onChange={(event) => setAsunto(event.target.value)} />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    <Label htmlFor="cuerpo">Cuerpo del recordatorio (HTML)</Label>
-                    <textarea id="cuerpo" name="cuerpo" rows={10} required value={cuerpo} onChange={(event) => setCuerpo(event.target.value)} className={`${CAMPO_TEXTO} font-mono`} />
-                    <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-                        Variables:
-                        {settings.variables.map((variable) => (
-                            <code key={variable.clave} title={variable.descripcion} className="rounded bg-gray-100 px-1.5 py-0.5 text-gray-700 dark:bg-white/5 dark:text-gray-300">
-                                {`{${variable.clave}}`}
-                            </code>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
-                    <Button type="button" variant="outline" disabled={isPreviewing} onClick={() => void handlePreview()}>
-                        {isPreviewing ? 'Generando...' : 'Vista previa'}
-                    </Button>
-                    <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Guardando...' : 'Guardar configuración'}
-                    </Button>
                 </div>
             </form>
 
-            {previewError && (
-                <div className="rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400">
-                    {previewError}
-                </div>
-            )}
+            {preview && <EmailPreviewModal preview={preview} onClose={() => setPreview(null)} />}
 
-            {preview && (
-                <section className="flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
-                    <div>
-                        <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">Asunto</p>
-                        <p className="text-sm text-gray-800 dark:text-white/90">{preview.asunto}</p>
-                    </div>
-                    <HtmlPreview html={preview.cuerpo} title="Vista previa del correo" />
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Datos de ejemplo. El correo real usa los datos de cada cliente.</p>
-                </section>
-            )}
-
-            <section className="flex flex-col gap-4 border-t border-gray-200 pt-6 dark:border-gray-800">
-                <div>
-                    <h2 className="text-base font-semibold text-gray-800 dark:text-white/90">Probar la configuración</h2>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Envía un correo de prueba con la configuración guardada. No muestra credenciales.</p>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-                    <div className="flex-1">
-                        <Label htmlFor="destinatario-prueba">Destinatario</Label>
-                        <Input id="destinatario-prueba" name="destinatario-prueba" type="email" value={destinatarioPrueba} onChange={(event) => setDestinatarioPrueba(event.target.value)} />
-                    </div>
-                    <Button type="button" variant="outline" disabled={isTesting || destinatarioPrueba === ''} onClick={() => void handleTest()}>
-                        {isTesting ? 'Enviando...' : 'Enviar prueba'}
-                    </Button>
-                </div>
-                {errorPrueba && (
-                    <div className="rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400">
-                        {errorPrueba}
-                    </div>
-                )}
-                {resultadoPrueba && (
-                    <div
-                        className={
-                            resultadoPrueba.enviado
-                                ? 'rounded-lg border border-success-500 bg-success-50 px-4 py-3 text-sm text-success-600 dark:border-success-800 dark:bg-success-500/10 dark:text-success-400'
-                                : 'rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400'
-                        }
-                    >
-                        {resultadoPrueba.mensaje}
-                    </div>
-                )}
-            </section>
+            {pruebaAbierta && <EmailTestSendModal onClose={() => setPruebaAbierta(false)} />}
         </div>
     );
 };

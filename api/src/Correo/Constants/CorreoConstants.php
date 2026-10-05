@@ -31,14 +31,17 @@ class CorreoConstants
 <p>{empresa}</p>
 HTML;
 
-    /** Variables que la plantilla acepta. En el texto van entre llaves: {cliente}. */
+    /**
+     * Variables que la plantilla acepta. En el texto van entre llaves: {cliente}.
+     * `origen` es de dónde sale el dato, para que el selector de la pantalla lo muestre.
+     */
     public const VARIABLES = [
-        'cliente' => 'Nombre del cliente',
-        'empresa' => 'Nombre de la empresa',
-        'credito' => 'Código del crédito',
-        'cuota' => 'Número de la cuota',
-        'valor' => 'Valor de la cuota',
-        'fecha_vencimiento' => 'Fecha de vencimiento de la cuota',
+        'cliente' => ['descripcion' => 'Nombre del cliente', 'origen' => 'terceros.nombre (vía clientes)'],
+        'empresa' => ['descripcion' => 'Nombre de la empresa', 'origen' => 'empresas.nombre_empresa'],
+        'credito' => ['descripcion' => 'Código del crédito', 'origen' => 'creditos.codigo'],
+        'cuota' => ['descripcion' => 'Número de la cuota', 'origen' => 'cuotas.numero_cuota'],
+        'valor' => ['descripcion' => 'Valor de la cuota, en pesos', 'origen' => 'cuotas.valor'],
+        'fecha_vencimiento' => ['descripcion' => 'Fecha de vencimiento de la cuota', 'origen' => 'cuotas.fecha_vencimiento'],
     ];
 
     /** Datos de ejemplo para la vista previa cuando no hay un cliente elegido. */

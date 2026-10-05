@@ -150,7 +150,7 @@ class ConfiguracionCorreoService
                 'cuerpo' => $configuracion?->plantilla_cuerpo ?? CorreoConstants::PLANTILLA_INICIAL_CUERPO,
             ],
             'variables' => collect(CorreoConstants::VARIABLES)
-                ->map(fn (string $descripcion, string $clave) => ['clave' => $clave, 'descripcion' => $descripcion])
+                ->map(fn (array $variable, string $clave) => ['clave' => $clave, ...$variable])
                 ->values()
                 ->all(),
         ];
