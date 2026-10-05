@@ -13,9 +13,10 @@ export const CreditInstallmentsTable: FC<CreditInstallmentsTableProps> = ({ cuot
             columns={[
                 { key: 'numero_cuota', label: '#' },
                 { key: 'fecha_vencimiento', label: 'Vencimiento', render: (row) => formatDateEs(row.fecha_vencimiento) },
-                { key: 'valor_interes', label: 'Interés', render: (row) => formatMoney(row.valor_interes) },
                 { key: 'valor_capital', label: 'Capital', render: (row) => formatMoney(row.valor_capital) },
-                { key: 'valor', label: 'Cuota', render: (row) => formatMoney(row.valor) },
+                { key: 'valor_interes', label: 'Intereses', render: (row) => formatMoney(row.valor_interes) },
+                { key: 'valor_otros_gastos', label: 'Otros gastos', render: (row) => formatMoney(row.valor_otros_gastos) },
+                { key: 'valor_total_cuota', label: 'Total de la cuota', render: (row) => formatMoney(row.valor_total_cuota) },
                 {
                     key: 'saldo_capital',
                     label: 'Saldo capital',

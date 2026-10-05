@@ -3,6 +3,7 @@
 namespace App\Creditos\Repositories;
 
 use App\Core\Base\BaseRepository;
+use App\Core\Dinero\Dinero;
 use App\Core\Scopes\AlcanceAsesorScope;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\EstadoCuota;
@@ -66,6 +67,8 @@ class CuotaRepository extends BaseRepository
             ...$fila,
             'valor' => $fila['valor']->centavos(),
             'valor_interes' => $fila['valor_interes']->centavos(),
+            // Sin otros gastos en la fila (p. ej. importación histórica), la cuota queda en cero.
+            'valor_otros_gastos' => ($fila['valor_otros_gastos'] ?? Dinero::cero())->centavos(),
             'valor_capital' => $fila['valor_capital']->centavos(),
             'saldo_capital' => $fila['saldo_capital']->centavos(),
             'credito_id' => $creditoId,

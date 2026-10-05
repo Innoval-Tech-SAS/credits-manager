@@ -83,13 +83,14 @@ final class EstadoCuentaPdf implements DocumentoPdf
     public function columnas(): array
     {
         return [
-            new ColumnaDocumento('numero', '#', TipoColumnaDocumento::Entero, 6),
-            new ColumnaDocumento('vencimiento', 'Vencimiento', TipoColumnaDocumento::Fecha, 16),
-            new ColumnaDocumento('interes', 'Interés', TipoColumnaDocumento::Monetario, 15),
-            new ColumnaDocumento('capital', 'Capital', TipoColumnaDocumento::Monetario, 15),
-            new ColumnaDocumento('cuota', 'Cuota', TipoColumnaDocumento::Monetario, 15),
-            new ColumnaDocumento('saldo_capital', 'Saldo capital', TipoColumnaDocumento::Monetario, 18),
-            new ColumnaDocumento('estado', 'Estado', TipoColumnaDocumento::Texto, 15),
+            new ColumnaDocumento('numero', '#', TipoColumnaDocumento::Entero, 4),
+            new ColumnaDocumento('vencimiento', 'Vencimiento', TipoColumnaDocumento::Fecha, 13),
+            new ColumnaDocumento('capital', 'Capital', TipoColumnaDocumento::Monetario, 14),
+            new ColumnaDocumento('intereses', 'Intereses', TipoColumnaDocumento::Monetario, 14),
+            new ColumnaDocumento('otros_gastos', 'Otros gastos', TipoColumnaDocumento::Monetario, 14),
+            new ColumnaDocumento('total', 'Total de la cuota', TipoColumnaDocumento::Monetario, 16),
+            new ColumnaDocumento('saldo_capital', 'Saldo capital', TipoColumnaDocumento::Monetario, 15),
+            new ColumnaDocumento('estado', 'Estado', TipoColumnaDocumento::Texto, 10),
         ];
     }
 
@@ -99,9 +100,10 @@ final class EstadoCuentaPdf implements DocumentoPdf
             yield [
                 'numero' => $cuota->numero_cuota,
                 'vencimiento' => $cuota->fecha_vencimiento,
-                'interes' => $cuota->valor_interes,
                 'capital' => $cuota->valor_capital,
-                'cuota' => $cuota->valor,
+                'intereses' => $cuota->valor_interes,
+                'otros_gastos' => $cuota->valor_otros_gastos,
+                'total' => $cuota->valor_total_cuota,
                 'saldo_capital' => $this->saldoCapitalTeoricoPorCuota[$cuota->numero_cuota] ?? Dinero::cero(),
                 'estado' => ucfirst($cuota->estado->value),
             ];

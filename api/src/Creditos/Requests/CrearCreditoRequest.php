@@ -45,6 +45,7 @@ class CrearCreditoRequest extends FormRequest
             'valor_prestamo' => ['required_unless:tipo_credito,refinanciacion', 'prohibited_if:tipo_credito,refinanciacion', 'numeric', 'min:0.01'],
             'valor_adicional' => ['required_if:tipo_credito,refinanciacion', 'prohibited_unless:tipo_credito,refinanciacion', 'numeric', 'min:0'],
             'tasa_interes' => ['required', 'numeric', 'min:0'],
+            'gastos_administracion_pct' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'plazo' => ['required', 'integer', 'min:1'],
             'tipo_pago' => ['required', Rule::enum(TipoPago::class)],
             'fecha_desembolso' => ['required', 'date'],

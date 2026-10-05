@@ -8,6 +8,10 @@ export type ApiInstallment = {
     fecha_vencimiento: string;
     valor: string;
     valor_interes: string;
+    /** Otros gastos de administración de la cuota. Decimal string. */
+    valor_otros_gastos: string;
+    /** Total exigible de la cuota: capital + interés + otros gastos. Decimal string calculado por el servidor. */
+    valor_total_cuota: string;
     valor_capital: string;
     saldo_capital: string;
     valor_pagado: string;

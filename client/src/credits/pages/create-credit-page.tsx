@@ -49,6 +49,7 @@ export const CreateCreditPage: FC = () => {
 
     const [valorPrestamo, setValorPrestamo] = useState('');
     const [tasaInteres, setTasaInteres] = useState('');
+    const [gastosAdministracion, setGastosAdministracion] = useState('0');
     const [plazo, setPlazo] = useState('');
     const [tipoPago, setTipoPago] = useState<PaymentType>('mensual');
     const [fechaDesembolso, setFechaDesembolso] = useState(HOY);
@@ -92,6 +93,7 @@ export const CreateCreditPage: FC = () => {
                     // En una refinanciación el servidor calcula el préstamo: saldo de capital del original + valor adicional.
                     ...(tipoCredito === 'refinanciacion' ? { valor_adicional: valorPrestamo } : { valor_prestamo: valorPrestamo }),
                     tasa_interes: tasaInteres,
+                    gastos_administracion_pct: gastosAdministracion,
                     plazo,
                     tipo_pago: tipoPago,
                     fecha_desembolso: fechaDesembolso,
@@ -184,6 +186,20 @@ export const CreateCreditPage: FC = () => {
                                 required
                                 value={tasaInteres}
                                 onChange={(event) => setTasaInteres(event.target.value)}
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="gastos-administracion">Gastos de administración (%)</Label>
+                            <Input
+                                id="gastos-administracion"
+                                name="gastos-administracion"
+                                type="number"
+                                step={0.001}
+                                min="0"
+                                max="100"
+                                value={gastosAdministracion}
+                                onChange={(event) => setGastosAdministracion(event.target.value)}
                             />
                         </div>
 

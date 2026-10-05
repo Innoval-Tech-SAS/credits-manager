@@ -8,7 +8,6 @@ use App\Contabilidad\Services\ComprobanteService;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\EstadoCuota;
-use App\Creditos\Enums\TipoPago;
 use App\Creditos\Models\Credito;
 use App\Creditos\Repositories\CreditoRepository;
 use App\Creditos\Repositories\CuotaRepository;
@@ -141,7 +140,7 @@ class PagoService
         $fechaReferencia = $this->pagos->ultimoPago($credito->id)?->fecha_pago ?? $credito->fecha_desembolso;
         $diasTranscurridos = (int) $fechaReferencia->diffInDays(now());
 
-        $divisorPeriodo = $credito->tipo_pago === TipoPago::Mensual ? 30 : 15;
+        $divisorPeriodo = $credito->tipo_pago->diasPorPeriodo();
         $tasaDiaria = ((float) $credito->tasa_interes / 100) / $divisorPeriodo;
 
         $interes = $capitalPendiente->multiplicarPorTasa($tasaDiaria * $diasTranscurridos);
