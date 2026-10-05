@@ -16,6 +16,8 @@ export type ApiCredit = {
     /** Solo en refinanciaciones: saldo de capital tomado del original. Decimal string; nulo si no aplica o es anterior a la columna. */
     saldo_refinanciado: string | null;
     tasa_interes: string;
+    /** Porcentaje de otros gastos de administración sobre el capital inicial. Decimal string (ej. "0.200"). */
+    gastos_administracion_pct: string;
     plazo: number;
     tipo_pago: PaymentType;
     valor_cuota: string;

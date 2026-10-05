@@ -26,6 +26,7 @@ export const EditCreditForm: FC<EditCreditFormProps> = ({ credito }) => {
 
     const [valor, setValor] = useState(valorInicial);
     const [tasaInteres, setTasaInteres] = useState(credito.tasa_interes);
+    const [gastosAdministracion, setGastosAdministracion] = useState(credito.gastos_administracion_pct);
     const [plazo, setPlazo] = useState(String(credito.plazo));
     const [tipoPago, setTipoPago] = useState<PaymentType>(credito.tipo_pago);
     const [fechaDesembolso, setFechaDesembolso] = useState(credito.fecha_desembolso);
@@ -45,6 +46,7 @@ export const EditCreditForm: FC<EditCreditFormProps> = ({ credito }) => {
                 body: {
                     ...(esRefinanciacion ? { valor_adicional: valor } : { valor_prestamo: valor }),
                     tasa_interes: tasaInteres,
+                    gastos_administracion_pct: gastosAdministracion,
                     plazo,
                     tipo_pago: tipoPago,
                     fecha_desembolso: fechaDesembolso,
@@ -101,6 +103,20 @@ export const EditCreditForm: FC<EditCreditFormProps> = ({ credito }) => {
                         required
                         value={tasaInteres}
                         onChange={(event) => setTasaInteres(event.target.value)}
+                    />
+                </div>
+
+                <div>
+                    <Label htmlFor="gastos-administracion">Gastos de administración (%)</Label>
+                    <Input
+                        id="gastos-administracion"
+                        name="gastos-administracion"
+                        type="number"
+                        step={0.001}
+                        min="0"
+                        max="100"
+                        value={gastosAdministracion}
+                        onChange={(event) => setGastosAdministracion(event.target.value)}
                     />
                 </div>
 
