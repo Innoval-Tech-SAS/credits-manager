@@ -27,19 +27,44 @@ export type ApiInvoice = {
     lineas?: ApiInvoiceLine[];
 };
 
-/** Totales de un documento. Las notas solo se cuentan sobre la factura. */
+/** Situación visible de una factura, derivada de sus notas y cobros. Las notas no tienen situación. */
+export type ApiInvoiceSituation = 'emitida' | 'parcialmente_pagada' | 'pagada' | 'anulada';
+
+/** Totales de un documento. Las notas y los cobros solo se cuentan sobre la factura. */
 export type ApiInvoiceTotals = {
     total: string;
     total_nota_credito?: string;
     total_nota_debito?: string;
+    total_cobrado?: string;
     saldo?: string;
     anulada?: boolean;
+    situacion?: ApiInvoiceSituation;
 };
 
-/** Raw shape de `GET /facturacion/documentos/{id}`: el documento con sus líneas y sus totales. */
+export type ApiInvoicePaymentMethod = 'efectivo' | 'transferencia' | 'consignacion' | 'cheque' | 'tarjeta';
+
+/** Fila de cobro: `cobro` registra dinero recibido; `reversa` lo compensa y apunta al cobro original. */
+export type ApiInvoicePayment = {
+    id: number;
+    tipo: 'cobro' | 'reversa';
+    cobro_origen_id: number | null;
+    fecha: string;
+    /** Decimal string en pesos, ej. "400.00". */
+    valor: string;
+    medio: ApiInvoicePaymentMethod;
+    referencia: string | null;
+    observacion: string | null;
+    motivo: string | null;
+    registrado_por: number | null;
+    registrador?: { id: number; nombre: string } | null;
+    creado_en: string;
+};
+
+/** Raw shape de `GET /facturacion/documentos/{id}`: el documento con sus líneas, sus totales y sus cobros. */
 export type ApiInvoiceDetail = {
     documento: ApiInvoice;
     totales: ApiInvoiceTotals;
+    cobros: ApiInvoicePayment[];
 };
 
 /** Raw shape de `GET /facturacion/consecutivos`. */

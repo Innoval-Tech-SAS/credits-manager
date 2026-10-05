@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
-import { Download, Send, Trash2 } from 'lucide-react';
+import { Ban, Download, Send, Trash2, Wallet } from 'lucide-react';
 
 import { usePermission } from '../../auth/hooks/use-permission';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
@@ -15,12 +15,19 @@ import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { DataTable } from '@ui/table/components/data-table';
-import { InvoiceNoteForm } from '../components/invoice-note-form';
 import { InvoiceLinesForm } from '../components/invoice-lines-form';
+import { InvoiceMotivoModal } from '../components/invoice-motivo-modal';
+import { InvoiceNoteForm } from '../components/invoice-note-form';
+import { InvoicePaymentModal } from '../components/invoice-payment-modal';
+import { InvoicePaymentsTable } from '../components/invoice-payments-table';
+import { InvoiceSituationBadge } from '../components/invoice-situation-badge';
 import type { InvoiceLineDraft } from '../props/invoice-lines-form-props';
-import type { ApiInvoiceDetail } from '../types/api-invoice';
+import type { ApiInvoiceDetail, ApiInvoicePayment } from '../types/api-invoice';
 
 const ETIQUETA_TIPO = { factura: 'Factura', nota_credito: 'Nota crédito', nota_debito: 'Nota débito' } as const;
+
+/** Acción de corrección pendiente de motivo: anular la factura o reversar un cobro. */
+type AccionConMotivo = { tipo: 'anular' } | { tipo: 'reversar'; cobro: ApiInvoicePayment };
 
 export const InvoiceDetailPage: FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -39,10 +46,18 @@ export const InvoiceDetailPage: FC = () => {
     const [errorAccion, setErrorAccion] = useState<string | null>(null);
     const [confirmarEliminar, setConfirmarEliminar] = useState(false);
     const [lineasEdicion, setLineasEdicion] = useState<InvoiceLineDraft[] | null>(null);
+    const [cobroAbierto, setCobroAbierto] = useState(false);
+    const [accionConMotivo, setAccionConMotivo] = useState<AccionConMotivo | null>(null);
 
     const reportarError = (caught: unknown) => {
         setMensaje(null);
         setErrorAccion(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
+    };
+
+    const informarExito = (texto: string) => {
+        setErrorAccion(null);
+        setMensaje(texto);
+        void refetch();
     };
 
     if (error) {
@@ -57,16 +72,18 @@ export const InvoiceDetailPage: FC = () => {
         );
     }
 
-    const { documento, totales } = data;
+    const { documento, totales, cobros } = data;
     const esBorrador = documento.estado === 'borrador';
+    const esFactura = documento.tipo === 'factura';
+    const situacion = totales.situacion;
     const tituloDocumento = documento.numero ?? `${ETIQUETA_TIPO[documento.tipo]} en borrador`;
+    const puedeCobrar = esFactura && !esBorrador && puedeCrear && (situacion === 'emitida' || situacion === 'parcialmente_pagada');
+    const puedeAnularFactura = esFactura && !esBorrador && puedeAnular && situacion !== 'anulada';
 
     const emitir = async () => {
         try {
             await sendRequest(`/facturacion/documentos/${documento.id}/emitir`, { method: 'POST' });
-            setErrorAccion(null);
-            setMensaje('Factura emitida. Su número ya no cambia.');
-            void refetch();
+            informarExito('Factura emitida. Su número ya no cambia.');
         } catch (caught) {
             reportarError(caught);
         }
@@ -94,10 +111,32 @@ export const InvoiceDetailPage: FC = () => {
                 body: { lineas: lineasEdicion.map((linea) => ({ concepto: linea.concepto, descripcion: linea.descripcion, valor: linea.valor })) },
             });
             setLineasEdicion(null);
-            setErrorAccion(null);
-            setMensaje('Borrador actualizado.');
-            void refetch();
+            informarExito('Borrador actualizado.');
         } catch (caught) {
+            reportarError(caught);
+        }
+    };
+
+    const confirmarAccionConMotivo = async (motivo: string) => {
+        if (accionConMotivo === null) {
+            return;
+        }
+
+        const ruta =
+            accionConMotivo.tipo === 'anular'
+                ? `/facturacion/documentos/${documento.id}/anular`
+                : `/facturacion/cobros/${accionConMotivo.cobro.id}/reversar`;
+
+        try {
+            await sendRequest(ruta, { method: 'POST', body: { motivo } });
+            setAccionConMotivo(null);
+            informarExito(
+                accionConMotivo.tipo === 'anular'
+                    ? 'Factura anulada con nota crédito. Conserva su número y la nota queda asentada y enlazada a la factura.'
+                    : 'Cobro reversado. Su asiento quedó anulado con un reverso enlazado.',
+            );
+        } catch (caught) {
+            setAccionConMotivo(null);
             reportarError(caught);
         }
     };
@@ -112,7 +151,10 @@ export const InvoiceDetailPage: FC = () => {
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                 <div className="flex flex-wrap items-start justify-between gap-4">
                     <div className="flex flex-col gap-1">
-                        <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">{tituloDocumento}</h2>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">{tituloDocumento}</h2>
+                            {esFactura && situacion && <InvoiceSituationBadge situacion={situacion} />}
+                        </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             {ETIQUETA_TIPO[documento.tipo]} · {formatDateEs(documento.fecha)} · Cliente {documento.cliente?.tercero.nombre ?? '—'} · Crédito #{documento.credito_id}
                         </p>
@@ -133,6 +175,16 @@ export const InvoiceDetailPage: FC = () => {
                                 </Button>
                             </>
                         )}
+                        {puedeCobrar && (
+                            <Button startIcon={<Wallet className="size-4" />} onClick={() => setCobroAbierto(true)}>
+                                Registrar cobro
+                            </Button>
+                        )}
+                        {puedeAnularFactura && (
+                            <Button variant="outline" startIcon={<Ban className="size-4" />} disabled={enviando} onClick={() => setAccionConMotivo({ tipo: 'anular' })}>
+                                Anular factura
+                            </Button>
+                        )}
                         {!esBorrador && puedeImprimir && (
                             <Button
                                 variant="outline"
@@ -146,8 +198,10 @@ export const InvoiceDetailPage: FC = () => {
                     </div>
                 </div>
 
-                {totales.anulada && (
-                    <p className="mt-4 text-sm font-medium text-warning-600 dark:text-warning-400">Factura anulada por notas crédito.</p>
+                {situacion === 'anulada' && (
+                    <p className="mt-4 text-sm font-medium text-error-600 dark:text-error-500">
+                        Factura anulada: sus notas crédito cubren el total. El número se conserva y la nota queda asentada y enlazada a la factura.
+                    </p>
                 )}
             </div>
 
@@ -186,32 +240,48 @@ export const InvoiceDetailPage: FC = () => {
                     />
                 )}
 
-                <dl className="mt-4 grid grid-cols-2 gap-2 text-sm md:max-w-md md:ml-auto">
+                <dl className="mt-4 grid grid-cols-2 gap-2 text-sm md:ml-auto md:max-w-md">
                     <dt className="text-gray-500 dark:text-gray-400">Total</dt>
                     <dd className="text-right font-semibold text-gray-800 dark:text-white/90">{formatMoney(totales.total)}</dd>
-                    {documento.tipo === 'factura' && (
+                    {esFactura && (
                         <>
                             <dt className="text-gray-500 dark:text-gray-400">Notas crédito</dt>
                             <dd className="text-right text-gray-800 dark:text-white/90">{formatMoney(totales.total_nota_credito ?? '0')}</dd>
                             <dt className="text-gray-500 dark:text-gray-400">Notas débito</dt>
                             <dd className="text-right text-gray-800 dark:text-white/90">{formatMoney(totales.total_nota_debito ?? '0')}</dd>
+                            <dt className="text-gray-500 dark:text-gray-400">Cobrado</dt>
+                            <dd className="text-right text-gray-800 dark:text-white/90">{formatMoney(totales.total_cobrado ?? '0')}</dd>
                             <dt className="text-gray-500 dark:text-gray-400">Saldo</dt>
-                            <dd className="text-right font-semibold text-gray-800 dark:text-white/90">{formatMoney(totales.saldo ?? totales.total)}</dd>
+                            <dd className="text-right text-base font-semibold text-gray-800 dark:text-white/90">{formatMoney(totales.saldo ?? totales.total)}</dd>
                         </>
                     )}
                 </dl>
             </div>
+
+            {esFactura && !esBorrador && (
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                        <h3 className="text-base font-semibold text-gray-800 dark:text-white/90">Cobros</h3>
+                        {puedeCobrar && (
+                            <Button variant="outline" size="sm" onClick={() => setCobroAbierto(true)}>
+                                Nuevo cobro
+                            </Button>
+                        )}
+                    </div>
+                    <InvoicePaymentsTable
+                        cobros={cobros}
+                        puedeReversar={puedeAnular}
+                        onReversar={(cobro) => setAccionConMotivo({ tipo: 'reversar', cobro })}
+                    />
+                </div>
+            )}
 
             {!esBorrador && puedeAnular && (
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                     <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">Emitir nota</h3>
                     <InvoiceNoteForm
                         documento={documento}
-                        onEmitida={() => {
-                            setErrorAccion(null);
-                            setMensaje('Nota emitida con su número consecutivo.');
-                            void refetch();
-                        }}
+                        onEmitida={() => informarExito('Nota emitida con su número consecutivo.')}
                         onError={(texto) => {
                             setMensaje(null);
                             setErrorAccion(texto);
@@ -219,6 +289,38 @@ export const InvoiceDetailPage: FC = () => {
                     />
                 </div>
             )}
+
+            {esFactura && (
+                <InvoicePaymentModal
+                    isOpen={cobroAbierto}
+                    documentoId={documento.id}
+                    saldo={totales.saldo ?? totales.total}
+                    onClose={() => setCobroAbierto(false)}
+                    onRegistrado={(texto) => {
+                        setCobroAbierto(false);
+                        informarExito(texto);
+                    }}
+                    onError={(texto) => {
+                        setCobroAbierto(false);
+                        setMensaje(null);
+                        setErrorAccion(texto);
+                    }}
+                />
+            )}
+
+            <InvoiceMotivoModal
+                isOpen={accionConMotivo !== null}
+                title={accionConMotivo?.tipo === 'reversar' ? 'Reversar cobro' : 'Anular factura'}
+                description={
+                    accionConMotivo?.tipo === 'reversar'
+                        ? 'La reversa compensa el cobro completo y anula su asiento. El cobro original no se borra.'
+                        : 'La anulación emite una nota crédito por el saldo de la factura. La factura conserva su número y la nota queda asentada y enlazada a ella.'
+                }
+                confirmLabel={accionConMotivo?.tipo === 'reversar' ? 'Reversar cobro' : 'Anular factura'}
+                isSubmitting={enviando}
+                onClose={() => setAccionConMotivo(null)}
+                onConfirm={(motivo) => void confirmarAccionConMotivo(motivo)}
+            />
 
             <ConfirmModal
                 isOpen={confirmarEliminar}
