@@ -241,6 +241,43 @@ class ComprobanteService
      * descarta silenciosamente), usar el valor completo del pago haría que el
      * comprobante nunca cuadrara.
      */
+    /**
+     * Asiento de apertura de la cartera importada: el capital desembolsado queda en la cuenta de cartera de la regla
+     * de desembolso, contra la cuenta de contrapartida que elige la carga. Reemplaza los asientos de desembolso
+     * individuales, que la importación histórica no genera.
+     */
+    public function eventosContablesActivos(EventoContable ...$eventos): bool
+    {
+        foreach ($eventos as $evento) {
+            if ($this->reglas->activaParaEvento($evento) === null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public function contabilizarAperturaCartera(Dinero $valor, int $cuentaContrapartidaId, string $fecha, int $importacionId): ?Comprobante
+    {
+        $regla = $this->reglas->activaParaEvento(EventoContable::DesembolsoCredito);
+
+        if (! $regla || ! $valor->esPositivo()) {
+            return null;
+        }
+
+        return $this->crearComprobante(
+            $regla->tipo_comprobante_id,
+            $fecha,
+            [
+                ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $valor, 'credito' => 0],
+                ['cuenta_id' => $cuentaContrapartidaId, 'debito' => 0, 'credito' => $valor],
+            ],
+            'Apertura de cartera importada #'.$importacionId,
+            'importaciones',
+            $importacionId,
+        );
+    }
+
     public function contabilizarRecaudoPago(Pago $pago, Dinero $capital, Dinero $interes): ?Comprobante
     {
         $reglaCapital = $this->reglas->activaParaEvento(EventoContable::RecaudoCapital);

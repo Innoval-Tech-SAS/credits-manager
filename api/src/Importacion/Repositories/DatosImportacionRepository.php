@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Importacion\Repositories;
+
+use App\Clientes\Models\Cliente;
+use App\Contabilidad\Models\PlanCuenta;
+use App\Contabilidad\Models\SaldoApertura;
+use App\Creditos\Models\Credito;
+use App\Creditos\Models\Cuota;
+use App\Empleadores\Models\Empleador;
+use App\Importacion\Lectura\ConvertidorValor;
+use App\Pagos\Models\Pago;
+use App\Usuarios\Models\Usuario;
+use Illuminate\Database\Eloquent\Collection;
+
+/**
+ * Búsquedas de referencia para los procesadores. Corren en el worker sin sesión: cada una recibe el `empresa_id`
+ * explícito y lo filtra, sin depender del scope de Eloquent (que no filtra sin usuario autenticado).
+ */
+class DatosImportacionRepository
+{
+    /** @param list<string> $cedulas @return array<string, int> cédula → id de cliente */
+    public function clientesPorCedulas(int $empresaId, array $cedulas): array
+    {
+        if ($cedulas === []) {
+            return [];
+        }
+
+        return Cliente::query()
+            ->join('terceros', 'terceros.id', '=', 'clientes.tercero_id')
+            ->where('clientes.empresa_id', $empresaId)
+            ->where('terceros.empresa_id', $empresaId)
+            ->whereNull('terceros.borrado_en')
+            ->whereIn('terceros.numero_documento', $cedulas)
+            ->select(['clientes.id as id', 'terceros.numero_documento as cedula'])
+            ->pluck('id', 'cedula')
+            ->all();
+    }
+
+    /** @param list<string> $codigos @return array<string, int> */
+    public function creditosPorCodigos(int $empresaId, array $codigos): array
+    {
+        if ($codigos === []) {
+            return [];
+        }
+
+        return Credito::query()
+            ->where('empresa_id', $empresaId)
+            ->whereIn('codigo', $codigos)
+            ->pluck('id', 'codigo')
+            ->all();
+    }
+
+    /** @param list<string> $codigos @return array<string, int> */
+    public function cuentasPorCodigos(int $empresaId, array $codigos): array
+    {
+        if ($codigos === []) {
+            return [];
+        }
+
+        return PlanCuenta::query()
+            ->where('empresa_id', $empresaId)
+            ->whereIn('codigo', $codigos)
+            ->pluck('id', 'codigo')
+            ->all();
+    }
+
+    /** @return array<string, int> nombre normalizado → id */
+    public function empleadoresPorNombre(int $empresaId): array
+    {
+        return Empleador::query()
+            ->where('empresa_id', $empresaId)
+            ->get(['id', 'nombre'])
+            ->mapWithKeys(fn (Empleador $empleador) => [ConvertidorValor::nombreNormalizado($empleador->nombre) => $empleador->id])
+            ->all();
+    }
+
+    /** @return array<string, int> nombre normalizado → id */
+    public function usuariosPorNombre(int $empresaId): array
+    {
+        return Usuario::query()
+            ->where('empresa_id', $empresaId)
+            ->get(['id', 'nombre'])
+            ->mapWithKeys(fn (Usuario $usuario) => [ConvertidorValor::nombreNormalizado((string) $usuario->nombre) => $usuario->id])
+            ->all();
+    }
+
+    /** @return Collection<int, Cuota> */
+    public function cuotasDelCredito(int $creditoId): Collection
+    {
+        return Cuota::query()->where('credito_id', $creditoId)->orderBy('numero_cuota')->get();
+    }
+
+    public function creditoTienePagos(int $creditoId): bool
+    {
+        return Pago::query()->where('credito_id', $creditoId)->exists();
+    }
+
+    public function saldoExiste(int $empresaId, int $cuentaId, string $fechaCorte): bool
+    {
+        return SaldoApertura::query()
+            ->where('empresa_id', $empresaId)
+            ->where('cuenta_id', $cuentaId)
+            ->whereDate('fecha_corte', $fechaCorte)
+            ->exists();
+    }
+
+    public function empresaTieneSaldosApertura(int $empresaId): bool
+    {
+        return SaldoApertura::query()->where('empresa_id', $empresaId)->exists();
+    }
+}

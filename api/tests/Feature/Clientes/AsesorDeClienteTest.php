@@ -10,13 +10,13 @@ use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use LogicException;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\AfirmaAuditoria;
 use Tests\Concerns\CreatesAuditoriaFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
+use Tests\Concerns\ImportaArchivos;
 use Tests\TestCase;
 
 class AsesorDeClienteTest extends TestCase
@@ -25,6 +25,7 @@ class AsesorDeClienteTest extends TestCase
     use AfirmaAuditoria;
     use CreatesAuditoriaFixtures;
     use CreatesCreditFixtures;
+    use ImportaArchivos;
     use RefreshDatabase;
 
     private function crearUsuarioConRol(string $nombreRol, Empresa $empresa, bool $activo = true): Usuario
@@ -269,13 +270,12 @@ class AsesorDeClienteTest extends TestCase
     public function test_los_clientes_importados_quedan_a_nombre_de_quien_importa(): void
     {
         $admin = $this->actingAsAdmin();
+        $this->prepararImportaciones();
         $csv = "tipo,tipo_persona,tipo_documento,numero_documento,nombres,apellidos,razon_social,digito_verificacion,representante_legal\n"
             ."cliente,natural,cc,1000000001,Ana,Torres,,,\n";
 
-        $this->postJson('/api/v1/contabilidad/migraciones-apertura', [
-            'tipo' => 'terceros',
-            'archivo' => UploadedFile::fake()->createWithContent('terceros.csv', $csv),
-        ])->assertCreated()->assertJsonPath('migracion.registros_aceptados', 1);
+        $id = $this->importarCompleto('terceros', $csv);
+        $this->assertSame(1, $this->importacion($id)->filas_aceptadas);
 
         $cliente = Cliente::query()->firstOrFail();
         $this->assertSame($admin->id, $cliente->asesor_id);

@@ -9,7 +9,6 @@ use App\Clientes\Controllers\ClienteController;
 use App\Contabilidad\Controllers\CentroCostoController;
 use App\Contabilidad\Controllers\ComprobanteController;
 use App\Contabilidad\Controllers\DocumentoTerceroController;
-use App\Contabilidad\Controllers\MigracionAperturaController;
 use App\Contabilidad\Controllers\PeriodoContableController;
 use App\Contabilidad\Controllers\PlanCuentaController;
 use App\Contabilidad\Controllers\ReglaContabilizacionController;
@@ -33,6 +32,7 @@ use App\Gastos\Controllers\ValorUvtController;
 use App\Geografia\Controllers\EstadoController;
 use App\Geografia\Controllers\MunicipioController;
 use App\Geografia\Controllers\PaisController;
+use App\Importacion\Controllers\ImportacionController;
 use App\Notificaciones\Controllers\NotificacionController;
 use App\Pagos\Controllers\PagoController;
 use App\Proveedores\Controllers\ProveedorController;
@@ -180,8 +180,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/contabilidad/balance-prueba/exportar', [ReporteContableController::class, 'exportarBalancePrueba'])->middleware('permiso:informes_contables,exportar');
     Route::post('/contabilidad/estados-financieros/exportar', [ReporteContableController::class, 'exportarEstadosFinancieros'])->middleware('permiso:informes_contables,exportar');
 
-    Route::get('/contabilidad/migraciones-apertura', [MigracionAperturaController::class, 'index'])->middleware('permiso:configuracion_contable,listar');
-    Route::post('/contabilidad/migraciones-apertura', [MigracionAperturaController::class, 'store'])->middleware('admin');
+    Route::get('/importaciones', [ImportacionController::class, 'index'])->middleware('permiso:importaciones,listar');
+    Route::post('/importaciones', [ImportacionController::class, 'store'])->middleware('permiso:importaciones,ejecutar');
+    Route::get('/importaciones/guias/{tipo}', [ImportacionController::class, 'guia'])->middleware('permiso:importaciones,ejecutar')->where('tipo', '[a-z_]+');
+    Route::get('/importaciones/{importacion}', [ImportacionController::class, 'show'])->middleware('permiso:importaciones,listar')->whereNumber('importacion');
+    Route::get('/importaciones/{importacion}/errores', [ImportacionController::class, 'errores'])->middleware('permiso:importaciones,listar')->whereNumber('importacion');
+    Route::get('/importaciones/{importacion}/reporte', [ImportacionController::class, 'reporte'])->middleware('permiso:importaciones,listar')->whereNumber('importacion');
+    Route::post('/importaciones/{importacion}/decisiones', [ImportacionController::class, 'decidir'])->middleware('permiso:importaciones,ejecutar')->whereNumber('importacion');
+    Route::post('/importaciones/{importacion}/confirmar', [ImportacionController::class, 'confirmar'])->middleware('permiso:importaciones,ejecutar')->whereNumber('importacion');
+    Route::post('/importaciones/{importacion}/cancelar', [ImportacionController::class, 'cancelar'])->middleware('permiso:importaciones,ejecutar')->whereNumber('importacion');
 
     Route::get('/terceros', [TerceroController::class, 'index']);
     Route::post('/terceros/personas-naturales', [TerceroController::class, 'storeNatural'])->middleware('permiso:terceros,crear');

@@ -9,10 +9,10 @@ use App\Contabilidad\Models\PeriodoContable;
 use App\Contabilidad\Services\DocumentoTerceroService;
 use App\Core\Dinero\Dinero;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\AfirmaAuditoria;
 use Tests\Concerns\CreatesContabilidadFixtures;
+use Tests\Concerns\ImportaArchivos;
 use Tests\TestCase;
 
 class TrazabilidadContabilidadTest extends TestCase
@@ -20,6 +20,7 @@ class TrazabilidadContabilidadTest extends TestCase
     use ActsAsAdmin;
     use AfirmaAuditoria;
     use CreatesContabilidadFixtures;
+    use ImportaArchivos;
     use RefreshDatabase;
 
     private function payloadComprobante(): array
@@ -179,21 +180,28 @@ class TrazabilidadContabilidadTest extends TestCase
         $this->assertEventoAuditoria('anular', 'contabilidad', 'documento_tercero', $otro->id);
     }
 
-    public function test_importar_una_migracion_de_apertura_deja_el_resumen_y_los_primeros_errores(): void
+    public function test_importar_un_archivo_deja_la_solicitud_y_el_resultado_en_la_bitacora(): void
     {
         $this->actingAsAdmin();
+        $this->prepararImportaciones();
         $csv = "codigo,nombre,naturaleza,tipo\n1105,Caja,debito,activo\n2205\n";
 
-        $id = $this->postJson('/api/v1/contabilidad/migraciones-apertura', [
-            'tipo' => 'plan_cuentas',
-            'archivo' => UploadedFile::fake()->createWithContent('cuentas.csv', $csv),
-        ])->assertCreated()->json('migracion.id');
+        $id = $this->importarCompleto('plan_cuentas', $csv, [], 'cuentas.csv');
 
-        $evento = $this->assertEventoAuditoria('importar', 'contabilidad', 'migracion_apertura', $id);
-        $this->assertSame('plan_cuentas', $evento['valores_nuevos']['tipo']);
-        $this->assertSame(1, $evento['valores_nuevos']['registros_aceptados']);
-        $this->assertSame(1, $evento['valores_nuevos']['registros_rechazados']);
-        $this->assertCount(1, $evento['valores_nuevos']['primeros_errores']);
-        $this->assertSame('cuentas.csv', $evento['valores_nuevos']['archivo_original']);
+        $eventos = array_values(array_filter(
+            $this->eventosDeAuditoria('importar', 'importaciones'),
+            fn (array $evento) => $evento['entidad'] === 'importacion' && $evento['entidad_id'] === $id,
+        ));
+        $this->assertCount(3, $eventos);
+
+        $solicitud = $eventos[0];
+        $this->assertSame('plan_cuentas', $solicitud['valores_nuevos']['tipo']);
+        $this->assertSame('cuentas.csv', $solicitud['valores_nuevos']['archivo']);
+
+        $confirmacion = $eventos[1];
+        $this->assertSame(1, $confirmacion['valores_nuevos']['filas_aceptadas']);
+
+        $completada = $eventos[2];
+        $this->assertSame(1, $completada['valores_nuevos']['aceptadas']);
     }
 }

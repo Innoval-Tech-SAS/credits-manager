@@ -6,8 +6,6 @@ import { Search, Upload, UserPlus } from 'lucide-react';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { usePermission } from '../../auth/hooks/use-permission';
-import { ImportModal } from '../../accounting/components/import-modal';
-import type { ApiOpeningBalanceImport } from '../../accounting/types/api-opening-balance-import';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Select } from '@ui/forms/components/select';
@@ -28,15 +26,9 @@ export const ThirdPartiesListPage: FC = () => {
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<ThirdPartiesListLocationState>();
 
     const [tipo, setTipo] = useState('');
-    const [showImportModal, setShowImportModal] = useState(false);
 
-    const { items, isLoading, page, setPage, totalPages, totalItems, search, setSearch, sortKey, sortDirection, toggleSort, refetch } =
+    const { items, isLoading, page, setPage, totalPages, totalItems, search, setSearch, sortKey, sortDirection, toggleSort } =
         usePaginatedResource<ApiThirdParty>('/terceros', { tipo });
-
-    const handleImported = (migracion: ApiOpeningBalanceImport) => {
-        setSuccessMessage(`Importación finalizada: ${migracion.registros_aceptados} aceptados, ${migracion.registros_rechazados} rechazados.`);
-        refetch();
-    };
 
     const handleTipoChange = (value: string) => {
         setTipo(value);
@@ -73,7 +65,7 @@ export const ThirdPartiesListPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button iconOnly variant="outline" startIcon={<Upload className="size-4" />} onClick={() => setShowImportModal(true)}>
+                        <Button iconOnly variant="outline" startIcon={<Upload className="size-4" />} onClick={() => navigate('/importaciones/nueva?tipo=terceros')}>
                             Importar
                         </Button>
                     )}
@@ -86,18 +78,6 @@ export const ThirdPartiesListPage: FC = () => {
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
-            modals={
-                showImportModal && (
-                    <ImportModal
-                        onClose={() => setShowImportModal(false)}
-                        tipo="terceros"
-                        titulo="Importar terceros"
-                        columnas={['tipo', 'tipo_persona', 'tipo_documento', 'numero_documento', 'nombres', 'apellidos', 'razon_social', 'digito_verificacion', 'representante_legal']}
-                        notas='"tipo": cliente, proveedor u otro. "tipo_persona": natural o juridica. Naturales: tipo_documento (cc, ce o pasaporte), nombres y apellidos. Jurídicas: razon_social, NIT sin dígito en numero_documento, digito_verificacion y representante_legal. Los clientes solo pueden ser naturales.'
-                        onImported={handleImported}
-                    />
-                )
-            }
         >
             <DataTable
                 columns={columns}

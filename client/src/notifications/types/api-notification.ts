@@ -3,7 +3,10 @@ export type NotificationType =
     | 'exportacion_fallida'
     | 'reapertura_solicitada'
     | 'reapertura_autorizada'
-    | 'reapertura_rechazada';
+    | 'reapertura_rechazada'
+    | 'importacion_validada'
+    | 'importacion_completada'
+    | 'importacion_fallida';
 
 /** Raw shape returned by `GET /notificaciones` (rows), `POST /notificaciones/{id}/leer` and pushed by the `.notificacion.creada` WebSocket event. */
 export type ApiNotification = {
@@ -13,7 +16,7 @@ export type ApiNotification = {
     tipo: NotificationType;
     titulo: string;
     mensaje: string;
-    datos: { exportacion_id?: number; formato?: string; solicitud_id?: number; periodo_id?: number } | null;
+    datos: { exportacion_id?: number; formato?: string; solicitud_id?: number; periodo_id?: number; importacion_id?: number } | null;
     leida_en: string | null;
     creado_en: string | null;
 };
