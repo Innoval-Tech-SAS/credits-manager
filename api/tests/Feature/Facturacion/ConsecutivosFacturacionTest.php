@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesAuditoriaFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
+use Tests\Concerns\CreatesFacturacionFixtures;
 use Tests\TestCase;
 
 class ConsecutivosFacturacionTest extends TestCase
@@ -14,6 +15,7 @@ class ConsecutivosFacturacionTest extends TestCase
     use ActsAsAdmin;
     use CreatesAuditoriaFixtures;
     use CreatesCreditFixtures;
+    use CreatesFacturacionFixtures;
     use RefreshDatabase;
 
     private const CONSECUTIVOS = '/api/v1/facturacion/consecutivos';
@@ -44,6 +46,7 @@ class ConsecutivosFacturacionTest extends TestCase
     public function test_cambia_el_prefijo_y_el_numero_inicial_antes_de_emitir(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
 
         $this->patchJson(self::CONSECUTIVOS.'/factura', ['prefijo' => 'FAC', 'numero_inicial' => 100])->assertOk();
 
@@ -56,6 +59,7 @@ class ConsecutivosFacturacionTest extends TestCase
     public function test_no_cambia_el_numero_inicial_con_documentos_emitidos_pero_si_el_prefijo(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
         $this->factura($this->crearCredito($this->crearCliente()));
 
         $this->patchJson(self::CONSECUTIVOS.'/factura', ['numero_inicial' => 50])

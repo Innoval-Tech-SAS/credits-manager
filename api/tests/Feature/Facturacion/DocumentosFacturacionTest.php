@@ -8,6 +8,7 @@ use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\AfirmaAuditoria;
 use Tests\Concerns\CreatesAuditoriaFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
+use Tests\Concerns\CreatesFacturacionFixtures;
 use Tests\TestCase;
 
 class DocumentosFacturacionTest extends TestCase
@@ -16,12 +17,15 @@ class DocumentosFacturacionTest extends TestCase
     use AfirmaAuditoria;
     use CreatesAuditoriaFixtures;
     use CreatesCreditFixtures;
+    use CreatesFacturacionFixtures;
     use RefreshDatabase;
 
     private const BASE = '/api/v1/facturacion/documentos';
 
     private function credito(): Credito
     {
+        $this->crearReglasFacturacion();
+
         return $this->crearCredito($this->crearCliente(['nombre' => 'Ana Gomez']));
     }
 

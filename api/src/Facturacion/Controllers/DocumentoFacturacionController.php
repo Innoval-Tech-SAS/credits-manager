@@ -9,6 +9,7 @@ use App\Facturacion\Requests\ActualizarBorradorFacturaRequest;
 use App\Facturacion\Requests\CrearBorradorFacturaRequest;
 use App\Facturacion\Requests\EmitirNotaRequest;
 use App\Facturacion\Requests\ListarDocumentosFacturacionRequest;
+use App\Facturacion\Requests\MotivoAccionFacturacionRequest;
 use App\Facturacion\Services\DocumentoFacturacionService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -80,6 +81,13 @@ class DocumentoFacturacionController extends Controller
         );
 
         return response()->json($this->documentos->detalle($nota), 201);
+    }
+
+    public function anular(MotivoAccionFacturacionRequest $peticion, DocumentoFacturacion $documento): JsonResponse
+    {
+        $anulada = $this->documentos->anular($documento, $peticion->validated('motivo'), $peticion->user());
+
+        return response()->json($this->documentos->detalle($anulada));
     }
 
     public function pdf(Request $peticion, DocumentoFacturacion $documento): Response

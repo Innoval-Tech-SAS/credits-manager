@@ -22,7 +22,7 @@ use Illuminate\Support\Str;
  */
 final class FacturaPdf implements DocumentoPdf
 {
-    /** @param array{total: Dinero, total_nota_credito: Dinero, total_nota_debito: Dinero, saldo: Dinero} $totales */
+    /** @param array{total: Dinero, total_nota_credito: Dinero, total_nota_debito: Dinero, total_cobrado: Dinero, saldo: Dinero} $totales */
     public function __construct(
         private readonly DocumentoFacturacion $documento,
         private readonly array $totales,
@@ -97,6 +97,7 @@ final class FacturaPdf implements DocumentoPdf
         if ($this->documento->tipo === TipoDocumentoFacturacion::Factura) {
             $totales[] = new TotalDocumento('Notas crédito', $this->totales['total_nota_credito']);
             $totales[] = new TotalDocumento('Notas débito', $this->totales['total_nota_debito']);
+            $totales[] = new TotalDocumento('Cobros', $this->totales['total_cobrado']);
             $totales[] = new TotalDocumento('Saldo', $this->totales['saldo']);
         }
 

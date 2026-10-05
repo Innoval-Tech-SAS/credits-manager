@@ -198,6 +198,16 @@ return [
             'lineas_origen_invalidas' => 'Una línea no pertenece al documento de origen.',
             'excede_saldo' => 'El valor supera lo que queda por acreditar de «:concepto».',
             'numeracion_bloqueada' => 'No se puede cambiar el número inicial: ya hay documentos emitidos de este tipo.',
+            'sin_regla_contable' => 'Falta la regla de contabilización «:evento». Configúrala en Contabilidad antes de continuar.',
+            'solo_factura_anulable' => 'Solo una factura se puede anular. Para corregir una nota, emite otra nota.',
+            'ya_anulada' => 'La factura ya está anulada.',
+            'con_cobros' => 'La factura tiene cobros vigentes. Reversa primero los cobros y luego anula la factura.',
+            'con_notas_debito' => 'La factura tiene notas débito emitidas. No se puede anular mientras existan.',
+            'excede_saldo_pendiente' => 'La nota crédito supera el saldo pendiente de la factura.',
+            'cobro_no_factura_emitida' => 'Solo se pueden registrar cobros sobre una factura emitida.',
+            'cobro_excede_saldo' => 'El cobro supera el saldo pendiente de la factura (:saldo).',
+            'cobro_no_reversible' => 'Solo se puede reversar un cobro, no una reversa.',
+            'cobro_ya_reversado' => 'Este cobro ya fue reversado.',
         ],
         'credito_origen_id' => [
             'pertenece_a_otro_cliente' => 'El crédito seleccionado no pertenece a este cliente.',
@@ -342,6 +352,8 @@ return [
         'valor_pago' => 'valor del pago',
         'forma_pago' => 'forma de pago',
         'observacion' => 'observación',
+        'medio' => 'medio de cobro',
+        'referencia' => 'referencia',
 
         // Auth
         'usuario' => 'usuario',
