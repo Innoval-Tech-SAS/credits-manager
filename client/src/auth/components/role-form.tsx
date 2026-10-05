@@ -9,7 +9,7 @@ import { Checkbox } from '@ui/forms/components/checkbox';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { ArrowRight } from 'lucide-react';
+import { Save } from 'lucide-react';
 import type { RoleFormProps } from '../props/role-form-props';
 import type { ApiPermisoCatalogItem } from '../types/api-permiso';
 import { groupPermisosByModulo } from '../utils/group-permisos-by-modulo';
@@ -134,7 +134,7 @@ export const RoleForm: FC<RoleFormProps> = ({ roleId, initialData }) => {
                         type="submit"
                         disabled={isSubmitting}
                         startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
-                        endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
+                        endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                     >
                         {isSubmitting
                             ? isEditMode

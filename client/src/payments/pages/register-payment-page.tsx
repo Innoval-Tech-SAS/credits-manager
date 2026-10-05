@@ -13,7 +13,7 @@ import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { DataTable } from '@ui/table/components/data-table';
-import { ArrowRight } from 'lucide-react';
+import { Save } from 'lucide-react';
 import { INSTALLMENT_STATUS_CLASSES, INSTALLMENT_STATUS_LABEL } from '../../credits/constants/installment-status-styles';
 import type { ApiCreditDetail } from '../../credits/types/api-credit-detail';
 import { PaymentTargetCard } from '../components/payment-target-card';
@@ -147,7 +147,7 @@ export const RegisterPaymentPage: FC = () => {
                                         type="submit"
                                         disabled={isSubmitting}
                                         startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
-                                        endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
+                                        endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                                     >
                                         {isSubmitting ? 'Pagando…' : 'Pagar cuota'}
                                     </Button>

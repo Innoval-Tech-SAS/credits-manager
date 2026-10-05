@@ -14,7 +14,7 @@ import { CLIENT_STATUS_BADGE_CLASSES } from '../constants/client-status-badge-cl
 import { NATURAL_DOCUMENT_TYPE_OPTIONS } from '../../third-parties/constants/natural-document-type-options';
 import { EmployerSelector } from '../../employers/components/employer-selector';
 import { AdvisorSelect } from './advisor-select';
-import { ArrowRight } from 'lucide-react';
+import { Save } from 'lucide-react';
 import type { ClientFormProps } from '../props/client-form-props';
 import type { ApiClient } from '../types/api-client';
 import type { ApiEmployer } from '../../employers/types/api-employer';
@@ -247,7 +247,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                         type="submit"
                         disabled={isSubmitting}
                         startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
-                        endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
+                        endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                     >
                         {isSubmitting
                             ? isEditMode

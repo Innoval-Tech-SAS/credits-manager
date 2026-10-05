@@ -11,7 +11,7 @@ import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { ToggleSwitchInput } from '@ui/forms/components/toggle-switch-input';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { ArrowRight, Lock, User } from 'lucide-react';
+import { KeyRound, User, Save } from 'lucide-react';
 import type { RegisterFormProps } from '../props/register-form-props';
 import type { ApiPermisoCatalogItem } from '../types/api-permiso';
 import type { ApiRoleWithPermisos } from '../types/api-role';
@@ -190,7 +190,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                                             name="password"
                                             type="password"
                                             pill
-                                            startIcon={<Lock className="size-4" />}
+                                            startIcon={<KeyRound className="size-4" />}
                                             minLength={8}
                                             hint="Mínimo 8 caracteres."
                                             value={password}
@@ -205,7 +205,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                                             name="confirm-password"
                                             type="password"
                                             pill
-                                            startIcon={<Lock className="size-4" />}
+                                            startIcon={<KeyRound className="size-4" />}
                                             minLength={8}
                                             value={confirmPassword}
                                             onChange={(event) => setConfirmPassword(event.target.value)}
@@ -295,7 +295,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                         type="submit"
                         disabled={isSubmitting}
                         startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
-                        endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
+                        endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                     >
                         {isSubmitting
                             ? isEditMode

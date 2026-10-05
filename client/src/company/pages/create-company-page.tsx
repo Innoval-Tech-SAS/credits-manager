@@ -9,7 +9,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { MunicipalitySelector } from '../../geography/components/municipality-selector';
-import { ArrowRight, Lock, User } from 'lucide-react';
+import { KeyRound, User, Save } from 'lucide-react';
 
 export const CreateCompanyPage: FC = () => {
     const navigate = useNavigate();
@@ -185,7 +185,7 @@ export const CreateCompanyPage: FC = () => {
                                                 name="admin-password"
                                                 type="password"
                                                 required
-                                                startIcon={<Lock className="size-4" />}
+                                                startIcon={<KeyRound className="size-4" />}
                                                 minLength={8}
                                                 hint="Mínimo 8 caracteres, con letras, números y símbolos."
                                                 value={adminPassword}
@@ -200,7 +200,7 @@ export const CreateCompanyPage: FC = () => {
                                                 name="admin-confirm-password"
                                                 type="password"
                                                 required
-                                                startIcon={<Lock className="size-4" />}
+                                                startIcon={<KeyRound className="size-4" />}
                                                 minLength={8}
                                                 value={adminConfirmPassword}
                                                 onChange={(event) => setAdminConfirmPassword(event.target.value)}
@@ -216,7 +216,7 @@ export const CreateCompanyPage: FC = () => {
                                 type="submit"
                                 disabled={isSubmitting || !municipalityId}
                                 startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
-                                endIcon={isSubmitting ? undefined : <ArrowRight className="size-4" />}
+                                endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                             >
                                 {isSubmitting ? 'Creando…' : 'Crear empresa'}
                             </Button>
