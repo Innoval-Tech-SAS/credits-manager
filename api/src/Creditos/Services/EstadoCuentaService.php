@@ -38,13 +38,15 @@ class EstadoCuentaService
         return $this->exportaciones->solicitar(new FuenteEstadoCuenta((int) $usuario->empresa_id, $credito->id), $formato, $usuario);
     }
 
-    /** @return array{credito: Credito, saldo: Dinero, refinanciacion: array<string, mixed>|null, pagos: Collection, resumen_cuotas: array<string, mixed>} */
+    /** @return array{credito: Credito, fecha_corte: string, saldo: Dinero, refinanciacion: array<string, mixed>|null, pagos: Collection, resumen_cuotas: array<string, mixed>} */
     public function obtener(Credito $credito): array
     {
         $credito = $this->creditos->mostrarCredito($credito);
 
+        // La fecha de corte es el día en que se genera: el estado de cuenta refleja los movimientos hasta ese momento.
         return [
             'credito' => $credito,
+            'fecha_corte' => now('America/Bogota')->toDateString(),
             'saldo' => $this->cuotas->saldoCredito($credito->id),
             'refinanciacion' => $this->creditos->vinculoRefinanciacion($credito),
             'pagos' => $this->pagos->listarPorCredito($credito->id, 'asc'),

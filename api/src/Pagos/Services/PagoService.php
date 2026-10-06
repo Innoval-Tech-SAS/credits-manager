@@ -3,6 +3,7 @@
 namespace App\Pagos\Services;
 
 use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Core\Dinero\Dinero;
@@ -18,8 +19,10 @@ use App\Exportacion\Services\ExportacionService;
 use App\Pagos\Enums\FormaPago;
 use App\Pagos\Exportaciones\FuentePagos;
 use App\Pagos\Models\Pago;
+use App\Pagos\Models\ReversaPago;
 use App\Pagos\Repositories\PagoDetalleRepository;
 use App\Pagos\Repositories\PagoRepository;
+use App\Pagos\Repositories\ReversaPagoRepository;
 use App\Recibos\Services\ReciboCajaService;
 use App\Usuarios\Models\Usuario;
 use Carbon\CarbonImmutable;
@@ -33,6 +36,7 @@ class PagoService
     public function __construct(
         protected PagoRepository $pagos,
         protected PagoDetalleRepository $pagoDetalles,
+        protected ReversaPagoRepository $reversas,
         protected CuotaRepository $cuotas,
         protected CreditoRepository $creditos,
         protected ComprobanteService $comprobantes,
@@ -41,10 +45,10 @@ class PagoService
         protected ExportacionService $exportaciones,
     ) {}
 
-    public function solicitarExportacion(Usuario $usuario, ?string $busqueda, FormatoExportacion $formato): Exportacion
+    public function solicitarExportacion(Usuario $usuario, ?string $busqueda, ?string $mes, FormatoExportacion $formato): Exportacion
     {
         return $this->exportaciones->solicitar(
-            new FuentePagos((int) $usuario->empresa_id, $usuario->idAsesorConAlcance(), $busqueda),
+            new FuentePagos((int) $usuario->empresa_id, $usuario->idAsesorConAlcance(), $busqueda, $mes),
             $formato,
             $usuario,
         );
@@ -55,9 +59,72 @@ class PagoService
         return $this->pagos->porCredito($creditoId, $direccion);
     }
 
-    public function listar(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
+    public function listar(?string $busqueda, ?string $mes, int $porPagina, int $pagina): LengthAwarePaginator
     {
-        return $this->pagos->paginar($busqueda, max(1, min(100, $porPagina)), max(1, $pagina));
+        return $this->pagos->paginar($busqueda, $mes, max(1, min(100, $porPagina)), max(1, $pagina));
+    }
+
+    /**
+     * Reversa un pago mediante movimiento compensatorio: el pago y su detalle no se tocan; las cuotas recuperan lo
+     * aplicado, el recibo queda anulado (con su número) y el comprobante de recaudo se reversa con un asiento enlazado.
+     * Solo admite el último pago aplicado del crédito: restaurar un pago anterior desharía la distribución de los
+     * posteriores. Todo ocurre en una transacción con el crédito bloqueado.
+     */
+    public function reversar(Pago $pago, string $motivo, ?int $usuarioId): ReversaPago
+    {
+        return DB::transaction(function () use ($pago, $motivo, $usuarioId) {
+            $credito = $this->creditos->bloquear($pago->credito_id);
+            $this->exigirReversible($credito, $pago);
+
+            $creditoAnteriores = $this->auditoria->instantanea($credito);
+            $cuotasAfectadas = $this->restaurarCuotas($credito, $pago);
+
+            $this->recalcularSaldoCapital($credito);
+
+            if ($credito->estado === EstadoCredito::Pagado) {
+                $this->creditos->actualizar($credito, ['estado' => EstadoCredito::Desembolsado]);
+            }
+
+            // El ajuste de otros gastos se rehace con el saldo restaurado: reproduce el valor que tenían antes del pago.
+            $this->ajustarOtrosGastosRestantes($credito);
+
+            $this->recibos->anularPorReversa($pago, $motivo, $usuarioId);
+
+            $comprobante = $this->comprobantes->buscarContabilizadoPorOrigen('pagos', $pago->id);
+            $reverso = $comprobante ? $this->comprobantes->reversarComprobante($comprobante, $motivo) : null;
+
+            $reversa = $this->reversas->crear([
+                'pago_id' => $pago->id,
+                'comprobante_reverso_id' => $reverso?->id,
+                'fecha' => now('America/Bogota')->toDateString(),
+                'valor' => $pago->valor_pago,
+                'motivo' => $motivo,
+                'registrado_por' => $usuarioId,
+            ]);
+
+            $this->auditoria->registrar(
+                AccionAuditoria::Reversar,
+                AuditoriaConstants::MODULO_PAGOS,
+                "Pago #{$pago->id} de {$pago->valor_pago->aDecimalString()} reversado en el crédito #{$credito->id}",
+                'pago',
+                $pago->id,
+                nuevos: [
+                    'reversa_id' => $reversa->id,
+                    'comprobante_reverso_id' => $reverso?->id,
+                    'cuotas_afectadas' => $cuotasAfectadas,
+                ],
+                motivo: $motivo,
+            );
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CREDITOS,
+                "Crédito #{$credito->id} actualizado por la reversa del pago #{$pago->id}",
+                $credito,
+                $creditoAnteriores,
+                $motivo,
+            );
+
+            return $reversa;
+        });
     }
 
     /**
@@ -402,6 +469,56 @@ class PagoService
 
             $this->cuotas->actualizar($cuota, ['valor_otros_gastos' => $otrosAjustados]);
         }
+    }
+
+    private function exigirReversible(Credito $credito, Pago $pago): void
+    {
+        if (! in_array($credito->estado, [EstadoCredito::Desembolsado, EstadoCredito::Pagado], true)) {
+            throw ValidationException::withMessages(['pago' => __('validation.custom.reversa.estado_credito')]);
+        }
+
+        if ($this->reversas->existePara($pago->id)) {
+            throw ValidationException::withMessages(['pago' => __('validation.custom.reversa.ya_reversado')]);
+        }
+
+        if ($this->pagos->ultimoVigenteDelCredito($credito->id)?->id !== $pago->id) {
+            throw ValidationException::withMessages(['pago' => __('validation.custom.reversa.no_es_ultimo')]);
+        }
+
+        // Una liquidación anticipada cierra cuotas sin detalle por cuota: no hay a qué devolverle el dinero, así que no se reversa.
+        if (! $pago->detalles()->exists()) {
+            throw ValidationException::withMessages(['pago' => __('validation.custom.reversa.sin_aplicacion')]);
+        }
+    }
+
+    /**
+     * Devuelve a cada cuota lo que este pago le aplicó. El estado vuelve a Pendiente o Vencida según la fecha, no a
+     * «la del pago»: la mora es una consecuencia del vencimiento, no del último movimiento.
+     *
+     * @return list<int> ids de las cuotas afectadas
+     */
+    private function restaurarCuotas(Credito $credito, Pago $pago): array
+    {
+        $cuotas = $this->cuotas->todasOrdenadasParaActualizar($credito->id)->keyBy('id');
+        $hoy = now('America/Bogota')->startOfDay();
+        $afectadas = [];
+
+        foreach ($pago->detalles()->get() as $detalle) {
+            $cuota = $cuotas[$detalle->cuota_id];
+            $pagado = $cuota->valor_pagado->restar($detalle->valor_aplicado)->noNegativo();
+            $total = $cuota->valor->sumar($cuota->valor_otros_gastos);
+
+            $estado = match (true) {
+                $pagado->mayorOIgualQue($total) => EstadoCuota::Pagada,
+                $cuota->fecha_vencimiento->lt($hoy) => EstadoCuota::Vencida,
+                default => EstadoCuota::Pendiente,
+            };
+
+            $this->cuotas->actualizar($cuota, ['valor_pagado' => $pagado, 'estado' => $estado]);
+            $afectadas[] = $cuota->id;
+        }
+
+        return $afectadas;
     }
 
     private function exigirDesembolsado(Credito $credito): void

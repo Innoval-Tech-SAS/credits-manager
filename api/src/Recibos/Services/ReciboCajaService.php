@@ -16,6 +16,7 @@ use App\Recibos\Documentos\ReciboCajaPdf;
 use App\Recibos\Enums\EstadoRecibo;
 use App\Recibos\Models\ReciboCaja;
 use App\Recibos\Repositories\ReciboCajaRepository;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ReciboCajaService
 {
@@ -47,9 +48,46 @@ class ReciboCajaService
         return $recibo;
     }
 
+    /**
+     * Anula el recibo del pago reversado, si lo tiene. Se llama dentro de la transacción de la reversa. El número se
+     * conserva: la numeración no tiene huecos porque ningún recibo se elimina ni se renumera.
+     */
+    public function anularPorReversa(Pago $pago, string $motivo, ?int $usuarioId): void
+    {
+        $recibo = $this->recibos->porPago($pago->id);
+
+        if ($recibo === null) {
+            return;
+        }
+
+        $anteriores = $this->auditoria->instantanea($recibo);
+
+        $this->recibos->actualizar($recibo, [
+            'estado' => EstadoRecibo::Anulado,
+            'anulado_en' => now(),
+            'anulado_por' => $usuarioId,
+            'motivo_anulacion' => $motivo,
+        ]);
+
+        $this->auditoria->registrarModificacion(
+            AuditoriaConstants::MODULO_PAGOS,
+            "Recibo de caja {$recibo->numero} anulado por la reversa del pago #{$pago->id}",
+            $recibo,
+            $anteriores,
+            $motivo,
+            AccionAuditoria::Reversar,
+        );
+    }
+
+    /** @param  array{tercero_id: ?int, desde: ?string, hasta: ?string, estado: ?EstadoRecibo}  $filtros */
+    public function listar(array $filtros, int $porPagina, int $pagina): LengthAwarePaginator
+    {
+        return $this->recibos->paginarFiltrado($filtros, max(1, min(100, $porPagina)), max(1, $pagina));
+    }
+
     public function generarPdf(Pago $pago): PdfGenerado
     {
-        $pago->load(['recibo.comprobante.tipoComprobante', 'recibo.comprobante.lineas.cuenta', 'cliente.tercero', 'detalles.cuota', 'registrador']);
+        $pago->load(['recibo.comprobante.tipoComprobante', 'recibo.comprobante.lineas.cuenta', 'recibo.anulador', 'cliente.tercero', 'detalles.cuota', 'registrador']);
 
         abort_if($pago->recibo === null, 404);
 

@@ -17,6 +17,7 @@ class ExportarPagosRequest extends FormRequest
     {
         return [
             'search' => ['nullable', 'string', 'max:100'],
+            'mes' => ['nullable', 'date_format:Y-m'],
             'formato' => ['required', Rule::enum(FormatoExportacion::class)],
         ];
     }

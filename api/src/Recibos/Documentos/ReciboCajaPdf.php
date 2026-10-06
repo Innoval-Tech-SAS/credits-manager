@@ -12,6 +12,7 @@ use App\Impresion\Enums\OrientacionDocumento;
 use App\Impresion\Enums\TipoColumnaDocumento;
 use App\Impresion\Services\NumeroALetras;
 use App\Pagos\Models\Pago;
+use App\Recibos\Enums\EstadoRecibo;
 use Illuminate\Support\Str;
 
 /** Recibo de caja de un pago. Espera el pago con `recibo.comprobante`, `cliente.tercero`, `detalles.cuota` y `registrador` ya cargados. */
@@ -21,7 +22,7 @@ final class ReciboCajaPdf implements DocumentoPdf
 
     public function titulo(): string
     {
-        return 'Recibo de caja';
+        return $this->anulado() ? 'Recibo de caja ANULADO' : 'Recibo de caja';
     }
 
     public function consecutivo(): ?string
@@ -95,7 +96,12 @@ final class ReciboCajaPdf implements DocumentoPdf
 
     public function totales(): array
     {
-        return [new TotalDocumento('Total recibido', $this->pago->valor_pago)];
+        return [new TotalDocumento($this->anulado() ? 'Valor anulado' : 'Total recibido', $this->pago->valor_pago)];
+    }
+
+    private function anulado(): bool
+    {
+        return $this->pago->recibo->estado === EstadoRecibo::Anulado;
     }
 
     public function secciones(): array
@@ -123,6 +129,15 @@ final class ReciboCajaPdf implements DocumentoPdf
 
         if ($this->pago->observacion) {
             $secciones[] = new SeccionDocumento('Observaciones', $this->pago->observacion);
+        }
+
+        if ($this->anulado()) {
+            $recibo = $this->pago->recibo;
+            $anuladoPor = $recibo->anulador?->nombre ?? 'Sin usuario registrado';
+            $secciones[] = new SeccionDocumento(
+                'Anulación',
+                "Anulado el {$recibo->anulado_en->timezone('America/Bogota')->format('d/m/Y H:i')} por {$anuladoPor}.\nMotivo: {$recibo->motivo_anulacion}\nEl valor de este recibo no tiene efecto sobre el pago.",
+            );
         }
 
         return $secciones;

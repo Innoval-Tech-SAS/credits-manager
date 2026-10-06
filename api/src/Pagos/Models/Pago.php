@@ -76,4 +76,9 @@ class Pago extends BaseModel
     {
         return $this->hasMany(PagoDetalle::class);
     }
+
+    public function reversa(): HasOne
+    {
+        return $this->hasOne(ReversaPago::class);
+    }
 }

@@ -7,24 +7,29 @@ use App\Creditos\Models\Credito;
 use App\Exportacion\Enums\FormatoExportacion;
 use App\Http\Controllers\Controller;
 use App\Pagos\Enums\FormaPago;
+use App\Pagos\Models\Pago;
 use App\Pagos\Requests\CrearPagoRequest;
 use App\Pagos\Requests\ExportarPagosRequest;
 use App\Pagos\Requests\LiquidarCreditoRequest;
+use App\Pagos\Requests\ListarPagosRequest;
+use App\Pagos\Requests\ReversarPagoRequest;
 use App\Pagos\Services\PagoService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class PagoController extends Controller
 {
     public function __construct(protected PagoService $pagoService) {}
 
-    public function listar(Request $peticion): JsonResponse
+    public function listar(ListarPagosRequest $peticion): JsonResponse
     {
+        $datos = $peticion->validated();
+
         $pagos = $this->pagoService->listar(
-            busqueda: $peticion->string('search')->toString(),
-            porPagina: $peticion->integer('per_page', 10),
-            pagina: $peticion->integer('page', 1),
+            busqueda: $datos['search'] ?? null,
+            mes: $datos['mes'] ?? null,
+            porPagina: (int) ($datos['per_page'] ?? 10),
+            pagina: (int) ($datos['page'] ?? 1),
         );
 
         return response()->json($pagos);
@@ -35,6 +40,7 @@ class PagoController extends Controller
         $exportacion = $this->pagoService->solicitarExportacion(
             $peticion->user(),
             $peticion->validated('search'),
+            $peticion->validated('mes'),
             FormatoExportacion::from($peticion->validated('formato')),
         );
 
@@ -62,6 +68,13 @@ class PagoController extends Controller
             'pago' => $resultado['pago'],
             'sobrante' => $resultado['sobrante'],
         ], 201);
+    }
+
+    public function reversar(ReversarPagoRequest $peticion, Pago $pago): JsonResponse
+    {
+        $reversa = $this->pagoService->reversar($pago, $peticion->validated('motivo'), Auth::id());
+
+        return response()->json(['reversa' => $reversa]);
     }
 
     public function liquidacion(Credito $credito): JsonResponse
