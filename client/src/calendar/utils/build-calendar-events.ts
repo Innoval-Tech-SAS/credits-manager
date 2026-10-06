@@ -8,6 +8,14 @@ export function buildCalendarEvents(agenda: ApiCalendarAgenda): CalendarEvent[] 
         title: `${cuota.cliente_nombre} · Cuota #${cuota.numero_cuota} · ${formatMoney(cuota.saldo)}`,
         start: cuota.fecha_vencimiento,
         allDay: true,
-        extendedProps: { color: cuota.color, creditoId: cuota.credito_id },
+        extendedProps: {
+            color: cuota.color,
+            creditoId: cuota.credito_id,
+            clienteNombre: cuota.cliente_nombre,
+            numeroCuota: cuota.numero_cuota,
+            saldo: cuota.saldo,
+            fechaVencimiento: cuota.fecha_vencimiento,
+            estado: cuota.estado,
+        },
     }));
 }
