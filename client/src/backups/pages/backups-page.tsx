@@ -29,8 +29,8 @@ export const BackupsPage: FC = () => {
                 {user?.role === 'admin' && (
                     <BackupDownloadCard
                         title="Datos de mi empresa"
-                        description="Todas las tablas, solo con los registros de tu empresa. Las contraseñas no se incluyen."
-                        buttonLabel="Descargar datos de mi empresa"
+                        description="Exporta toda tu información."
+                        buttonLabel="Descargar mis datos"
                         icon={<Building2 className="size-5" />}
                         endpoint="/respaldos/empresa"
                         fallbackFilename="datos-empresa.sql.gz"
