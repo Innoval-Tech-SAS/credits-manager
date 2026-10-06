@@ -26,7 +26,7 @@ export function buildCreditTableColumns({ canCancel, onView, onCancel }: BuildCr
         { key: 'tasa_interes', label: 'Tasa', render: (row) => `${parseFloat(row.tasa_interes).toFixed(3)}%` },
         { key: 'plazo', label: 'Plazo' },
         { key: 'tipo_pago', label: 'Tipo pago', render: (row) => (row.tipo_pago === 'mensual' ? 'Mensual' : 'Quincenal') },
-        { key: 'valor_cuota', label: 'Cuota', render: (row) => formatMoney(row.valor_cuota) },
+        { key: 'valor_cuota_total', label: 'Cuota', render: (row) => formatMoney(row.valor_cuota_total) },
         {
             key: 'estado',
             label: 'Estado',

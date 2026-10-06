@@ -11,6 +11,7 @@ use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Models\Credito;
 use App\Creditos\Repositories\CreditoRepository;
 use App\Creditos\Repositories\CuotaRepository;
+use App\Creditos\Services\OtrosGastosCalculator;
 use App\Exportacion\Enums\FormatoExportacion;
 use App\Exportacion\Models\Exportacion;
 use App\Exportacion\Services\ExportacionService;
@@ -83,19 +84,22 @@ class PagoService
             ]);
 
             $aplicacion = $this->aplicarAlPlan($credito, $pago, $valorPago);
-            $this->pagos->actualizar($pago, ['valor_capital' => $aplicacion['capital'], 'valor_interes' => $aplicacion['interes']]);
+            $this->pagos->actualizar($pago, ['valor_capital' => $aplicacion['capital'], 'valor_interes' => $aplicacion['interes'], 'valor_otros_gastos' => $aplicacion['otros']]);
             $restante = $aplicacion['sobrante'];
             $capitalTotal = $aplicacion['capital'];
             $interesTotal = $aplicacion['interes'];
+            $otrosTotal = $aplicacion['otros'];
             $cuotasAfectadas = $aplicacion['cuotas'];
 
             $this->recalcularSaldoCapital($credito);
 
             if ($this->cuotas->contarNoPagadas($credito->id) === 0) {
                 $this->creditos->marcarComoPagado($credito);
+            } else {
+                $this->ajustarOtrosGastosRestantes($credito);
             }
 
-            $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $capitalTotal, $interesTotal);
+            $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $capitalTotal, $interesTotal, $otrosTotal);
             $recibo = $this->recibos->emitir($pago, $comprobante);
 
             $this->auditoria->registrarCreacion(
@@ -105,6 +109,7 @@ class PagoService
                 [
                     'capital' => $capitalTotal,
                     'interes' => $interesTotal,
+                    'otros_gastos' => $otrosTotal,
                     'sobrante_descartado' => $restante,
                     'cuotas_afectadas' => $cuotasAfectadas,
                     'comprobante_id' => $comprobante?->id,
@@ -144,7 +149,8 @@ class PagoService
         $tasaDiaria = ((float) $credito->tasa_interes / 100) / $divisorPeriodo;
 
         $interes = $capitalPendiente->multiplicarPorTasa($tasaDiaria * $diasTranscurridos);
-        $total = $capitalPendiente->sumar($interes);
+        $otrosGastos = $this->otrosGastosLiquidacion($credito);
+        $total = $capitalPendiente->sumar($interes)->sumar($otrosGastos);
 
         /*
          * Alternativa híbrida (comentada, pendiente de confirmación del cliente):
@@ -178,6 +184,7 @@ class PagoService
             'dias_transcurridos' => $diasTranscurridos,
             'tasa_diaria' => $tasaDiaria,
             'interes' => $interes,
+            'otros_gastos' => $otrosGastos,
             'total' => $total,
             'fecha_referencia' => $fechaReferencia->toDateString(),
         ];
@@ -195,6 +202,7 @@ class PagoService
                 'valor_pago' => $cotizacion['total'],
                 'valor_capital' => $cotizacion['capital_pendiente'],
                 'valor_interes' => $cotizacion['interes'],
+                'valor_otros_gastos' => $cotizacion['otros_gastos'],
                 'fecha_pago' => now(),
                 'forma_pago' => $formaPago,
                 'observacion' => $observacion ?? 'Liquidación anticipada del crédito',
@@ -204,7 +212,7 @@ class PagoService
             $this->cuotas->cerrarPendientesComoOrigen($credito->id);
             $this->recalcularSaldoCapital($credito);
             $this->creditos->marcarComoPagado($credito);
-            $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $cotizacion['capital_pendiente'], $cotizacion['interes']);
+            $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $cotizacion['capital_pendiente'], $cotizacion['interes'], $cotizacion['otros_gastos']);
             $recibo = $this->recibos->emitir($pago, $comprobante);
 
             $this->auditoria->registrarCreacion(
@@ -259,7 +267,7 @@ class PagoService
             ]);
 
             $aplicacion = $this->aplicarAlPlan($credito, $pago, $valor);
-            $this->pagos->actualizar($pago, ['valor_capital' => $aplicacion['capital'], 'valor_interes' => $aplicacion['interes']]);
+            $this->pagos->actualizar($pago, ['valor_capital' => $aplicacion['capital'], 'valor_interes' => $aplicacion['interes'], 'valor_otros_gastos' => $aplicacion['otros']]);
 
             if (! $aplicacion['sobrante']->esCero()) {
                 throw ValidationException::withMessages(['valor' => 'El valor supera el saldo pendiente del crédito.']);
@@ -272,7 +280,7 @@ class PagoService
             }
 
             $comprobante = $contabilizar
-                ? $this->comprobantes->contabilizarRecaudoPago($pago, $aplicacion['capital'], $aplicacion['interes'])
+                ? $this->comprobantes->contabilizarRecaudoPago($pago, $aplicacion['capital'], $aplicacion['interes'], $aplicacion['otros'])
                 : null;
 
             $this->auditoria->registrarCreacion(
@@ -300,7 +308,7 @@ class PagoService
     }
 
     /**
-     * @return array{sobrante: Dinero, capital: Dinero, interes: Dinero, cuotas: list<int>}
+     * @return array{sobrante: Dinero, capital: Dinero, interes: Dinero, otros: Dinero, cuotas: list<int>}
      */
     private function aplicarAlPlan(Credito $credito, Pago $pago, Dinero $valor): array
     {
@@ -308,9 +316,10 @@ class PagoService
 
         $aplicacion = AplicadorPagoPlan::aplicar(
             $cuotas->map(fn ($cuota) => [
-                'valor' => $cuota->valor,
+                'valor' => $cuota->valor->sumar($cuota->valor_otros_gastos),
                 'valor_pagado' => $cuota->valor_pagado,
                 'valor_interes' => $cuota->valor_interes,
+                'valor_otros_gastos' => $cuota->valor_otros_gastos,
             ])->all(),
             $valor,
         );
@@ -330,7 +339,7 @@ class PagoService
 
             $this->cuotas->actualizar($cuota, [
                 'valor_pagado' => $asignacion['nuevo_pagado'],
-                'estado' => $asignacion['nuevo_pagado']->mayorOIgualQue($cuota->valor) ? EstadoCuota::Pagada : EstadoCuota::Pendiente,
+                'estado' => $asignacion['nuevo_pagado']->mayorOIgualQue($cuota->valor->sumar($cuota->valor_otros_gastos)) ? EstadoCuota::Pagada : EstadoCuota::Pendiente,
             ]);
         }
 
@@ -338,8 +347,61 @@ class PagoService
             'sobrante' => $aplicacion['sobrante'],
             'capital' => $aplicacion['capital'],
             'interes' => $aplicacion['interes'],
+            'otros' => $aplicacion['otros'],
             'cuotas' => $cuotasAfectadas,
         ];
+    }
+
+    /**
+     * Otros gastos que cobra una cancelación anticipada (regla 12): las cuotas vencidas no pagadas cobran su saldo
+     * completo de otros gastos; la cuota del periodo en curso cobra lo devengado por días desde el inicio de su periodo.
+     * Las cuotas posteriores no generan otros gastos.
+     */
+    private function otrosGastosLiquidacion(Credito $credito): Dinero
+    {
+        $hoy = now()->startOfDay();
+        $inicioPeriodo = $credito->fecha_desembolso;
+        $total = Dinero::cero();
+
+        foreach ($this->cuotas->todasPorCredito($credito->id) as $cuota) {
+            $inicio = $inicioPeriodo;
+            $inicioPeriodo = $cuota->fecha_vencimiento;
+
+            if ($cuota->estado === EstadoCuota::Pagada) {
+                continue;
+            }
+
+            $pendiente = $cuota->valor_otros_gastos->restar(AplicadorPagoPlan::desglosePagado($cuota->valor_pagado, $cuota->valor_interes, $cuota->valor_otros_gastos)['otros'])->noNegativo();
+
+            if ($cuota->fecha_vencimiento->lt($hoy)) {
+                $total = $total->sumar($pendiente);
+            } elseif ($inicio->lte($hoy)) {
+                $devengado = OtrosGastosCalculator::proporcionalPorDias($cuota->valor_otros_gastos, (int) $inicio->diffInDays(now()), $credito->tipo_pago);
+                $total = $total->sumar($pendiente->menorEntre($devengado));
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Abono parcial que no liquida el crédito (regla 13): los otros gastos de las cuotas restantes pasan a
+     * capital pendiente × porcentaje, es decir, capital inicial × porcentaje × (saldo / capital inicial).
+     * Solo cambian las cuotas sin ningún pago; una cuota con pago parcial conserva su valor.
+     */
+    private function ajustarOtrosGastosRestantes(Credito $credito): void
+    {
+        $saldo = $this->capitalPendienteReal($credito);
+        $otrosAjustados = OtrosGastosCalculator::valorPorCuota($saldo, (float) $credito->gastos_administracion_pct);
+
+        foreach ($this->cuotas->pendientesOrdenadasParaActualizar($credito->id) as $cuota) {
+            // Una cuota con pago parcial en curso conserva su valor: cambiarlo a mitad de pago alteraría lo ya abonado.
+            if (! $cuota->valor_pagado->esCero()) {
+                continue;
+            }
+
+            $this->cuotas->actualizar($cuota, ['valor_otros_gastos' => $otrosAjustados]);
+        }
     }
 
     private function exigirDesembolsado(Credito $credito): void
@@ -363,7 +425,7 @@ class PagoService
         $capitalRestante = $credito->valor_prestamo;
 
         foreach ($this->cuotas->todasPorCredito($credito->id) as $cuota) {
-            $capitalRestante = $capitalRestante->restar($cuota->valor_pagado->restar($cuota->valor_interes)->noNegativo());
+            $capitalRestante = $capitalRestante->restar(AplicadorPagoPlan::desglosePagado($cuota->valor_pagado, $cuota->valor_interes, $cuota->valor_otros_gastos)['capital']);
         }
 
         return $capitalRestante->noNegativo();
@@ -380,7 +442,7 @@ class PagoService
         $capitalRestante = $credito->valor_prestamo;
 
         foreach ($this->cuotas->todasOrdenadasParaActualizar($credito->id) as $cuota) {
-            $capitalPagado = $cuota->valor_pagado->restar($cuota->valor_interes)->noNegativo();
+            $capitalPagado = AplicadorPagoPlan::desglosePagado($cuota->valor_pagado, $cuota->valor_interes, $cuota->valor_otros_gastos)['capital'];
             $capitalRestante = $capitalRestante->restar($capitalPagado);
             $this->cuotas->actualizar($cuota, ['saldo_capital' => $capitalRestante->noNegativo()]);
         }

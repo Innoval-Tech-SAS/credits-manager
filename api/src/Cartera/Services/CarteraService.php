@@ -182,10 +182,10 @@ class CarteraService
                 $filas[$clienteId] ??= [
                     'cliente_id' => $clienteId,
                     'cliente_nombre' => $cuota->credito->cliente->tercero->nombre,
-                    'valor_cuota' => $cuota->credito->valor_cuota,
+                    'valor_cuota' => $cuota->credito->valor_cuota_total,
                     'cuotas' => [],
                 ];
-                $filas[$clienteId]['cuotas'][$periodo] = ['valor' => $cuota->valor, 'estado' => $cuota->estado];
+                $filas[$clienteId]['cuotas'][$periodo] = ['valor' => $cuota->valor_total_cuota, 'estado' => $cuota->estado];
             }
 
             sort($meses);

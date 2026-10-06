@@ -69,7 +69,7 @@ final class FuenteCreditos implements FuenteExportable
                 'valor_prestamo' => $credito->valor_prestamo,
                 'tasa_interes' => $credito->tasa_interes,
                 'plazo' => $credito->plazo,
-                'valor_cuota' => $credito->valor_cuota,
+                'valor_cuota' => $credito->valor_cuota_total,
             ];
         }
     }

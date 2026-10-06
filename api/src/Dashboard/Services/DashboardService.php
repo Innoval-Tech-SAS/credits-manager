@@ -175,13 +175,17 @@ class DashboardService
 
     private function mapearPagosDelDia(array $cuotas): array
     {
-        return array_map(fn (object $cuota) => [
-            'cuota_id' => (int) $cuota->cuota_id,
-            'credito_id' => (int) $cuota->credito_id,
-            'cliente_nombre' => $cuota->cliente_nombre,
-            'numero_cuota' => (int) $cuota->numero_cuota,
-            'valor' => Dinero::desdeCentavos((int) $cuota->valor)->aDecimalString(),
-            'pendiente' => Dinero::desdeCentavos((int) $cuota->valor)->restar(Dinero::desdeCentavos((int) $cuota->valor_pagado))->noNegativo()->aDecimalString(),
-        ], $cuotas);
+        return array_map(function (object $cuota) {
+            $total = Dinero::desdeCentavos((int) $cuota->valor)->sumar(Dinero::desdeCentavos((int) $cuota->valor_otros_gastos));
+
+            return [
+                'cuota_id' => (int) $cuota->cuota_id,
+                'credito_id' => (int) $cuota->credito_id,
+                'cliente_nombre' => $cuota->cliente_nombre,
+                'numero_cuota' => (int) $cuota->numero_cuota,
+                'valor' => $total->aDecimalString(),
+                'pendiente' => $total->restar(Dinero::desdeCentavos((int) $cuota->valor_pagado))->noNegativo()->aDecimalString(),
+            ];
+        }, $cuotas);
     }
 }

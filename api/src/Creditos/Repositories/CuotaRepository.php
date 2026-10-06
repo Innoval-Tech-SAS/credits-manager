@@ -112,7 +112,7 @@ class CuotaRepository extends BaseRepository
     {
         $saldo = $this->consulta()
             ->where('credito_id', $creditoId)
-            ->select(DB::raw('SUM(valor - valor_pagado) as saldo'))
+            ->select(DB::raw('SUM(valor + valor_otros_gastos - valor_pagado) as saldo'))
             ->value('saldo');
 
         return (int) ($saldo ?? 0);
@@ -169,7 +169,7 @@ class CuotaRepository extends BaseRepository
             ->whereIn('credito_id', $creditoIds)
             ->selectRaw('
                 credito_id,
-                SUM(valor - valor_pagado) as saldo,
+                SUM(valor + valor_otros_gastos - valor_pagado) as saldo,
                 SUM(CASE WHEN estado = ? THEN 1 ELSE 0 END) as vencidas,
                 MIN(CASE WHEN estado = ? THEN fecha_vencimiento END) as primera_fecha_vencida
             ', [EstadoCuota::Vencida->value, EstadoCuota::Vencida->value])
@@ -234,7 +234,7 @@ class CuotaRepository extends BaseRepository
             ->where('estado', '!=', EstadoCuota::Pagada)
             ->update([
                 'estado' => EstadoCuota::Pagada,
-                'valor_pagado' => DB::raw('valor'),
+                'valor_pagado' => DB::raw('valor + valor_otros_gastos'),
             ]);
     }
 }

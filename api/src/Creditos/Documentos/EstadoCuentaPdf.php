@@ -116,18 +116,30 @@ final class EstadoCuentaPdf implements DocumentoPdf
             new TablaDocumento(
                 'Detalle de pagos',
                 [
-                    new ColumnaDocumento('fecha', 'Fecha', TipoColumnaDocumento::Fecha, 18),
-                    new ColumnaDocumento('concepto', 'Concepto', TipoColumnaDocumento::Texto, 42),
-                    new ColumnaDocumento('valor', 'Valor', TipoColumnaDocumento::Monetario, 20),
-                    new ColumnaDocumento('forma_pago', 'Forma de pago', TipoColumnaDocumento::Texto, 20),
+                    new ColumnaDocumento('fecha', 'Fecha', TipoColumnaDocumento::Fecha, 13),
+                    new ColumnaDocumento('concepto', 'Concepto', TipoColumnaDocumento::Texto, 22),
+                    new ColumnaDocumento('valor', 'Valor', TipoColumnaDocumento::Monetario, 12),
+                    new ColumnaDocumento('capital', 'Capital', TipoColumnaDocumento::Monetario, 12),
+                    new ColumnaDocumento('intereses', 'Intereses', TipoColumnaDocumento::Monetario, 12),
+                    new ColumnaDocumento('otros_gastos', 'Otros gastos', TipoColumnaDocumento::Monetario, 12),
+                    new ColumnaDocumento('forma_pago', 'Forma de pago', TipoColumnaDocumento::Texto, 17),
                 ],
                 $this->pagos->map(fn ($pago) => [
                     'fecha' => $pago->fecha_pago,
                     'concepto' => $pago->observacion ?: 'Pago',
                     'valor' => $pago->valor_pago,
+                    'capital' => $pago->valor_capital ?? Dinero::cero(),
+                    'intereses' => $pago->valor_interes ?? Dinero::cero(),
+                    'otros_gastos' => $pago->valor_otros_gastos ?? Dinero::cero(),
                     'forma_pago' => ucfirst($pago->forma_pago->value),
                 ])->values()->all(),
-                ['concepto' => 'Total pagado', 'valor' => $this->totalPagado()],
+                [
+                    'concepto' => 'Total pagado',
+                    'valor' => $this->totalPagado(),
+                    'capital' => $this->totalDesglose('valor_capital'),
+                    'intereses' => $this->totalDesglose('valor_interes'),
+                    'otros_gastos' => $this->totalDesglose('valor_otros_gastos'),
+                ],
                 'Aún no se han registrado pagos.',
             ),
         ];
@@ -137,7 +149,7 @@ final class EstadoCuentaPdf implements DocumentoPdf
     {
         return [
             new TotalDocumento('Monto prestado', $this->credito->valor_prestamo),
-            new TotalDocumento('Cuota fija', $this->credito->valor_cuota),
+            new TotalDocumento('Cuota fija', $this->credito->valor_cuota_total),
             new TotalDocumento('Total pagado', $this->totalPagado()),
             new TotalDocumento('Saldo pendiente', $this->saldo),
         ];
@@ -169,6 +181,11 @@ final class EstadoCuentaPdf implements DocumentoPdf
     private function totalPagado(): Dinero
     {
         return Dinero::sumarVarios(...$this->pagos->map(fn ($pago) => $pago->valor_pago)->all());
+    }
+
+    private function totalDesglose(string $campo): Dinero
+    {
+        return Dinero::sumarVarios(...$this->pagos->map(fn ($pago) => $pago->{$campo} ?? Dinero::cero())->all());
     }
 
     /** @param array<string, mixed> $vinculo */

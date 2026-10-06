@@ -163,11 +163,11 @@ export const RegisterPaymentPage: FC = () => {
                             columns={[
                                 { key: 'numero_cuota', label: '#' },
                                 { key: 'fecha_vencimiento', label: 'Vencimiento', render: (row) => formatDateEs(row.fecha_vencimiento) },
-                                { key: 'valor', label: 'Valor', render: (row) => formatMoney(row.valor) },
+                                { key: 'valor_total_cuota', label: 'Total de la cuota', render: (row) => formatMoney(row.valor_total_cuota) },
                                 {
                                     key: 'saldo',
                                     label: 'Saldo',
-                                    render: (row) => formatMoney((parseFloat(row.valor) - parseFloat(row.valor_pagado)).toFixed(2)),
+                                    render: (row) => formatMoney((parseFloat(row.valor_total_cuota) - parseFloat(row.valor_pagado)).toFixed(2)),
                                 },
                                 {
                                     key: 'estado',

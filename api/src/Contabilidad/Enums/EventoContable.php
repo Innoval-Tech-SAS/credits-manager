@@ -13,6 +13,7 @@ enum EventoContable: string
     case DesembolsoCredito = 'desembolso_credito';
     case RecaudoCapital = 'recaudo_capital';
     case RecaudoInteres = 'recaudo_interes';
+    case RecaudoOtrosGastos = 'recaudo_otros_gastos';
     case FacturaEmision = 'factura_emision';
     case NotaCreditoFactura = 'nota_credito_factura';
     case NotaDebitoFactura = 'nota_debito_factura';
@@ -24,6 +25,7 @@ enum EventoContable: string
             self::DesembolsoCredito => 'Desembolso de crédito',
             self::RecaudoCapital => 'Recaudo de capital',
             self::RecaudoInteres => 'Recaudo de interés',
+            self::RecaudoOtrosGastos => 'Recaudo de otros gastos',
             self::FacturaEmision => 'Emisión de factura',
             self::NotaCreditoFactura => 'Nota crédito sobre factura',
             self::NotaDebitoFactura => 'Nota débito sobre factura',

@@ -85,7 +85,7 @@ class DashboardRepository
      */
     public function carteraActual(int $empresaId, ?int $asesorId, ?int $clienteId, ?EstadoCredito $estado, string $hoy): array
     {
-        $saldo = 'cuotas.valor - cuotas.valor_pagado';
+        $saldo = 'cuotas.valor + cuotas.valor_otros_gastos - cuotas.valor_pagado';
         $esVencida = "(cuotas.estado = '".EstadoCuota::Vencida->value."' OR cuotas.fecha_vencimiento < ?)";
 
         $fila = $this->filtrarCreditos(
@@ -125,7 +125,7 @@ class DashboardRepository
             $asesorId,
             $clienteId,
             $estado,
-        )->selectRaw("cuotas.credito_id, SUM(cuotas.valor - cuotas.valor_pagado) AS saldo, MIN(CASE WHEN {$esVencida} THEN cuotas.fecha_vencimiento END) AS primera", [$hoy])
+        )->selectRaw("cuotas.credito_id, SUM(cuotas.valor + cuotas.valor_otros_gastos - cuotas.valor_pagado) AS saldo, MIN(CASE WHEN {$esVencida} THEN cuotas.fecha_vencimiento END) AS primera", [$hoy])
             ->groupBy('cuotas.credito_id')
             ->havingRaw("MIN(CASE WHEN {$esVencida} THEN cuotas.fecha_vencimiento END) IS NOT NULL", [$hoy]);
 
@@ -162,6 +162,7 @@ class DashboardRepository
                 'terceros.nombre as cliente_nombre',
                 'cuotas.numero_cuota',
                 'cuotas.valor',
+                'cuotas.valor_otros_gastos',
                 'cuotas.valor_pagado',
             ])
             ->all();
