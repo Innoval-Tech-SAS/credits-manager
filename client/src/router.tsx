@@ -23,6 +23,7 @@ import { VoucherTypesPage } from './accounting/pages/voucher-types-page';
 import { VouchersListPage } from './accounting/pages/vouchers-list-page';
 import { AuditLogPage } from './audit/pages/audit-log-page';
 import { AuditRecoveryPage } from './audit/pages/audit-recovery-page';
+import { BackupsPage } from './backups/pages/backups-page';
 import { CalendarPage } from './calendar/pages/calendar-page';
 import { CreateEconomicActivityPage } from './expenses/pages/create-economic-activity-page';
 import { CreateExpensePage } from './expenses/pages/create-expense-page';
@@ -342,6 +343,10 @@ const routes: RouteObject[] = [
                                 <AuditRecoveryPage />
                             </RequireSuperAdmin>
                         ),
+                    },
+                    {
+                        path: 'respaldos',
+                        element: <BackupsPage />,
                     },
                     {
                         path: 'roles',

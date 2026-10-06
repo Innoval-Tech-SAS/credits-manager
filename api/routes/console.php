@@ -1,8 +1,10 @@
 <?php
 
 use App\Creditos\Services\CuotaService;
+use App\Respaldos\Constants\RespaldosConstants;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -34,3 +36,13 @@ Schedule::command('importaciones:limpiar')
     ->dailyAt('03:15')
     ->name('importaciones:limpiar')
     ->withoutOverlapping(30);
+
+/**
+ * Respaldo diario de base y archivos (los domingos y el día 1 también se copia a semanal y mensual).
+ * Un fallo queda en el log del scheduler; el respaldo anterior sigue disponible.
+ */
+Schedule::command('respaldos:ejecutar')
+    ->dailyAt(RespaldosConstants::HORA_AUTOMATICA)
+    ->name('respaldos:ejecutar')
+    ->withoutOverlapping(120)
+    ->onFailure(fn () => Log::error('El respaldo automático falló; revisar la salida del servicio scheduler.'));

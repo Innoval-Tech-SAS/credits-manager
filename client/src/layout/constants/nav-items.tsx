@@ -1,5 +1,6 @@
 import {
     ArchiveRestore,
+    DatabaseBackup,
     BookOpen,
     BookText,
     Briefcase,
@@ -52,6 +53,7 @@ export const SUPERADMIN_NAV_ITEMS: NavItem[] = [
             { name: "Recuperación", path: "/recuperacion-auditoria", icon: ArchiveRestore },
         ],
     },
+    { name: "Respaldos", icon: DatabaseBackup, path: "/respaldos" },
 ];
 
 export const NAV_ITEMS: NavItem[] = [
@@ -331,6 +333,7 @@ export const NAV_ITEMS: NavItem[] = [
                 action: "listar",
             },
             { name: "Correo de cobranza", path: "/correo", icon: Mail, adminOnly: true },
+            { name: "Respaldos", path: "/respaldos", icon: DatabaseBackup, adminOnly: true },
         ],
     },
 ];

@@ -10,7 +10,7 @@ RUN composer dump-autoload --optimize --no-dev
 FROM docker.io/library/php:8.4-fpm-alpine
 WORKDIR /var/www/html
 
-RUN apk add --no-cache icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev \
+RUN apk add --no-cache icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev mysql-client mariadb-connector-c \
     && docker-php-ext-configure gd --with-jpeg \
     && docker-php-ext-install pdo_mysql mbstring bcmath intl zip opcache pcntl gd \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
@@ -26,8 +26,8 @@ RUN chmod +x /entrypoint.sh
 
 COPY --from=vendor /app ./
 
-RUN mkdir -p /var/exportaciones /var/importaciones \
-    && chown -R www-data:www-data storage bootstrap/cache /var/exportaciones /var/importaciones
+RUN mkdir -p /var/exportaciones /var/importaciones /var/respaldos storage/app/private storage/app/public \
+    && chown -R www-data:www-data storage bootstrap/cache /var/exportaciones /var/importaciones /var/respaldos
 
 EXPOSE 9000
 ENTRYPOINT ["/entrypoint.sh"]

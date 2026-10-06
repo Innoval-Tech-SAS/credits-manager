@@ -44,6 +44,7 @@ use App\Notificaciones\Controllers\NotificacionController;
 use App\Pagos\Controllers\PagoController;
 use App\Proveedores\Controllers\ProveedorController;
 use App\Recibos\Controllers\ReciboCajaController;
+use App\Respaldos\Controllers\DescargaBaseController;
 use App\Terceros\Controllers\TerceroController;
 use App\Usuarios\Controllers\PermisoController;
 use App\Usuarios\Controllers\RolController;
@@ -79,6 +80,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auditoria/bitacora/exportar', [BitacoraAuditoriaController::class, 'exportar'])->middleware('permiso_o_superadmin:auditoria,exportar');
     Route::get('/auditoria/respaldo', [RecuperacionAuditoriaController::class, 'index'])->middleware('superadmin');
     Route::post('/auditoria/respaldo/recuperar', [RecuperacionAuditoriaController::class, 'recuperar'])->middleware('superadmin');
+
+    Route::get('/respaldos/base', [DescargaBaseController::class, 'base'])->middleware('superadmin');
+    Route::get('/respaldos/empresa', [DescargaBaseController::class, 'empresa'])->middleware('admin');
 
     Route::get('/exportaciones', [ExportacionController::class, 'index']);
     Route::get('/exportaciones/{exportacion}/descargar', [ExportacionController::class, 'descargar'])->whereNumber('exportacion');

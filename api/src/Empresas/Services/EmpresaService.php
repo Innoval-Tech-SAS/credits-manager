@@ -36,6 +36,14 @@ class EmpresaService
         return $this->conMunicipio($this->empresas->buscarPorIdOFallar(Auth::user()->empresa_id));
     }
 
+    /** Como `obtenerPropia`, pero `null` si el usuario no pertenece a una empresa (superadmin). */
+    public function obtenerPropiaOpcional(): ?Empresa
+    {
+        $empresaId = Auth::user()->empresa_id;
+
+        return $empresaId === null ? null : $this->conMunicipio($this->empresas->buscarPorIdOFallar($empresaId));
+    }
+
     /** Con el municipio y su estado, lo que el formulario necesita para mostrar la ciudad ya elegida. */
     public function conMunicipio(Empresa $empresa): Empresa
     {

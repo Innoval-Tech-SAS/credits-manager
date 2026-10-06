@@ -14,7 +14,7 @@ class EmpresaController extends Controller
 
     public function show(): JsonResponse
     {
-        return response()->json(['empresa' => $this->empresas->obtenerPropia()]);
+        return response()->json(['empresa' => $this->empresas->obtenerPropiaOpcional()]);
     }
 
     public function update(EditarEmpresaRequest $peticion): JsonResponse
