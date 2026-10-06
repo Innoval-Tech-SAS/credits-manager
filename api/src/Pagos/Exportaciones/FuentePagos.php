@@ -50,6 +50,9 @@ final class FuentePagos implements FuenteExportable
             new ColumnaExportable('credito', 'Crédito (id)', TipoColumna::Entero),
             new ColumnaExportable('forma_pago', 'Forma de pago'),
             new ColumnaExportable('valor', 'Valor', TipoColumna::Monetario),
+            new ColumnaExportable('capital', 'Capital', TipoColumna::Monetario),
+            new ColumnaExportable('intereses', 'Intereses', TipoColumna::Monetario),
+            new ColumnaExportable('otros_gastos', 'Otros gastos', TipoColumna::Monetario),
             new ColumnaExportable('recibo', 'Recibo (número)', TipoColumna::Entero),
             new ColumnaExportable('observacion', 'Observación'),
         ];
@@ -58,9 +61,13 @@ final class FuentePagos implements FuenteExportable
     public function filas(): iterable
     {
         $total = Dinero::cero();
+        $totales = ['capital' => Dinero::cero(), 'intereses' => Dinero::cero(), 'otros_gastos' => Dinero::cero()];
 
         foreach (app(PagoRepository::class)->cursorParaExportar($this->empresaId, $this->asesorId, $this->busqueda) as $pago) {
             $total = $total->sumar($pago->valor_pago);
+            $totales['capital'] = $totales['capital']->sumar($pago->valor_capital ?? Dinero::cero());
+            $totales['intereses'] = $totales['intereses']->sumar($pago->valor_interes ?? Dinero::cero());
+            $totales['otros_gastos'] = $totales['otros_gastos']->sumar($pago->valor_otros_gastos ?? Dinero::cero());
 
             yield [
                 'pago' => $pago->id,
@@ -69,6 +76,9 @@ final class FuentePagos implements FuenteExportable
                 'credito' => $pago->credito_id,
                 'forma_pago' => $pago->forma_pago->value,
                 'valor' => $pago->valor_pago,
+                'capital' => $pago->valor_capital ?? Dinero::cero(),
+                'intereses' => $pago->valor_interes ?? Dinero::cero(),
+                'otros_gastos' => $pago->valor_otros_gastos ?? Dinero::cero(),
                 'recibo' => $pago->recibo?->numero,
                 'observacion' => $pago->observacion,
             ];
@@ -81,6 +91,9 @@ final class FuentePagos implements FuenteExportable
             'credito' => null,
             'forma_pago' => null,
             'valor' => $total,
+            'capital' => $totales['capital'],
+            'intereses' => $totales['intereses'],
+            'otros_gastos' => $totales['otros_gastos'],
             'recibo' => null,
             'observacion' => null,
         ];
