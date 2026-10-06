@@ -278,15 +278,19 @@ class ComprobanteService
         );
     }
 
-    public function contabilizarRecaudoPago(Pago $pago, Dinero $capital, Dinero $interes): ?Comprobante
+    /** Sin regla activa de otros gastos no se contabiliza un recaudo que los incluye: el asiento no cuadraría. */
+    public function contabilizarRecaudoPago(Pago $pago, Dinero $capital, Dinero $interes, ?Dinero $otros = null): ?Comprobante
     {
+        $otros ??= Dinero::cero();
+
         $reglaCapital = $this->reglas->activaParaEvento(EventoContable::RecaudoCapital);
         $reglaInteres = $this->reglas->activaParaEvento(EventoContable::RecaudoInteres);
-        if (! $reglaCapital || ! $reglaInteres) {
+        $reglaOtros = $otros->esPositivo() ? $this->reglas->activaParaEvento(EventoContable::RecaudoOtrosGastos) : null;
+        if (! $reglaCapital || ! $reglaInteres || ($otros->esPositivo() && ! $reglaOtros)) {
             return null;
         }
 
-        $aplicado = $capital->sumar($interes);
+        $aplicado = $capital->sumar($interes)->sumar($otros);
         if (! $aplicado->esPositivo()) {
             return null;
         }
@@ -299,6 +303,9 @@ class ComprobanteService
         }
         if ($interes->esPositivo()) {
             $lineas[] = ['cuenta_id' => $reglaInteres->cuenta_credito_id, 'debito' => 0, 'credito' => $interes];
+        }
+        if ($otros->esPositivo()) {
+            $lineas[] = ['cuenta_id' => $reglaOtros->cuenta_credito_id, 'debito' => 0, 'credito' => $otros];
         }
 
         return $this->crearComprobante(
