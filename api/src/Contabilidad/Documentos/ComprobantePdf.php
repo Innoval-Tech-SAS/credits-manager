@@ -139,6 +139,10 @@ final class ComprobantePdf implements DocumentoPdf
             $secciones[] = new SeccionDocumento('Elaborado por', $this->comprobante->creadoPor->nombre);
         }
 
+        if ($this->comprobante->revisor) {
+            $secciones[] = new SeccionDocumento('Revisado por', $this->comprobante->revisor->nombre);
+        }
+
         return $secciones;
     }
 

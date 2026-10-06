@@ -215,6 +215,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/contabilidad/comprobantes', [ComprobanteController::class, 'store'])->middleware('permiso:contabilidad,crear_manual');
     Route::get('/contabilidad/comprobantes/{comprobante}', [ComprobanteController::class, 'show'])->middleware('permiso:contabilidad,listar');
     Route::get('/contabilidad/comprobantes/{comprobante}/pdf', [ComprobanteController::class, 'pdf'])->middleware('permiso:contabilidad,imprimir_comprobante')->whereNumber('comprobante');
+    Route::post('/contabilidad/comprobantes/{comprobante}/revisar', [ComprobanteController::class, 'revisar'])->middleware('permiso:contabilidad,revisar')->whereNumber('comprobante');
+    Route::post('/contabilidad/comprobantes/{comprobante}/contabilizar', [ComprobanteController::class, 'contabilizar'])->middleware('permiso:contabilidad,contabilizar')->whereNumber('comprobante');
     Route::post('/contabilidad/comprobantes/{comprobante}/reversar', [ComprobanteController::class, 'reversar'])->middleware('permiso:contabilidad,anular');
 
     Route::get('/contabilidad/libro-diario', [ReporteContableController::class, 'libroDiario'])->middleware('permiso:informes_contables,listar');
@@ -225,6 +227,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/contabilidad/libro-mayor/exportar', [ReporteContableController::class, 'exportarLibroMayor'])->middleware('permiso:informes_contables,exportar');
     Route::post('/contabilidad/balance-prueba/exportar', [ReporteContableController::class, 'exportarBalancePrueba'])->middleware('permiso:informes_contables,exportar');
     Route::post('/contabilidad/estados-financieros/exportar', [ReporteContableController::class, 'exportarEstadosFinancieros'])->middleware('permiso:informes_contables,exportar');
+
+
 
     Route::get('/importaciones', [ImportacionController::class, 'index'])->middleware('permiso:importaciones,listar');
     Route::post('/importaciones', [ImportacionController::class, 'store'])->middleware('permiso:importaciones,ejecutar');

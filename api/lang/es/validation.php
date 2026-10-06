@@ -233,6 +233,7 @@ return [
         'lineas' => [
             'descuadrado' => 'Comprobante descuadrado: débitos :debito distintos de créditos :credito. No se puede contabilizar.',
             'sin_valor' => 'El comprobante no tiene valor.',
+            'centro_costo_requerido' => 'Las cuentas de gasto y costo necesitan un centro de costo en cada línea.',
         ],
         'periodo' => [
             'no_cerrado' => 'Solo se puede solicitar la reapertura de un período cerrado.',
@@ -245,6 +246,10 @@ return [
         'comprobante' => [
             'no_contabilizado' => 'Solo se pueden reversar comprobantes contabilizados.',
             'periodo_cerrado' => 'El período del comprobante original está cerrado; solicite reapertura autorizada.',
+            'no_borrador' => 'Solo se puede revisar un comprobante en borrador.',
+            'no_revisado' => 'Solo se puede contabilizar un comprobante revisado.',
+            'revision_propia' => 'No puedes revisar un comprobante que tú creaste: la revisión la hace otro usuario.',
+            'descuadrado_al_contabilizar' => 'El comprobante no cuadra entre sus líneas y sus totales; no se puede contabilizar.',
         ],
         'fecha' => [
             'periodo_cerrado' => 'El período contable :mes/:anio está cerrado. No se pueden registrar movimientos.',

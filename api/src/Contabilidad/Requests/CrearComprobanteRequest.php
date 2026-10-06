@@ -37,6 +37,10 @@ class CrearComprobanteRequest extends FormRequest
                 'required',
                 Rule::exists('plan_cuentas', 'id')->where('empresa_id', $this->user()->empresa_id),
             ],
+            'lineas.*.centro_costo_id' => [
+                'nullable',
+                Rule::exists('centros_costo', 'id')->where('empresa_id', $this->user()->empresa_id)->where('activo', true)->whereNull('borrado_en'),
+            ],
             'lineas.*.debito' => ['nullable', 'numeric', 'min:0'],
             'lineas.*.credito' => ['nullable', 'numeric', 'min:0'],
             'lineas.*.descripcion' => ['nullable', 'string', 'max:255'],
