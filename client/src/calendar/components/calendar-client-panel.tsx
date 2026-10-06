@@ -62,6 +62,14 @@ export const CalendarClientPanel: FC<CalendarClientPanelProps> = ({ detalle }) =
                         </span>
                     )}
                 </Fila>
+                <Fila etiqueta="Saldo en mora">
+                    {resumen && (
+                        <span className={resumen.cartera.dias_mora > 0 ? 'text-error-600 dark:text-error-400' : undefined}>
+                            {formatMoney(resumen.cartera.saldo_en_mora)}
+                        </span>
+                    )}
+                    {!resumen && '—'}
+                </Fila>
                 <Fila etiqueta="Saldo con la entidad">{resumen ? formatMoney(resumen.saldo_consolidado) : '—'}</Fila>
                 <Fila etiqueta="Último pago">
                     {resumen && (ultimoPago ? `${formatDateEs(ultimoPago.fecha_pago)} · ${formatMoney(ultimoPago.valor_pago)}` : 'Sin pagos')}
