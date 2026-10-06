@@ -165,6 +165,7 @@ services:
       - api_storage:/var/www/html/storage
       - exportaciones_data:/var/exportaciones
       - importaciones_data:/var/importaciones
+      - ${RESPALDOS_ORIGEN:-respaldos_data}:/var/respaldos
     restart: unless-stopped
 
   # Servidor WebSocket (Laravel Reverb). El navegador entra por nginx (wss://api.ddasolucionescredicias.tech/app).
@@ -245,6 +246,7 @@ services:
       - api_storage:/var/www/html/storage
       - exportaciones_data:/var/exportaciones
       - importaciones_data:/var/importaciones
+      - ${RESPALDOS_ORIGEN:-respaldos_data}:/var/respaldos
     healthcheck:
       test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
       interval: 5s
@@ -288,3 +290,4 @@ volumes:
   api_storage:
   exportaciones_data:
   importaciones_data:
+  respaldos_data:
