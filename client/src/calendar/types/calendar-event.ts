@@ -9,6 +9,11 @@ export type CalendarEventProps = {
     numeroCuota: number;
     /** Decimal string (ej. "12345.66"), viene de `App\Core\Dinero\Dinero`. */
     saldo: string;
+    valorTotal: string;
+    valorPagado: string;
+    valorCapital: string;
+    valorInteres: string;
+    valorOtrosGastos: string;
     fechaVencimiento: string;
     estado: InstallmentStatus;
 };
