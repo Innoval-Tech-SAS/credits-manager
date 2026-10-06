@@ -6,6 +6,10 @@ export type CalendarEventProps = {
     color: CalendarInstallmentColor;
     creditoId: number;
     clienteNombre: string;
+    tipoDocumento: string;
+    numeroDocumento: string;
+    celular: string | null;
+    creditosConEntidad: number;
     numeroCuota: number;
     /** Decimal string (ej. "12345.66"), viene de `App\Core\Dinero\Dinero`. */
     saldo: string;

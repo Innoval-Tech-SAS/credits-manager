@@ -11,7 +11,11 @@ export function buildCalendarEvents(agenda: ApiCalendarAgenda): CalendarEvent[] 
         extendedProps: {
             color: cuota.color,
             creditoId: cuota.credito_id,
-            clienteNombre: cuota.cliente_nombre,
+            clienteNombre: cuota.cliente.nombre,
+            tipoDocumento: cuota.cliente.tipo_documento,
+            numeroDocumento: cuota.cliente.numero_documento,
+            celular: cuota.cliente.celular,
+            creditosConEntidad: cuota.creditos_con_entidad,
             numeroCuota: cuota.numero_cuota,
             saldo: cuota.saldo,
             valorTotal: cuota.valor_total,
