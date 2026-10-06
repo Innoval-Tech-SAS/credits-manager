@@ -105,7 +105,7 @@ export const CreditDetailPage: FC = () => {
 
             {refinanciacion && <RefinancingNotice vinculo={refinanciacion} valorPrestamo={credito.valor_prestamo} className="mb-6" />}
 
-            <CreditSummaryCards valorPrestamo={credito.valor_prestamo} valorTotal={credito.valor_total} saldo={saldo} cartera={cartera} />
+            <CreditSummaryCards valorPrestamo={credito.valor_prestamo} valorTotal={credito.valor_total_con_otros} saldo={saldo} cartera={cartera} />
 
             <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
                 <CreditInstallmentsChartCard cuotas={credito.cuotas ?? []} />

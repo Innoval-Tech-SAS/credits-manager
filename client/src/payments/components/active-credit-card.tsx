@@ -39,11 +39,11 @@ export const ActiveCreditCard: FC<ActiveCreditCardProps> = ({ credito }) => {
                 </div>
                 <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Valor cuota</p>
-                    <p className="mt-0.5 text-sm font-medium text-gray-800 dark:text-white/90">{formatMoney(credito.valor_cuota)}</p>
+                    <p className="mt-0.5 text-sm font-medium text-gray-800 dark:text-white/90">{formatMoney(credito.valor_cuota_total)}</p>
                 </div>
                 <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Valor total a pagar</p>
-                    <p className="mt-0.5 text-sm font-medium text-gray-800 dark:text-white/90">{formatMoney(credito.valor_total)}</p>
+                    <p className="mt-0.5 text-sm font-medium text-gray-800 dark:text-white/90">{formatMoney(credito.valor_total_con_otros)}</p>
                 </div>
                 <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Tasa de interés</p>

@@ -36,7 +36,7 @@ export const AccountStatementHeader: FC<AccountStatementHeaderProps> = ({ compan
             </div>
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-white/3">
                 <p className="text-[10px] font-bold tracking-wide text-gray-500 uppercase dark:text-gray-400">Cuota fija</p>
-                <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatMoney(credito.valor_cuota)}</p>
+                <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatMoney(credito.valor_cuota_total)}</p>
             </div>
             <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-800 dark:bg-white/3">
                 <p className="text-[10px] font-bold tracking-wide text-gray-500 uppercase dark:text-gray-400">Periodicidad</p>

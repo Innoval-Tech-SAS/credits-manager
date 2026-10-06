@@ -21,6 +21,10 @@ export type ApiCredit = {
     plazo: number;
     tipo_pago: PaymentType;
     valor_cuota: string;
+    /** Cuota fija más otros gastos (lo que se cobra cada mes). Decimal string calculado por el servidor. */
+    valor_cuota_total: string;
+    /** Total a pagar del plan más los otros gastos de todas las cuotas. Decimal string calculado por el servidor. */
+    valor_total_con_otros: string;
     valor_total: string;
     fecha_desembolso: string;
     desembolsado_en: string | null;

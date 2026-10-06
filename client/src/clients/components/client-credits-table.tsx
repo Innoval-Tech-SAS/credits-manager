@@ -15,7 +15,7 @@ export const ClientCreditsTable: FC<ClientCreditsTableProps> = ({ creditos, onVi
             columns={[
                 { key: 'id', label: '#', render: (row) => `#${row.id}` },
                 { key: 'valor_prestamo', label: 'Valor', render: (row) => formatMoney(row.valor_prestamo) },
-                { key: 'valor_cuota', label: 'Cuota', render: (row) => formatMoney(row.valor_cuota) },
+                { key: 'valor_cuota_total', label: 'Cuota', render: (row) => formatMoney(row.valor_cuota_total) },
                 {
                     key: 'estado',
                     label: 'Estado',
