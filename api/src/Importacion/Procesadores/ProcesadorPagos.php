@@ -138,9 +138,10 @@ final class ProcesadorPagos implements ProcesadorFila
     {
         $aplicacion = AplicadorPagoPlan::aplicar(
             $pendientes->map(fn (Cuota $cuota) => [
-                'valor' => $cuota->valor,
+                'valor' => $cuota->valor->sumar($cuota->valor_otros_gastos),
                 'valor_pagado' => $cuota->valor_pagado,
                 'valor_interes' => $cuota->valor_interes,
+                'valor_otros_gastos' => $cuota->valor_otros_gastos,
             ])->all(),
             $valor,
         );

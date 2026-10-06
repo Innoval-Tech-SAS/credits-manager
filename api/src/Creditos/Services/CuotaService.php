@@ -9,6 +9,7 @@ use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Models\Credito;
 use App\Creditos\Repositories\CuotaRepository;
+use App\Pagos\Services\AplicadorPagoPlan;
 
 class CuotaService
 {
@@ -94,11 +95,10 @@ class CuotaService
         foreach ($this->cuotas->todasPorCredito($creditoId) as $cuota) {
             $valorInteres = $cuota->valor_interes;
             $valorCapital = $cuota->valor_capital;
-            $valorPagado = $cuota->valor_pagado;
 
-            $interesPagado = $valorPagado->menorEntre($valorInteres);
-            $interesPendiente = $interesPendiente->sumar($valorInteres)->restar($interesPagado);
-            $capitalPagado = $capitalPagado->sumar($valorPagado->restar($valorInteres)->noNegativo());
+            $desglose = AplicadorPagoPlan::desglosePagado($cuota->valor_pagado, $valorInteres, $cuota->valor_otros_gastos);
+            $interesPendiente = $interesPendiente->sumar($valorInteres)->restar($desglose['interes']);
+            $capitalPagado = $capitalPagado->sumar($desglose['capital']);
 
             $saldoCapitalTeorico = $saldoCapitalTeorico->restar($valorCapital)->noNegativo();
             $curvaPorCuota[$cuota->numero_cuota] = $saldoCapitalTeorico;
