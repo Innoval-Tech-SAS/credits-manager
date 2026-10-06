@@ -14,7 +14,7 @@ export const CalendarInstallmentModal: FC<CalendarInstallmentModalProps> = ({ de
     const navigate = useNavigate();
 
     return (
-        <Modal isOpen={detalle !== null} onClose={onClose} size="lg" className="overflow-hidden p-0! sm:p-0!">
+        <Modal isOpen={detalle !== null} onClose={onClose} size="lg" className="max-h-[calc(100dvh-2rem)] overflow-y-auto p-0! sm:p-0!">
             {detalle && (
                 <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
                     <CalendarClientPanel detalle={detalle} />
