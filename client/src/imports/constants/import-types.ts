@@ -1,4 +1,4 @@
-export const IMPORT_TYPES = ['clientes', 'creditos', 'plan_cuotas', 'pagos', 'saldos_iniciales', 'plan_cuentas', 'terceros'] as const;
+export const IMPORT_TYPES = ['clientes', 'creditos', 'plan_cuotas', 'pagos', 'saldos_iniciales', 'plan_cuentas', 'terceros', 'gastos'] as const;
 
 export type ImportType = (typeof IMPORT_TYPES)[number];
 
@@ -10,6 +10,7 @@ export const IMPORT_TYPE_LABELS: Record<ImportType, string> = {
     saldos_iniciales: 'Saldos contables iniciales',
     plan_cuentas: 'Plan de cuentas (formato anterior)',
     terceros: 'Terceros (formato anterior)',
+    gastos: 'Gastos',
 };
 
 /** Orden en que deben cargarse: cada hoja depende de las anteriores. */
@@ -21,6 +22,7 @@ export const IMPORT_TYPE_OPTIONS = [
     { value: 'saldos_iniciales', label: '5. Saldos contables iniciales' },
     { value: 'plan_cuentas', label: 'Plan de cuentas (formato anterior)' },
     { value: 'terceros', label: 'Terceros (formato anterior)' },
+    { value: 'gastos', label: 'Gastos y costos' },
 ] satisfies { value: ImportType; label: string }[];
 
 export const IMPORT_TYPES_WITH_EMPLOYER_CHECK: ImportType[] = ['clientes'];

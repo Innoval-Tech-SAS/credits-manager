@@ -29,7 +29,12 @@ export const TrialBalancePage: FC = () => {
                 </div>
 
                 <div className="mt-6">
-                    <ReportExportButton endpoint="/contabilidad/balance-prueba/exportar" filters={{ hasta }} />
+                    <ReportExportButton
+                        endpoint="/contabilidad/balance-prueba/exportar"
+                        pdfEndpoint="/contabilidad/balance-prueba/pdf"
+                        pdfFilename="balance-de-prueba.pdf"
+                        filters={{ hasta }}
+                    />
                 </div>
             </div>
 

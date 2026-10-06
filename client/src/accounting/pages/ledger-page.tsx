@@ -72,6 +72,8 @@ export const LedgerPage: FC<LedgerPageProps> = ({ modo = 'mayor' }) => {
                 <div className="mt-6">
                     <ReportExportButton
                         endpoint="/contabilidad/libro-mayor/exportar"
+                        pdfEndpoint="/contabilidad/libro-mayor/pdf"
+                        pdfFilename="libro-mayor.pdf"
                         filters={{ cuenta_id: cuentaId, desde, hasta }}
                         disabled={!cuentaId}
                     />

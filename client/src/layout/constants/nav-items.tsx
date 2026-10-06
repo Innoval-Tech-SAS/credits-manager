@@ -38,6 +38,8 @@ import {
     UserCog,
     Wallet,
     Workflow,
+    ChartPie,
+    GitCompare,
 } from "lucide-react";
 import { canAccessAudit } from "../../auth/utils/can-access-audit";
 import type { NavItem } from "../types/nav-item";
@@ -225,6 +227,13 @@ export const NAV_ITEMS: NavItem[] = [
                 action: "listar",
             },
             {
+                name: "Gastos por Centro de Costo",
+                path: "/gastos/por-centro-costo",
+                icon: ChartPie,
+                moduleKey: "gastos",
+                action: "listar",
+            },
+            {
                 name: "Tipos de Gasto",
                 path: "/gastos/tipos-gasto",
                 icon: Tags,
@@ -316,6 +325,20 @@ export const NAV_ITEMS: NavItem[] = [
                 name: "Estados Financieros",
                 path: "/contabilidad/estados-financieros",
                 icon: Scale,
+                moduleKey: "informes_contables",
+                action: "listar",
+            },
+            {
+                name: "Auxiliares",
+                path: "/contabilidad/auxiliares",
+                icon: ListTree,
+                moduleKey: "informes_contables",
+                action: "listar",
+            },
+            {
+                name: "Conciliación de Apertura",
+                path: "/contabilidad/conciliacion-apertura",
+                icon: GitCompare,
                 moduleKey: "informes_contables",
                 action: "listar",
             },

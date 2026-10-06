@@ -40,7 +40,12 @@ export const JournalPage: FC = () => {
                 </div>
 
                 <div className="mt-6">
-                    <ReportExportButton endpoint="/contabilidad/libro-diario/exportar" filters={{ desde, hasta }} />
+                    <ReportExportButton
+                        endpoint="/contabilidad/libro-diario/exportar"
+                        pdfEndpoint="/contabilidad/libro-diario/pdf"
+                        pdfFilename="libro-diario.pdf"
+                        filters={{ desde, hasta }}
+                    />
                 </div>
             </div>
 

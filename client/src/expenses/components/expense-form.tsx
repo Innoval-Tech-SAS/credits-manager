@@ -15,6 +15,8 @@ import { Spinner } from '@ui/spinner/components/spinner';
 import { Save } from 'lucide-react';
 import type { ExpenseFormProps } from '../props/expense-form-props';
 import type { ApiExpense } from '../types/api-expense';
+import type { ApiCostCenter } from '../../accounting/types/api-cost-center';
+import { useResource } from '../../shared/hooks/use-resource';
 
 export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
     const navigate = useNavigate();
@@ -25,12 +27,17 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
     const [tipoGastoId, setTipoGastoId] = useState('');
     const [tercero, setTercero] = useState<ApiThirdParty | null>(null);
     const [municipioId, setMunicipioId] = useState('');
+    const [centroCostoId, setCentroCostoId] = useState('');
     const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
     const [numeroDocumento, setNumeroDocumento] = useState('');
     const [concepto, setConcepto] = useState('');
     const [valorBruto, setValorBruto] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const { data: centrosRespuesta } = useResource<{ data: ApiCostCenter[] }>('/contabilidad/centros-costo?per_page=100');
+    const centrosActivos = (centrosRespuesta?.data ?? []).filter((centro) => centro.activo);
+    const centroOptions = centrosActivos.map((centro) => ({ value: String(centro.id), label: `${centro.codigo} - ${centro.nombre}` }));
 
     const tipoGastoSeleccionado = tiposGasto.find((tipo) => String(tipo.id) === tipoGastoId);
     const requiereTercero = tipoGastoSeleccionado?.requiere_tercero ?? false;
@@ -47,6 +54,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                     tipo_gasto_id: Number(tipoGastoId),
                     tercero_id: tercero?.id ?? null,
                     municipio_id: municipioId ? Number(municipioId) : null,
+                    centro_costo_id: centroCostoId ? Number(centroCostoId) : null,
                     fecha,
                     numero_documento: numeroDocumento,
                     concepto,
@@ -85,6 +93,17 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                     <div>
                         <Label htmlFor="fecha">Fecha</Label>
                         <DatePicker id="fecha" name="fecha" required value={fecha} onChange={setFecha} />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <div>
+                        <Label htmlFor="centro-costo">Centro de costo</Label>
+                        {centroOptions.length > 0 ? (
+                            <Select options={centroOptions} defaultValue={centroCostoId} onChange={setCentroCostoId} />
+                        ) : (
+                            <p className="text-sm text-gray-500 dark:text-gray-400">No hay centros de costo activos. Créalos en Contabilidad antes de registrar gastos.</p>
+                        )}
                     </div>
                 </div>
 
