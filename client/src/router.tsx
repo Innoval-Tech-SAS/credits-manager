@@ -15,6 +15,7 @@ import { NewImportPage } from './imports/pages/new-import-page';
 import { ImportDetailPage } from './imports/pages/import-detail-page';
 import { JournalPage } from './accounting/pages/journal-page';
 import { LedgerPage } from './accounting/pages/ledger-page';
+import { ReceiptsListPage } from './receipts/pages/receipts-list-page';
 import { PeriodsPage } from './accounting/pages/periods-page';
 import { PostingRulesPage } from './accounting/pages/posting-rules-page';
 import { TrialBalancePage } from './accounting/pages/trial-balance-page';
@@ -229,6 +230,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="pagos" accion="listar">
                                 <PaymentsListPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'recibos',
+                        element: (
+                            <RequireModulePermission modulo="recibos" accion="listar">
+                                <ReceiptsListPage />
                             </RequireModulePermission>
                         ),
                     },
@@ -521,6 +530,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="informes_contables" accion="listar">
                                 <LedgerPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/caja-bancos',
+                        element: (
+                            <RequireModulePermission modulo="informes_contables" accion="listar">
+                                <LedgerPage modo="cajaBancos" />
                             </RequireModulePermission>
                         ),
                     },

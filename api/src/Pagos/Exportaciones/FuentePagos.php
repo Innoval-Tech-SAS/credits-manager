@@ -19,6 +19,7 @@ final class FuentePagos implements FuenteExportable
         private readonly int $empresaId,
         private readonly ?int $asesorId,
         private readonly ?string $busqueda,
+        private readonly ?string $mes,
     ) {}
 
     public function reporte(): string
@@ -55,6 +56,7 @@ final class FuentePagos implements FuenteExportable
             new ColumnaExportable('otros_gastos', 'Otros gastos', TipoColumna::Monetario),
             new ColumnaExportable('recibo', 'Recibo (número)', TipoColumna::Entero),
             new ColumnaExportable('observacion', 'Observación'),
+            new ColumnaExportable('estado', 'Estado'),
         ];
     }
 
@@ -63,11 +65,16 @@ final class FuentePagos implements FuenteExportable
         $total = Dinero::cero();
         $totales = ['capital' => Dinero::cero(), 'intereses' => Dinero::cero(), 'otros_gastos' => Dinero::cero()];
 
-        foreach (app(PagoRepository::class)->cursorParaExportar($this->empresaId, $this->asesorId, $this->busqueda) as $pago) {
-            $total = $total->sumar($pago->valor_pago);
-            $totales['capital'] = $totales['capital']->sumar($pago->valor_capital ?? Dinero::cero());
-            $totales['intereses'] = $totales['intereses']->sumar($pago->valor_interes ?? Dinero::cero());
-            $totales['otros_gastos'] = $totales['otros_gastos']->sumar($pago->valor_otros_gastos ?? Dinero::cero());
+        foreach (app(PagoRepository::class)->cursorParaExportar($this->empresaId, $this->asesorId, $this->busqueda, $this->mes) as $pago) {
+            $reversado = $pago->reversa !== null;
+
+            // Un pago reversado sigue en el listado para trazabilidad, pero no suma al total recaudado.
+            if (! $reversado) {
+                $total = $total->sumar($pago->valor_pago);
+                $totales['capital'] = $totales['capital']->sumar($pago->valor_capital ?? Dinero::cero());
+                $totales['intereses'] = $totales['intereses']->sumar($pago->valor_interes ?? Dinero::cero());
+                $totales['otros_gastos'] = $totales['otros_gastos']->sumar($pago->valor_otros_gastos ?? Dinero::cero());
+            }
 
             yield [
                 'pago' => $pago->id,
@@ -75,6 +82,7 @@ final class FuentePagos implements FuenteExportable
                 'cliente' => $pago->cliente->tercero->nombre,
                 'credito' => $pago->credito_id,
                 'forma_pago' => $pago->forma_pago->value,
+                'estado' => $reversado ? 'Reversado' : 'Vigente',
                 'valor' => $pago->valor_pago,
                 'capital' => $pago->valor_capital ?? Dinero::cero(),
                 'intereses' => $pago->valor_interes ?? Dinero::cero(),
@@ -90,6 +98,7 @@ final class FuentePagos implements FuenteExportable
             'cliente' => 'Total',
             'credito' => null,
             'forma_pago' => null,
+            'estado' => null,
             'valor' => $total,
             'capital' => $totales['capital'],
             'intereses' => $totales['intereses'],
@@ -101,12 +110,12 @@ final class FuentePagos implements FuenteExportable
 
     public function totalFilas(): int
     {
-        return app(PagoRepository::class)->contarParaExportar($this->empresaId, $this->asesorId, $this->busqueda) + 1;
+        return app(PagoRepository::class)->contarParaExportar($this->empresaId, $this->asesorId, $this->busqueda, $this->mes) + 1;
     }
 
     public function filtrosAplicados(): array
     {
-        return ['busqueda' => $this->busqueda, 'asesor_id' => $this->asesorId];
+        return ['busqueda' => $this->busqueda, 'mes' => $this->mes, 'asesor_id' => $this->asesorId];
     }
 
     public function autorizadoPara(Usuario $usuario): bool

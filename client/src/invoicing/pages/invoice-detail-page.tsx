@@ -16,7 +16,7 @@ import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { DataTable } from '@ui/table/components/data-table';
 import { InvoiceLinesForm } from '../components/invoice-lines-form';
-import { InvoiceMotivoModal } from '../components/invoice-motivo-modal';
+import { MotivoModal } from '../../shared/components/motivo-modal';
 import { InvoiceNoteForm } from '../components/invoice-note-form';
 import { InvoicePaymentModal } from '../components/invoice-payment-modal';
 import { InvoicePaymentsTable } from '../components/invoice-payments-table';
@@ -308,7 +308,7 @@ export const InvoiceDetailPage: FC = () => {
                 />
             )}
 
-            <InvoiceMotivoModal
+            <MotivoModal
                 isOpen={accionConMotivo !== null}
                 title={accionConMotivo?.tipo === 'reversar' ? 'Reversar cobro' : 'Anular factura'}
                 description={

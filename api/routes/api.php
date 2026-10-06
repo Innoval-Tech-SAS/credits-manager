@@ -141,8 +141,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/pagos', [PagoController::class, 'listar'])->middleware('permiso:pagos,listar');
     Route::post('/pagos/exportar', [PagoController::class, 'exportar'])->middleware('permiso:pagos,exportar');
     Route::get('/creditos/{credito}/pagos', [PagoController::class, 'index'])->middleware('permiso:pagos,listar');
+    Route::get('/recibos', [ReciboCajaController::class, 'listar'])->middleware('permiso:recibos,listar');
     Route::get('/pagos/{pago}/recibo/pdf', [ReciboCajaController::class, 'pdf'])->middleware('permiso:pagos,imprimir_recibo')->whereNumber('pago');
     Route::post('/creditos/{credito}/pagos', [PagoController::class, 'store'])->middleware('permiso:pagos,crear');
+    Route::post('/pagos/{pago}/reversar', [PagoController::class, 'reversar'])->middleware('permiso:pagos,reversar')->whereNumber('pago');
     Route::get('/creditos/{credito}/liquidacion', [PagoController::class, 'liquidacion'])->middleware('permiso:pagos,crear');
     Route::post('/creditos/{credito}/liquidacion', [PagoController::class, 'liquidar'])->middleware('permiso:pagos,crear');
 

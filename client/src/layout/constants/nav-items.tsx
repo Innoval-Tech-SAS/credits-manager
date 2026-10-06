@@ -103,6 +103,13 @@ export const NAV_ITEMS: NavItem[] = [
                 action: "listar",
             },
             {
+                name: "Recibos de caja",
+                path: "/recibos",
+                icon: Receipt,
+                moduleKey: "recibos",
+                action: "listar",
+            },
+            {
                 name: "Cartera",
                 path: "/cartera",
                 icon: Wallet,
@@ -288,6 +295,13 @@ export const NAV_ITEMS: NavItem[] = [
                 name: "Libro Mayor y Balances",
                 path: "/contabilidad/libro-mayor",
                 icon: BookOpen,
+                moduleKey: "informes_contables",
+                action: "listar",
+            },
+            {
+                name: "Caja y Bancos",
+                path: "/contabilidad/caja-bancos",
+                icon: Landmark,
                 moduleKey: "informes_contables",
                 action: "listar",
             },

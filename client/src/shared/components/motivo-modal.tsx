@@ -5,10 +5,10 @@ import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Modal } from '@ui/modal/components/modal';
-import type { InvoiceMotivoModalProps } from '../props/invoice-motivo-modal-props';
+import type { MotivoModalProps } from '../props/motivo-modal-props';
 
 /** Pide el motivo obligatorio de una corrección (anular una factura o reversar un cobro). */
-export const InvoiceMotivoModal: FC<InvoiceMotivoModalProps> = ({ isOpen, title, description, confirmLabel, isSubmitting, onClose, onConfirm }) => (
+export const MotivoModal: FC<MotivoModalProps> = ({ isOpen, title, description, confirmLabel, isSubmitting, onClose, onConfirm }) => (
     <Modal isOpen={isOpen} onClose={onClose} size="md">
         {/* El formulario se monta al abrir: su motivo arranca vacío en cada apertura. */}
         {isOpen && (
@@ -24,7 +24,7 @@ export const InvoiceMotivoModal: FC<InvoiceMotivoModalProps> = ({ isOpen, title,
     </Modal>
 );
 
-type FormularioMotivoProps = Omit<InvoiceMotivoModalProps, 'isOpen'>;
+type FormularioMotivoProps = Omit<MotivoModalProps, 'isOpen'>;
 
 const FormularioMotivo: FC<FormularioMotivoProps> = ({ title, description, confirmLabel, isSubmitting, onClose, onConfirm }) => {
     const [motivo, setMotivo] = useState('');

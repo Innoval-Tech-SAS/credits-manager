@@ -1,4 +1,4 @@
-export type InvoiceMotivoModalProps = {
+export type MotivoModalProps = {
     isOpen: boolean;
     title: string;
     description: string;

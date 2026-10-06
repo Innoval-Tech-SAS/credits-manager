@@ -37,7 +37,7 @@ class EmpresaConstants
             'gastos.listar', 'gastos.crear', 'gastos.anular', 'gastos.parametrizar', 'gastos.exportar',
             'cartera.listar', 'cartera.exportar', 'cartera.imprimir_reporte_empleador',
             'clientes.listar', 'clientes.ver', 'clientes.exportar',
-            'pagos.exportar',
+            'pagos.exportar', 'pagos.reversar', 'recibos.listar',
         ],
         'cartera' => [
             'clientes.listar', 'clientes.ver', 'clientes.editar', 'clientes.exportar',

@@ -66,7 +66,7 @@ final class EstadoCuentaPdf implements DocumentoPdf
 
     public function fechas(): array
     {
-        $fechas = [new FechaDocumento('Generación', $this->generadoEn, true)];
+        $fechas = [new FechaDocumento('Fecha de corte', $this->generadoEn)];
 
         if ($this->credito->fecha_desembolso) {
             $fechas[] = new FechaDocumento('Desembolso', $this->credito->fecha_desembolso);
@@ -126,7 +126,7 @@ final class EstadoCuentaPdf implements DocumentoPdf
                 ],
                 $this->pagos->map(fn ($pago) => [
                     'fecha' => $pago->fecha_pago,
-                    'concepto' => $pago->observacion ?: 'Pago',
+                    'concepto' => $pago->reversa ? 'Reversado: '.$pago->reversa->motivo : ($pago->observacion ?: 'Pago'),
                     'valor' => $pago->valor_pago,
                     'capital' => $pago->valor_capital ?? Dinero::cero(),
                     'intereses' => $pago->valor_interes ?? Dinero::cero(),
@@ -178,14 +178,20 @@ final class EstadoCuentaPdf implements DocumentoPdf
         return "Este documento es válido para pago total únicamente al día de generado.\nCualquier inquietud, favor comunicarla por escrito a los canales de atención de la empresa.";
     }
 
+    /** Los pagos reversados siguen en el detalle para trazabilidad, pero no suman al total recaudado. */
+    private function pagosVigentes(): Collection
+    {
+        return $this->pagos->filter(fn ($pago) => $pago->reversa === null);
+    }
+
     private function totalPagado(): Dinero
     {
-        return Dinero::sumarVarios(...$this->pagos->map(fn ($pago) => $pago->valor_pago)->all());
+        return Dinero::sumarVarios(...$this->pagosVigentes()->map(fn ($pago) => $pago->valor_pago)->all());
     }
 
     private function totalDesglose(string $campo): Dinero
     {
-        return Dinero::sumarVarios(...$this->pagos->map(fn ($pago) => $pago->{$campo} ?? Dinero::cero())->all());
+        return Dinero::sumarVarios(...$this->pagosVigentes()->map(fn ($pago) => $pago->{$campo} ?? Dinero::cero())->all());
     }
 
     /** @param array<string, mixed> $vinculo */

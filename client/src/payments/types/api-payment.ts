@@ -15,4 +15,6 @@ export type ApiPayment = {
     valor_otros_gastos: string | null;
     /** Recibo de caja del pago; nulo solo en pagos anteriores a su emisión que aún no se respaldaron. */
     recibo: { id: number; numero: string; estado: string } | null;
+    /** Reversa del pago (movimiento compensatorio); nulo si el pago sigue vigente. */
+    reversa: { fecha: string; motivo: string } | null;
 };

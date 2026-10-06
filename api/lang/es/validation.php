@@ -209,6 +209,12 @@ return [
             'cobro_no_reversible' => 'Solo se puede reversar un cobro, no una reversa.',
             'cobro_ya_reversado' => 'Este cobro ya fue reversado.',
         ],
+        'reversa' => [
+            'estado_credito' => 'Solo se pueden reversar pagos de créditos desembolsados o pagados.',
+            'ya_reversado' => 'Este pago ya fue reversado.',
+            'no_es_ultimo' => 'Solo se puede reversar el último pago aplicado del crédito. Reversa primero los pagos posteriores.',
+            'sin_aplicacion' => 'Este pago no tiene cuotas aplicadas (por ejemplo, una liquidación anticipada) y no se puede reversar automáticamente.',
+        ],
         'credito_origen_id' => [
             'pertenece_a_otro_cliente' => 'El crédito seleccionado no pertenece a este cliente.',
             'no_desembolsado' => 'Solo se puede refinanciar un crédito desembolsado.',

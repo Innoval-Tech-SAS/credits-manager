@@ -5,7 +5,7 @@ import { formatDateEs } from '../../shared/utils/format-date-es';
 import { formatMoney } from '../../shared/utils/format-money';
 import type { AccountStatementHeaderProps } from '../props/account-statement-header-props';
 
-export const AccountStatementHeader: FC<AccountStatementHeaderProps> = ({ company, credito, cuotasPagadas }) => (
+export const AccountStatementHeader: FC<AccountStatementHeaderProps> = ({ company, credito, cuotasPagadas, fechaCorte }) => (
     <>
         <div className="mb-6 flex items-start justify-between border-b border-gray-200 pb-4 dark:border-gray-800">
             <div>
@@ -23,8 +23,8 @@ export const AccountStatementHeader: FC<AccountStatementHeaderProps> = ({ compan
                 </p>
             </div>
             <div className="text-right text-xs text-gray-500 dark:text-gray-400">
-                <p>Fecha de generación:</p>
-                <p className="font-medium text-gray-800 dark:text-white/90">{formatDateEs(new Date().toISOString().slice(0, 10))}</p>
+                <p>Fecha de corte:</p>
+                <p className="font-medium text-gray-800 dark:text-white/90">{formatDateEs(fechaCorte)}</p>
                 <p className="mt-1">Crédito #{credito.id}</p>
             </div>
         </div>

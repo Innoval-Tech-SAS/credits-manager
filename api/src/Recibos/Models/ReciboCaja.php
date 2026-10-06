@@ -13,9 +13,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Documento numerado de un pago. El valor, el cliente y el medio de pago no se copian: salen del pago, que no se edita.
- * `numero` sí es una copia deliberada, asignada al emitir y nunca modificada.
+ * `numero` sí es una copia deliberada, asignada al emitir y nunca modificada. La anulación no libera el número.
  */
-#[Fillable(['pago_id', 'comprobante_id', 'consecutivo', 'numero', 'estado', 'emitido_por'])]
+#[Fillable(['pago_id', 'comprobante_id', 'consecutivo', 'numero', 'estado', 'emitido_por', 'anulado_en', 'anulado_por', 'motivo_anulacion'])]
 class ReciboCaja extends BaseModel
 {
     use PerteneceAEmpresa;
@@ -27,6 +27,7 @@ class ReciboCaja extends BaseModel
         return [
             'estado' => EstadoRecibo::class,
             'consecutivo' => 'integer',
+            'anulado_en' => 'datetime',
         ];
     }
 
@@ -43,5 +44,10 @@ class ReciboCaja extends BaseModel
     public function emisor(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'emitido_por');
+    }
+
+    public function anulador(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'anulado_por');
     }
 }

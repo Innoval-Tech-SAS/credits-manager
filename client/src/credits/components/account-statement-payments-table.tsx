@@ -31,7 +31,13 @@ export const AccountStatementPaymentsTable: FC<AccountStatementPaymentsTableProp
                         pagos.map((pago) => (
                             <tr key={pago.id} className="border-b border-gray-100 text-gray-700 dark:border-gray-800 dark:text-gray-300">
                                 <td className="py-2 pr-4 whitespace-nowrap">{formatDateEs(pago.fecha_pago)}</td>
-                                <td className="min-w-28 py-2 pr-4">{pago.observacion || 'Pago'}</td>
+                                <td className="min-w-28 py-2 pr-4">
+                                    {pago.reversa ? (
+                                        <span className="text-error-600 dark:text-error-500">Reversado: {pago.reversa.motivo}</span>
+                                    ) : (
+                                        pago.observacion || 'Pago'
+                                    )}
+                                </td>
                                 <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(pago.valor_pago)}</td>
                                 <td className="py-2 pr-4 whitespace-nowrap">{pago.valor_capital === null ? '—' : formatMoney(pago.valor_capital)}</td>
                                 <td className="py-2 pr-4 whitespace-nowrap">{pago.valor_interes === null ? '—' : formatMoney(pago.valor_interes)}</td>

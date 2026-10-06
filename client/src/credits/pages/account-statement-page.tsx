@@ -47,7 +47,8 @@ export const AccountStatementPage: FC = () => {
     const { credito, saldo, refinanciacion, pagos, resumen_cuotas: resumenCuotas } = estadoCuenta;
     const cuotas = credito.cuotas ?? [];
     const cuotasPagadas = cuotas.filter((c) => c.estado === 'pagada').length;
-    const totalPagado = pagos.reduce((total, pago) => total + parseFloat(pago.valor_pago), 0);
+    // Un pago reversado sigue listado para trazabilidad, pero no suma al total pagado.
+    const totalPagado = pagos.filter((pago) => pago.reversa === null).reduce((total, pago) => total + parseFloat(pago.valor_pago), 0);
 
     return (
         <div className="flex min-h-full flex-col pb-6">
@@ -99,7 +100,7 @@ export const AccountStatementPage: FC = () => {
             )}
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3 print:border-0 print:p-0">
-                <AccountStatementHeader company={company} credito={credito} cuotasPagadas={cuotasPagadas} />
+                <AccountStatementHeader company={company} credito={credito} cuotasPagadas={cuotasPagadas} fechaCorte={estadoCuenta.fecha_corte} />
 
                 {refinanciacion && (
                     <RefinancingNotice vinculo={refinanciacion} valorPrestamo={credito.valor_prestamo} linkSuffix="/estado-cuenta" className="mb-6" />
