@@ -5,6 +5,7 @@ import type { CalendarInstallmentColor } from './api-calendar-installment';
 export type CalendarEventProps = {
     color: CalendarInstallmentColor;
     creditoId: number;
+    clienteId: number;
     clienteNombre: string;
     tipoDocumento: string;
     numeroDocumento: string;

@@ -1,23 +1,14 @@
 import type { FC } from 'react';
 import { useNavigate } from 'react-router';
-import { CalendarDays, CreditCard, Phone, Receipt } from 'lucide-react';
+import { CalendarDays, CreditCard, Receipt } from 'lucide-react';
 
-import { WhatsAppButton } from '../../clients/components/whatsapp-button';
 import { formatDateEs } from '../../shared/utils/format-date-es';
 import { formatMoney } from '../../shared/utils/format-money';
 import { Button } from '@ui/button/components/button';
 import { Modal } from '@ui/modal/components/modal';
 import { INSTALLMENT_STATUS_CLASSES, INSTALLMENT_STATUS_LABEL } from '../../credits/constants/installment-status-styles';
 import type { CalendarInstallmentModalProps } from '../props/calendar-installment-modal-props';
-
-function iniciales(nombre: string): string {
-    return nombre
-        .split(' ')
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((parte) => parte[0].toUpperCase())
-        .join('');
-}
+import { CalendarClientPanel } from './calendar-client-panel';
 
 export const CalendarInstallmentModal: FC<CalendarInstallmentModalProps> = ({ detalle, onClose }) => {
     const navigate = useNavigate();
@@ -26,42 +17,7 @@ export const CalendarInstallmentModal: FC<CalendarInstallmentModalProps> = ({ de
         <Modal isOpen={detalle !== null} onClose={onClose} size="lg">
             {detalle && (
                 <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
-                    <aside className="flex flex-col gap-5 bg-gray-50 p-6 sm:p-8 md:border-r md:border-gray-200 dark:bg-white/5 dark:md:border-gray-800">
-                        <div className="flex items-center gap-4">
-                            <div className="flex size-14 shrink-0 items-center justify-center rounded-full bg-brand-500 text-lg font-semibold text-white">
-                                {iniciales(detalle.clienteNombre)}
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">Cliente</p>
-                                <h3 className="truncate text-lg font-semibold text-gray-900 dark:text-white/90">{detalle.clienteNombre}</h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    {detalle.tipoDocumento.toUpperCase()} {detalle.numeroDocumento}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                            <div className="flex min-w-0 items-center gap-3">
-                                <Phone className="size-4 shrink-0 text-gray-400" />
-                                <div className="min-w-0">
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Celular</p>
-                                    <p className="truncate font-semibold text-gray-800 dark:text-white/90">{detalle.celular ?? 'Sin celular'}</p>
-                                </div>
-                            </div>
-                            <WhatsAppButton variant="icono" nombre={detalle.clienteNombre} celular={detalle.celular} />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Crédito que paga</p>
-                                <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white/90">#{detalle.creditoId}</p>
-                            </div>
-                            <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                                <p className="text-xs text-gray-500 dark:text-gray-400">Créditos con la entidad</p>
-                                <p className="mt-1 text-2xl font-semibold text-gray-900 dark:text-white/90">{detalle.creditosConEntidad}</p>
-                            </div>
-                        </div>
-                    </aside>
+                    <CalendarClientPanel detalle={detalle} />
 
                     <section className="flex flex-col p-6 sm:p-8">
                         <header className="flex items-start justify-between gap-4">
