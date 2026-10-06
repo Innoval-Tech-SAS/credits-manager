@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Creditos;
 
+use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Models\Credito;
 use App\Creditos\Models\Cuota;
@@ -90,6 +91,17 @@ class GastosAdministracionTest extends TestCase
         $sinOtros = fn (array $cuotas) => array_map(fn (array $c) => array_diff_key($c, ['otros' => true]), $cuotas);
 
         $this->assertSame($sinOtros($this->cuotasComoLista($sinGastos)), $sinOtros($this->cuotasComoLista($conGastos)));
+    }
+
+    public function test_la_cuota_total_del_credito_suma_la_cuota_fija_y_los_otros_gastos(): void
+    {
+        $this->actingAsAdmin();
+        $credito = $this->crearCreditoConPorcentaje(0.2);
+
+        $this->getJson("/api/v1/creditos/{$credito->id}")
+            ->assertOk()
+            ->assertJsonPath('credito.valor_cuota_total', $credito->valor_cuota->sumar(Dinero::desdePesos(5000))->aDecimalString())
+            ->assertJsonPath('credito.valor_total_con_otros', $credito->valor_total->sumar(Dinero::desdePesos(15000))->aDecimalString());
     }
 
     public function test_sin_porcentaje_el_credito_queda_en_cero(): void

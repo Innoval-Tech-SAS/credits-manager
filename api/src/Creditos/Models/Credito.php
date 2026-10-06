@@ -11,8 +11,10 @@ use App\Core\Dinero\DineroCast;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\TipoCredito;
 use App\Creditos\Enums\TipoPago;
+use App\Creditos\Services\OtrosGastosCalculator;
 use App\Pagos\Models\Pago;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -42,6 +44,9 @@ class Credito extends BaseModel
 
     protected $table = 'creditos';
 
+    /** Cuota fija y total a pagar más otros gastos: lo que cartera y el estado de cuenta muestran. */
+    protected $appends = ['valor_cuota_total', 'valor_total_con_otros'];
+
     protected static function columnaDeClienteParaAlcance(): ?string
     {
         return 'cliente_id';
@@ -68,6 +73,19 @@ class Credito extends BaseModel
     public function valorDesembolsado(): Dinero
     {
         return $this->saldo_refinanciado === null ? $this->valor_prestamo : $this->valor_prestamo->restar($this->saldo_refinanciado);
+    }
+
+    protected function valorCuotaTotal(): Attribute
+    {
+        return Attribute::make(get: fn () => $this->valor_cuota->sumar(OtrosGastosCalculator::valorPorCuota($this->valor_prestamo, (float) $this->gastos_administracion_pct)));
+    }
+
+    /** Total a pagar del plan más los otros gastos de todas sus cuotas (cada cuota lleva el mismo valor). */
+    protected function valorTotalConOtros(): Attribute
+    {
+        $otrosPorCuota = OtrosGastosCalculator::valorPorCuota($this->valor_prestamo, (float) $this->gastos_administracion_pct);
+
+        return Attribute::make(get: fn () => $this->valor_total->sumar(Dinero::sumarVarios(...array_fill(0, $this->plazo, $otrosPorCuota))));
     }
 
     public function cliente(): BelongsTo

@@ -137,7 +137,7 @@ final class EstadoCuentaPdf implements DocumentoPdf
     {
         return [
             new TotalDocumento('Monto prestado', $this->credito->valor_prestamo),
-            new TotalDocumento('Cuota fija', $this->credito->valor_cuota),
+            new TotalDocumento('Cuota fija', $this->credito->valor_cuota_total),
             new TotalDocumento('Total pagado', $this->totalPagado()),
             new TotalDocumento('Saldo pendiente', $this->saldo),
         ];
