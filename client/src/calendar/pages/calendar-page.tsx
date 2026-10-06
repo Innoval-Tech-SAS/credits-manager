@@ -6,15 +6,16 @@ import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Spinner } from '@ui/spinner/components/spinner';
+import { CalendarInstallmentModal } from '../components/calendar-installment-modal';
 import { LEGEND_ITEMS } from '../constants/legend-items';
 import { buildCalendarEvents } from '../utils/build-calendar-events';
 import type { ApiCalendarAgenda } from '../types/api-calendar-agenda';
 import type { CalendarInstallmentColor } from '../types/api-calendar-installment';
+import type { CalendarEventProps } from '../types/calendar-event';
 
 function mesActualEnCurso(): string {
     const hoy = new Date();
@@ -22,7 +23,6 @@ function mesActualEnCurso(): string {
 }
 
 export const CalendarPage: FC = () => {
-    const navigate = useNavigate();
     const [mes, setMes] = useState(mesActualEnCurso);
 
     const { data: agenda, error } = useResource<ApiCalendarAgenda>(`/calendario?mes=${mes}`);
@@ -35,6 +35,7 @@ export const CalendarPage: FC = () => {
      * y sigue montado de forma continua; solo el spinner de la primera carga usa `agenda` directo.
      */
     const [agendaVisible, setAgendaVisible] = useState<ApiCalendarAgenda | null>(null);
+    const [detalle, setDetalle] = useState<CalendarEventProps | null>(null);
 
     useEffect(() => {
         if (agenda) {
@@ -49,8 +50,7 @@ export const CalendarPage: FC = () => {
     };
 
     const handleEventClick = (info: EventClickArg) => {
-        const { creditoId } = info.event.extendedProps as { creditoId: number };
-        navigate(`/creditos/${creditoId}/pagos/nuevo`);
+        setDetalle(info.event.extendedProps as CalendarEventProps);
     };
 
     const renderEventContent = (eventInfo: EventContentArg) => {
@@ -117,6 +117,8 @@ export const CalendarPage: FC = () => {
                     datesSet={handleDatesSet}
                 />
             </div>
+
+            <CalendarInstallmentModal detalle={detalle} onClose={() => setDetalle(null)} />
         </div>
     );
 };

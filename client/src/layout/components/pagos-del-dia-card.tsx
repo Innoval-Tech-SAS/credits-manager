@@ -26,7 +26,7 @@ export const PagosDelDiaCard: FC<PagosDelDiaCardProps> = ({ pagos, puedeRegistra
                         render: (row) =>
                             puedeRegistrarPago ? (
                                 <div className="text-right">
-                                    <Button collapseBelow="md" startIcon={<HandCoins className="size-4" />} size="sm" variant="outline" onClick={() => navigate(`/creditos/${row.credito_id}/pagos/nuevo`)}>
+                                    <Button collapseBelow="md" startIcon={<HandCoins className="size-4" />} size="sm" variant="outline" onClick={() => navigate(`/pagos/creditos/${row.credito_id}/nuevo`)}>
                                         Registrar pago
                                     </Button>
                                 </div>
