@@ -19,6 +19,8 @@ import { ReceiptsListPage } from './receipts/pages/receipts-list-page';
 import { PeriodsPage } from './accounting/pages/periods-page';
 import { PostingRulesPage } from './accounting/pages/posting-rules-page';
 import { TrialBalancePage } from './accounting/pages/trial-balance-page';
+import { AuxiliariesPage } from './accounting/pages/auxiliaries-page';
+import { OpeningReconciliationPage } from './accounting/pages/opening-reconciliation-page';
 import { VoucherDetailPage } from './accounting/pages/voucher-detail-page';
 import { VoucherTypesPage } from './accounting/pages/voucher-types-page';
 import { VouchersListPage } from './accounting/pages/vouchers-list-page';
@@ -33,6 +35,7 @@ import { CreateMunicipalityPage } from './geography/pages/create-municipality-pa
 import { CreateParametrizationPage } from './expenses/pages/create-parametrization-page';
 import { CreateReteicaTariffPage } from './expenses/pages/create-reteica-tariff-page';
 import { CreateUvtValuePage } from './expenses/pages/create-uvt-value-page';
+import { ExpenseCostCenterReportPage } from './expenses/pages/expense-cost-center-report-page';
 import { EconomicActivitiesPage } from './expenses/pages/economic-activities-page';
 import { ExpenseDetailPage } from './expenses/pages/expense-detail-page';
 import { ExpenseTypesPage } from './expenses/pages/expense-types-page';
@@ -574,6 +577,22 @@ const routes: RouteObject[] = [
                         ),
                     },
                     {
+                        path: 'contabilidad/auxiliares',
+                        element: (
+                            <RequireModulePermission modulo="informes_contables" accion="listar">
+                                <AuxiliariesPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/conciliacion-apertura',
+                        element: (
+                            <RequireModulePermission modulo="informes_contables" accion="listar">
+                                <OpeningReconciliationPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
                         path: 'importaciones',
                         element: (
                             <RequireModulePermission modulo="importaciones" accion="listar">
@@ -650,6 +669,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="gastos" accion="listar">
                                 <ExpenseDetailPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'gastos/por-centro-costo',
+                        element: (
+                            <RequireModulePermission modulo="gastos" accion="listar">
+                                <ExpenseCostCenterReportPage />
                             </RequireModulePermission>
                         ),
                     },

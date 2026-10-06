@@ -23,6 +23,7 @@ export const AUDIT_ACTION_LABELS: Record<AuditAction, string> = {
     reversar: 'Reversar',
     cerrar_periodo: 'Cerrar período',
     reabrir_periodo: 'Reabrir período',
+    revisar: 'Revisar',
 };
 
 export const AUDIT_ACTION_OPTIONS: SelectOption[] = (Object.keys(AUDIT_ACTION_LABELS) as AuditAction[]).map((action) => ({
@@ -47,6 +48,7 @@ export const AUDIT_ACTION_BADGE_CLASSES: Record<AuditAction, string> = {
     cambio_permisos: WARNING,
     cerrar_periodo: WARNING,
     reabrir_periodo: WARNING,
+    revisar: WARNING,
     eliminar: ERROR,
     anular: ERROR,
     cancelar: ERROR,

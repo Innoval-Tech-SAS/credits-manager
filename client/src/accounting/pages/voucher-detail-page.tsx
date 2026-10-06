@@ -1,10 +1,11 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { Download, Undo2 } from 'lucide-react';
+import { BadgeCheck, Ban, ClipboardCheck, Download, Undo2 } from 'lucide-react';
 
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import { useResource } from '../../shared/hooks/use-resource';
+import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { formatDateEs } from '../../shared/utils/format-date-es';
 import { formatMoney } from '../../shared/utils/format-money';
 import { usePermission } from '../../auth/hooks/use-permission';
@@ -20,11 +21,30 @@ export const VoucherDetailPage: FC = () => {
     const navigate = useNavigate();
     const canReverse = usePermission('contabilidad', 'anular');
     const canPrint = usePermission('contabilidad', 'imprimir_comprobante');
+    const canReview = usePermission('contabilidad', 'revisar');
+    const canPublish = usePermission('contabilidad', 'contabilizar');
 
-    const { data, error, isLoading } = useResource<{ comprobante: ApiVoucher }>(`/contabilidad/comprobantes/${id}`);
+    const { data, error, isLoading, refetch } = useResource<{ comprobante: ApiVoucher }>(`/contabilidad/comprobantes/${id}`);
     const comprobante = data?.comprobante ?? null;
-    const [isReversing, setIsReversing] = useState(false);
+    const [modo, setModo] = useState<'reversar' | 'anular' | null>(null);
+    const [actionError, setActionError] = useState<string | null>(null);
+    const [isActing, setIsActing] = useState(false);
+    const { sendRequest } = useSendRequest();
     const { download, isDownloading, error: downloadError } = useDownloadFile();
+
+    const runAction = async (accion: 'revisar' | 'contabilizar') => {
+        setActionError(null);
+        setIsActing(true);
+
+        try {
+            await sendRequest(`/contabilidad/comprobantes/${id}/${accion}`, { method: 'POST' });
+            refetch();
+        } catch (caught) {
+            setActionError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
+        } finally {
+            setIsActing(false);
+        }
+    };
 
     return (
         <div className="flex min-h-full flex-col pb-6">
@@ -51,7 +71,9 @@ export const VoucherDetailPage: FC = () => {
                                 <p>Concepto: {comprobante.concepto}</p>
                                 {comprobante.tercero && <p>Tercero: {comprobante.tercero.nombre}</p>}
                                 {comprobante.documento_soporte && <p>Documento soporte: {comprobante.documento_soporte}</p>}
+                                {comprobante.revisor && <p>Revisado por: {comprobante.revisor.nombre}</p>}
                                 {downloadError && <p className="text-error-600 dark:text-error-400">{downloadError}</p>}
+                {actionError && <p className="text-error-600 dark:text-error-400">{actionError}</p>}
                                 {comprobante.comprobante_reverso_id && (
                                     <p className="text-brand-600 dark:text-brand-400">
                                         Reversado por el comprobante #{comprobante.comprobante_reverso_id}.
@@ -76,8 +98,23 @@ export const VoucherDetailPage: FC = () => {
                                             {isDownloading ? 'Generando…' : 'Descargar PDF'}
                                         </Button>
                                     )}
+                                    {canReview && comprobante.estado === 'borrador' && (
+                                        <Button iconOnly variant="outline" startIcon={<ClipboardCheck className="size-4" />} disabled={isActing} onClick={() => void runAction('revisar')}>
+                                            Revisar
+                                        </Button>
+                                    )}
+                                    {canPublish && comprobante.estado === 'revisado' && (
+                                        <Button iconOnly startIcon={<BadgeCheck className="size-4" />} disabled={isActing} onClick={() => void runAction('contabilizar')}>
+                                            Contabilizar
+                                        </Button>
+                                    )}
+                                    {canReverse && (comprobante.estado === 'borrador' || comprobante.estado === 'revisado') && (
+                                        <Button iconOnly variant="outline" startIcon={<Ban className="size-4" />} onClick={() => setModo('anular')}>
+                                            Anular
+                                        </Button>
+                                    )}
                                     {canReverse && comprobante.estado === 'contabilizado' && (
-                                        <Button iconOnly variant="outline" startIcon={<Undo2 className="size-4" />} onClick={() => setIsReversing(true)}>
+                                        <Button iconOnly variant="outline" startIcon={<Undo2 className="size-4" />} onClick={() => setModo('reversar')}>
                                             Reversar
                                         </Button>
                                     )}
@@ -131,10 +168,20 @@ export const VoucherDetailPage: FC = () => {
 
             {comprobante && (
                 <ReverseVoucherModal
-                    isOpen={isReversing}
-                    onClose={() => setIsReversing(false)}
+                    isOpen={modo !== null}
+                    onClose={() => setModo(null)}
                     voucherId={comprobante.id}
-                    onReversed={(nuevoId) => navigate(`/contabilidad/comprobantes/${nuevoId}`, { replace: true, state: { message: 'Comprobante reversado correctamente.' } })}
+                    sinEfecto={modo === 'anular'}
+                    onReversed={(nuevoId) => {
+                        setModo(null);
+
+                        if (nuevoId === comprobante.id) {
+                            refetch();
+                            return;
+                        }
+
+                        navigate(`/contabilidad/comprobantes/${nuevoId}`, { replace: true, state: { message: 'Comprobante reversado correctamente.' } });
+                    }}
                 />
             )}
         </div>

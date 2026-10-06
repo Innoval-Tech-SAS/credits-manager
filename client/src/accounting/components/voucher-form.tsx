@@ -84,7 +84,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
 
             navigate(`/contabilidad/comprobantes/${respuesta.comprobante.id}`, {
                 replace: true,
-                state: { message: 'Comprobante creado y contabilizado.' },
+                state: { message: 'Comprobante creado en borrador. Otro usuario debe revisarlo y contabilizarlo.' },
             });
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');

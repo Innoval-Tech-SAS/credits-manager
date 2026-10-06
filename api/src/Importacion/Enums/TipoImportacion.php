@@ -11,4 +11,5 @@ enum TipoImportacion: string
     case SaldosIniciales = 'saldos_iniciales';
     case PlanCuentas = 'plan_cuentas';
     case Terceros = 'terceros';
+    case Gastos = 'gastos';
 }

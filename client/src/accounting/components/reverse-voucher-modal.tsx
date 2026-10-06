@@ -13,7 +13,7 @@ import type { ApiVoucher } from '../types/api-voucher';
  * El comprobante original nunca se elimina ni se modifica más allá de su estado —
  * esto solo genera el reverso, igual que `reversar_comprobante.php` del legado.
  */
-export const ReverseVoucherModal: FC<ReverseVoucherModalProps> = ({ isOpen, onClose, voucherId, onReversed }) => {
+export const ReverseVoucherModal: FC<ReverseVoucherModalProps> = ({ isOpen, onClose, voucherId, onReversed, sinEfecto = false }) => {
     const { sendRequest } = useSendRequest();
 
     const [motivo, setMotivo] = useState('');
@@ -41,9 +41,11 @@ export const ReverseVoucherModal: FC<ReverseVoucherModalProps> = ({ isOpen, onCl
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} size="sm">
-            <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">Reversar comprobante</h4>
+            <h4 className="mb-2 text-lg font-semibold text-gray-800 dark:text-white/90">{sinEfecto ? 'Anular comprobante' : 'Reversar comprobante'}</h4>
             <p className="mb-5 text-sm text-gray-500 dark:text-gray-400">
-                El comprobante original no será eliminado; se creará un nuevo comprobante con las líneas invertidas.
+                {sinEfecto
+                    ? 'El comprobante no llegó a los reportes: se anula sin crear reverso. Su número se conserva.'
+                    : 'El comprobante original no será eliminado; se creará un nuevo comprobante con las líneas invertidas.'}
             </p>
 
             {error && (
@@ -52,7 +54,7 @@ export const ReverseVoucherModal: FC<ReverseVoucherModalProps> = ({ isOpen, onCl
                 </div>
             )}
 
-            <Label htmlFor="motivo">Motivo del reverso</Label>
+            <Label htmlFor="motivo">{sinEfecto ? 'Motivo de la anulación' : 'Motivo del reverso'}</Label>
             <textarea
                 id="motivo"
                 required
@@ -71,7 +73,7 @@ export const ReverseVoucherModal: FC<ReverseVoucherModalProps> = ({ isOpen, onCl
                     disabled={isSubmitting || motivo.trim() === ''}
                     startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
                 >
-                    {isSubmitting ? 'Reversando…' : 'Confirmar reverso'}
+                    {isSubmitting ? (sinEfecto ? 'Anulando…' : 'Reversando…') : sinEfecto ? 'Confirmar anulación' : 'Confirmar reverso'}
                 </Button>
             </div>
         </Modal>

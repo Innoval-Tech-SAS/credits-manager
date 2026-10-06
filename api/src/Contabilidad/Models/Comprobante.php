@@ -28,6 +28,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'creado_por',
     'contabilizado_por',
     'contabilizado_en',
+    'revisado_por',
+    'revisado_en',
     'anulado_por',
     'anulado_en',
     'comprobante_reverso_id',
@@ -46,6 +48,7 @@ class Comprobante extends BaseModel
             'total_debito' => DineroCast::class,
             'total_credito' => DineroCast::class,
             'contabilizado_en' => 'datetime',
+            'revisado_en' => 'datetime',
             'anulado_en' => 'datetime',
         ];
     }
@@ -68,6 +71,12 @@ class Comprobante extends BaseModel
     public function creadoPor(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'creado_por');
+    }
+
+    /** Nombre distinto de la columna `revisado_por`: una relación con el mismo nombre pisaría la FK en el JSON. */
+    public function revisor(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'revisado_por');
     }
 
     public function comprobanteReverso(): BelongsTo

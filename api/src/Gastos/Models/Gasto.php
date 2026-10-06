@@ -2,6 +2,7 @@
 
 namespace App\Gastos\Models;
 
+use App\Contabilidad\Models\CentroCosto;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\DocumentoTercero;
 use App\Core\Base\BaseModel;
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'tipo_gasto_id',
     'tercero_id',
     'municipio_id',
+    'centro_costo_id',
     'fecha',
     'numero_documento',
     'concepto',
@@ -70,6 +72,11 @@ class Gasto extends BaseModel
     public function municipio(): BelongsTo
     {
         return $this->belongsTo(Municipio::class);
+    }
+
+    public function centroCosto(): BelongsTo
+    {
+        return $this->belongsTo(CentroCosto::class);
     }
 
     public function parametrizacion(): BelongsTo

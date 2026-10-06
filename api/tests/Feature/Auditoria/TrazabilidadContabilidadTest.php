@@ -6,6 +6,7 @@ use App\Contabilidad\Enums\EstadoPeriodo;
 use App\Contabilidad\Enums\EventoContable;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Models\PeriodoContable;
+use App\Contabilidad\Services\ComprobanteService;
 use App\Contabilidad\Services\DocumentoTerceroService;
 use App\Core\Dinero\Dinero;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -36,18 +37,18 @@ class TrazabilidadContabilidadTest extends TestCase
         ];
     }
 
-    public function test_un_comprobante_manual_deja_un_evento_de_contabilizacion_con_sus_totales(): void
+    public function test_un_comprobante_manual_deja_un_evento_de_creacion_en_borrador_con_sus_totales(): void
     {
         $admin = $this->actingAsAdmin();
 
         $id = $this->postJson('/api/v1/contabilidad/comprobantes', $this->payloadComprobante())->assertCreated()->json('comprobante.id');
 
-        $evento = $this->assertEventoAuditoria('contabilizar', 'contabilidad', 'comprobante', $id);
+        $evento = $this->assertEventoAuditoria('crear', 'contabilidad', 'comprobante', $id);
         $this->assertSame($admin->empresa_id, $evento['empresa_id']);
         $this->assertSame('100.00', $evento['valores_nuevos']['total_debito']);
         $this->assertSame('100.00', $evento['valores_nuevos']['total_credito']);
         $this->assertSame(2, $evento['valores_nuevos']['lineas']);
-        $this->assertSame('contabilizado', $evento['valores_nuevos']['estado']);
+        $this->assertStringContainsString('creado en borrador', $evento['descripcion']);
         $this->assertStringContainsString('(origen: manual)', $evento['descripcion']);
         $this->assertStringNotContainsString('#)', $evento['descripcion']);
     }
@@ -66,7 +67,10 @@ class TrazabilidadContabilidadTest extends TestCase
     public function test_reversar_un_comprobante_deja_el_motivo_y_el_comprobante_de_reverso(): void
     {
         $this->actingAsAdmin();
-        $originalId = $this->postJson('/api/v1/contabilidad/comprobantes', $this->payloadComprobante())->json('comprobante.id');
+        $payload = $this->payloadComprobante();
+        $originalId = app(ComprobanteService::class)
+            ->crearComprobante($payload['tipo_comprobante_id'], $payload['fecha'], $payload['lineas'], $payload['concepto'], 'manual')
+            ->id;
 
         $this->postJson("/api/v1/contabilidad/comprobantes/{$originalId}/reversar", ['motivo' => 'Error de digitación'])->assertCreated();
 

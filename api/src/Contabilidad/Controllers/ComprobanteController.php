@@ -43,9 +43,24 @@ class ComprobanteController extends Controller
             null,
             $datos['documento_soporte'] ?? null,
             $datos['tercero_id'] ?? null,
+            contabilizarInmediato: false,
         );
 
         return response()->json(['comprobante' => $this->comprobantes->mostrar($comprobante)], 201);
+    }
+
+    public function revisar(Comprobante $comprobante): JsonResponse
+    {
+        $comprobante = $this->comprobantes->revisar($comprobante);
+
+        return response()->json(['comprobante' => $this->comprobantes->mostrar($comprobante)]);
+    }
+
+    public function contabilizar(Comprobante $comprobante): JsonResponse
+    {
+        $comprobante = $this->comprobantes->contabilizar($comprobante);
+
+        return response()->json(['comprobante' => $this->comprobantes->mostrar($comprobante)]);
     }
 
     public function show(Comprobante $comprobante): JsonResponse
@@ -65,8 +80,8 @@ class ComprobanteController extends Controller
 
     public function reversar(ReversarComprobanteRequest $peticion, Comprobante $comprobante): JsonResponse
     {
-        $reverso = $this->comprobantes->reversarComprobante($comprobante, $peticion->validated()['motivo']);
+        $resultado = $this->comprobantes->reversarComprobante($comprobante, $peticion->validated()['motivo']);
 
-        return response()->json(['comprobante' => $this->comprobantes->mostrar($reverso)], 201);
+        return response()->json(['comprobante' => $this->comprobantes->mostrar($resultado)], 201);
     }
 }

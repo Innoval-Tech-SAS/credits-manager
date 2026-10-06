@@ -6,13 +6,17 @@ import { ExportButton } from '../../shared/components/export-button';
 import { Alert } from '@ui/alert/components/alert';
 import type { ReportExportButtonProps } from '../props/report-export-button-props';
 
-/** Exportación de un reporte contable. Solo aparece con el permiso `contabilidad.exportar`. */
-export const ReportExportButton: FC<ReportExportButtonProps> = ({ endpoint, filters, disabled = false }) => {
+/**
+ * Exportación de un reporte contable. Excel y CSV requieren `informes_contables.exportar`; el PDF, `informes_contables.imprimir`.
+ * Sin ninguno de los dos no se muestra el botón.
+ */
+export const ReportExportButton: FC<ReportExportButtonProps> = ({ endpoint, pdfEndpoint, pdfFilename, filters, disabled = false }) => {
     const canExport = usePermission('informes_contables', 'exportar');
+    const canPrint = usePermission('informes_contables', 'imprimir');
     const [message, setMessage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
-    if (!canExport) {
+    if (!canExport && !canPrint) {
         return null;
     }
 
@@ -22,6 +26,9 @@ export const ReportExportButton: FC<ReportExportButtonProps> = ({ endpoint, filt
                 <ExportButton
                     endpoint={endpoint}
                     filters={filters}
+                    formats={canExport ? ['xlsx', 'csv'] : []}
+                    pdfEndpoint={canPrint ? pdfEndpoint : undefined}
+                    pdfFilename={pdfFilename}
                     disabled={disabled}
                     onRequested={() => {
                         setError(null);

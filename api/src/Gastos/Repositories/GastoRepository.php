@@ -3,9 +3,12 @@
 namespace App\Gastos\Repositories;
 
 use App\Core\Base\BaseRepository;
+use App\Gastos\Enums\EstadoGasto;
 use App\Gastos\Models\Gasto;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
 
 class GastoRepository extends BaseRepository
@@ -31,6 +34,25 @@ class GastoRepository extends BaseRepository
             ->orderByDesc('fecha');
 
         return $this->filtrar($consulta, $busqueda);
+    }
+
+    /**
+     * Gastos causados por mes y centro de costo, en centavos. El centro nulo son los gastos anteriores a la obligatoriedad.
+     * La empresa va explícita: el reporte también corre en el worker de exportación, sin sesión.
+     */
+    public function resumenPorCentroCosto(int $empresaId, string $desde, string $hasta): Collection
+    {
+        return DB::table('gastos')
+            ->leftJoin('centros_costo', 'centros_costo.id', '=', 'gastos.centro_costo_id')
+            ->where('gastos.empresa_id', $empresaId)
+            ->where('gastos.estado', EstadoGasto::Causado->value)
+            ->whereBetween('gastos.fecha', [$desde, $hasta])
+            ->whereNull('gastos.borrado_en')
+            ->groupBy('mes', 'gastos.centro_costo_id', 'centros_costo.codigo', 'centros_costo.nombre')
+            ->orderBy('mes')
+            ->orderBy('centros_costo.codigo')
+            ->selectRaw('SUBSTR(gastos.fecha, 1, 7) as mes, gastos.centro_costo_id, centros_costo.codigo as centro_codigo, centros_costo.nombre as centro_nombre, COUNT(*) as cantidad, COALESCE(SUM(gastos.valor_bruto),0) as valor_bruto, COALESCE(SUM(gastos.valor_neto),0) as valor_neto')
+            ->get();
     }
 
     public function cursorParaExportar(int $empresaId, ?string $busqueda): LazyCollection

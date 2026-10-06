@@ -25,9 +25,11 @@ export type ApiVoucher = {
     modulo_origen: string | null;
     origen_id: number | null;
     documento_soporte: string | null;
-    estado: 'borrador' | 'contabilizado' | 'anulado';
+    estado: 'borrador' | 'revisado' | 'contabilizado' | 'anulado';
     total_debito: string;
     total_credito: string;
     comprobante_reverso_id: number | null;
+    revisor?: { id: number; nombre: string } | null;
+    revisado_en?: string | null;
     lineas?: ApiVoucherLine[];
 };

@@ -31,14 +31,15 @@ class ComprobanteControllerTest extends TestCase
         ];
     }
 
-    public function test_crea_y_contabiliza_un_comprobante_manual(): void
+    public function test_crea_un_comprobante_manual_en_borrador_sin_afectar_contabilidad(): void
     {
         $this->actingAsAdmin();
 
         $respuesta = $this->postJson('/api/v1/contabilidad/comprobantes', $this->payloadValido());
 
         $respuesta->assertStatus(201);
-        $respuesta->assertJsonPath('comprobante.estado', 'contabilizado');
+        $respuesta->assertJsonPath('comprobante.estado', 'borrador');
+        $this->assertDatabaseHas('comprobantes', ['id' => $respuesta->json('comprobante.id'), 'contabilizado_en' => null]);
         $this->assertDatabaseCount('asientos_contables', 2);
     }
 

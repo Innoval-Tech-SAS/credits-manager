@@ -38,7 +38,12 @@ export const FinancialStatementsPage: FC = () => {
                 </div>
 
                 <div className="mt-6">
-                    <ReportExportButton endpoint="/contabilidad/estados-financieros/exportar" filters={{ desde, hasta }} />
+                    <ReportExportButton
+                        endpoint="/contabilidad/estados-financieros/exportar"
+                        pdfEndpoint="/contabilidad/estados-financieros/pdf"
+                        pdfFilename="estados-financieros.pdf"
+                        filters={{ desde, hasta }}
+                    />
                 </div>
             </div>
 

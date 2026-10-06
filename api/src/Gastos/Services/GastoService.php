@@ -117,6 +117,7 @@ class GastoService
                 'tipo_gasto_id' => $tipoGasto->id,
                 'tercero_id' => $tercero?->id,
                 'municipio_id' => $datos['municipio_id'] ?? null,
+                'centro_costo_id' => $datos['centro_costo_id'],
                 'fecha' => $datos['fecha'],
                 'numero_documento' => $datos['numero_documento'],
                 'concepto' => $datos['concepto'],
@@ -134,7 +135,7 @@ class GastoService
             $comprobante = $this->comprobantes->crearComprobante(
                 $parametrizacion->tipo_comprobante_id,
                 $datos['fecha'],
-                $this->construirLineasComprobante($parametrizacion, $valorBruto, $calculo, $retencionesPorTipo),
+                $this->construirLineasComprobante($parametrizacion, $valorBruto, $calculo, $retencionesPorTipo, $datos['centro_costo_id']),
                 $datos['concepto'],
                 'gastos',
                 $gasto->id,
@@ -222,10 +223,10 @@ class GastoService
     }
 
     /** @param  Collection<string, array>  $retencionesPorTipo */
-    private function construirLineasComprobante(ParametrizacionTipoGasto $parametrizacion, Dinero $valorBruto, array $calculo, Collection $retencionesPorTipo): array
+    private function construirLineasComprobante(ParametrizacionTipoGasto $parametrizacion, Dinero $valorBruto, array $calculo, Collection $retencionesPorTipo, int $centroCostoId): array
     {
         $lineas = [
-            ['cuenta_id' => $parametrizacion->cuenta_gasto_id, 'debito' => $valorBruto, 'credito' => 0],
+            ['cuenta_id' => $parametrizacion->cuenta_gasto_id, 'debito' => $valorBruto, 'credito' => 0, 'centro_costo_id' => $centroCostoId],
         ];
 
         if ($calculo['valor_iva']->esPositivo()) {

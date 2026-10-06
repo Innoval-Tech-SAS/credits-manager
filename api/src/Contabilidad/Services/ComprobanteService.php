@@ -8,7 +8,9 @@ use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Enums\EstadoComprobante;
 use App\Contabilidad\Enums\EstadoPeriodo;
 use App\Contabilidad\Enums\EventoContable;
+use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Models\Comprobante;
+use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Repositories\AsientoContableRepository;
 use App\Contabilidad\Repositories\ComprobanteRepository;
 use App\Contabilidad\Repositories\ReglaContabilizacionRepository;
@@ -93,6 +95,10 @@ class ComprobanteService
             ]);
         }
 
+        if ($moduloOrigen === 'manual') {
+            $this->exigirCentroCostoEnGastos($lineas);
+        }
+
         $periodo = $this->periodos->obtenerAbierto($fecha);
         $consecutivo = $this->tiposComprobante->incrementarConsecutivo($tipoComprobanteId);
 
@@ -152,6 +158,10 @@ class ComprobanteService
      */
     public function reversarComprobante(Comprobante $original, string $motivo): Comprobante
     {
+        if (in_array($original->estado, [EstadoComprobante::Borrador, EstadoComprobante::Revisado], true)) {
+            return $this->anularSinEfecto($original, $motivo);
+        }
+
         if ($original->estado !== EstadoComprobante::Contabilizado) {
             throw ValidationException::withMessages([
                 'comprobante' => __('validation.custom.comprobante.no_contabilizado'),
@@ -205,6 +215,120 @@ class ComprobanteService
 
             return $reverso;
         });
+    }
+
+    /**
+     * Revisión de un asiento manual: la hace otro usuario que el creador (segregación de funciones). Un borrador no
+     * afecta reportes, así que la revisión no cambia saldos; solo deja constancia de quién lo revisó.
+     */
+    public function revisar(Comprobante $comprobante): Comprobante
+    {
+        if ($comprobante->estado !== EstadoComprobante::Borrador) {
+            throw ValidationException::withMessages(['comprobante' => __('validation.custom.comprobante.no_borrador')]);
+        }
+
+        if ((int) $comprobante->creado_por === (int) Auth::id()) {
+            throw ValidationException::withMessages(['comprobante' => __('validation.custom.comprobante.revision_propia')]);
+        }
+
+        $this->periodos->obtenerAbierto($comprobante->fecha->toDateString());
+
+        return DB::transaction(function () use ($comprobante) {
+            $anteriores = $this->auditoria->instantanea($comprobante);
+
+            $comprobante = $this->comprobantes->actualizar($comprobante, [
+                'estado' => EstadoComprobante::Revisado,
+                'revisado_por' => Auth::id(),
+                'revisado_en' => now(),
+            ]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                'Comprobante #'.$comprobante->consecutivo.' revisado',
+                $comprobante,
+                $anteriores,
+                accion: AccionAuditoria::Revisar,
+            );
+
+            return $comprobante;
+        });
+    }
+
+    /** Publica un asiento revisado. Vuelve a comprobar el cuadre línea por línea: el total guardado no basta. */
+    public function contabilizar(Comprobante $comprobante): Comprobante
+    {
+        if ($comprobante->estado !== EstadoComprobante::Revisado) {
+            throw ValidationException::withMessages(['comprobante' => __('validation.custom.comprobante.no_revisado')]);
+        }
+
+        $this->periodos->obtenerAbierto($comprobante->fecha->toDateString());
+
+        $comprobante->loadMissing('lineas');
+        $debito = Dinero::sumarVarios(...$comprobante->lineas->pluck('debito')->all());
+        $credito = Dinero::sumarVarios(...$comprobante->lineas->pluck('credito')->all());
+
+        if (! $debito->igualA($credito) || ! $debito->igualA($comprobante->total_debito) || ! $credito->igualA($comprobante->total_credito)) {
+            throw ValidationException::withMessages(['comprobante' => __('validation.custom.comprobante.descuadrado_al_contabilizar')]);
+        }
+
+        return DB::transaction(function () use ($comprobante, $debito) {
+            $anteriores = $this->auditoria->instantanea($comprobante);
+
+            $comprobante = $this->comprobantes->actualizar($comprobante, [
+                'estado' => EstadoComprobante::Contabilizado,
+                'contabilizado_por' => Auth::id(),
+                'contabilizado_en' => now(),
+            ]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                'Comprobante #'.$comprobante->consecutivo.' contabilizado por '.$debito->aDecimalString(),
+                $comprobante,
+                $anteriores,
+                accion: AccionAuditoria::Contabilizar,
+            );
+
+            return $comprobante;
+        });
+    }
+
+    /** Un borrador o revisado nunca llegó a los reportes: se anula sin reverso ni asiento. */
+    private function anularSinEfecto(Comprobante $comprobante, string $motivo): Comprobante
+    {
+        return DB::transaction(function () use ($comprobante, $motivo) {
+            $anteriores = $this->auditoria->instantanea($comprobante);
+
+            $comprobante = $this->comprobantes->actualizar($comprobante, [
+                'estado' => EstadoComprobante::Anulado,
+                'anulado_por' => Auth::id(),
+                'anulado_en' => now(),
+            ]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                'Comprobante #'.$comprobante->consecutivo.' anulado sin efecto contable',
+                $comprobante,
+                $anteriores,
+                $motivo,
+                AccionAuditoria::Anular,
+            );
+
+            return $comprobante;
+        });
+    }
+
+    /** Un gasto de cuenta de gasto o costo lleva centro de costo en cada línea, también en un asiento manual. */
+    private function exigirCentroCostoEnGastos(array $lineas): void
+    {
+        $cuentas = PlanCuenta::query()->whereIn('id', array_column($lineas, 'cuenta_id'))->get()->keyBy('id');
+
+        foreach ($lineas as $linea) {
+            $tipo = $cuentas[$linea['cuenta_id']]->tipo ?? null;
+
+            if (in_array($tipo, [TipoCuenta::Gasto, TipoCuenta::Costo], true) && empty($linea['centro_costo_id'])) {
+                throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.centro_costo_requerido')]);
+            }
+        }
     }
 
     // -------- Generadores automáticos por evento de negocio --------

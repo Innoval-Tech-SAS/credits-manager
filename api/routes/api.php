@@ -6,6 +6,7 @@ use App\Auth\Controllers\AuthController;
 use App\Calendario\Controllers\CalendarioController;
 use App\Cartera\Controllers\CarteraController;
 use App\Clientes\Controllers\ClienteController;
+use App\Contabilidad\Controllers\AuxiliarContableController;
 use App\Contabilidad\Controllers\CentroCostoController;
 use App\Contabilidad\Controllers\ComprobanteController;
 use App\Contabilidad\Controllers\DocumentoTerceroController;
@@ -29,6 +30,7 @@ use App\Facturacion\Controllers\DocumentoFacturacionController;
 use App\Gastos\Controllers\ActividadEconomicaController;
 use App\Gastos\Controllers\GastoController;
 use App\Gastos\Controllers\ParametrizacionTipoGastoController;
+use App\Gastos\Controllers\ReporteGastosCentroCostoController;
 use App\Gastos\Controllers\TarifaReteIcaMunicipioController;
 use App\Gastos\Controllers\TipoGastoController;
 use App\Gastos\Controllers\ValorUvtController;
@@ -215,6 +217,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/contabilidad/comprobantes', [ComprobanteController::class, 'store'])->middleware('permiso:contabilidad,crear_manual');
     Route::get('/contabilidad/comprobantes/{comprobante}', [ComprobanteController::class, 'show'])->middleware('permiso:contabilidad,listar');
     Route::get('/contabilidad/comprobantes/{comprobante}/pdf', [ComprobanteController::class, 'pdf'])->middleware('permiso:contabilidad,imprimir_comprobante')->whereNumber('comprobante');
+    Route::post('/contabilidad/comprobantes/{comprobante}/revisar', [ComprobanteController::class, 'revisar'])->middleware('permiso:contabilidad,revisar')->whereNumber('comprobante');
+    Route::post('/contabilidad/comprobantes/{comprobante}/contabilizar', [ComprobanteController::class, 'contabilizar'])->middleware('permiso:contabilidad,contabilizar')->whereNumber('comprobante');
     Route::post('/contabilidad/comprobantes/{comprobante}/reversar', [ComprobanteController::class, 'reversar'])->middleware('permiso:contabilidad,anular');
 
     Route::get('/contabilidad/libro-diario', [ReporteContableController::class, 'libroDiario'])->middleware('permiso:informes_contables,listar');
@@ -225,6 +229,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/contabilidad/libro-mayor/exportar', [ReporteContableController::class, 'exportarLibroMayor'])->middleware('permiso:informes_contables,exportar');
     Route::post('/contabilidad/balance-prueba/exportar', [ReporteContableController::class, 'exportarBalancePrueba'])->middleware('permiso:informes_contables,exportar');
     Route::post('/contabilidad/estados-financieros/exportar', [ReporteContableController::class, 'exportarEstadosFinancieros'])->middleware('permiso:informes_contables,exportar');
+
+    Route::get('/contabilidad/libro-diario/pdf', [ReporteContableController::class, 'pdfLibroDiario'])->middleware('permiso:informes_contables,imprimir');
+    Route::get('/contabilidad/libro-mayor/pdf', [ReporteContableController::class, 'pdfLibroMayor'])->middleware('permiso:informes_contables,imprimir');
+    Route::get('/contabilidad/balance-prueba/pdf', [ReporteContableController::class, 'pdfBalancePrueba'])->middleware('permiso:informes_contables,imprimir');
+    Route::get('/contabilidad/estados-financieros/pdf', [ReporteContableController::class, 'pdfEstadosFinancieros'])->middleware('permiso:informes_contables,imprimir');
+    Route::get('/contabilidad/conciliacion-apertura', [ReporteContableController::class, 'conciliacionApertura'])->middleware('permiso:informes_contables,listar');
+
+    Route::get('/contabilidad/auxiliares', [AuxiliarContableController::class, 'index'])->middleware('permiso:informes_contables,listar');
+    Route::post('/contabilidad/auxiliares/exportar', [AuxiliarContableController::class, 'exportar'])->middleware('permiso:informes_contables,exportar');
+    Route::get('/contabilidad/auxiliares/pdf', [AuxiliarContableController::class, 'pdf'])->middleware('permiso:informes_contables,imprimir');
 
     Route::get('/importaciones', [ImportacionController::class, 'index'])->middleware('permiso:importaciones,listar');
     Route::post('/importaciones', [ImportacionController::class, 'store'])->middleware('permiso:importaciones,ejecutar');
@@ -270,6 +284,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/gastos', [GastoController::class, 'index'])->middleware('permiso:gastos,listar');
     Route::post('/gastos/exportar', [GastoController::class, 'exportar'])->middleware('permiso:gastos,exportar');
+    Route::get('/gastos/reporte-centro-costo', [ReporteGastosCentroCostoController::class, 'index'])->middleware('permiso:gastos,listar');
+    Route::post('/gastos/reporte-centro-costo/exportar', [ReporteGastosCentroCostoController::class, 'exportar'])->middleware('permiso:gastos,exportar');
 
     Route::get('/facturacion/documentos', [DocumentoFacturacionController::class, 'index'])->middleware('permiso:facturacion,listar');
     Route::post('/facturacion/documentos', [DocumentoFacturacionController::class, 'store'])->middleware('permiso:facturacion,crear');

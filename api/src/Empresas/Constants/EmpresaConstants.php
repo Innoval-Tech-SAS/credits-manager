@@ -27,10 +27,11 @@ class EmpresaConstants
             'calendario.listar',
         ],
         'contable' => [
-            'contabilidad.listar', 'contabilidad.crear_manual', 'contabilidad.anular', 'contabilidad.imprimir_comprobante',
+            'contabilidad.listar', 'contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar',
+            'contabilidad.anular', 'contabilidad.imprimir_comprobante',
             'configuracion_contable.listar', 'configuracion_contable.crear', 'configuracion_contable.editar',
             'configuracion_contable.configurar', 'configuracion_contable.cerrar_periodo',
-            'informes_contables.listar', 'informes_contables.exportar',
+            'informes_contables.listar', 'informes_contables.exportar', 'informes_contables.imprimir',
             'terceros.listar', 'terceros.crear', 'terceros.editar',
             'tributario.listar', 'tributario.parametrizar',
             'facturacion.listar', 'facturacion.crear', 'facturacion.anular', 'facturacion.imprimir', 'facturacion.configurar',
@@ -58,7 +59,7 @@ class EmpresaConstants
         ],
         'auditoria' => [
             'contabilidad.listar', 'contabilidad.imprimir_comprobante',
-            'configuracion_contable.listar', 'informes_contables.listar', 'informes_contables.exportar', 'terceros.listar',
+            'configuracion_contable.listar', 'informes_contables.listar', 'informes_contables.exportar', 'informes_contables.imprimir', 'terceros.listar',
             'cartera.listar', 'cartera.exportar', 'cartera.imprimir_reporte_empleador',
             'auditoria.listar',
             'auditoria.exportar',

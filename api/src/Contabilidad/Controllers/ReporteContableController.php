@@ -2,19 +2,30 @@
 
 namespace App\Contabilidad\Controllers;
 
+use App\Contabilidad\Requests\ConsultarCorteContableRequest;
+use App\Contabilidad\Requests\ConsultarPeriodoContableRequest;
 use App\Contabilidad\Requests\ExportarBalancePruebaRequest;
 use App\Contabilidad\Requests\ExportarEstadosFinancierosRequest;
 use App\Contabilidad\Requests\ExportarLibroDiarioRequest;
 use App\Contabilidad\Requests\ExportarLibroMayorRequest;
+use App\Contabilidad\Requests\ImprimirLibroMayorRequest;
+use App\Contabilidad\Services\ConciliacionAperturaService;
+use App\Contabilidad\Services\InformeContablePdfService;
 use App\Contabilidad\Services\ReporteContableService;
 use App\Exportacion\Enums\FormatoExportacion;
 use App\Http\Controllers\Controller;
+use App\Impresion\Data\PdfGenerado;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class ReporteContableController extends Controller
 {
-    public function __construct(protected ReporteContableService $reportes) {}
+    public function __construct(
+        protected ReporteContableService $reportes,
+        protected InformeContablePdfService $informesPdf,
+        protected ConciliacionAperturaService $conciliacion,
+    ) {}
 
     public function libroDiario(Request $peticion): JsonResponse
     {
@@ -50,6 +61,38 @@ class ReporteContableController extends Controller
             $peticion->string('desde', now()->startOfYear()->toDateString())->toString(),
             $peticion->string('hasta', now()->toDateString())->toString(),
         ));
+    }
+
+    public function conciliacionApertura(ConsultarCorteContableRequest $peticion): JsonResponse
+    {
+        return response()->json($this->conciliacion->conciliar(
+            (int) $peticion->user()->empresa_id,
+            $peticion->validated('hasta'),
+        ));
+    }
+
+    public function pdfBalancePrueba(ConsultarCorteContableRequest $peticion): Response
+    {
+        return $this->pdf($this->informesPdf->balancePrueba($peticion->validated('hasta')));
+    }
+
+    public function pdfLibroDiario(ConsultarPeriodoContableRequest $peticion): Response
+    {
+        return $this->pdf($this->informesPdf->libroDiario($peticion->validated('desde'), $peticion->validated('hasta')));
+    }
+
+    public function pdfLibroMayor(ImprimirLibroMayorRequest $peticion): Response
+    {
+        return $this->pdf($this->informesPdf->libroMayor(
+            $peticion->integer('cuenta_id'),
+            $peticion->validated('desde'),
+            $peticion->validated('hasta'),
+        ));
+    }
+
+    public function pdfEstadosFinancieros(ConsultarPeriodoContableRequest $peticion): Response
+    {
+        return $this->pdf($this->informesPdf->estadosFinancieros($peticion->validated('desde'), $peticion->validated('hasta')));
     }
 
     public function exportarLibroDiario(ExportarLibroDiarioRequest $peticion): JsonResponse
@@ -98,5 +141,13 @@ class ReporteContableController extends Controller
         );
 
         return response()->json(['exportacion' => $exportacion], 202);
+    }
+
+    private function pdf(PdfGenerado $pdf): Response
+    {
+        return response($pdf->contenido, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$pdf->nombreArchivo.'.pdf"',
+        ]);
     }
 }

@@ -23,7 +23,7 @@ class ComprobantePdfService
 
     public function generarPdf(Comprobante $comprobante): PdfGenerado
     {
-        $comprobante->load(['tipoComprobante', 'tercero', 'lineas.cuenta', 'creadoPor', 'comprobanteReverso.tipoComprobante']);
+        $comprobante->load(['tipoComprobante', 'tercero', 'lineas.cuenta', 'creadoPor', 'revisor', 'comprobanteReverso.tipoComprobante']);
 
         // Un reverso apunta al comprobante que reversa (`origen_id`); la búsqueda pasa por el scope de empresa.
         $original = $comprobante->modulo_origen === 'reverso' ? $this->comprobantes->buscarPorId($comprobante->origen_id) : null;

@@ -16,6 +16,7 @@ class ProcesadorFilaFactory
             TipoImportacion::SaldosIniciales => ProcesadorSaldosIniciales::class,
             TipoImportacion::PlanCuentas => ProcesadorPlanCuentas::class,
             TipoImportacion::Terceros => ProcesadorTerceros::class,
+            TipoImportacion::Gastos => ProcesadorGastos::class,
         });
     }
 }

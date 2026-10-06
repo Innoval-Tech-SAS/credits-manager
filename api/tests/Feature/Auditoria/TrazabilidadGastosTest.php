@@ -25,7 +25,7 @@ class TrazabilidadGastosTest extends TestCase
         $this->crearParametrizacion($tipoGasto);
 
         return $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-109', 'concepto' => 'Servicio', 'valor_bruto' => 1000000,
         ])->assertCreated()->json('gasto.id');
     }
@@ -55,7 +55,7 @@ class TrazabilidadGastosTest extends TestCase
         $tipoGasto = $this->crearTipoGasto();
 
         $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id, 'fecha' => '2026-03-01', 'numero_documento' => 'FAC-1', 'concepto' => 'Sin parametrizar', 'valor_bruto' => 1000,
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'fecha' => '2026-03-01', 'numero_documento' => 'FAC-1', 'concepto' => 'Sin parametrizar', 'valor_bruto' => 1000,
         ])->assertStatus(422);
 
         $this->assertSinEventosDeAuditoria();

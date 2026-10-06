@@ -2,6 +2,7 @@
 
 namespace Tests\Concerns;
 
+use App\Contabilidad\Models\CentroCosto;
 use App\Gastos\Models\ActividadEconomica;
 use App\Gastos\Models\ParametrizacionTipoGasto;
 use App\Gastos\Models\TarifaReteIcaMunicipio;
@@ -37,6 +38,19 @@ trait CreatesGastosFixtures
         return ActividadEconomica::create(array_merge([
             'codigo' => "A{$contador}",
             'nombre' => "Actividad económica de prueba {$contador}",
+        ], $overrides));
+    }
+
+    /** Centro de costo activo de la empresa de la sesión: los gastos nuevos lo exigen. */
+    protected function crearCentroCosto(array $overrides = []): CentroCosto
+    {
+        static $contador = 0;
+        $contador++;
+
+        return CentroCosto::create(array_merge([
+            'codigo' => "CC{$contador}",
+            'nombre' => "Centro de costo de prueba {$contador}",
+            'activo' => true,
         ], $overrides));
     }
 

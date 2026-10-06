@@ -7,6 +7,7 @@ use App\Empresas\Models\Empresa;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\AfirmaAuditoria;
+use Tests\Concerns\CreatesAuditoriaFixtures;
 use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\TestCase;
 
@@ -14,18 +15,22 @@ class ComprobantePdfTest extends TestCase
 {
     use ActsAsAdmin;
     use AfirmaAuditoria;
+    use CreatesAuditoriaFixtures;
     use CreatesContabilidadFixtures;
     use RefreshDatabase;
 
-    /** Crea un comprobante manual contabilizado de 100 y deja la sesión del admin de su empresa; devuelve su id. */
+    /**
+     * Crea un comprobante manual de 100, lo revisa y contabiliza otro usuario, y deja la sesión de ese revisor (con
+     * permiso de imprimir y anular) en la empresa del admin. Devuelve su id.
+     */
     private function crearComprobante(array $extra = []): int
     {
-        $this->actingAsAdmin();
+        $admin = $this->actingAsAdmin();
         $tipo = $this->crearTipoComprobante(['codigo' => 'CD']);
         $debito = $this->crearCuenta(['codigo' => '110505', 'nombre' => 'Caja general']);
         $credito = $this->crearCuenta(['codigo' => '413505', 'nombre' => 'Ingresos por intereses']);
 
-        return $this->postJson('/api/v1/contabilidad/comprobantes', array_merge([
+        $id = $this->postJson('/api/v1/contabilidad/comprobantes', array_merge([
             'tipo_comprobante_id' => $tipo->id,
             'fecha' => '2026-01-15',
             'concepto' => 'Ajuste manual de prueba',
@@ -34,6 +39,16 @@ class ComprobantePdfTest extends TestCase
                 ['cuenta_id' => $credito->id, 'debito' => 0, 'credito' => 100, 'descripcion' => 'Intereses del mes'],
             ],
         ], $extra))->assertCreated()->json('comprobante.id');
+
+        $this->actingAsRolConPermisos('revisor', [
+            'contabilidad.listar', 'contabilidad.revisar', 'contabilidad.contabilizar',
+            'contabilidad.imprimir_comprobante', 'contabilidad.anular',
+        ], Empresa::query()->findOrFail($admin->empresa_id));
+
+        $this->postJson("/api/v1/contabilidad/comprobantes/{$id}/revisar")->assertOk();
+        $this->postJson("/api/v1/contabilidad/comprobantes/{$id}/contabilizar")->assertOk();
+
+        return $id;
     }
 
     /** Descomprime los flujos del PDF para poder buscar el texto dibujado. */
