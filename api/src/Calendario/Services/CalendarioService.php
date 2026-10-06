@@ -39,7 +39,7 @@ class CalendarioService
                     'credito_id' => $cuota->credito_id,
                     'cliente_nombre' => $cuota->credito->cliente->tercero->nombre,
                     'numero_cuota' => $cuota->numero_cuota,
-                    'saldo' => $cuota->valor->restar($cuota->valor_pagado),
+                    'saldo' => $cuota->valor_total_cuota->restar($cuota->valor_pagado),
                     'fecha_vencimiento' => $cuota->fecha_vencimiento->toDateString(),
                     'estado' => $cuota->estado,
                     'color' => $this->colorPara($cuota->estado),

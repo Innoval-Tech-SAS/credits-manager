@@ -185,7 +185,7 @@ class CarteraService
                     'valor_cuota' => $cuota->credito->valor_cuota,
                     'cuotas' => [],
                 ];
-                $filas[$clienteId]['cuotas'][$periodo] = ['valor' => $cuota->valor, 'estado' => $cuota->estado];
+                $filas[$clienteId]['cuotas'][$periodo] = ['valor' => $cuota->valor_total_cuota, 'estado' => $cuota->estado];
             }
 
             sort($meses);
