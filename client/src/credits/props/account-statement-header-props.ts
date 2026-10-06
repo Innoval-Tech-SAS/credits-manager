@@ -5,4 +5,5 @@ export type AccountStatementHeaderProps = {
     company: Company | null;
     credito: ApiCredit;
     cuotasPagadas: number;
+    fechaCorte: string;
 };
