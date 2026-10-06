@@ -198,6 +198,10 @@ class ClienteService
             'creditos' => $creditos,
             'saldo_consolidado' => $saldoConsolidado,
             'cartera' => [
+                'saldo_en_mora' => Dinero::sumarVarios(...array_map(
+                    fn (array $fila) => Dinero::desdeCentavos($fila['saldo_mora']),
+                    $resumenCuotas,
+                )),
                 'cuotas_vencidas' => $cuotasVencidas,
                 'dias_mora' => $primeraVencida === null
                     ? 0
