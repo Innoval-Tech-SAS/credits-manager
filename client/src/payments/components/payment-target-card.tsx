@@ -24,6 +24,20 @@ export const PaymentTargetCard: FC<PaymentTargetCardProps> = ({ cuota }) => {
                     <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatMoney(saldo.toFixed(2))}</p>
                 </div>
             </div>
+            <div className="mt-4 grid grid-cols-1 gap-4 border-t border-brand-200 pt-4 sm:grid-cols-3 dark:border-brand-800">
+                <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Capital de la cuota</p>
+                    <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatMoney(cuota.valor_capital)}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Intereses</p>
+                    <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatMoney(cuota.valor_interes)}</p>
+                </div>
+                <div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Otros gastos</p>
+                    <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatMoney(cuota.valor_otros_gastos)}</p>
+                </div>
+            </div>
         </div>
     );
 };
