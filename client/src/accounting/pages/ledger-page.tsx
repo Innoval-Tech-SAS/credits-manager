@@ -12,14 +12,18 @@ import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
 import type { ApiAccount } from '../types/api-account';
 import type { ApiLedger, ApiLedgerMovement } from '../types/api-ledger';
+import type { LedgerPageProps } from '../props/ledger-page-props';
 
 function primerDiaDelAnio(): string {
     return `${new Date().getFullYear()}-01-01`;
 }
 
-export const LedgerPage: FC = () => {
+export const LedgerPage: FC<LedgerPageProps> = ({ modo = 'mayor' }) => {
     const { data: cuentasData } = useResource<{ cuentas: ApiAccount[] }>('/contabilidad/plan-cuentas');
-    const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento);
+    // Caja y bancos son las cuentas de la clase 11 del PUC; el control es el mismo libro mayor, filtrado a ellas.
+    const cuentas = (cuentasData?.cuentas ?? []).filter(
+        (cuenta) => cuenta.permite_movimiento && (modo === 'mayor' || cuenta.codigo.startsWith('11')),
+    );
 
     const [cuentaId, setCuentaId] = useState('');
     const [desde, setDesde] = useState(primerDiaDelAnio());
@@ -42,7 +46,7 @@ export const LedgerPage: FC = () => {
 
     return (
         <div className="flex min-h-full flex-col gap-6 pb-6">
-            <PageBreadcrumb pageTitle="Libro mayor / auxiliares" />
+            <PageBreadcrumb pageTitle={modo === 'cajaBancos' ? 'Caja y bancos' : 'Libro mayor / auxiliares'} />
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
