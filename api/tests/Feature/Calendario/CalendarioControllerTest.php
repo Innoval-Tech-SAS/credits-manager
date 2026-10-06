@@ -44,6 +44,30 @@ class CalendarioControllerTest extends TestCase
         $this->assertSame('warning', $cuotas[$pendiente->id]['color']);
     }
 
+    public function test_la_cuota_trae_el_cliente_y_los_creditos_con_la_entidad_sin_cancelados_ni_eliminados(): void
+    {
+        $this->actingAsAdmin();
+        $cliente = $this->crearCliente(['numero_documento' => '1234567', 'celular' => '3001112233']);
+        $activo = $this->crearCredito($cliente);
+        $cancelado = $this->crearCredito($cliente, ['estado' => 'cancelado']);
+        $eliminado = $this->crearCredito($cliente);
+        $eliminado->delete();
+
+        $mesObjetivo = now()->addMonths(2);
+        $cuota = $this->crearCuota($activo, ['numero_cuota' => 1, 'fecha_vencimiento' => $mesObjetivo->copy()->day(5), 'estado' => 'pendiente']);
+
+        $cancelado->update(['estado' => 'cancelado']);
+
+        $respuesta = $this->getJson('/api/v1/calendario?mes='.$mesObjetivo->format('Y-m'));
+
+        $respuesta->assertStatus(200);
+        $fila = collect($respuesta->json('cuotas'))->firstWhere('id', $cuota->id);
+        $this->assertSame($cliente->id, $fila['cliente']['id']);
+        $this->assertSame('1234567', $fila['cliente']['numero_documento']);
+        $this->assertSame('3001112233', $fila['cliente']['celular']);
+        $this->assertSame(1, $fila['creditos_con_entidad']);
+    }
+
     public function test_sin_mes_usa_el_mes_actual(): void
     {
         $this->actingAsAdmin();

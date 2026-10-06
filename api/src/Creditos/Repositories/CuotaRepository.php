@@ -170,14 +170,16 @@ class CuotaRepository extends BaseRepository
             ->selectRaw('
                 credito_id,
                 SUM(valor + valor_otros_gastos - valor_pagado) as saldo,
+                SUM(CASE WHEN estado = ? THEN valor + valor_otros_gastos - valor_pagado ELSE 0 END) as saldo_mora,
                 SUM(CASE WHEN estado = ? THEN 1 ELSE 0 END) as vencidas,
                 MIN(CASE WHEN estado = ? THEN fecha_vencimiento END) as primera_fecha_vencida
-            ', [EstadoCuota::Vencida->value, EstadoCuota::Vencida->value])
+            ', [EstadoCuota::Vencida->value, EstadoCuota::Vencida->value, EstadoCuota::Vencida->value])
             ->groupBy('credito_id')
             ->get()
             ->keyBy('credito_id')
             ->map(fn ($fila) => [
                 'saldo' => (int) $fila->saldo,
+                'saldo_mora' => (int) $fila->saldo_mora,
                 'vencidas' => (int) $fila->vencidas,
                 'primera_fecha_vencida' => $fila->primera_fecha_vencida,
             ])

@@ -66,6 +66,28 @@ class CreditoRepository extends BaseRepository
     }
 
     /** Mismo listado que la pantalla, con empresa y asesor explícitos, para exportar. */
+    /**
+     * Créditos por cliente sin contar los cancelados (los eliminados ya quedan fuera por `borrado_en`).
+     *
+     * @param  list<int>  $clienteIds
+     * @return array<int, int>
+     */
+    public function conteoPorClientes(array $clienteIds): array
+    {
+        if ($clienteIds === []) {
+            return [];
+        }
+
+        return $this->consulta()
+            ->whereIn('cliente_id', $clienteIds)
+            ->where('estado', '!=', EstadoCredito::Cancelado)
+            ->selectRaw('cliente_id, COUNT(*) AS total')
+            ->groupBy('cliente_id')
+            ->pluck('total', 'cliente_id')
+            ->map(fn ($total) => (int) $total)
+            ->all();
+    }
+
     public function consultaParaExportar(int $empresaId, ?int $asesorId, ?string $busqueda, ?EstadoCredito $estado): Builder
     {
         $consulta = $this->restringirAAsesor($this->consultaDeEmpresa($empresaId), $empresaId, $asesorId)

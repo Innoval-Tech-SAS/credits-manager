@@ -10,6 +10,21 @@ export type ApiCalendarInstallment = {
     numero_cuota: number;
     /** Decimal string (ej. "12345.66"), viene de `AppCoreDineroDinero`. */
     saldo: string;
+    /** Decimales en string, vienen de `App\Core\Dinero\Dinero`. */
+    valor_total: string;
+    valor_pagado: string;
+    valor_capital: string;
+    valor_interes: string;
+    valor_otros_gastos: string;
+    cliente: {
+        id: number;
+        nombre: string;
+        tipo_documento: string;
+        numero_documento: string;
+        celular: string | null;
+    };
+    /** Créditos del cliente con la entidad, sin cancelados ni eliminados. */
+    creditos_con_entidad: number;
     fecha_vencimiento: string;
     estado: InstallmentStatus;
     color: CalendarInstallmentColor;

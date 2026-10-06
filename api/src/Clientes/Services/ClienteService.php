@@ -190,9 +190,23 @@ class ClienteService
             $resumenCuotas,
         ));
 
+        $cuotasVencidas = array_sum(array_column($resumenCuotas, 'vencidas'));
+        $primerasVencidas = array_filter(array_column($resumenCuotas, 'primera_fecha_vencida'));
+        $primeraVencida = $primerasVencidas === [] ? null : min($primerasVencidas);
+
         return [
             'creditos' => $creditos,
             'saldo_consolidado' => $saldoConsolidado,
+            'cartera' => [
+                'saldo_en_mora' => Dinero::sumarVarios(...array_map(
+                    fn (array $fila) => Dinero::desdeCentavos($fila['saldo_mora']),
+                    $resumenCuotas,
+                )),
+                'cuotas_vencidas' => $cuotasVencidas,
+                'dias_mora' => $primeraVencida === null
+                    ? 0
+                    : max(0, (int) ((strtotime(now()->toDateString()) - strtotime($primeraVencida)) / 86400)),
+            ],
             'ultimos_pagos' => $this->pagos->porCliente($cliente->id),
             'documentos' => $cliente->documentos()->orderByDesc('creado_en')->get(),
             'historial_empleadores' => $cliente->historialEmpleadores()->with('empleador')->orderByDesc('fecha_inicio')->get(),

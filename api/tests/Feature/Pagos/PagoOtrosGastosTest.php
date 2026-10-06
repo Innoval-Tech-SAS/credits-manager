@@ -4,7 +4,6 @@ namespace Tests\Feature\Pagos;
 
 use App\Contabilidad\Enums\EventoContable;
 use App\Core\Dinero\Dinero;
-use App\Creditos\Models\Credito;
 use App\Pagos\Enums\FormaPago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
