@@ -5,7 +5,7 @@ import { formatMoney } from '../../shared/utils/format-money';
 import type { PaymentTargetCardProps } from '../props/payment-target-card-props';
 
 export const PaymentTargetCard: FC<PaymentTargetCardProps> = ({ cuota }) => {
-    const saldo = parseFloat(cuota.valor) - parseFloat(cuota.valor_pagado);
+    const saldo = parseFloat(cuota.valor_total_cuota) - parseFloat(cuota.valor_pagado);
 
     return (
         <div className="mb-6 rounded-xl border border-brand-200 bg-brand-50 p-5 dark:border-brand-800 dark:bg-brand-500/10">
@@ -16,8 +16,8 @@ export const PaymentTargetCard: FC<PaymentTargetCardProps> = ({ cuota }) => {
                     <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatDateEs(cuota.fecha_vencimiento)}</p>
                 </div>
                 <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Valor de la cuota</p>
-                    <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatMoney(cuota.valor)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Total de la cuota</p>
+                    <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatMoney(cuota.valor_total_cuota)}</p>
                 </div>
                 <div>
                     <p className="text-xs text-gray-500 dark:text-gray-400">Saldo pendiente de la cuota</p>

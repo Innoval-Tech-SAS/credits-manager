@@ -21,6 +21,10 @@ export const SettlementQuoteCard: FC<SettlementQuoteCardProps> = ({ cotizacion }
             <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatMoney(cotizacion.interes)}</p>
         </div>
         <div>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Otros gastos</p>
+            <p className="mt-1 font-semibold text-gray-800 dark:text-white/90">{formatMoney(cotizacion.otros_gastos)}</p>
+        </div>
+        <div>
             <p className="text-sm text-gray-500 dark:text-gray-400">Total a pagar</p>
             <p className="mt-1 text-title-sm font-semibold text-brand-600 dark:text-brand-400">{formatMoney(cotizacion.total)}</p>
         </div>
