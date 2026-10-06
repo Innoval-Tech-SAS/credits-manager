@@ -19,7 +19,7 @@ export const CalendarInstallmentModal: FC<CalendarInstallmentModalProps> = ({ de
                 <div className="grid grid-cols-1 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
                     <CalendarClientPanel detalle={detalle} />
 
-                    <section className="flex flex-col p-6 sm:p-8">
+                    <section className="order-first flex flex-col p-6 sm:p-8 md:order-none">
                         <header className="flex items-start justify-between gap-4 pr-12">
                             <div>
                                 <p className="text-xs font-medium tracking-wide text-gray-500 uppercase dark:text-gray-400">Pago de hoy</p>
