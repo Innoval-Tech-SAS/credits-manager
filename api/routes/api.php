@@ -30,6 +30,7 @@ use App\Facturacion\Controllers\DocumentoFacturacionController;
 use App\Gastos\Controllers\ActividadEconomicaController;
 use App\Gastos\Controllers\GastoController;
 use App\Gastos\Controllers\ParametrizacionTipoGastoController;
+use App\Gastos\Controllers\ReporteGastosCentroCostoController;
 use App\Gastos\Controllers\TarifaReteIcaMunicipioController;
 use App\Gastos\Controllers\TipoGastoController;
 use App\Gastos\Controllers\ValorUvtController;
@@ -283,6 +284,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/gastos', [GastoController::class, 'index'])->middleware('permiso:gastos,listar');
     Route::post('/gastos/exportar', [GastoController::class, 'exportar'])->middleware('permiso:gastos,exportar');
+    Route::get('/gastos/reporte-centro-costo', [ReporteGastosCentroCostoController::class, 'index'])->middleware('permiso:gastos,listar');
+    Route::post('/gastos/reporte-centro-costo/exportar', [ReporteGastosCentroCostoController::class, 'exportar'])->middleware('permiso:gastos,exportar');
 
     Route::get('/facturacion/documentos', [DocumentoFacturacionController::class, 'index'])->middleware('permiso:facturacion,listar');
     Route::post('/facturacion/documentos', [DocumentoFacturacionController::class, 'store'])->middleware('permiso:facturacion,crear');

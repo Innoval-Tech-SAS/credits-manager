@@ -80,7 +80,7 @@ class ParametrizacionTipoGastoControllerTest extends TestCase
         $tipoGasto = $this->crearTipoGasto(['requiere_tercero' => false]);
 
         $respuesta = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id,
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id,
             'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-1',
             'concepto' => 'Gasto sin parametrizar',

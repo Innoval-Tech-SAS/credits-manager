@@ -50,7 +50,7 @@ class GastoControllerTest extends TestCase
         ]);
 
         $respuesta = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id,
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id,
             'tercero_id' => $tercero->id,
             'municipio_id' => $municipio->id,
             'fecha' => '2026-03-01',
@@ -90,7 +90,7 @@ class GastoControllerTest extends TestCase
         ]);
 
         $respuesta = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id,
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id,
             'tercero_id' => $tercero->id,
             'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-101',
@@ -120,7 +120,7 @@ class GastoControllerTest extends TestCase
         ]);
 
         $respuesta = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id,
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id,
             'tercero_id' => $tercero->id,
             'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-102',
@@ -152,7 +152,7 @@ class GastoControllerTest extends TestCase
         ]);
 
         $respuesta = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id,
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id,
             'tercero_id' => $tercero->id,
             'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-103',
@@ -184,11 +184,11 @@ class GastoControllerTest extends TestCase
         $terceroJuridico = $this->crearTerceroFiscal(['tipo_persona' => TipoPersona::Juridica]);
 
         $respuestaNatural = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id, 'tercero_id' => $terceroNatural->id, 'fecha' => '2026-03-01',
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $terceroNatural->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-104', 'concepto' => 'Honorarios persona natural', 'valor_bruto' => 1000000,
         ]);
         $respuestaJuridica = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id, 'tercero_id' => $terceroJuridico->id, 'fecha' => '2026-03-01',
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $terceroJuridico->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-105', 'concepto' => 'Honorarios persona jurídica', 'valor_bruto' => 1000000,
         ]);
 
@@ -241,7 +241,7 @@ class GastoControllerTest extends TestCase
         ]);
 
         $respuesta = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-106', 'concepto' => 'Servicio', 'valor_bruto' => 1000000,
         ]);
 
@@ -262,7 +262,7 @@ class GastoControllerTest extends TestCase
         $this->crearParametrizacion($tipoGasto);
 
         $respuesta = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-107', 'concepto' => 'Servicio', 'valor_bruto' => 1000000,
         ]);
 
@@ -291,7 +291,7 @@ class GastoControllerTest extends TestCase
         ]);
 
         $respuesta = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id, 'tercero_id' => $tercero->id, 'municipio_id' => $municipio->id,
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'municipio_id' => $municipio->id,
             'fecha' => '2026-03-01', 'numero_documento' => 'FAC-108', 'concepto' => 'Servicio sin tarifa ICA', 'valor_bruto' => 1000000,
         ]);
 
@@ -308,7 +308,7 @@ class GastoControllerTest extends TestCase
         $this->crearParametrizacion($tipoGasto);
 
         $creado = $this->postJson('/api/v1/gastos', [
-            'tipo_gasto_id' => $tipoGasto->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-109', 'concepto' => 'Servicio', 'valor_bruto' => 1000000,
         ]);
         $gastoId = $creado->json('gasto.id');

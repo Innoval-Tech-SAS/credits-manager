@@ -98,6 +98,22 @@ final class DefinicionImportacion
                     self::c('credito', 'Saldo crédito', false, 'monto'),
                 ],
             ],
+            TipoImportacion::Gastos => [
+                'hoja' => 'Gastos',
+                'orden' => 8,
+                'nota' => 'Requiere tipos de gasto y centros de costo ya creados, y parametrización vigente para la fecha. Cada fila se causa como un gasto nuevo, con sus retenciones y asiento.',
+                'permiso' => ['gastos', 'crear'],
+                'columnas' => [
+                    self::c('fecha', 'Fecha del gasto', true, 'fecha'),
+                    self::c('numero_documento', 'Número de documento', true, 'texto'),
+                    self::c('tipo_gasto', 'Tipo de gasto (código o nombre)', true, 'texto'),
+                    self::c('tercero', 'Documento del tercero (si aplica)', false, 'texto'),
+                    self::c('concepto', 'Concepto', true, 'texto'),
+                    self::c('valor_bruto', 'Valor bruto', true, 'monto'),
+                    self::c('centro_costo', 'Centro de costo (código)', true, 'texto'),
+                    self::c('municipio', 'Código DANE del municipio (si aplica ReteICA)', false, 'texto'),
+                ],
+            ],
             TipoImportacion::PlanCuentas => [
                 'hoja' => 'Plan de cuentas (formato anterior)',
                 'orden' => 6,
@@ -148,7 +164,7 @@ final class DefinicionImportacion
             TipoImportacion::PlanCuotas => ['codigo' => 'CR-2023-001', 'numero' => '1'],
             TipoImportacion::Pagos => ['codigo' => 'CR-2023-001', 'valor' => '280500'],
             TipoImportacion::SaldosIniciales => ['cuenta' => '133005', 'debito' => '45000000'],
-            TipoImportacion::PlanCuentas, TipoImportacion::Terceros => [],
+            TipoImportacion::PlanCuentas, TipoImportacion::Terceros, TipoImportacion::Gastos => [],
         };
     }
 

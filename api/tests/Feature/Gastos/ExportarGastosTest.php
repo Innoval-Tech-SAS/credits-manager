@@ -72,7 +72,7 @@ class ExportarGastosTest extends TestCase
         $tipoGasto = $this->crearTipoGasto();
 
         return Gasto::create([
-            'tipo_gasto_id' => $tipoGasto->id,
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id,
             'parametrizacion_tipo_gasto_id' => $this->crearParametrizacion($tipoGasto)->id,
             'fecha' => '2026-02-10',
             'numero_documento' => 'FE-'.$concepto,
