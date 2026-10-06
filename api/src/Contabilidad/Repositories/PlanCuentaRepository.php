@@ -2,11 +2,13 @@
 
 namespace App\Contabilidad\Repositories;
 
-use App\Contabilidad\Enums\EstadoComprobante;
 use App\Contabilidad\Models\PlanCuenta;
+use App\Contabilidad\Support\EfectoContable;
 use App\Core\Base\BaseRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Facades\DB;
 
 class PlanCuentaRepository extends BaseRepository
 {
@@ -59,23 +61,31 @@ class PlanCuentaRepository extends BaseRepository
     public function saldosParaBalancePrueba(int $empresaId, string $hasta): Collection
     {
         return $this->consulta()
-            ->leftJoin('asientos_contables', 'asientos_contables.cuenta_id', '=', 'plan_cuentas.id')
-            ->leftJoin('comprobantes', function ($join) use ($empresaId, $hasta) {
-                $join->on('comprobantes.id', '=', 'asientos_contables.comprobante_id')
-                    ->where('comprobantes.empresa_id', $empresaId)
-                    ->where('comprobantes.estado', EstadoComprobante::Contabilizado->value)
-                    ->where('comprobantes.fecha', '<=', $hasta);
-            })
+            ->joinSub($this->movimientosContabilizados($empresaId, null, $hasta), 'movimientos', 'movimientos.cuenta_id', '=', 'plan_cuentas.id')
             ->where('plan_cuentas.empresa_id', $empresaId)
             ->where('plan_cuentas.permite_movimiento', true)
-            ->groupBy('plan_cuentas.id', 'plan_cuentas.codigo', 'plan_cuentas.nombre', 'plan_cuentas.naturaleza', 'plan_cuentas.tipo')
-            ->havingRaw('COALESCE(SUM(asientos_contables.debito),0) > 0 OR COALESCE(SUM(asientos_contables.credito),0) > 0')
+            ->whereRaw('(movimientos.debitos > 0 OR movimientos.creditos > 0)')
             ->orderBy('plan_cuentas.codigo')
-            ->selectRaw(
-                'plan_cuentas.codigo, plan_cuentas.nombre, plan_cuentas.naturaleza, plan_cuentas.tipo, '.
-                'COALESCE(SUM(asientos_contables.debito),0) as debitos, COALESCE(SUM(asientos_contables.credito),0) as creditos'
-            )
+            ->selectRaw('plan_cuentas.codigo, plan_cuentas.nombre, plan_cuentas.naturaleza, plan_cuentas.tipo, movimientos.debitos, movimientos.creditos')
             ->get();
+    }
+
+    /**
+     * Movimientos contabilizados agregados por cuenta antes de unirse al plan. Filtrar el comprobante en el ON de un LEFT
+     * JOIN no basta: los asientos de borradores, revisados y anulados seguirían sumando en la cuenta.
+     */
+    private function movimientosContabilizados(int $empresaId, ?string $desde, string $hasta): QueryBuilder
+    {
+        $movimientos = DB::table('asientos_contables')
+            ->join('comprobantes', 'comprobantes.id', '=', 'asientos_contables.comprobante_id')
+            ->where('comprobantes.empresa_id', $empresaId)
+            ->where(EfectoContable::condicion())
+            ->groupBy('asientos_contables.cuenta_id')
+            ->selectRaw('asientos_contables.cuenta_id, SUM(asientos_contables.debito) as debitos, SUM(asientos_contables.credito) as creditos');
+
+        return $desde !== null
+            ? $movimientos->whereBetween('comprobantes.fecha', [$desde, $hasta])
+            : $movimientos->where('comprobantes.fecha', '<=', $hasta);
     }
 
     /**
@@ -86,25 +96,14 @@ class PlanCuentaRepository extends BaseRepository
     public function saldosPorTipo(int $empresaId, array $tipos, ?string $desde, string $hasta): Collection
     {
         return $this->consulta()
-            ->leftJoin('asientos_contables', 'asientos_contables.cuenta_id', '=', 'plan_cuentas.id')
-            ->leftJoin('comprobantes', function ($join) use ($empresaId, $desde, $hasta) {
-                $join->on('comprobantes.id', '=', 'asientos_contables.comprobante_id')
-                    ->where('comprobantes.empresa_id', $empresaId)
-                    ->where('comprobantes.estado', EstadoComprobante::Contabilizado->value);
-                if ($desde !== null) {
-                    $join->whereBetween('comprobantes.fecha', [$desde, $hasta]);
-                } else {
-                    $join->where('comprobantes.fecha', '<=', $hasta);
-                }
-            })
+            ->leftJoinSub($this->movimientosContabilizados($empresaId, $desde, $hasta), 'movimientos', 'movimientos.cuenta_id', '=', 'plan_cuentas.id')
             ->where('plan_cuentas.empresa_id', $empresaId)
             ->whereIn('plan_cuentas.tipo', $tipos)
             ->where('plan_cuentas.permite_movimiento', true)
-            ->groupBy('plan_cuentas.id', 'plan_cuentas.codigo', 'plan_cuentas.nombre', 'plan_cuentas.naturaleza')
             ->orderBy('plan_cuentas.codigo')
             ->selectRaw(
                 'plan_cuentas.codigo, plan_cuentas.nombre, plan_cuentas.naturaleza, '.
-                'COALESCE(SUM(asientos_contables.debito),0) as d, COALESCE(SUM(asientos_contables.credito),0) as c'
+                'COALESCE(movimientos.debitos,0) as d, COALESCE(movimientos.creditos,0) as c'
             )
             ->get();
     }
