@@ -7,6 +7,7 @@ use App\Calendario\Controllers\CalendarioController;
 use App\Cartera\Controllers\CarteraController;
 use App\Clientes\Controllers\ClienteController;
 use App\Contabilidad\Controllers\AuxiliarContableController;
+use App\Contabilidad\Controllers\CarteraTerceroController;
 use App\Contabilidad\Controllers\CentroCostoController;
 use App\Contabilidad\Controllers\ComprobanteController;
 use App\Contabilidad\Controllers\DocumentoTerceroController;
@@ -20,6 +21,7 @@ use App\Correo\Controllers\ConfiguracionCorreoController;
 use App\Correo\Controllers\RecordatorioCorreoController;
 use App\Creditos\Controllers\CreditoController;
 use App\Dashboard\Controllers\DashboardController;
+use App\Egresos\Controllers\EgresoController;
 use App\Empleadores\Controllers\EmpleadorController;
 use App\Empresas\Controllers\EmpresaAdminController;
 use App\Empresas\Controllers\EmpresaController;
@@ -258,6 +260,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/terceros/personas-juridicas/{tercero}', [TerceroController::class, 'updateJuridica'])->middleware('permiso:terceros,editar');
     Route::get('/terceros/{tercero}/documentos-pendientes', [DocumentoTerceroController::class, 'pendientes'])->middleware('permiso:contabilidad,listar');
 
+    Route::get('/cartera-terceros', [CarteraTerceroController::class, 'index'])->middleware('permiso:contabilidad,listar');
+    Route::get('/cartera-terceros/edades', [CarteraTerceroController::class, 'edades'])->middleware('permiso:contabilidad,listar');
+
     Route::get('/proveedores', [ProveedorController::class, 'index'])->middleware('permiso:terceros,listar');
     Route::post('/proveedores/personas-naturales', [ProveedorController::class, 'storeNatural'])->middleware('permiso:terceros,crear');
     Route::post('/proveedores/personas-juridicas', [ProveedorController::class, 'storeJuridica'])->middleware('permiso:terceros,crear');
@@ -303,4 +308,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/gastos', [GastoController::class, 'store'])->middleware('permiso:gastos,crear');
     Route::get('/gastos/{gasto}', [GastoController::class, 'show'])->middleware('permiso:gastos,listar');
     Route::delete('/gastos/{gasto}', [GastoController::class, 'destroy'])->middleware('permiso:gastos,anular');
+
+    Route::get('/egresos', [EgresoController::class, 'index'])->middleware('permiso:egresos,listar');
+    Route::post('/egresos', [EgresoController::class, 'store'])->middleware('permiso:egresos,crear');
 });

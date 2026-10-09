@@ -9,6 +9,7 @@ enum TipoDocumentoConsecutivo: string
     case Factura = 'factura';
     case NotaCredito = 'nota_credito';
     case NotaDebito = 'nota_debito';
+    case Egreso = 'egreso';
 
     public function prefijoInicial(): string
     {
@@ -17,6 +18,7 @@ enum TipoDocumentoConsecutivo: string
             self::Factura => 'F',
             self::NotaCredito => 'NC',
             self::NotaDebito => 'ND',
+            self::Egreso => 'CE',
         };
     }
 }

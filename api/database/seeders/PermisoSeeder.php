@@ -27,6 +27,7 @@ class PermisoSeeder extends Seeder
         'informes_contables' => ['listar', 'exportar', 'imprimir'],
         'tributario' => ['listar', 'parametrizar'],
         'gastos' => ['listar', 'crear', 'anular', 'parametrizar', 'exportar'],
+        'egresos' => ['listar', 'crear'],
         'auditoria' => ['listar', 'exportar'],
         'facturacion' => ['listar', 'crear', 'anular', 'imprimir', 'configurar'],
         'importaciones' => ['listar', 'ejecutar'],

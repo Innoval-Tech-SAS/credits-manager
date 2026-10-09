@@ -4,6 +4,7 @@ namespace App\Facturacion\Models;
 
 use App\Clientes\Models\Cliente;
 use App\Contabilidad\Models\Comprobante;
+use App\Contabilidad\Models\DocumentoTercero;
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
 use App\Creditos\Models\Credito;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * El total no se guarda: sale de las líneas. Las invariantes de número, origen y valor están en la base
  * (ver la migración de documentos); los montos acumulados los controla DocumentoFacturacionService.
  */
-#[Fillable(['tipo', 'estado', 'consecutivo', 'numero', 'fecha', 'cliente_id', 'credito_id', 'documento_origen_id', 'motivo', 'emitido_en', 'emitido_por', 'comprobante_id'])]
+#[Fillable(['tipo', 'estado', 'consecutivo', 'numero', 'fecha', 'fecha_vencimiento', 'cliente_id', 'credito_id', 'documento_origen_id', 'motivo', 'emitido_en', 'emitido_por', 'comprobante_id', 'documento_tercero_id'])]
 class DocumentoFacturacion extends BaseModel
 {
     use PerteneceAEmpresa;
@@ -33,8 +34,14 @@ class DocumentoFacturacion extends BaseModel
             'estado' => EstadoDocumentoFacturacion::class,
             'consecutivo' => 'integer',
             'fecha' => 'date:Y-m-d',
+            'fecha_vencimiento' => 'date:Y-m-d',
             'emitido_en' => 'datetime',
         ];
+    }
+
+    public function documentoTercero(): BelongsTo
+    {
+        return $this->belongsTo(DocumentoTercero::class);
     }
 
     public function cliente(): BelongsTo

@@ -303,6 +303,7 @@ return [
             'sin_aplicaciones' => 'Debe seleccionar al menos un documento para aplicar el valor.',
             'saldo_insuficiente' => 'El valor a aplicar debe ser mayor a cero y no puede superar el saldo pendiente del documento.',
             'no_pendiente_o_no_pertenece' => 'Uno de los documentos seleccionados no pertenece a este tercero o ya no está pendiente.',
+            'sin_cuenta_contable' => 'Uno de los documentos seleccionados no tiene una cuenta contable asignada.',
         ],
         'tipo_gasto' => [
             'inactivo_o_no_existe' => 'El tipo de gasto no existe o está inactivo.',

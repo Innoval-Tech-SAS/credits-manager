@@ -25,6 +25,7 @@ class CrearGastoRequest extends FormRequest
                 Rule::exists('centros_costo', 'id')->where('empresa_id', $empresaId)->where('activo', true)->whereNull('borrado_en'),
             ],
             'fecha' => ['required', 'date'],
+            'fecha_vencimiento' => ['nullable', 'date', 'after_or_equal:fecha'],
             'numero_documento' => ['required', 'string', 'max:60'],
             'concepto' => ['required', 'string', 'max:255'],
             'valor_bruto' => ['required', 'numeric', 'min:0.01'],
