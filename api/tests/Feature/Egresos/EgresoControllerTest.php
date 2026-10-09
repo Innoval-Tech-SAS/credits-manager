@@ -142,6 +142,75 @@ class EgresoControllerTest extends TestCase
         $this->postJson(self::BASE, $datos)->assertStatus(422)->assertJsonValidationErrors('soporte');
     }
 
+    public function test_registra_con_descuento_por_pronto_pago_cancela_el_documento_completo_pagando_menos(): void
+    {
+        $this->actingAsAdmin();
+        $gasto = $this->gastoConDocumentoPendiente();
+        $cuentaDescuento = $this->crearCuenta();
+
+        $datos = $this->datosValidos($gasto);
+        $datos['cuenta_descuento_id'] = $cuentaDescuento->id;
+        $datos['aplicaciones'] = [
+            ['documento_tercero_id' => $gasto->documento_tercero_id, 'valor' => '1000', 'descuento' => '50'],
+        ];
+
+        $respuesta = $this->postJson(self::BASE, $datos)->assertStatus(201);
+
+        $this->assertSame('1000.00', $respuesta->json('egreso.valor'));
+        $this->assertSame('50.00', $respuesta->json('egreso.valor_descuento'));
+
+        $documento = DocumentoTercero::findOrFail($gasto->documento_tercero_id);
+        $this->assertEquals(0, $documento->saldo->aFloat());
+        $this->assertSame('cancelado', $documento->estado->value);
+
+        $comprobanteId = $respuesta->json('egreso.comprobante_id');
+        $this->assertDatabaseHas('asientos_contables', [
+            'comprobante_id' => $comprobanteId,
+            'cuenta_id' => $gasto->parametrizacion->cuenta_cxp_id,
+            'debito' => 100000,
+            'credito' => 0,
+        ]);
+        $this->assertDatabaseHas('asientos_contables', [
+            'comprobante_id' => $comprobanteId,
+            'cuenta_id' => $datos['cuenta_caja_id'],
+            'debito' => 0,
+            'credito' => 95000,
+        ]);
+        $this->assertDatabaseHas('asientos_contables', [
+            'comprobante_id' => $comprobanteId,
+            'cuenta_id' => $cuentaDescuento->id,
+            'debito' => 0,
+            'credito' => 5000,
+        ]);
+    }
+
+    public function test_rechaza_un_descuento_mayor_o_igual_al_valor_aplicado(): void
+    {
+        $this->actingAsAdmin();
+        $gasto = $this->gastoConDocumentoPendiente();
+
+        $datos = $this->datosValidos($gasto);
+        $datos['cuenta_descuento_id'] = $this->crearCuenta()->id;
+        $datos['aplicaciones'] = [
+            ['documento_tercero_id' => $gasto->documento_tercero_id, 'valor' => '1000', 'descuento' => '1000'],
+        ];
+
+        $this->postJson(self::BASE, $datos)->assertStatus(422)->assertJsonValidationErrors('aplicaciones');
+    }
+
+    public function test_exige_cuenta_descuento_id_cuando_hay_descuento(): void
+    {
+        $this->actingAsAdmin();
+        $gasto = $this->gastoConDocumentoPendiente();
+
+        $datos = $this->datosValidos($gasto);
+        $datos['aplicaciones'] = [
+            ['documento_tercero_id' => $gasto->documento_tercero_id, 'valor' => '1000', 'descuento' => '50'],
+        ];
+
+        $this->postJson(self::BASE, $datos)->assertStatus(422)->assertJsonValidationErrors('cuenta_descuento_id');
+    }
+
     public function test_un_tercero_de_otra_empresa_responde_422(): void
     {
         $admin = $this->actingAsAdmin();

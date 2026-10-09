@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /** Pago de uno o más documentos por pagar del mismo tercero. Inmutable: no se edita ni se anula (ver el docblock de la migración). */
-#[Fillable(['tercero_id', 'fecha', 'consecutivo', 'numero', 'valor', 'medio_pago', 'cuenta_caja_id', 'concepto', 'comprobante_id', 'creado_por'])]
+#[Fillable(['tercero_id', 'fecha', 'consecutivo', 'numero', 'valor', 'valor_descuento', 'medio_pago', 'cuenta_caja_id', 'cuenta_descuento_id', 'concepto', 'comprobante_id', 'creado_por'])]
 class Egreso extends BaseModel
 {
     use PerteneceAEmpresa;
@@ -27,6 +27,7 @@ class Egreso extends BaseModel
             'fecha' => 'date:Y-m-d',
             'consecutivo' => 'integer',
             'valor' => DineroCast::class,
+            'valor_descuento' => DineroCast::class,
             'medio_pago' => MedioPagoEgreso::class,
         ];
     }
@@ -39,6 +40,11 @@ class Egreso extends BaseModel
     public function cuentaCaja(): BelongsTo
     {
         return $this->belongsTo(PlanCuenta::class, 'cuenta_caja_id');
+    }
+
+    public function cuentaDescuento(): BelongsTo
+    {
+        return $this->belongsTo(PlanCuenta::class, 'cuenta_descuento_id');
     }
 
     public function comprobante(): BelongsTo

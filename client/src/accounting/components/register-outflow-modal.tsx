@@ -43,22 +43,39 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
     const tipos = tiposData?.data ?? [];
 
     const [valores, setValores] = useState<Record<number, string>>(() => Object.fromEntries(documentos.map((documento) => [documento.id, documento.saldo])));
+    const [descuentos, setDescuentos] = useState<Record<number, string>>(() => Object.fromEntries(documentos.map((documento) => [documento.id, ''])));
     const [fecha, setFecha] = useState(hoyBogota());
     const [medioPago, setMedioPago] = useState<ApiOutflowPaymentMethod>('transferencia');
     const [cuentaCajaId, setCuentaCajaId] = useState('');
+    const [cuentaDescuentoId, setCuentaDescuentoId] = useState('');
     const [tipoComprobanteId, setTipoComprobanteId] = useState('');
     const [concepto, setConcepto] = useState('');
     const [soporte, setSoporte] = useState<File | null>(null);
 
     const totalAPagar = documentos.reduce((acumulado, documento) => acumulado + (parseFloat(valores[documento.id] ?? '0') || 0), 0);
+    const totalDescuento = documentos.reduce((acumulado, documento) => acumulado + (parseFloat(descuentos[documento.id] ?? '0') || 0), 0);
+    const hayDescuento = totalDescuento > 0;
 
     const valorValido = (documento: (typeof documentos)[number]) => {
         const valor = valores[documento.id];
         return valor !== undefined && valor.trim() !== '' && Number(valor) > 0 && Number(valor) <= Number(documento.saldo);
     };
 
+    const descuentoValido = (documento: (typeof documentos)[number]) => {
+        const descuento = descuentos[documento.id];
+        if (descuento === undefined || descuento.trim() === '') return true;
+        return Number(descuento) >= 0 && Number(descuento) < Number(valores[documento.id] ?? '0');
+    };
+
     const formularioValido =
-        fecha !== '' && cuentaCajaId !== '' && tipoComprobanteId !== '' && concepto.trim() !== '' && soporte !== null && documentos.every(valorValido);
+        fecha !== '' &&
+        cuentaCajaId !== '' &&
+        tipoComprobanteId !== '' &&
+        concepto.trim() !== '' &&
+        soporte !== null &&
+        documentos.every(valorValido) &&
+        documentos.every(descuentoValido) &&
+        (!hayDescuento || cuentaDescuentoId !== '');
     const cargandoListas = isLoadingCuentas || isLoadingTipos;
 
     const registrar = async () => {
@@ -69,8 +86,20 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
             formData.append('fecha', fecha);
             formData.append('medio_pago', medioPago);
             formData.append('cuenta_caja_id', cuentaCajaId);
+            if (hayDescuento) {
+                formData.append('cuenta_descuento_id', cuentaDescuentoId);
+            }
             formData.append('concepto', concepto.trim());
-            formData.append('aplicaciones', JSON.stringify(documentos.map((documento) => ({ documento_tercero_id: documento.id, valor: valores[documento.id] }))));
+            formData.append(
+                'aplicaciones',
+                JSON.stringify(
+                    documentos.map((documento) => ({
+                        documento_tercero_id: documento.id,
+                        valor: valores[documento.id],
+                        descuento: descuentos[documento.id]?.trim() || '0',
+                    })),
+                ),
+            );
             if (soporte) {
                 formData.append('soporte', soporte);
             }
@@ -95,17 +124,19 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
                 </p>
             </div>
 
-            {documentos.length > 1 && (
+            {documentos.length > 1 ? (
                 <div className="flex flex-col gap-3">
                     {documentos.map((documento) => (
                         <div
                             key={documento.id}
-                            className="grid grid-cols-1 gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800 sm:grid-cols-[1fr_auto_auto] sm:items-center"
+                            className="grid grid-cols-1 gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800 sm:grid-cols-[1fr_auto_auto_auto] sm:items-center"
                         >
                             <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{documento.numero_documento}</p>
                             <p className="text-sm text-gray-500 dark:text-gray-400 sm:text-right">Saldo: {formatMoney(documento.saldo)}</p>
                             <div className="sm:w-36">
+                                <Label htmlFor={`egreso-valor-${documento.id}`}>Valor</Label>
                                 <Input
+                                    id={`egreso-valor-${documento.id}`}
                                     type="number"
                                     min="0.01"
                                     step={0.01}
@@ -115,8 +146,33 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
                                     onChange={(event) => setValores((anterior) => ({ ...anterior, [documento.id]: event.target.value }))}
                                 />
                             </div>
+                            <div className="sm:w-32">
+                                <Label htmlFor={`egreso-descuento-${documento.id}`}>Descuento</Label>
+                                <Input
+                                    id={`egreso-descuento-${documento.id}`}
+                                    type="number"
+                                    min="0"
+                                    step={0.01}
+                                    value={descuentos[documento.id] ?? ''}
+                                    error={!descuentoValido(documento)}
+                                    onChange={(event) => setDescuentos((anterior) => ({ ...anterior, [documento.id]: event.target.value }))}
+                                />
+                            </div>
                         </div>
                     ))}
+                </div>
+            ) : (
+                <div className="sm:w-48">
+                    <Label htmlFor={`egreso-descuento-${documentos[0].id}`}>Descuento por pronto pago (opcional)</Label>
+                    <Input
+                        id={`egreso-descuento-${documentos[0].id}`}
+                        type="number"
+                        min="0"
+                        step={0.01}
+                        value={descuentos[documentos[0].id] ?? ''}
+                        error={!descuentoValido(documentos[0])}
+                        onChange={(event) => setDescuentos((anterior) => ({ ...anterior, [documentos[0].id]: event.target.value }))}
+                    />
                 </div>
             )}
 
@@ -154,6 +210,16 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
                             onChange={setTipoComprobanteId}
                         />
                     </div>
+                    {hayDescuento && (
+                        <div>
+                            <Label htmlFor="egreso-cuenta-descuento">Cuenta de descuentos comerciales condicionados</Label>
+                            <Select
+                                options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
+                                placeholder="Selecciona la cuenta"
+                                onChange={setCuentaDescuentoId}
+                            />
+                        </div>
+                    )}
                     <div className="sm:col-span-2">
                         <Label htmlFor="egreso-concepto">Concepto</Label>
                         <Input id="egreso-concepto" value={concepto} maxLength={255} onChange={(event) => setConcepto(event.target.value)} />
