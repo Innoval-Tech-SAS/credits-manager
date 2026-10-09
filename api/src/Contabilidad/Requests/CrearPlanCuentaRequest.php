@@ -30,6 +30,10 @@ class CrearPlanCuentaRequest extends FormRequest
             ],
             'tipo' => ['required', Rule::enum(TipoCuenta::class)],
             'permite_movimiento' => ['sometimes', 'boolean'],
+            'exige_tercero' => ['sometimes', 'boolean'],
+            'exige_documento_cruce' => ['sometimes', 'boolean'],
+            'exige_vencimiento' => ['sometimes', 'boolean'],
+            'exige_centro_costo' => ['sometimes', 'boolean'],
         ];
     }
 }

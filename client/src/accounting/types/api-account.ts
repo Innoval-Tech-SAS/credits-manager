@@ -8,5 +8,9 @@ export type ApiAccount = {
     cuenta_padre_id: number | null;
     tipo: 'activo' | 'pasivo' | 'patrimonio' | 'ingreso' | 'gasto' | 'costo' | 'orden';
     permite_movimiento: boolean;
+    exige_tercero: boolean;
+    exige_documento_cruce: boolean;
+    exige_vencimiento: boolean;
+    exige_centro_costo: boolean;
     activa: boolean;
 };

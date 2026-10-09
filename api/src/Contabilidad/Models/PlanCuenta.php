@@ -18,6 +18,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'cuenta_padre_id',
     'tipo',
     'permite_movimiento',
+    'exige_tercero',
+    'exige_documento_cruce',
+    'exige_vencimiento',
+    'exige_centro_costo',
     'activa',
 ])]
 class PlanCuenta extends BaseModel
@@ -32,6 +36,10 @@ class PlanCuenta extends BaseModel
             'naturaleza' => NaturalezaCuenta::class,
             'tipo' => TipoCuenta::class,
             'permite_movimiento' => 'boolean',
+            'exige_tercero' => 'boolean',
+            'exige_documento_cruce' => 'boolean',
+            'exige_vencimiento' => 'boolean',
+            'exige_centro_costo' => 'boolean',
             'activa' => 'boolean',
             'nivel' => 'integer',
         ];

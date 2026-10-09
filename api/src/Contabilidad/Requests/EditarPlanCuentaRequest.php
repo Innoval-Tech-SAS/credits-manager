@@ -16,6 +16,10 @@ class EditarPlanCuentaRequest extends FormRequest
         return [
             'nombre' => ['sometimes', 'string', 'max:150'],
             'permite_movimiento' => ['sometimes', 'boolean'],
+            'exige_tercero' => ['sometimes', 'boolean'],
+            'exige_documento_cruce' => ['sometimes', 'boolean'],
+            'exige_vencimiento' => ['sometimes', 'boolean'],
+            'exige_centro_costo' => ['sometimes', 'boolean'],
             'activa' => ['sometimes', 'boolean'],
         ];
     }

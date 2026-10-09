@@ -8,7 +8,6 @@ use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Enums\EstadoComprobante;
 use App\Contabilidad\Enums\EstadoPeriodo;
 use App\Contabilidad\Enums\EventoContable;
-use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Repositories\AsientoContableRepository;
@@ -96,7 +95,7 @@ class ComprobanteService
         }
 
         if ($moduloOrigen === 'manual') {
-            $this->exigirCentroCostoEnGastos($lineas);
+            $this->exigirCentroCostoSegunCuenta($lineas);
         }
 
         $periodo = $this->periodos->obtenerAbierto($fecha);
@@ -317,15 +316,15 @@ class ComprobanteService
         });
     }
 
-    /** Un gasto de cuenta de gasto o costo lleva centro de costo en cada línea, también en un asiento manual. */
-    private function exigirCentroCostoEnGastos(array $lineas): void
+    /** Una cuenta marcada `exige_centro_costo` lo exige en cada línea que la use, también en un asiento manual. */
+    private function exigirCentroCostoSegunCuenta(array $lineas): void
     {
         $cuentas = PlanCuenta::query()->whereIn('id', array_column($lineas, 'cuenta_id'))->get()->keyBy('id');
 
         foreach ($lineas as $linea) {
-            $tipo = $cuentas[$linea['cuenta_id']]->tipo ?? null;
+            $exigeCentroCosto = $cuentas[$linea['cuenta_id']]->exige_centro_costo ?? false;
 
-            if (in_array($tipo, [TipoCuenta::Gasto, TipoCuenta::Costo], true) && empty($linea['centro_costo_id'])) {
+            if ($exigeCentroCosto && empty($linea['centro_costo_id'])) {
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.centro_costo_requerido')]);
             }
         }
