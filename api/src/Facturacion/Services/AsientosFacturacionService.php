@@ -42,6 +42,12 @@ class AsientosFacturacionService
         return $this->contabilizar(EventoContable::CobroFactura, $factura, $valor, $fecha, "Cobro de factura {$factura->numero}", 'facturacion_cobro', $factura->id);
     }
 
+    /** Cuenta PUC que debita la emisión de la factura (la cuenta por cobrar): la misma que muestra la cartera por tercero. */
+    public function cuentaCxcFactura(): int
+    {
+        return $this->reglaActiva(EventoContable::FacturaEmision)->cuenta_debito_id;
+    }
+
     private function contabilizar(EventoContable $evento, DocumentoFacturacion $documento, Dinero $valor, string $fecha, string $concepto, string $modulo, int $origenId): Comprobante
     {
         $regla = $this->reglaActiva($evento);

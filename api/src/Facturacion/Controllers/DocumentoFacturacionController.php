@@ -39,6 +39,7 @@ class DocumentoFacturacionController extends Controller
             $peticion->integer('credito_id'),
             $peticion->validated('fecha'),
             $peticion->validated('lineas'),
+            $peticion->validated('fecha_vencimiento'),
         );
 
         return response()->json(['documento' => $documento], 201);
@@ -51,7 +52,7 @@ class DocumentoFacturacionController extends Controller
 
     public function update(ActualizarBorradorFacturaRequest $peticion, DocumentoFacturacion $documento): JsonResponse
     {
-        $actualizado = $this->documentos->actualizarBorrador($documento, $peticion->validated('fecha'), $peticion->validated('lineas'));
+        $actualizado = $this->documentos->actualizarBorrador($documento, $peticion->validated('fecha'), $peticion->validated('lineas'), $peticion->validated('fecha_vencimiento'));
 
         return response()->json($this->documentos->detalle($actualizado));
     }

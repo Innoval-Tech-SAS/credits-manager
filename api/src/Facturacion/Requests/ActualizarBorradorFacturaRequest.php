@@ -15,6 +15,7 @@ class ActualizarBorradorFacturaRequest extends FormRequest
     {
         return [
             'fecha' => ['nullable', 'date_format:Y-m-d'],
+            'fecha_vencimiento' => ['nullable', 'date_format:Y-m-d'],
             'lineas' => ['required', 'array', 'min:1'],
             'lineas.*.concepto' => ['required', 'string', 'max:60'],
             'lineas.*.descripcion' => ['required', 'string', 'max:255'],

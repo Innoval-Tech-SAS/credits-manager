@@ -5,6 +5,8 @@ namespace App\Facturacion\Services;
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Contabilidad\Enums\NaturalezaDocumento;
+use App\Contabilidad\Services\DocumentoTerceroService;
 use App\Core\Consecutivos\Services\ConsecutivoDocumentoService;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
@@ -45,6 +47,7 @@ class DocumentoFacturacionService
         protected CreditoRepository $creditos,
         protected ConsecutivoDocumentoService $consecutivos,
         protected AsientosFacturacionService $asientos,
+        protected DocumentoTerceroService $documentosTercero,
         protected EmpresaService $empresas,
         protected GeneradorPdf $generador,
         protected EmisorAuditoria $auditoria,
@@ -56,7 +59,7 @@ class DocumentoFacturacionService
     }
 
     /** Factura en borrador desde un crédito desembolsado (o ya pagado): el cliente y el crédito salen de él. */
-    public function crearBorrador(int $creditoId, ?string $fecha, array $lineas): DocumentoFacturacion
+    public function crearBorrador(int $creditoId, ?string $fecha, array $lineas, ?string $fechaVencimiento = null): DocumentoFacturacion
     {
         /** @var Credito $credito */
         $credito = $this->creditos->buscarPorIdOFallar($creditoId);
@@ -65,11 +68,12 @@ class DocumentoFacturacionService
             throw ValidationException::withMessages(['credito_id' => __('validation.custom.facturacion.credito_no_desembolsado')]);
         }
 
-        return DB::transaction(function () use ($credito, $fecha, $lineas) {
+        return DB::transaction(function () use ($credito, $fecha, $lineas, $fechaVencimiento) {
             $documento = $this->documentos->crear([
                 'tipo' => TipoDocumentoFacturacion::Factura,
                 'estado' => EstadoDocumentoFacturacion::Borrador,
                 'fecha' => $fecha ?? now('America/Bogota')->toDateString(),
+                'fecha_vencimiento' => $fechaVencimiento,
                 'cliente_id' => $credito->cliente_id,
                 'credito_id' => $credito->id,
             ]);
@@ -89,16 +93,20 @@ class DocumentoFacturacionService
         });
     }
 
-    public function actualizarBorrador(DocumentoFacturacion $documento, ?string $fecha, array $lineas): DocumentoFacturacion
+    public function actualizarBorrador(DocumentoFacturacion $documento, ?string $fecha, array $lineas, ?string $fechaVencimiento = null): DocumentoFacturacion
     {
         $this->exigirBorrador($documento);
 
-        return DB::transaction(function () use ($documento, $fecha, $lineas) {
+        return DB::transaction(function () use ($documento, $fecha, $lineas, $fechaVencimiento) {
             $bloqueado = $this->documentos->bloquear($documento->id);
             $this->exigirBorrador($bloqueado);
 
             if ($fecha !== null) {
                 $bloqueado->update(['fecha' => $fecha]);
+            }
+
+            if ($fechaVencimiento !== null) {
+                $bloqueado->update(['fecha_vencimiento' => $fechaVencimiento]);
             }
 
             $this->lineas->sincronizar($bloqueado, $this->lineasDeEntrada($lineas));
@@ -151,8 +159,24 @@ class DocumentoFacturacionService
             }
 
             $emitido = $this->emitir($bloqueado, $usuario);
-            $asiento = $this->asientos->contabilizarEmision($emitido, $this->sumaLineas($emitido));
-            $emitido->update(['comprobante_id' => $asiento->id]);
+            $total = $this->sumaLineas($emitido);
+            $asiento = $this->asientos->contabilizarEmision($emitido, $total);
+
+            $documentoTercero = $this->documentosTercero->crearDocumento(
+                $emitido->cliente->tercero,
+                NaturalezaDocumento::PorCobrar,
+                'factura',
+                $emitido->numero,
+                $emitido->fecha->toDateString(),
+                "Factura {$emitido->numero}",
+                $total,
+                'facturacion',
+                $emitido->id,
+                planCuentaId: $this->asientos->cuentaCxcFactura(),
+                fechaVencimiento: $emitido->fecha_vencimiento?->toDateString(),
+            );
+
+            $emitido->update(['comprobante_id' => $asiento->id, 'documento_tercero_id' => $documentoTercero->id]);
 
             $this->auditoria->registrar(
                 AccionAuditoria::Crear,
@@ -335,8 +359,32 @@ class DocumentoFacturacionService
         $this->lineas->crearParaDocumento($nota, $lineasNota);
 
         $emitida = $this->emitir($nota, $usuario);
-        $asiento = $this->asientos->contabilizarNota($emitida, $this->sumaLineas($emitida));
+        $valorNota = $this->sumaLineas($emitida);
+        $asiento = $this->asientos->contabilizarNota($emitida, $valorNota);
         $emitida->update(['comprobante_id' => $asiento->id]);
+
+        $factura = $origen->tipo === TipoDocumentoFacturacion::Factura ? $origen : $origen->origen;
+
+        if ($factura?->documento_tercero_id && $valorNota->esPositivo()) {
+            if ($tipo === TipoDocumentoFacturacion::NotaCredito) {
+                $this->documentosTercero->aplicarValor(
+                    $factura->cliente->tercero,
+                    NaturalezaDocumento::PorCobrar,
+                    [['documento_tercero_id' => $factura->documento_tercero_id, 'valor' => $valorNota]],
+                    'facturacion_nota',
+                    $emitida->id,
+                    $emitida->fecha->toDateString(),
+                );
+            } else {
+                $this->documentosTercero->incrementarValor(
+                    $factura->documentoTercero,
+                    $valorNota,
+                    'facturacion_nota',
+                    $emitida->id,
+                    $emitida->fecha->toDateString(),
+                );
+            }
+        }
 
         $descripcion = $anulacion
             ? "Factura {$origen->numero} anulada con {$emitida->numero}"

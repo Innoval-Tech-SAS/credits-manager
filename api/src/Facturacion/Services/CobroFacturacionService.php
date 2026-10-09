@@ -5,7 +5,9 @@ namespace App\Facturacion\Services;
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Services\ComprobanteService;
+use App\Contabilidad\Services\DocumentoTerceroService;
 use App\Core\Dinero\Dinero;
 use App\Facturacion\Enums\EstadoDocumentoFacturacion;
 use App\Facturacion\Enums\MedioCobroFacturacion;
@@ -33,6 +35,7 @@ class CobroFacturacionService
         protected DocumentoFacturacionService $facturas,
         protected AsientosFacturacionService $asientos,
         protected ComprobanteService $comprobantes,
+        protected DocumentoTerceroService $documentosTercero,
         protected EmisorAuditoria $auditoria,
     ) {}
 
@@ -73,6 +76,17 @@ class CobroFacturacionService
                 'observacion' => $datos['observacion'] ?? null,
                 'registrado_por' => $usuario->id,
             ]);
+
+            if ($bloqueada->documento_tercero_id) {
+                $this->documentosTercero->aplicarValor(
+                    $bloqueada->cliente->tercero,
+                    NaturalezaDocumento::PorCobrar,
+                    [['documento_tercero_id' => $bloqueada->documento_tercero_id, 'valor' => $valor]],
+                    'facturacion_cobro',
+                    $cobro->id,
+                    $datos['fecha'],
+                );
+            }
 
             $this->auditoria->registrar(
                 AccionAuditoria::Crear,
@@ -123,6 +137,15 @@ class CobroFacturacionService
                 'motivo' => $motivo,
                 'registrado_por' => $usuario->id,
             ]);
+
+            if ($factura->documento_tercero_id) {
+                $this->documentosTercero->incrementarValor(
+                    $factura->documentoTercero,
+                    $cobro->valor,
+                    'facturacion_cobro_reversa',
+                    $reversa->id,
+                );
+            }
 
             $this->auditoria->registrar(
                 AccionAuditoria::Reversar,
