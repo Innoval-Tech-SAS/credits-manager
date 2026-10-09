@@ -15,9 +15,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'tercero_id',
     'naturaleza',
+    'plan_cuenta_id',
     'tipo_documento',
     'numero_documento',
     'fecha',
+    'fecha_vencimiento',
     'concepto',
     'valor_original',
     'saldo',
@@ -38,6 +40,7 @@ class DocumentoTercero extends BaseModel
             'naturaleza' => NaturalezaDocumento::class,
             'estado' => EstadoDocumentoTercero::class,
             'fecha' => 'date:Y-m-d',
+            'fecha_vencimiento' => 'date:Y-m-d',
             'valor_original' => DineroCast::class,
             'saldo' => DineroCast::class,
         ];
@@ -46,6 +49,11 @@ class DocumentoTercero extends BaseModel
     public function tercero(): BelongsTo
     {
         return $this->belongsTo(Tercero::class);
+    }
+
+    public function planCuenta(): BelongsTo
+    {
+        return $this->belongsTo(PlanCuenta::class);
     }
 
     public function documentoOriginal(): BelongsTo

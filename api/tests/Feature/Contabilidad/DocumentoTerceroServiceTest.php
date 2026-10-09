@@ -61,7 +61,7 @@ class DocumentoTerceroServiceTest extends TestCase
         $this->assertDatabaseHas('aplicaciones_documento', ['documento_tercero_id' => $documento->id, 'valor_aplicado' => 100000]);
     }
 
-    public function test_aplicar_valor_parcial_deja_el_documento_pendiente_con_el_nuevo_saldo(): void
+    public function test_aplicar_valor_parcial_deja_el_documento_abonado_parcial_con_el_nuevo_saldo(): void
     {
         $this->actingAsAdmin();
         $tercero = $this->crearTercero();
@@ -77,7 +77,7 @@ class DocumentoTerceroServiceTest extends TestCase
         );
 
         $this->assertEquals(600, $documento->fresh()->saldo->aFloat());
-        $this->assertSame(EstadoDocumentoTercero::Pendiente, $documento->fresh()->estado);
+        $this->assertSame(EstadoDocumentoTercero::AbonadoParcial, $documento->fresh()->estado);
     }
 
     public function test_aplica_a_varios_documentos_del_mismo_tercero_en_una_sola_llamada(): void
@@ -153,5 +153,66 @@ class DocumentoTerceroServiceTest extends TestCase
         $this->expectException(ValidationException::class);
 
         $servicio->aplicarValor($tercero, NaturalezaDocumento::PorPagar, [['documento_tercero_id' => $documento->id, 'valor' => 1]], 'egresos', 2);
+    }
+
+    public function test_un_segundo_abono_sobre_un_documento_abonado_parcial_se_acepta_y_puede_cancelarlo(): void
+    {
+        $this->actingAsAdmin();
+        $tercero = $this->crearTercero();
+        $servicio = app(DocumentoTerceroService::class);
+        $documento = $servicio->crearDocumento($tercero, NaturalezaDocumento::PorPagar, 'factura_compra', 'FC-001', '2026-01-15', 'Compra', Dinero::desdePesos(1000), 'facturas', 1);
+
+        $servicio->aplicarValor($tercero, NaturalezaDocumento::PorPagar, [['documento_tercero_id' => $documento->id, 'valor' => 400]], 'egresos', 1);
+        $servicio->aplicarValor($tercero, NaturalezaDocumento::PorPagar, [['documento_tercero_id' => $documento->id, 'valor' => 600]], 'egresos', 2);
+
+        $this->assertEquals(0, $documento->fresh()->saldo->aFloat());
+        $this->assertSame(EstadoDocumentoTercero::Cancelado, $documento->fresh()->estado);
+        $this->assertDatabaseCount('aplicaciones_documento', 2);
+    }
+
+    public function test_incrementar_valor_aumenta_el_saldo_y_vuelve_pendiente_un_documento_cancelado(): void
+    {
+        $this->actingAsAdmin();
+        $tercero = $this->crearTercero();
+        $servicio = app(DocumentoTerceroService::class);
+        $documento = $servicio->crearDocumento($tercero, NaturalezaDocumento::PorCobrar, 'factura', 'F-001', '2026-01-15', 'Venta', Dinero::desdePesos(1000), 'facturacion', 1);
+        $servicio->aplicarValor($tercero, NaturalezaDocumento::PorCobrar, [['documento_tercero_id' => $documento->id, 'valor' => 1000]], 'facturacion_cobro', 1);
+        $this->assertSame(EstadoDocumentoTercero::Cancelado, $documento->fresh()->estado);
+
+        $actualizado = $servicio->incrementarValor($documento->fresh(), Dinero::desdePesos(200), 'facturacion_nota', 2);
+
+        $this->assertEquals(200, $actualizado->saldo->aFloat());
+        $this->assertSame(EstadoDocumentoTercero::AbonadoParcial, $actualizado->estado);
+        $this->assertDatabaseHas('aplicaciones_documento', [
+            'documento_tercero_id' => $documento->id,
+            'modulo_aplicacion' => 'facturacion_nota',
+            'valor_aplicado' => -20000,
+        ]);
+    }
+
+    public function test_incrementar_valor_puede_dejar_el_saldo_por_encima_del_valor_original(): void
+    {
+        $this->actingAsAdmin();
+        $tercero = $this->crearTercero();
+        $servicio = app(DocumentoTerceroService::class);
+        $documento = $servicio->crearDocumento($tercero, NaturalezaDocumento::PorCobrar, 'factura', 'F-001', '2026-01-15', 'Venta', Dinero::desdePesos(1000), 'facturacion', 1);
+
+        $actualizado = $servicio->incrementarValor($documento, Dinero::desdePesos(50), 'facturacion_nota', 2);
+
+        $this->assertEquals(1050, $actualizado->saldo->aFloat());
+        $this->assertEquals(1000, $actualizado->valor_original->aFloat());
+        $this->assertSame(EstadoDocumentoTercero::Pendiente, $actualizado->estado);
+    }
+
+    public function test_incrementar_valor_rechaza_un_valor_cero_o_negativo(): void
+    {
+        $this->actingAsAdmin();
+        $tercero = $this->crearTercero();
+        $servicio = app(DocumentoTerceroService::class);
+        $documento = $servicio->crearDocumento($tercero, NaturalezaDocumento::PorCobrar, 'factura', 'F-001', '2026-01-15', 'Venta', Dinero::desdePesos(1000), 'facturacion', 1);
+
+        $this->expectException(ValidationException::class);
+
+        $servicio->incrementarValor($documento, Dinero::cero(), 'facturacion_nota', 2);
     }
 }

@@ -47,6 +47,12 @@ class DocumentoTerceroService
         return $this->documentos->pendientesPorTercero($tercero, $naturaleza);
     }
 
+    /** Lectura simple (sin bloqueo) de varios documentos por id — para armar de antemano las líneas de un comprobante que los va a cruzar. */
+    public function buscarVariosPorId(array $ids): Collection
+    {
+        return $this->documentos->porIds($ids);
+    }
+
     public function crearDocumento(
         Tercero $tercero,
         NaturalezaDocumento $naturaleza,
@@ -58,13 +64,17 @@ class DocumentoTerceroService
         string $moduloOrigen,
         int $origenId,
         ?DocumentoTercero $documentoOriginal = null,
+        ?int $planCuentaId = null,
+        ?string $fechaVencimiento = null,
     ): DocumentoTercero {
         $documento = $this->documentos->crear([
             'tercero_id' => $tercero->id,
             'naturaleza' => $naturaleza,
+            'plan_cuenta_id' => $planCuentaId,
             'tipo_documento' => $tipoDocumento,
             'numero_documento' => $numeroDocumento,
             'fecha' => $fecha,
+            'fecha_vencimiento' => $fechaVencimiento,
             'concepto' => $concepto,
             'valor_original' => $valor,
             'saldo' => $valor,
@@ -145,7 +155,7 @@ class DocumentoTerceroService
 
                 $this->documentos->actualizar($documento, [
                     'saldo' => $nuevoSaldo,
-                    'estado' => $nuevoSaldo->esPositivo() ? EstadoDocumentoTercero::Pendiente : EstadoDocumentoTercero::Cancelado,
+                    'estado' => $this->estadoPorSaldo($nuevoSaldo, $documento->valor_original),
                 ]);
 
                 $this->auditoria->registrarModificacion(
@@ -162,5 +172,68 @@ class DocumentoTerceroService
 
             return ['documentos' => $documentosActualizados, 'total_aplicado' => $totalAplicado];
         });
+    }
+
+    /**
+     * Aumenta el saldo de un documento ya existente: nota débito sobre una CxC (carga adicional, p. ej. intereses
+     * de mora, que no corrige el valor original sino que suma deuda nueva) o reversa de un cobro/egreso. Lo
+     * opuesto de `aplicarValor()`. A diferencia de esa, no está acotada por `valor_original`: una nota débito puede
+     * dejar el saldo por encima de él a propósito.
+     */
+    public function incrementarValor(
+        DocumentoTercero $documento,
+        Dinero $valor,
+        string $moduloAplicacion,
+        int $aplicacionId,
+        ?string $fecha = null,
+    ): DocumentoTercero {
+        if (! $valor->esPositivo()) {
+            throw ValidationException::withMessages([
+                'valor' => __('validation.custom.documento.saldo_insuficiente'),
+            ]);
+        }
+
+        $fecha ??= now()->toDateString();
+
+        return DB::transaction(function () use ($documento, $valor, $moduloAplicacion, $aplicacionId, $fecha) {
+            $bloqueado = $this->documentos->bloquearPorId($documento->id);
+
+            $nuevoSaldo = $bloqueado->saldo->sumar($valor);
+
+            // Convención: valor_aplicado negativo = aumenta el saldo (nota débito, reversa de cobro/egreso).
+            $this->aplicaciones->crear([
+                'documento_tercero_id' => $bloqueado->id,
+                'modulo_aplicacion' => $moduloAplicacion,
+                'aplicacion_id' => $aplicacionId,
+                'valor_aplicado' => $valor->negar(),
+                'fecha' => $fecha,
+            ]);
+
+            $anteriores = $this->auditoria->instantanea($bloqueado);
+
+            $this->documentos->actualizar($bloqueado, [
+                'saldo' => $nuevoSaldo,
+                'estado' => $this->estadoPorSaldo($nuevoSaldo, $bloqueado->valor_original),
+            ]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                "Documento {$bloqueado->numero_documento}: incrementados {$valor->aDecimalString()}",
+                $bloqueado,
+                $anteriores,
+                adicionales: ['valor_incrementado' => $valor, 'modulo_aplicacion' => $moduloAplicacion, 'aplicacion_id' => $aplicacionId],
+            );
+
+            return $bloqueado;
+        });
+    }
+
+    private function estadoPorSaldo(Dinero $saldo, Dinero $valorOriginal): EstadoDocumentoTercero
+    {
+        if (! $saldo->esPositivo()) {
+            return EstadoDocumentoTercero::Cancelado;
+        }
+
+        return $saldo->menorQue($valorOriginal) ? EstadoDocumentoTercero::AbonadoParcial : EstadoDocumentoTercero::Pendiente;
     }
 }
