@@ -10,4 +10,6 @@ export type StackedBarChartProps = {
     height?: number;
     /** Formatea el valor en el eje Y y en el tooltip (ej. `formatMoney`). */
     valueFormatter?: (value: number) => string;
+    /** Eje Y en enteros (conteos, no montos). */
+    integerValues?: boolean;
 };

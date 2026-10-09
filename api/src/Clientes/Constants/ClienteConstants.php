@@ -10,4 +10,6 @@ class ClienteConstants
     public const TIPO_PERSONA = TipoPersona::Natural;
 
     public const COLUMNAS_ORDENABLES = ['nombre', 'numero_documento', 'empleador', 'creado_en'];
+
+    public const MESES_COMPORTAMIENTO = 12;
 }
