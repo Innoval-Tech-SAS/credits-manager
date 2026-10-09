@@ -3,6 +3,8 @@
 namespace Tests\Feature\Auditoria;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\AfirmaAuditoria;
 use Tests\Concerns\CreatesContabilidadFixtures;
@@ -19,6 +21,7 @@ class TrazabilidadGastosTest extends TestCase
 
     private function causarGasto(): int
     {
+        Storage::fake('public');
         $this->crearValorUvt();
         $tipoGasto = $this->crearTipoGasto();
         $tercero = $this->crearTerceroFiscal();
@@ -27,6 +30,7 @@ class TrazabilidadGastosTest extends TestCase
         return $this->postJson('/api/v1/gastos', [
             'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-109', 'concepto' => 'Servicio', 'valor_bruto' => 1000000,
+            'soporte' => UploadedFile::fake()->create('soporte.pdf', 200, 'application/pdf'),
         ])->assertCreated()->json('gasto.id');
     }
 

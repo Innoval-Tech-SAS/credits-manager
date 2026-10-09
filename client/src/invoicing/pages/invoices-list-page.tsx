@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { FileText, Settings } from 'lucide-react';
+import { FileText, HandCoins, Settings } from 'lucide-react';
 
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { usePermission } from '../../auth/hooks/use-permission';
@@ -31,6 +31,11 @@ export const InvoicesListPage: FC = () => {
                     {puedeConfigurar && (
                         <Button variant="outline" collapseBelow="md" startIcon={<Settings className="size-4" />} onClick={() => navigate('/facturacion/consecutivos')}>
                             Consecutivos
+                        </Button>
+                    )}
+                    {canCreate && (
+                        <Button variant="outline" collapseBelow="md" startIcon={<HandCoins className="size-4" />} onClick={() => navigate('/facturacion/cobros/crear')}>
+                            Cobro múltiple
                         </Button>
                     )}
                     {canCreate && (

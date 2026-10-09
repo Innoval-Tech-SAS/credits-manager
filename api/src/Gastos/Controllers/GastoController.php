@@ -40,7 +40,7 @@ class GastoController extends Controller
 
     public function store(CrearGastoRequest $peticion): JsonResponse
     {
-        return response()->json(['gasto' => $this->gastos->causar($peticion->validated())], 201);
+        return response()->json(['gasto' => $this->gastos->causar($peticion->validated(), $peticion->file('soporte'))], 201);
     }
 
     public function show(Gasto $gasto): JsonResponse

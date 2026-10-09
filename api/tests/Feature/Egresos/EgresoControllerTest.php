@@ -3,10 +3,13 @@
 namespace Tests\Feature\Egresos;
 
 use App\Contabilidad\Models\DocumentoTercero;
+use App\Egresos\Models\Egreso;
 use App\Empresas\Models\Empresa;
 use App\Gastos\Models\Gasto;
 use App\Gastos\Services\GastoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesGastosFixtures;
@@ -20,6 +23,12 @@ class EgresoControllerTest extends TestCase
     use RefreshDatabase;
 
     private const BASE = '/api/v1/egresos';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Storage::fake('public');
+    }
 
     /** Gasto causado a un tercero: queda con su documento por pagar (saldo = valor neto) listo para pagarse. */
     private function gastoConDocumentoPendiente(array $overrides = []): Gasto
@@ -63,7 +72,7 @@ class EgresoControllerTest extends TestCase
 
         $this->postJson(self::BASE, [])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['tercero_id', 'tipo_comprobante_id', 'fecha', 'medio_pago', 'cuenta_caja_id', 'concepto', 'aplicaciones']);
+            ->assertJsonValidationErrors(['tercero_id', 'tipo_comprobante_id', 'fecha', 'medio_pago', 'cuenta_caja_id', 'concepto', 'soporte', 'aplicaciones']);
     }
 
     public function test_rechaza_un_documento_que_no_pertenece_al_tercero_enviado(): void
@@ -105,6 +114,34 @@ class EgresoControllerTest extends TestCase
         $this->assertDatabaseHas('asientos_contables', ['comprobante_id' => $comprobanteId, 'cuenta_id' => $gasto->parametrizacion->cuenta_cxp_id]);
     }
 
+    public function test_el_soporte_queda_adjunto_al_egreso(): void
+    {
+        $this->actingAsAdmin();
+        $gasto = $this->gastoConDocumentoPendiente();
+
+        $datos = $this->datosValidos($gasto);
+        $datos['soporte'] = UploadedFile::fake()->create('comprobante-transferencia.pdf', 300, 'application/pdf');
+
+        $respuesta = $this->postJson(self::BASE, $datos)->assertStatus(201);
+
+        $this->assertDatabaseHas('archivos_adjuntos', [
+            'adjuntable_type' => (new Egreso)->getMorphClass(),
+            'adjuntable_id' => $respuesta->json('egreso.id'),
+            'nombre_original' => 'comprobante-transferencia.pdf',
+        ]);
+    }
+
+    public function test_exige_soporte_adjunto(): void
+    {
+        $this->actingAsAdmin();
+        $gasto = $this->gastoConDocumentoPendiente();
+
+        $datos = $this->datosValidos($gasto);
+        unset($datos['soporte']);
+
+        $this->postJson(self::BASE, $datos)->assertStatus(422)->assertJsonValidationErrors('soporte');
+    }
+
     public function test_un_tercero_de_otra_empresa_responde_422(): void
     {
         $admin = $this->actingAsAdmin();
@@ -130,6 +167,7 @@ class EgresoControllerTest extends TestCase
             'medio_pago' => 'transferencia',
             'cuenta_caja_id' => $this->crearCuenta()->id,
             'concepto' => 'Pago de la compra',
+            'soporte' => UploadedFile::fake()->create('soporte.pdf', 200, 'application/pdf'),
             'aplicaciones' => [
                 ['documento_tercero_id' => $gasto->documento_tercero_id, 'valor' => '1000'],
             ],

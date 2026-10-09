@@ -172,6 +172,13 @@ export const NAV_ITEMS: NavItem[] = [
                 moduleKey: "contabilidad",
                 action: "listar",
             },
+            {
+                name: "Anticipos",
+                path: "/contabilidad/anticipos/cruzar",
+                icon: GitCompare,
+                moduleKey: "anticipos",
+                action: "crear",
+            },
         ],
     },
     {
