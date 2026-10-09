@@ -7,6 +7,7 @@ use App\Calendario\Controllers\CalendarioController;
 use App\Cartera\Controllers\CarteraController;
 use App\Clientes\Controllers\ClienteController;
 use App\Contabilidad\Controllers\AuxiliarContableController;
+use App\Contabilidad\Controllers\CarteraTerceroController;
 use App\Contabilidad\Controllers\CentroCostoController;
 use App\Contabilidad\Controllers\ComprobanteController;
 use App\Contabilidad\Controllers\DocumentoTerceroController;
@@ -258,6 +259,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/terceros/personas-naturales/{tercero}', [TerceroController::class, 'updateNatural'])->middleware('permiso:terceros,editar');
     Route::patch('/terceros/personas-juridicas/{tercero}', [TerceroController::class, 'updateJuridica'])->middleware('permiso:terceros,editar');
     Route::get('/terceros/{tercero}/documentos-pendientes', [DocumentoTerceroController::class, 'pendientes'])->middleware('permiso:contabilidad,listar');
+
+    Route::get('/cartera-terceros', [CarteraTerceroController::class, 'index'])->middleware('permiso:contabilidad,listar');
+    Route::get('/cartera-terceros/edades', [CarteraTerceroController::class, 'edades'])->middleware('permiso:contabilidad,listar');
 
     Route::get('/proveedores', [ProveedorController::class, 'index'])->middleware('permiso:terceros,listar');
     Route::post('/proveedores/personas-naturales', [ProveedorController::class, 'storeNatural'])->middleware('permiso:terceros,crear');
