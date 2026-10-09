@@ -155,6 +155,8 @@ class GastoService
                     $calculo['valor_neto'],
                     'gastos',
                     $gasto->id,
+                    planCuentaId: $parametrizacion->cuenta_cxp_id,
+                    fechaVencimiento: $datos['fecha_vencimiento'] ?? null,
                 );
             }
 
