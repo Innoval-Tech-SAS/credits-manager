@@ -311,6 +311,10 @@ return [
         'anticipo' => [
             'cruce_invalido' => 'El anticipo y el documento deben ser del mismo tercero y del lado correspondiente (anticipo a proveedor con una cuenta por pagar, anticipo de cliente con una cuenta por cobrar).',
         ],
+        'egreso' => [
+            'descuento_mayor_o_igual_al_valor' => 'El descuento de una línea no puede ser mayor o igual que el valor aplicado: algo debe quedar pagado en efectivo.',
+            'cuenta_descuento_requerida' => 'Si alguna línea tiene descuento por pronto pago, debes indicar la cuenta de descuentos comerciales condicionados.',
+        ],
         'tipo_gasto' => [
             'inactivo_o_no_existe' => 'El tipo de gasto no existe o está inactivo.',
             'requiere_tercero' => 'Este tipo de gasto requiere un tercero.',

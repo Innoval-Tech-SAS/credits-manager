@@ -31,6 +31,7 @@ class CrearEgresoRequest extends FormRequest
             'fecha' => ['required', 'date'],
             'medio_pago' => ['required', Rule::enum(MedioPagoEgreso::class)],
             'cuenta_caja_id' => ['required', Rule::exists('plan_cuentas', 'id')->where('empresa_id', $empresaId)],
+            'cuenta_descuento_id' => ['nullable', Rule::exists('plan_cuentas', 'id')->where('empresa_id', $empresaId)],
             'concepto' => ['required', 'string', 'max:255'],
             'soporte' => ['required', 'file', 'mimes:pdf,png,jpg,jpeg,webp', 'max:5120'],
             'aplicaciones' => ['required', 'array', 'min:1'],
@@ -40,6 +41,7 @@ class CrearEgresoRequest extends FormRequest
                 Rule::exists('documentos_tercero', 'id')->where('empresa_id', $empresaId),
             ],
             'aplicaciones.*.valor' => ['required', 'numeric', 'min:0.01'],
+            'aplicaciones.*.descuento' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 }

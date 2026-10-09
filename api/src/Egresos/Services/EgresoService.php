@@ -47,7 +47,7 @@ class EgresoService
     }
 
     /**
-     * @param  array{tercero_id: int, fecha: string, medio_pago: string, cuenta_caja_id: int, tipo_comprobante_id: int, concepto: string, aplicaciones: list<array{documento_tercero_id: int, valor: string}>}  $datos
+     * @param  array{tercero_id: int, fecha: string, medio_pago: string, cuenta_caja_id: int, cuenta_descuento_id?: int|null, tipo_comprobante_id: int, concepto: string, aplicaciones: list<array{documento_tercero_id: int, valor: string, descuento?: string|null}>}  $datos
      */
     public function registrar(array $datos, UploadedFile $soporte): Egreso
     {
@@ -65,6 +65,7 @@ class EgresoService
 
             $lineasPorCuenta = [];
             $valorTotal = Dinero::cero();
+            $totalDescuento = Dinero::cero();
 
             foreach ($datos['aplicaciones'] as $aplicacion) {
                 $documento = $documentos[$aplicacion['documento_tercero_id']];
@@ -82,9 +83,26 @@ class EgresoService
                 }
 
                 $valor = Dinero::desdePesos($aplicacion['valor']);
+                $descuento = Dinero::desdePesos($aplicacion['descuento'] ?? '0');
+
+                if ($descuento->mayorOIgualQue($valor)) {
+                    throw ValidationException::withMessages([
+                        'aplicaciones' => __('validation.custom.egreso.descuento_mayor_o_igual_al_valor'),
+                    ]);
+                }
+
                 $lineasPorCuenta[$documento->plan_cuenta_id] = ($lineasPorCuenta[$documento->plan_cuenta_id] ?? Dinero::cero())->sumar($valor);
                 $valorTotal = $valorTotal->sumar($valor);
+                $totalDescuento = $totalDescuento->sumar($descuento);
             }
+
+            if ($totalDescuento->esPositivo() && empty($datos['cuenta_descuento_id'])) {
+                throw ValidationException::withMessages([
+                    'cuenta_descuento_id' => __('validation.custom.egreso.cuenta_descuento_requerida'),
+                ]);
+            }
+
+            $valorCaja = $valorTotal->restar($totalDescuento);
 
             $consecutivo = $this->consecutivos->siguiente(TipoDocumentoConsecutivo::Egreso);
             $numero = trim(($consecutivo['prefijo'] ? $consecutivo['prefijo'].' ' : '').$consecutivo['numero']);
@@ -95,8 +113,10 @@ class EgresoService
                 'consecutivo' => $consecutivo['numero'],
                 'numero' => $numero,
                 'valor' => $valorTotal,
+                'valor_descuento' => $totalDescuento,
                 'medio_pago' => MedioPagoEgreso::from($datos['medio_pago']),
                 'cuenta_caja_id' => $datos['cuenta_caja_id'],
+                'cuenta_descuento_id' => $datos['cuenta_descuento_id'] ?? null,
                 'concepto' => $datos['concepto'],
                 'creado_por' => Auth::id(),
             ]);
@@ -109,7 +129,11 @@ class EgresoService
                 $lineasComprobante[] = ['cuenta_id' => $cuentaId, 'debito' => $valorCuenta, 'credito' => 0];
             }
 
-            $lineasComprobante[] = ['cuenta_id' => $datos['cuenta_caja_id'], 'debito' => 0, 'credito' => $valorTotal];
+            $lineasComprobante[] = ['cuenta_id' => $datos['cuenta_caja_id'], 'debito' => 0, 'credito' => $valorCaja];
+
+            if ($totalDescuento->esPositivo()) {
+                $lineasComprobante[] = ['cuenta_id' => $datos['cuenta_descuento_id'], 'debito' => 0, 'credito' => $totalDescuento];
+            }
 
             $comprobante = $this->comprobantes->crearComprobante(
                 $datos['tipo_comprobante_id'],
