@@ -20,6 +20,7 @@ use App\Correo\Controllers\ConfiguracionCorreoController;
 use App\Correo\Controllers\RecordatorioCorreoController;
 use App\Creditos\Controllers\CreditoController;
 use App\Dashboard\Controllers\DashboardController;
+use App\Egresos\Controllers\EgresoController;
 use App\Empleadores\Controllers\EmpleadorController;
 use App\Empresas\Controllers\EmpresaAdminController;
 use App\Empresas\Controllers\EmpresaController;
@@ -303,4 +304,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/gastos', [GastoController::class, 'store'])->middleware('permiso:gastos,crear');
     Route::get('/gastos/{gasto}', [GastoController::class, 'show'])->middleware('permiso:gastos,listar');
     Route::delete('/gastos/{gasto}', [GastoController::class, 'destroy'])->middleware('permiso:gastos,anular');
+
+    Route::get('/egresos', [EgresoController::class, 'index'])->middleware('permiso:egresos,listar');
+    Route::post('/egresos', [EgresoController::class, 'store'])->middleware('permiso:egresos,crear');
 });

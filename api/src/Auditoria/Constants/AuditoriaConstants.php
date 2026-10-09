@@ -28,6 +28,8 @@ class AuditoriaConstants
 
     public const MODULO_GASTOS = 'gastos';
 
+    public const MODULO_EGRESOS = 'egresos';
+
     public const MODULO_FACTURACION = 'facturacion';
 
     public const MODULO_GEOGRAFIA = 'geografia';
