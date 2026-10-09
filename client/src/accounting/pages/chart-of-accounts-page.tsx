@@ -118,6 +118,20 @@ export const ChartOfAccountsPage: FC = () => {
                     { key: 'tipo', label: 'Tipo' },
                     { key: 'permite_movimiento', label: 'Movimiento', render: (cuenta) => (cuenta.permite_movimiento ? 'Sí' : 'No') },
                     {
+                        key: 'exige',
+                        label: 'Exige',
+                        render: (cuenta) => {
+                            const requisitos = [
+                                cuenta.exige_tercero && 'Tercero',
+                                cuenta.exige_documento_cruce && 'Doc. cruce',
+                                cuenta.exige_vencimiento && 'Vencimiento',
+                                cuenta.exige_centro_costo && 'C. costo',
+                            ].filter(Boolean);
+
+                            return requisitos.length > 0 ? requisitos.join(' · ') : '—';
+                        },
+                    },
+                    {
                         key: 'activa',
                         label: 'Estado',
                         render: (cuenta) => (

@@ -23,6 +23,10 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, onCreated }) => {
     const [cuentaPadreId, setCuentaPadreId] = useState('');
     const [tipo, setTipo] = useState<ApiAccount['tipo']>('activo');
     const [permiteMovimiento, setPermiteMovimiento] = useState(true);
+    const [exigeTercero, setExigeTercero] = useState(false);
+    const [exigeDocumentoCruce, setExigeDocumentoCruce] = useState(false);
+    const [exigeVencimiento, setExigeVencimiento] = useState(false);
+    const [exigeCentroCosto, setExigeCentroCosto] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,6 +46,10 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, onCreated }) => {
                     cuenta_padre_id: cuentaPadreId ? Number(cuentaPadreId) : null,
                     tipo,
                     permite_movimiento: permiteMovimiento,
+                    exige_tercero: exigeTercero,
+                    exige_documento_cruce: exigeDocumentoCruce,
+                    exige_vencimiento: exigeVencimiento,
+                    exige_centro_costo: exigeCentroCosto,
                 },
             });
 
@@ -117,6 +125,16 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, onCreated }) => {
                     checked={permiteMovimiento}
                     onChange={setPermiteMovimiento}
                 />
+
+                <div>
+                    <Label>Qué exige esta cuenta al usarse en un comprobante</Label>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <Checkbox label="Exige tercero" checked={exigeTercero} onChange={setExigeTercero} />
+                        <Checkbox label="Exige documento cruce" checked={exigeDocumentoCruce} onChange={setExigeDocumentoCruce} />
+                        <Checkbox label="Exige vencimiento" checked={exigeVencimiento} onChange={setExigeVencimiento} />
+                        <Checkbox label="Exige centro de costo" checked={exigeCentroCosto} onChange={setExigeCentroCosto} />
+                    </div>
+                </div>
 
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                     <Button type="submit" disabled={isSubmitting} startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}>

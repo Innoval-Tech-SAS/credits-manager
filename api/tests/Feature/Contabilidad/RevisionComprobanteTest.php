@@ -174,11 +174,11 @@ class RevisionComprobanteTest extends TestCase
         $this->assertDatabaseHas('comprobantes', ['id' => $id, 'estado' => 'anulado', 'comprobante_reverso_id' => null]);
     }
 
-    public function test_un_asiento_manual_con_cuenta_de_gasto_exige_centro_de_costo(): void
+    public function test_un_asiento_manual_con_cuenta_que_exige_centro_de_costo_lo_exige(): void
     {
         $empresa = $this->crearEmpresaDePrueba();
         $this->creador($empresa);
-        $cuentaGasto = $this->crearCuenta(['tipo' => TipoCuenta::Gasto]);
+        $cuentaGasto = $this->crearCuenta(['tipo' => TipoCuenta::Gasto, 'exige_centro_costo' => true]);
         $cuentaBanco = $this->crearCuenta();
         $payload = [
             'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
@@ -194,6 +194,26 @@ class RevisionComprobanteTest extends TestCase
 
         $centro = CentroCosto::query()->create(['codigo' => 'ADM', 'nombre' => 'Administración', 'activo' => true]);
         $payload['lineas'][0]['centro_costo_id'] = $centro->id;
+
+        $this->postJson(self::BASE, $payload)->assertStatus(201);
+    }
+
+    /** La regla ahora la declara la cuenta (`exige_centro_costo`), no su `tipo`: Gasto/Costo ya no la fuerzan por sí solos. */
+    public function test_un_asiento_manual_con_cuenta_de_gasto_sin_el_flag_no_exige_centro_de_costo(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->creador($empresa);
+        $cuentaGasto = $this->crearCuenta(['tipo' => TipoCuenta::Gasto, 'exige_centro_costo' => false]);
+        $cuentaBanco = $this->crearCuenta();
+        $payload = [
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Gasto manual sin centro de costo',
+            'lineas' => [
+                ['cuenta_id' => $cuentaGasto->id, 'debito' => 80, 'credito' => 0],
+                ['cuenta_id' => $cuentaBanco->id, 'debito' => 0, 'credito' => 80],
+            ],
+        ];
 
         $this->postJson(self::BASE, $payload)->assertStatus(201);
     }

@@ -36,6 +36,45 @@ class PlanCuentaControllerTest extends TestCase
         $this->assertDatabaseHas('plan_cuentas', ['codigo' => '1105', 'nombre' => 'Caja general']);
     }
 
+    public function test_crea_una_cuenta_con_flags_de_parametrizacion(): void
+    {
+        $this->actingAsAdmin();
+
+        $payload = array_merge($this->payloadValido(), [
+            'codigo' => '2205',
+            'exige_tercero' => true,
+            'exige_documento_cruce' => true,
+            'exige_vencimiento' => true,
+            'exige_centro_costo' => true,
+        ]);
+
+        $respuesta = $this->postJson('/api/v1/contabilidad/plan-cuentas', $payload);
+
+        $respuesta->assertStatus(201);
+        $this->assertDatabaseHas('plan_cuentas', [
+            'codigo' => '2205',
+            'exige_tercero' => true,
+            'exige_documento_cruce' => true,
+            'exige_vencimiento' => true,
+            'exige_centro_costo' => true,
+        ]);
+    }
+
+    public function test_los_flags_de_parametrizacion_quedan_en_false_por_defecto(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson('/api/v1/contabilidad/plan-cuentas', $this->payloadValido())->assertStatus(201);
+
+        $this->assertDatabaseHas('plan_cuentas', [
+            'codigo' => '1105',
+            'exige_tercero' => false,
+            'exige_documento_cruce' => false,
+            'exige_vencimiento' => false,
+            'exige_centro_costo' => false,
+        ]);
+    }
+
     public function test_rechaza_codigo_duplicado(): void
     {
         $this->actingAsAdmin();
@@ -82,6 +121,28 @@ class PlanCuentaControllerTest extends TestCase
 
         $respuesta->assertStatus(200);
         $this->assertDatabaseHas('plan_cuentas', ['id' => $cuenta->id, 'activa' => false]);
+    }
+
+    public function test_edita_los_flags_de_parametrizacion_de_una_cuenta(): void
+    {
+        $this->actingAsAdmin();
+        $cuenta = $this->crearCuenta();
+
+        $respuesta = $this->patchJson("/api/v1/contabilidad/plan-cuentas/{$cuenta->id}", [
+            'exige_tercero' => true,
+            'exige_documento_cruce' => true,
+            'exige_vencimiento' => true,
+            'exige_centro_costo' => true,
+        ]);
+
+        $respuesta->assertStatus(200);
+        $this->assertDatabaseHas('plan_cuentas', [
+            'id' => $cuenta->id,
+            'exige_tercero' => true,
+            'exige_documento_cruce' => true,
+            'exige_vencimiento' => true,
+            'exige_centro_costo' => true,
+        ]);
     }
 
     public function test_cuenta_inexistente_devuelve_404(): void
