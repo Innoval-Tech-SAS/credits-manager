@@ -27,6 +27,7 @@ export const CreateInvoicePage: FC = () => {
     const creditoInicial = searchParams.get('credito') ?? '';
     const [creditoId, setCreditoId] = useState(creditoInicial);
     const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
+    const [fechaVencimiento, setFechaVencimiento] = useState('');
     const [lineas, setLineas] = useState<InvoiceLineDraft[]>([{ ...LINEA_INICIAL }]);
     const [error, setError] = useState<string | null>(null);
 
@@ -43,6 +44,7 @@ export const CreateInvoicePage: FC = () => {
                 body: {
                     credito_id: Number(creditoId),
                     fecha,
+                    fecha_vencimiento: fechaVencimiento || null,
                     lineas: lineas.map((linea) => ({ concepto: linea.concepto, descripcion: linea.descripcion, valor: linea.valor })),
                 },
             });
@@ -65,7 +67,7 @@ export const CreateInvoicePage: FC = () => {
                         <Spinner size="lg" />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                         <div>
                             <Label htmlFor="credito">Crédito desembolsado</Label>
                             <Select
@@ -81,6 +83,10 @@ export const CreateInvoicePage: FC = () => {
                         <div>
                             <Label htmlFor="fecha">Fecha</Label>
                             <DatePicker id="fecha" value={fecha} onChange={setFecha} />
+                        </div>
+                        <div>
+                            <Label htmlFor="fecha-vencimiento">Fecha de vencimiento (opcional)</Label>
+                            <DatePicker id="fecha-vencimiento" value={fechaVencimiento} onChange={setFechaVencimiento} />
                         </div>
                     </div>
                 )}

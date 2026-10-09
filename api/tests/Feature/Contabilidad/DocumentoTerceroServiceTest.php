@@ -40,6 +40,51 @@ class DocumentoTerceroServiceTest extends TestCase
         $this->assertDatabaseHas('documentos_tercero', ['id' => $documento->id, 'tercero_id' => $tercero->id]);
     }
 
+    public function test_rechaza_crear_un_documento_sin_vencimiento_cuando_la_cuenta_lo_exige(): void
+    {
+        $this->actingAsAdmin();
+        $tercero = $this->crearTercero();
+        $cuenta = $this->crearCuenta(['exige_vencimiento' => true]);
+
+        $this->expectException(ValidationException::class);
+
+        app(DocumentoTerceroService::class)->crearDocumento(
+            $tercero,
+            NaturalezaDocumento::PorPagar,
+            'factura_compra',
+            'FC-001',
+            '2026-01-15',
+            'Compra de mercancía',
+            Dinero::desdePesos(1000),
+            'facturas',
+            1,
+            planCuentaId: $cuenta->id,
+        );
+    }
+
+    public function test_crea_un_documento_con_vencimiento_cuando_la_cuenta_lo_exige(): void
+    {
+        $this->actingAsAdmin();
+        $tercero = $this->crearTercero();
+        $cuenta = $this->crearCuenta(['exige_vencimiento' => true]);
+
+        $documento = app(DocumentoTerceroService::class)->crearDocumento(
+            $tercero,
+            NaturalezaDocumento::PorPagar,
+            'factura_compra',
+            'FC-001',
+            '2026-01-15',
+            'Compra de mercancía',
+            Dinero::desdePesos(1000),
+            'facturas',
+            1,
+            planCuentaId: $cuenta->id,
+            fechaVencimiento: '2026-02-15',
+        );
+
+        $this->assertDatabaseHas('documentos_tercero', ['id' => $documento->id, 'fecha_vencimiento' => '2026-02-15']);
+    }
+
     public function test_aplicar_valor_total_cancela_el_documento(): void
     {
         $this->actingAsAdmin();

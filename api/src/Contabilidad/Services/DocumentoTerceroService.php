@@ -8,6 +8,7 @@ use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Enums\EstadoDocumentoTercero;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Models\DocumentoTercero;
+use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Repositories\AplicacionDocumentoRepository;
 use App\Contabilidad\Repositories\DocumentoTerceroRepository;
 use App\Core\Dinero\Dinero;
@@ -67,6 +68,12 @@ class DocumentoTerceroService
         ?int $planCuentaId = null,
         ?string $fechaVencimiento = null,
     ): DocumentoTercero {
+        if ($planCuentaId && empty($fechaVencimiento) && PlanCuenta::query()->find($planCuentaId)?->exige_vencimiento) {
+            throw ValidationException::withMessages([
+                'documento' => __('validation.custom.documento.vencimiento_requerido'),
+            ]);
+        }
+
         $documento = $this->documentos->crear([
             'tercero_id' => $tercero->id,
             'naturaleza' => $naturaleza,
