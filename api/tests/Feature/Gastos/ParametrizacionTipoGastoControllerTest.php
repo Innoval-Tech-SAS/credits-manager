@@ -3,6 +3,8 @@
 namespace Tests\Feature\Gastos;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesGastosFixtures;
@@ -76,6 +78,7 @@ class ParametrizacionTipoGastoControllerTest extends TestCase
 
     public function test_causar_gasto_sin_parametrizacion_vigente_es_rechazado(): void
     {
+        Storage::fake('public');
         $this->actingAsAdmin();
         $tipoGasto = $this->crearTipoGasto(['requiere_tercero' => false]);
 
@@ -85,6 +88,7 @@ class ParametrizacionTipoGastoControllerTest extends TestCase
             'numero_documento' => 'FAC-1',
             'concepto' => 'Gasto sin parametrizar',
             'valor_bruto' => 100000,
+            'soporte' => UploadedFile::fake()->create('soporte.pdf', 200, 'application/pdf'),
         ]);
 
         $respuesta->assertStatus(422)->assertJsonValidationErrors('tipo_gasto_id');

@@ -4,11 +4,14 @@ namespace Tests\Feature\Gastos;
 
 use App\Contabilidad\Enums\EstadoComprobante;
 use App\Core\Dinero\Dinero;
+use App\Gastos\Models\Gasto;
 use App\Gastos\Services\MotorReglasFiscalesService;
 use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
@@ -21,6 +24,17 @@ class GastoControllerTest extends TestCase
     use CreatesContabilidadFixtures;
     use CreatesGastosFixtures;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Storage::fake('public');
+    }
+
+    private function archivoSoporte(): UploadedFile
+    {
+        return UploadedFile::fake()->create('soporte.pdf', 200, 'application/pdf');
+    }
 
     public function test_causa_un_gasto_de_honorarios_con_las_tres_retenciones_y_trazabilidad(): void
     {
@@ -57,6 +71,7 @@ class GastoControllerTest extends TestCase
             'numero_documento' => 'FAC-100',
             'concepto' => 'Honorarios marzo',
             'valor_bruto' => 1000000,
+            'soporte' => $this->archivoSoporte(),
         ]);
 
         $respuesta->assertStatus(201)
@@ -96,6 +111,7 @@ class GastoControllerTest extends TestCase
             'numero_documento' => 'FAC-101',
             'concepto' => 'Arriendo a autorretenedor',
             'valor_bruto' => 1000000,
+            'soporte' => $this->archivoSoporte(),
         ]);
 
         $respuesta->assertStatus(201)->assertJsonPath('gasto.valor_retefuente', '0.00')->assertJsonPath('gasto.valor_neto', '1000000.00');
@@ -126,6 +142,7 @@ class GastoControllerTest extends TestCase
             'numero_documento' => 'FAC-102',
             'concepto' => 'Servicio a no responsable de IVA',
             'valor_bruto' => 1000000,
+            'soporte' => $this->archivoSoporte(),
         ]);
 
         $respuesta->assertStatus(201)->assertJsonPath('gasto.valor_reteiva', '0.00');
@@ -158,6 +175,7 @@ class GastoControllerTest extends TestCase
             'numero_documento' => 'FAC-103',
             'concepto' => 'Servicio menor a la base mínima',
             'valor_bruto' => 500000,
+            'soporte' => $this->archivoSoporte(),
         ]);
 
         $respuesta->assertStatus(201)->assertJsonPath('gasto.valor_retefuente', '0.00');
@@ -186,10 +204,12 @@ class GastoControllerTest extends TestCase
         $respuestaNatural = $this->postJson('/api/v1/gastos', [
             'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $terceroNatural->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-104', 'concepto' => 'Honorarios persona natural', 'valor_bruto' => 1000000,
+            'soporte' => $this->archivoSoporte(),
         ]);
         $respuestaJuridica = $this->postJson('/api/v1/gastos', [
             'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $terceroJuridico->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-105', 'concepto' => 'Honorarios persona jurídica', 'valor_bruto' => 1000000,
+            'soporte' => $this->archivoSoporte(),
         ]);
 
         $respuestaNatural->assertJsonPath('gasto.valor_retefuente', '100000.00');
@@ -243,6 +263,7 @@ class GastoControllerTest extends TestCase
         $respuesta = $this->postJson('/api/v1/gastos', [
             'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-106', 'concepto' => 'Servicio', 'valor_bruto' => 1000000,
+            'soporte' => $this->archivoSoporte(),
         ]);
 
         $comprobanteId = $respuesta->json('gasto.comprobante_id');
@@ -264,6 +285,7 @@ class GastoControllerTest extends TestCase
         $respuesta = $this->postJson('/api/v1/gastos', [
             'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-107', 'concepto' => 'Servicio', 'valor_bruto' => 1000000,
+            'soporte' => $this->archivoSoporte(),
         ]);
 
         $this->assertDatabaseHas('documentos_tercero', [
@@ -274,6 +296,28 @@ class GastoControllerTest extends TestCase
             'valor_original' => 100000000,
             'saldo' => 100000000,
             'estado' => 'pendiente',
+        ]);
+    }
+
+    public function test_el_soporte_queda_adjunto_al_gasto(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearValorUvt();
+        $tipoGasto = $this->crearTipoGasto();
+        $tercero = $this->crearTerceroFiscal();
+        $this->crearParametrizacion($tipoGasto);
+
+        $respuesta = $this->postJson('/api/v1/gastos', [
+            'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
+            'numero_documento' => 'FAC-110', 'concepto' => 'Servicio', 'valor_bruto' => 1000000,
+            'soporte' => UploadedFile::fake()->create('factura-proveedor.pdf', 300, 'application/pdf'),
+        ]);
+
+        $respuesta->assertStatus(201);
+        $this->assertDatabaseHas('archivos_adjuntos', [
+            'adjuntable_type' => (new Gasto)->getMorphClass(),
+            'adjuntable_id' => $respuesta->json('gasto.id'),
+            'nombre_original' => 'factura-proveedor.pdf',
         ]);
     }
 
@@ -293,6 +337,7 @@ class GastoControllerTest extends TestCase
         $respuesta = $this->postJson('/api/v1/gastos', [
             'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'municipio_id' => $municipio->id,
             'fecha' => '2026-03-01', 'numero_documento' => 'FAC-108', 'concepto' => 'Servicio sin tarifa ICA', 'valor_bruto' => 1000000,
+            'soporte' => $this->archivoSoporte(),
         ]);
 
         $respuesta->assertStatus(422)->assertJsonValidationErrors('municipio_id');
@@ -310,6 +355,7 @@ class GastoControllerTest extends TestCase
         $creado = $this->postJson('/api/v1/gastos', [
             'tipo_gasto_id' => $tipoGasto->id, 'centro_costo_id' => $this->crearCentroCosto()->id, 'tercero_id' => $tercero->id, 'fecha' => '2026-03-01',
             'numero_documento' => 'FAC-109', 'concepto' => 'Servicio', 'valor_bruto' => 1000000,
+            'soporte' => $this->archivoSoporte(),
         ]);
         $gastoId = $creado->json('gasto.id');
         $comprobanteId = $creado->json('gasto.comprobante_id');
@@ -351,6 +397,6 @@ class GastoControllerTest extends TestCase
 
         $respuesta = $this->postJson('/api/v1/gastos', []);
 
-        $respuesta->assertStatus(422)->assertJsonValidationErrors(['tipo_gasto_id', 'fecha', 'numero_documento', 'concepto', 'valor_bruto']);
+        $respuesta->assertStatus(422)->assertJsonValidationErrors(['tipo_gasto_id', 'fecha', 'numero_documento', 'concepto', 'valor_bruto', 'soporte']);
     }
 }

@@ -6,6 +6,7 @@ use App\Facturacion\Models\CobroFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Requests\MotivoAccionFacturacionRequest;
 use App\Facturacion\Requests\RegistrarCobroFacturaRequest;
+use App\Facturacion\Requests\RegistrarCobroMultipleFacturaRequest;
 use App\Facturacion\Services\CobroFacturacionService;
 use App\Facturacion\Services\DocumentoFacturacionService;
 use App\Http\Controllers\Controller;
@@ -23,6 +24,13 @@ class CobroFacturacionController extends Controller
         $cobro = $this->cobros->registrar($documento, $peticion->validated(), $peticion->user());
 
         return response()->json([...$this->documentos->detalle($cobro->documento), 'cobro' => $cobro], 201);
+    }
+
+    public function storeMultiple(RegistrarCobroMultipleFacturaRequest $peticion): JsonResponse
+    {
+        $cobros = $this->cobros->registrarMultiple($peticion->validated(), $peticion->user());
+
+        return response()->json(['cobros' => $cobros], 201);
     }
 
     public function reversar(MotivoAccionFacturacionRequest $peticion, CobroFacturacion $cobro): JsonResponse

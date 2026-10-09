@@ -8,6 +8,7 @@ use App\Facturacion\Enums\TipoDocumentoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Models\LineaDocumentoFacturacion;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -41,6 +42,12 @@ class DocumentoFacturacionRepository extends BaseRepository
     public function bloquear(int $id): DocumentoFacturacion
     {
         return $this->consulta()->lockForUpdate()->findOrFail($id);
+    }
+
+    /** Igual que `bloquear()` pero para varias filas a la vez: un cobro que cruza varias facturas las bloquea todas en la misma transacción. */
+    public function bloquearVarias(array $ids): Collection
+    {
+        return $this->consulta()->with('cliente.tercero')->whereIn('id', $ids)->lockForUpdate()->get();
     }
 
     /** Total del documento: suma de sus líneas activas, en centavos. */

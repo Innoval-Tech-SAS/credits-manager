@@ -19,13 +19,15 @@ use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Repositories\CobroFacturacionRepository;
 use App\Facturacion\Repositories\DocumentoFacturacionRepository;
 use App\Usuarios\Models\Usuario;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
  * Cobros sobre facturas. Un cobro no supera el saldo de la factura en el momento de registrarlo, y su asiento
  * se crea en la misma transacción. Un cobro no se edita ni se borra: se corrige con una reversa, que anula su
- * asiento (reverso enlazado al original) y deja una fila compensatoria.
+ * asiento (reverso enlazado al original) y deja una fila compensatoria. `registrarMultiple()` deja aplicar un
+ * recibo a varias facturas del mismo cliente a la vez, cada una con su propio cobro y asiento.
  */
 class CobroFacturacionService
 {
@@ -45,67 +47,115 @@ class CobroFacturacionService
         return DB::transaction(function () use ($factura, $datos, $usuario) {
             $bloqueada = $this->documentos->bloquear($factura->id);
 
-            if ($bloqueada->tipo !== TipoDocumentoFacturacion::Factura || $bloqueada->estado !== EstadoDocumentoFacturacion::Emitido) {
-                throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.cobro_no_factura_emitida')]);
-            }
-
-            $totales = $this->facturas->totales($bloqueada);
-
-            if ($totales['situacion'] === SituacionFactura::Anulada) {
-                throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.ya_anulada')]);
-            }
-
-            $valor = Dinero::desdePesos($datos['valor']);
-
-            if ($valor->mayorQue($totales['saldo'])) {
-                throw ValidationException::withMessages([
-                    'valor' => __('validation.custom.facturacion.cobro_excede_saldo', ['saldo' => $totales['saldo']->aDecimalString()]),
-                ]);
-            }
-
-            $asiento = $this->asientos->contabilizarCobro($bloqueada, $valor, $datos['fecha']);
-
-            $cobro = $this->cobros->crear([
-                'documento_id' => $bloqueada->id,
-                'tipo' => MovimientoCobro::Cobro,
-                'comprobante_id' => $asiento->id,
-                'fecha' => $datos['fecha'],
-                'valor' => $valor,
-                'medio' => $datos['medio'],
-                'referencia' => $datos['referencia'] ?? null,
-                'observacion' => $datos['observacion'] ?? null,
-                'registrado_por' => $usuario->id,
-            ]);
-
-            if ($bloqueada->documento_tercero_id) {
-                $this->documentosTercero->aplicarValor(
-                    $bloqueada->cliente->tercero,
-                    NaturalezaDocumento::PorCobrar,
-                    [['documento_tercero_id' => $bloqueada->documento_tercero_id, 'valor' => $valor]],
-                    'facturacion_cobro',
-                    $cobro->id,
-                    $datos['fecha'],
-                );
-            }
-
-            $this->auditoria->registrar(
-                AccionAuditoria::Crear,
-                AuditoriaConstants::MODULO_FACTURACION,
-                "Cobro de {$valor->aDecimalString()} registrado en la factura {$bloqueada->numero}",
-                'cobro_facturacion',
-                $cobro->id,
-                nuevos: [
-                    'documento_id' => $bloqueada->id,
-                    'valor' => $valor->aDecimalString(),
-                    'medio' => $cobro->medio->value,
-                    'referencia' => $cobro->referencia,
-                    'fecha' => $cobro->fecha->toDateString(),
-                ],
-                autor: $usuario,
-            );
-
-            return $cobro;
+            return $this->registrarSobreFacturaBloqueada($bloqueada, $datos, $usuario);
         });
+    }
+
+    /**
+     * Un cobro que cruza varias facturas del mismo cliente en un solo recibo: misma validación y mismo asiento por
+     * factura que `registrar()` (reutilizado aquí), solo que las N facturas se bloquean y se cobran en una única
+     * transacción — si una falla (saldo insuficiente, ya anulada...), ninguna queda cobrada. A propósito NO comparten
+     * un solo comprobante: cada `cobros_facturacion` sigue siendo responsable de exactamente un asiento, para que
+     * `reversar()` pueda deshacer una factura del recibo sin arrastrar a las demás.
+     *
+     * @param  array{tercero_id: int, fecha: string, medio: MedioCobroFacturacion, referencia?: ?string, observacion?: ?string, aplicaciones: list<array{documento_facturacion_id: int, valor: string}>}  $datos
+     * @return Collection<int, CobroFacturacion>
+     */
+    public function registrarMultiple(array $datos, Usuario $usuario): Collection
+    {
+        return DB::transaction(function () use ($datos, $usuario) {
+            $ids = array_column($datos['aplicaciones'], 'documento_facturacion_id');
+            $facturas = $this->documentos->bloquearVarias($ids)->keyBy('id');
+
+            if ($facturas->count() !== count(array_unique($ids))) {
+                throw ValidationException::withMessages(['aplicaciones' => __('validation.custom.documento.no_pendiente_o_no_pertenece')]);
+            }
+
+            $terceroId = (int) $datos['tercero_id'];
+
+            foreach ($facturas as $factura) {
+                if ($factura->cliente->tercero_id !== $terceroId) {
+                    throw ValidationException::withMessages(['aplicaciones' => __('validation.custom.documento.no_pendiente_o_no_pertenece')]);
+                }
+            }
+
+            return collect($datos['aplicaciones'])->map(function (array $aplicacion) use ($facturas, $datos, $usuario) {
+                $factura = $facturas[$aplicacion['documento_facturacion_id']];
+
+                return $this->registrarSobreFacturaBloqueada($factura, [
+                    'fecha' => $datos['fecha'],
+                    'valor' => $aplicacion['valor'],
+                    'medio' => $datos['medio'],
+                    'referencia' => $datos['referencia'] ?? null,
+                    'observacion' => $datos['observacion'] ?? null,
+                ], $usuario);
+            })->values();
+        });
+    }
+
+    /** @param array{fecha: string, valor: string, medio: MedioCobroFacturacion, referencia?: ?string, observacion?: ?string} $datos */
+    private function registrarSobreFacturaBloqueada(DocumentoFacturacion $bloqueada, array $datos, Usuario $usuario): CobroFacturacion
+    {
+        if ($bloqueada->tipo !== TipoDocumentoFacturacion::Factura || $bloqueada->estado !== EstadoDocumentoFacturacion::Emitido) {
+            throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.cobro_no_factura_emitida')]);
+        }
+
+        $totales = $this->facturas->totales($bloqueada);
+
+        if ($totales['situacion'] === SituacionFactura::Anulada) {
+            throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.ya_anulada')]);
+        }
+
+        $valor = Dinero::desdePesos($datos['valor']);
+
+        if ($valor->mayorQue($totales['saldo'])) {
+            throw ValidationException::withMessages([
+                'valor' => __('validation.custom.facturacion.cobro_excede_saldo', ['saldo' => $totales['saldo']->aDecimalString()]),
+            ]);
+        }
+
+        $asiento = $this->asientos->contabilizarCobro($bloqueada, $valor, $datos['fecha']);
+
+        $cobro = $this->cobros->crear([
+            'documento_id' => $bloqueada->id,
+            'tipo' => MovimientoCobro::Cobro,
+            'comprobante_id' => $asiento->id,
+            'fecha' => $datos['fecha'],
+            'valor' => $valor,
+            'medio' => $datos['medio'],
+            'referencia' => $datos['referencia'] ?? null,
+            'observacion' => $datos['observacion'] ?? null,
+            'registrado_por' => $usuario->id,
+        ]);
+
+        if ($bloqueada->documento_tercero_id) {
+            $this->documentosTercero->aplicarValor(
+                $bloqueada->cliente->tercero,
+                NaturalezaDocumento::PorCobrar,
+                [['documento_tercero_id' => $bloqueada->documento_tercero_id, 'valor' => $valor]],
+                'facturacion_cobro',
+                $cobro->id,
+                $datos['fecha'],
+            );
+        }
+
+        $this->auditoria->registrar(
+            AccionAuditoria::Crear,
+            AuditoriaConstants::MODULO_FACTURACION,
+            "Cobro de {$valor->aDecimalString()} registrado en la factura {$bloqueada->numero}",
+            'cobro_facturacion',
+            $cobro->id,
+            nuevos: [
+                'documento_id' => $bloqueada->id,
+                'valor' => $valor->aDecimalString(),
+                'medio' => $cobro->medio->value,
+                'referencia' => $cobro->referencia,
+                'fecha' => $cobro->fecha->toDateString(),
+            ],
+            autor: $usuario,
+        );
+
+        return $cobro;
     }
 
     /** Reversa el cobro completo: su asiento queda anulado con un reverso enlazado y el cobro original no cambia. */

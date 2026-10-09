@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Facturacion;
 
+use App\Clientes\Models\Cliente;
 use App\Contabilidad\Enums\EstadoComprobante;
 use App\Contabilidad\Enums\EventoContable;
 use App\Contabilidad\Models\Comprobante;
@@ -33,7 +34,14 @@ class CobrosFacturacionTest extends TestCase
     private function factura(string $valor = '1000'): array
     {
         $this->crearReglasFacturacion();
-        $credito = $this->crearCredito($this->crearCliente());
+
+        return $this->facturaDeCliente($this->crearCliente(), $valor);
+    }
+
+    /** Igual que `factura()`, pero sobre un cliente ya existente — para armar varias facturas del mismo tercero. */
+    private function facturaDeCliente(Cliente $cliente, string $valor = '1000'): array
+    {
+        $credito = $this->crearCredito($cliente);
 
         $borrador = $this->postJson(self::BASE.'/documentos', [
             'credito_id' => $credito->id,
@@ -41,6 +49,18 @@ class CobrosFacturacionTest extends TestCase
         ])->assertStatus(201)->json('documento');
 
         return $this->postJson(self::BASE.'/documentos/'.$borrador['id'].'/emitir')->assertOk()->json('documento');
+    }
+
+    /** @param array<string, mixed> $datos */
+    private function cobrarMultiple(array $aplicaciones, int $terceroId, array $datos = []): TestResponse
+    {
+        return $this->postJson(self::BASE.'/cobros', array_merge([
+            'tercero_id' => $terceroId,
+            'fecha' => '2026-10-09',
+            'medio' => 'transferencia',
+            'referencia' => 'REF-MULTI',
+            'aplicaciones' => $aplicaciones,
+        ], $datos));
     }
 
     /** @param array<string, mixed> $datos */
@@ -191,5 +211,121 @@ class CobrosFacturacionTest extends TestCase
 
         $this->expectException(LogicException::class);
         CobroFacturacion::query()->firstOrFail()->delete();
+    }
+
+    public function test_cobro_multiple_sin_autenticar_recibe_401(): void
+    {
+        $this->postJson(self::BASE.'/cobros', [])->assertStatus(401);
+    }
+
+    public function test_cobro_multiple_asesor_sin_permiso_recibe_403(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
+        $cliente = $this->crearCliente();
+        $facturaUno = $this->facturaDeCliente($cliente, '1000');
+        $facturaDos = $this->facturaDeCliente($cliente, '1000');
+
+        $this->actingAsAsesor(Empresa::findOrFail($admin->empresa_id));
+
+        $this->cobrarMultiple([
+            ['documento_facturacion_id' => $facturaUno['id'], 'valor' => '100'],
+            ['documento_facturacion_id' => $facturaDos['id'], 'valor' => '100'],
+        ], $cliente->tercero_id)->assertStatus(403);
+    }
+
+    public function test_cobro_multiple_exige_al_menos_dos_aplicaciones_y_valida_los_campos(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
+        $cliente = $this->crearCliente();
+        $factura = $this->facturaDeCliente($cliente, '1000');
+
+        $this->cobrarMultiple([['documento_facturacion_id' => $factura['id'], 'valor' => '100']], $cliente->tercero_id)
+            ->assertStatus(422)->assertJsonValidationErrors('aplicaciones');
+
+        $this->cobrarMultiple([
+            ['documento_facturacion_id' => $factura['id'], 'valor' => '0'],
+            ['documento_facturacion_id' => 999999, 'valor' => '100'],
+        ], $cliente->tercero_id)->assertStatus(422)->assertJsonValidationErrors(['aplicaciones.0.valor', 'aplicaciones.1.documento_facturacion_id']);
+    }
+
+    public function test_cobro_multiple_aplica_a_dos_facturas_del_mismo_cliente_con_un_comprobante_cada_una(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
+        $cliente = $this->crearCliente();
+        $facturaUno = $this->facturaDeCliente($cliente, '1000');
+        $facturaDos = $this->facturaDeCliente($cliente, '600');
+
+        $respuesta = $this->cobrarMultiple([
+            ['documento_facturacion_id' => $facturaUno['id'], 'valor' => '1000'],
+            ['documento_facturacion_id' => $facturaDos['id'], 'valor' => '600'],
+        ], $cliente->tercero_id)->assertStatus(201);
+
+        $cobros = $respuesta->json('cobros');
+        $this->assertCount(2, $cobros);
+        $this->assertNotSame($cobros[0]['comprobante_id'], $cobros[1]['comprobante_id']);
+
+        $this->assertDatabaseHas('cobros_facturacion', ['documento_id' => $facturaUno['id'], 'valor' => 100000]);
+        $this->assertDatabaseHas('cobros_facturacion', ['documento_id' => $facturaDos['id'], 'valor' => 60000]);
+
+        $detalleUno = $this->getJson(self::BASE.'/documentos/'.$facturaUno['id'])->assertOk();
+        $detalleDos = $this->getJson(self::BASE.'/documentos/'.$facturaDos['id'])->assertOk();
+        $this->assertSame('pagada', $detalleUno->json('totales.situacion'));
+        $this->assertSame('pagada', $detalleDos->json('totales.situacion'));
+    }
+
+    public function test_cobro_multiple_rechaza_facturas_de_clientes_distintos(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
+        $facturaUno = $this->factura('1000');
+        $facturaDos = $this->factura('1000');
+
+        $this->cobrarMultiple([
+            ['documento_facturacion_id' => $facturaUno['id'], 'valor' => '100'],
+            ['documento_facturacion_id' => $facturaDos['id'], 'valor' => '100'],
+        ], $facturaUno['cliente']['tercero_id'])->assertStatus(422)->assertJsonValidationErrors('aplicaciones');
+    }
+
+    public function test_cobro_multiple_si_una_factura_excede_su_saldo_no_se_cobra_ninguna(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
+        $cliente = $this->crearCliente();
+        $facturaUno = $this->facturaDeCliente($cliente, '1000');
+        $facturaDos = $this->facturaDeCliente($cliente, '600');
+
+        $this->cobrarMultiple([
+            ['documento_facturacion_id' => $facturaUno['id'], 'valor' => '1000'],
+            ['documento_facturacion_id' => $facturaDos['id'], 'valor' => '700'],
+        ], $cliente->tercero_id)->assertStatus(422)->assertJsonValidationErrors('valor');
+
+        $this->assertDatabaseCount('cobros_facturacion', 0);
+    }
+
+    /** La razón de no compartir un comprobante entre facturas del mismo recibo: poder reversar una sin arrastrar a la otra. */
+    public function test_reversar_un_cobro_del_lote_no_afecta_al_otro(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
+        $cliente = $this->crearCliente();
+        $facturaUno = $this->facturaDeCliente($cliente, '1000');
+        $facturaDos = $this->facturaDeCliente($cliente, '600');
+
+        $cobros = $this->cobrarMultiple([
+            ['documento_facturacion_id' => $facturaUno['id'], 'valor' => '1000'],
+            ['documento_facturacion_id' => $facturaDos['id'], 'valor' => '600'],
+        ], $cliente->tercero_id)->assertStatus(201)->json('cobros');
+
+        $cobroUno = collect($cobros)->firstWhere('documento_id', $facturaUno['id']);
+
+        $this->postJson(self::BASE.'/cobros/'.$cobroUno['id'].'/reversar', ['motivo' => 'Cheque devuelto'])->assertOk();
+
+        $detalleUno = $this->getJson(self::BASE.'/documentos/'.$facturaUno['id'])->assertOk();
+        $detalleDos = $this->getJson(self::BASE.'/documentos/'.$facturaDos['id'])->assertOk();
+        $this->assertSame('emitida', $detalleUno->json('totales.situacion'));
+        $this->assertSame('pagada', $detalleDos->json('totales.situacion'));
     }
 }

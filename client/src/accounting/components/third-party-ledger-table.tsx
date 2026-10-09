@@ -12,6 +12,7 @@ import { ThirdPartySelector } from '../../third-parties/components/third-party-s
 import type { ApiThirdParty } from '../../third-parties/types/api-third-party';
 import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
+import { Checkbox } from '@ui/forms/components/checkbox';
 import { DatePicker } from '@ui/forms/components/date-picker';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
@@ -43,11 +44,37 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
     const [hasta, setHasta] = useState('');
     const [estado, setEstado] = useState('');
     const [fechaCorte, setFechaCorte] = useState(hoyBogota());
-    const [egresoModal, setEgresoModal] = useState<{ terceroId: number; documentoTerceroId: number; saldo: string } | null>(null);
+    const [seleccionPago, setSeleccionPago] = useState<Record<number, ApiCarteraDocument>>({});
+    const [egresoModalAbierto, setEgresoModalAbierto] = useState(false);
     const [mensaje, setMensaje] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const terceroId = todos ? '' : tercero ? String(tercero.id) : '';
+    const permiteSeleccionMultiple = naturaleza === 'por_pagar' && puedeRegistrarEgreso && !todos && tercero !== null;
+
+    const cambiarTercero = (nuevo: ApiThirdParty | null) => {
+        setTercero(nuevo);
+        setSeleccionPago({});
+    };
+
+    const cambiarTodos = (valor: boolean) => {
+        setTodos(valor);
+        setSeleccionPago({});
+    };
+
+    const alternarSeleccion = (documento: ApiCarteraDocument, marcado: boolean) => {
+        setSeleccionPago((anterior) => {
+            const copia = { ...anterior };
+            if (marcado) {
+                copia[documento.id] = documento;
+            } else {
+                delete copia[documento.id];
+            }
+            return copia;
+        });
+    };
+
+    const documentosSeleccionados = Object.values(seleccionPago);
 
     const { items, isLoading, page, setPage, totalPages, totalItems, refetch } = usePaginatedResource<ApiCarteraDocument>(
         todos || tercero ? '/cartera-terceros' : null,
@@ -74,9 +101,9 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="sm:col-span-2 lg:col-span-1">
                         <Label htmlFor="tercero">Tercero</Label>
-                        <ThirdPartySelector id="tercero" selected={tercero} onSelect={setTercero} />
+                        <ThirdPartySelector id="tercero" selected={tercero} onSelect={cambiarTercero} />
                         <div className="mt-2">
-                            <ToggleSwitchInput id="todos-terceros" label="Todos los terceros" checked={todos} onChange={setTodos} />
+                            <ToggleSwitchInput id="todos-terceros" label="Todos los terceros" checked={todos} onChange={cambiarTodos} />
                         </div>
                     </div>
                     <div>
@@ -105,9 +132,36 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                     {mensaje && <Alert variant="success" title="Listo" message={mensaje} onDismiss={() => setMensaje(null)} />}
                     {error && <Alert variant="danger" title="Error" message={error} onDismiss={() => setError(null)} />}
 
+                    {permiteSeleccionMultiple && documentosSeleccionados.length > 0 && (
+                        <div className="flex flex-col items-start gap-3 rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/3 sm:flex-row sm:items-center sm:justify-between">
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
+                                {documentosSeleccionados.length} {documentosSeleccionados.length === 1 ? 'documento marcado' : 'documentos marcados'} — total{' '}
+                                {formatMoney(documentosSeleccionados.reduce((suma, documento) => suma + Number(documento.saldo), 0))}
+                            </p>
+                            <Button size="sm" startIcon={<Wallet className="size-4" />} onClick={() => setEgresoModalAbierto(true)}>
+                                Pagar seleccionados
+                            </Button>
+                        </div>
+                    )}
+
                     <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                         <DataTable
                             columns={[
+                                ...(permiteSeleccionMultiple
+                                    ? [
+                                          {
+                                              key: 'seleccion',
+                                              label: '',
+                                              render: (documento: ApiCarteraDocument) =>
+                                                  Number(documento.saldo) <= 0 ? null : (
+                                                      <Checkbox
+                                                          checked={documento.id in seleccionPago}
+                                                          onChange={(marcado) => alternarSeleccion(documento, marcado)}
+                                                      />
+                                                  ),
+                                          },
+                                      ]
+                                    : []),
                                 { key: 'tipo_documento', label: 'Tipo' },
                                 { key: 'numero_documento', label: 'Número' },
                                 { key: 'fecha', label: 'Fecha', render: (documento) => formatDateEs(documento.fecha) },
@@ -158,7 +212,10 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                                                     size="sm"
                                                     variant="outline"
                                                     startIcon={<Wallet className="size-4" />}
-                                                    onClick={() => setEgresoModal({ terceroId: documento.tercero.id, documentoTerceroId: documento.id, saldo: documento.saldo })}
+                                                    onClick={() => {
+                                                        setSeleccionPago({ [documento.id]: documento });
+                                                        setEgresoModalAbierto(true);
+                                                    }}
                                                 >
                                                     Pagar
                                                 </Button>
@@ -200,16 +257,20 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                 </>
             )}
 
-            {egresoModal && (
+            {egresoModalAbierto && documentosSeleccionados.length > 0 && (
                 <RegisterOutflowModal
                     isOpen
-                    terceroId={egresoModal.terceroId}
-                    documentoTerceroId={egresoModal.documentoTerceroId}
-                    saldo={egresoModal.saldo}
-                    onClose={() => setEgresoModal(null)}
+                    terceroId={documentosSeleccionados[0].tercero.id}
+                    documentos={documentosSeleccionados.map((documento) => ({
+                        id: documento.id,
+                        numero_documento: documento.numero_documento,
+                        saldo: documento.saldo,
+                    }))}
+                    onClose={() => setEgresoModalAbierto(false)}
                     onRegistrado={(texto) => {
                         setMensaje(texto);
-                        setEgresoModal(null);
+                        setEgresoModalAbierto(false);
+                        setSeleccionPago({});
                         refetch();
                         refetchEdades();
                     }}

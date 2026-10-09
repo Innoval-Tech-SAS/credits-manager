@@ -2,7 +2,7 @@ import type { FC } from 'react';
 
 import { API_ROOT } from '../../shared/constants/api';
 import { Dropzone } from '@ui/dropzone/components/dropzone';
-import { ACCEPTED_DOCUMENT_TYPES } from '../constants/accepted-document-types';
+import { ACCEPTED_DOCUMENT_TYPES } from '../../shared/constants/accepted-document-types';
 import type { ClientDocumentsProps } from '../props/client-documents-props';
 
 export const ClientDocuments: FC<ClientDocumentsProps> = ({ documentos, canUpload, isUploading, uploadError, onUpload }) => (

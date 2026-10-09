@@ -3,6 +3,8 @@ import { Navigate, createBrowserRouter } from 'react-router';
 
 import { AccountsPayablePage } from './accounting/pages/accounts-payable-page';
 import { AccountsReceivablePage } from './accounting/pages/accounts-receivable-page';
+import { CreateAdvancePage } from './advances/pages/create-advance-page';
+import { CrossAdvancePage } from './advances/pages/cross-advance-page';
 import { ChartOfAccountsPage } from './accounting/pages/chart-of-accounts-page';
 import { CostCentersPage } from './accounting/pages/cost-centers-page';
 import { CreateAccountPage } from './accounting/pages/create-account-page';
@@ -41,6 +43,7 @@ import { ExpenseDetailPage } from './expenses/pages/expense-detail-page';
 import { ExpenseTypesPage } from './expenses/pages/expense-types-page';
 import { ExpensesListPage } from './expenses/pages/expenses-list-page';
 import { CreateInvoicePage } from './invoicing/pages/create-invoice-page';
+import { CreateMultiplePaymentPage } from './invoicing/pages/create-multiple-payment-page';
 import { InvoiceDetailPage } from './invoicing/pages/invoice-detail-page';
 import { InvoiceSequencesPage } from './invoicing/pages/invoice-sequences-page';
 import { InvoicesListPage } from './invoicing/pages/invoices-list-page';
@@ -561,6 +564,22 @@ const routes: RouteObject[] = [
                         ),
                     },
                     {
+                        path: 'contabilidad/anticipos/crear',
+                        element: (
+                            <RequireModulePermission modulo="anticipos" accion="crear">
+                                <CreateAdvancePage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/anticipos/cruzar',
+                        element: (
+                            <RequireModulePermission modulo="anticipos" accion="crear">
+                                <CrossAdvancePage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
                         path: 'contabilidad/balance-prueba',
                         element: (
                             <RequireModulePermission modulo="informes_contables" accion="listar">
@@ -637,6 +656,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="facturacion" accion="crear">
                                 <CreateInvoicePage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'facturacion/cobros/crear',
+                        element: (
+                            <RequireModulePermission modulo="facturacion" accion="crear">
+                                <CreateMultiplePaymentPage />
                             </RequireModulePermission>
                         ),
                     },

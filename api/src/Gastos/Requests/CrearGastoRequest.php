@@ -29,6 +29,7 @@ class CrearGastoRequest extends FormRequest
             'numero_documento' => ['required', 'string', 'max:60'],
             'concepto' => ['required', 'string', 'max:255'],
             'valor_bruto' => ['required', 'numeric', 'min:0.01'],
+            'soporte' => ['required', 'file', 'mimes:pdf,png,jpg,jpeg,webp', 'max:5120'],
         ];
     }
 }

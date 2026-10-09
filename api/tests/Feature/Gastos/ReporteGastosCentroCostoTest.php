@@ -9,6 +9,7 @@ use App\Exportacion\Jobs\ProcesarExportacionJob;
 use App\Gastos\Models\TipoGasto;
 use App\Gastos\Models\ValorUvt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\ActsAsAdmin;
@@ -41,6 +42,8 @@ class ReporteGastosCentroCostoTest extends TestCase
 
     private function causar(TipoGasto $tipo, CentroCosto $centro, string $fecha, int $valor): int
     {
+        Storage::fake('public');
+
         return $this->postJson('/api/v1/gastos', [
             'tipo_gasto_id' => $tipo->id,
             'centro_costo_id' => $centro->id,
@@ -48,6 +51,7 @@ class ReporteGastosCentroCostoTest extends TestCase
             'numero_documento' => 'DOC-'.uniqid(),
             'concepto' => 'Gasto de prueba',
             'valor_bruto' => $valor,
+            'soporte' => UploadedFile::fake()->create('soporte.pdf', 200, 'application/pdf'),
         ])->assertCreated()->json('gasto.id');
     }
 

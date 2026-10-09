@@ -308,6 +308,9 @@ return [
             'sin_cuenta_contable' => 'Uno de los documentos seleccionados no tiene una cuenta contable asignada.',
             'vencimiento_requerido' => 'La cuenta de este documento exige fecha de vencimiento.',
         ],
+        'anticipo' => [
+            'cruce_invalido' => 'El anticipo y el documento deben ser del mismo tercero y del lado correspondiente (anticipo a proveedor con una cuenta por pagar, anticipo de cliente con una cuenta por cobrar).',
+        ],
         'tipo_gasto' => [
             'inactivo_o_no_existe' => 'El tipo de gasto no existe o está inactivo.',
             'requiere_tercero' => 'Este tipo de gasto requiere un tercero.',

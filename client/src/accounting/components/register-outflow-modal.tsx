@@ -4,9 +4,11 @@ import { useState } from 'react';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { formatMoney } from '../../shared/utils/format-money';
+import { ACCEPTED_DOCUMENT_TYPES } from '../../shared/constants/accepted-document-types';
 import type { PaginatedResponse } from '../../shared/types/paginated-response';
 import { Button } from '@ui/button/components/button';
 import { DatePicker } from '@ui/forms/components/date-picker';
+import { Dropzone } from '@ui/dropzone/components/dropzone';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
@@ -20,25 +22,19 @@ import type { RegisterOutflowModalProps } from '../props/register-outflow-modal-
 
 const hoyBogota = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Bogota' }).format(new Date());
 
-/** Paga por completo un documento por pagar: crea el egreso, lo cruza y lo contabiliza en el servidor. */
-export const RegisterOutflowModal: FC<RegisterOutflowModalProps> = ({ isOpen, terceroId, documentoTerceroId, saldo, onClose, onRegistrado, onError }) => (
+/**
+ * Paga uno o varios documentos por pagar del mismo tercero: crea un solo egreso con una línea de crédito por cada
+ * cuenta involucrada (`EgresoService` ya agrupa así), lo cruza contra cada documento y lo contabiliza en el servidor.
+ */
+export const RegisterOutflowModal: FC<RegisterOutflowModalProps> = ({ isOpen, terceroId, documentos, onClose, onRegistrado, onError }) => (
     <Modal isOpen={isOpen} onClose={onClose} size="lg">
-        {isOpen && (
-            <FormularioEgreso
-                terceroId={terceroId}
-                documentoTerceroId={documentoTerceroId}
-                saldo={saldo}
-                onClose={onClose}
-                onRegistrado={onRegistrado}
-                onError={onError}
-            />
-        )}
+        {isOpen && <FormularioEgreso terceroId={terceroId} documentos={documentos} onClose={onClose} onRegistrado={onRegistrado} onError={onError} />}
     </Modal>
 );
 
 type FormularioEgresoProps = Omit<RegisterOutflowModalProps, 'isOpen'>;
 
-const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentoTerceroId, saldo, onClose, onRegistrado, onError }) => {
+const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, onClose, onRegistrado, onError }) => {
     const { sendRequest, isLoading } = useSendRequest();
     const { data: cuentasData, isLoading: isLoadingCuentas } = useResource<{ cuentas: ApiAccount[] }>('/contabilidad/plan-cuentas');
     const { data: tiposData, isLoading: isLoadingTipos } = useResource<PaginatedResponse<ApiVoucherType>>('/contabilidad/tipos-comprobante?per_page=100');
@@ -46,30 +42,45 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentoTerce
     const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento);
     const tipos = tiposData?.data ?? [];
 
+    const [valores, setValores] = useState<Record<number, string>>(() => Object.fromEntries(documentos.map((documento) => [documento.id, documento.saldo])));
     const [fecha, setFecha] = useState(hoyBogota());
     const [medioPago, setMedioPago] = useState<ApiOutflowPaymentMethod>('transferencia');
     const [cuentaCajaId, setCuentaCajaId] = useState('');
     const [tipoComprobanteId, setTipoComprobanteId] = useState('');
     const [concepto, setConcepto] = useState('');
+    const [soporte, setSoporte] = useState<File | null>(null);
 
-    const formularioValido = fecha !== '' && cuentaCajaId !== '' && tipoComprobanteId !== '' && concepto.trim() !== '';
+    const totalAPagar = documentos.reduce((acumulado, documento) => acumulado + (parseFloat(valores[documento.id] ?? '0') || 0), 0);
+
+    const valorValido = (documento: (typeof documentos)[number]) => {
+        const valor = valores[documento.id];
+        return valor !== undefined && valor.trim() !== '' && Number(valor) > 0 && Number(valor) <= Number(documento.saldo);
+    };
+
+    const formularioValido =
+        fecha !== '' && cuentaCajaId !== '' && tipoComprobanteId !== '' && concepto.trim() !== '' && soporte !== null && documentos.every(valorValido);
     const cargandoListas = isLoadingCuentas || isLoadingTipos;
 
     const registrar = async () => {
         try {
-            const respuesta = await sendRequest<{ egreso: ApiOutflow }>('/egresos', {
-                method: 'POST',
-                body: {
-                    tercero_id: terceroId,
-                    tipo_comprobante_id: Number(tipoComprobanteId),
-                    fecha,
-                    medio_pago: medioPago,
-                    cuenta_caja_id: Number(cuentaCajaId),
-                    concepto: concepto.trim(),
-                    aplicaciones: [{ documento_tercero_id: documentoTerceroId, valor: saldo }],
-                },
-            });
-            onRegistrado(`Egreso ${respuesta.egreso.numero} registrado. El documento quedó cruzado y contabilizado.`);
+            const formData = new FormData();
+            formData.append('tercero_id', String(terceroId));
+            formData.append('tipo_comprobante_id', tipoComprobanteId);
+            formData.append('fecha', fecha);
+            formData.append('medio_pago', medioPago);
+            formData.append('cuenta_caja_id', cuentaCajaId);
+            formData.append('concepto', concepto.trim());
+            formData.append('aplicaciones', JSON.stringify(documentos.map((documento) => ({ documento_tercero_id: documento.id, valor: valores[documento.id] }))));
+            if (soporte) {
+                formData.append('soporte', soporte);
+            }
+
+            const respuesta = await sendRequest<{ egreso: ApiOutflow }>('/egresos', { method: 'POST', body: formData });
+            onRegistrado(
+                documentos.length === 1
+                    ? `Egreso ${respuesta.egreso.numero} registrado. El documento quedó cruzado y contabilizado.`
+                    : `Egreso ${respuesta.egreso.numero} registrado sobre ${documentos.length} documentos.`,
+            );
         } catch (caught) {
             onError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         }
@@ -79,8 +90,35 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentoTerce
         <div className="flex flex-col gap-5">
             <div className="flex flex-col gap-1 pr-10">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Registrar pago</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Valor a pagar: {formatMoney(saldo)}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {documentos.length === 1 ? `Valor a pagar: ${formatMoney(documentos[0].saldo)}` : `${documentos.length} documentos — total ${formatMoney(totalAPagar)}`}
+                </p>
             </div>
+
+            {documentos.length > 1 && (
+                <div className="flex flex-col gap-3">
+                    {documentos.map((documento) => (
+                        <div
+                            key={documento.id}
+                            className="grid grid-cols-1 gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800 sm:grid-cols-[1fr_auto_auto] sm:items-center"
+                        >
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{documento.numero_documento}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 sm:text-right">Saldo: {formatMoney(documento.saldo)}</p>
+                            <div className="sm:w-36">
+                                <Input
+                                    type="number"
+                                    min="0.01"
+                                    step={0.01}
+                                    max={documento.saldo}
+                                    value={valores[documento.id] ?? ''}
+                                    error={!valorValido(documento)}
+                                    onChange={(event) => setValores((anterior) => ({ ...anterior, [documento.id]: event.target.value }))}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {cargandoListas ? (
                 <div className="flex justify-center py-8">
@@ -119,6 +157,19 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentoTerce
                     <div className="sm:col-span-2">
                         <Label htmlFor="egreso-concepto">Concepto</Label>
                         <Input id="egreso-concepto" value={concepto} maxLength={255} onChange={(event) => setConcepto(event.target.value)} />
+                    </div>
+                    <div className="sm:col-span-2">
+                        <Label htmlFor="egreso-soporte">Soporte (transferencia, cheque o planilla bancaria)</Label>
+                        {soporte ? (
+                            <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm dark:border-gray-800">
+                                <span className="text-gray-700 dark:text-gray-300">{soporte.name}</span>
+                                <button type="button" className="text-error-600 hover:underline dark:text-error-400" onClick={() => setSoporte(null)}>
+                                    Quitar
+                                </button>
+                            </div>
+                        ) : (
+                            <Dropzone accept={ACCEPTED_DOCUMENT_TYPES} hint="PDF, PNG, JPG o WEBP" onFileAccepted={setSoporte} />
+                        )}
                     </div>
                 </div>
             )}

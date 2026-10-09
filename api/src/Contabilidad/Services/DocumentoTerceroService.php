@@ -54,6 +54,11 @@ class DocumentoTerceroService
         return $this->documentos->porIds($ids);
     }
 
+    public function bloquearPorId(int $id): DocumentoTercero
+    {
+        return $this->documentos->bloquearPorId($id);
+    }
+
     public function crearDocumento(
         Tercero $tercero,
         NaturalezaDocumento $naturaleza,

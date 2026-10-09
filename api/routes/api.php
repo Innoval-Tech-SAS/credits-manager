@@ -1,5 +1,6 @@
 <?php
 
+use App\Anticipos\Controllers\AnticipoController;
 use App\Auditoria\Controllers\BitacoraAuditoriaController;
 use App\Auditoria\Controllers\RecuperacionAuditoriaController;
 use App\Auth\Controllers\AuthController;
@@ -301,6 +302,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/facturacion/documentos/{documento}/notas', [DocumentoFacturacionController::class, 'nota'])->middleware('permiso:facturacion,anular');
     Route::post('/facturacion/documentos/{documento}/anular', [DocumentoFacturacionController::class, 'anular'])->middleware('permiso:facturacion,anular');
     Route::post('/facturacion/documentos/{documento}/cobros', [CobroFacturacionController::class, 'store'])->middleware('permiso:facturacion,crear');
+    Route::post('/facturacion/cobros', [CobroFacturacionController::class, 'storeMultiple'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/cobros/{cobro}/reversar', [CobroFacturacionController::class, 'reversar'])->middleware('permiso:facturacion,anular');
     Route::get('/facturacion/documentos/{documento}/pdf', [DocumentoFacturacionController::class, 'pdf'])->middleware('permiso:facturacion,imprimir');
     Route::get('/facturacion/consecutivos', [ConsecutivoFacturacionController::class, 'index'])->middleware('permiso:facturacion,listar');
@@ -311,4 +313,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/egresos', [EgresoController::class, 'index'])->middleware('permiso:egresos,listar');
     Route::post('/egresos', [EgresoController::class, 'store'])->middleware('permiso:egresos,crear');
+    Route::post('/anticipos/proveedores', [AnticipoController::class, 'storeProveedor'])->middleware('permiso:anticipos,crear');
+    Route::post('/anticipos/clientes', [AnticipoController::class, 'storeCliente'])->middleware('permiso:anticipos,crear');
+    Route::post('/anticipos/cruzar', [AnticipoController::class, 'cruzar'])->middleware('permiso:anticipos,crear');
 });

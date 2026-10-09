@@ -37,6 +37,7 @@ class EmpresaConstants
             'facturacion.listar', 'facturacion.crear', 'facturacion.anular', 'facturacion.imprimir', 'facturacion.configurar',
             'gastos.listar', 'gastos.crear', 'gastos.anular', 'gastos.parametrizar', 'gastos.exportar',
             'egresos.listar', 'egresos.crear',
+            'anticipos.listar', 'anticipos.crear',
             'cartera.listar', 'cartera.exportar', 'cartera.imprimir_reporte_empleador',
             'clientes.listar', 'clientes.ver', 'clientes.exportar',
             'pagos.exportar', 'pagos.reversar', 'recibos.listar',

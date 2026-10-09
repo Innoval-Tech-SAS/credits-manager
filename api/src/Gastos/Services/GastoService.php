@@ -10,6 +10,7 @@ use App\Contabilidad\Models\AplicacionDocumento;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Contabilidad\Services\DocumentoTerceroService;
 use App\Core\Dinero\Dinero;
+use App\Documentos\Services\ArchivoAdjuntoService;
 use App\Exportacion\Enums\FormatoExportacion;
 use App\Exportacion\Models\Exportacion;
 use App\Exportacion\Services\ExportacionService;
@@ -26,6 +27,7 @@ use App\Gastos\Repositories\ValorUvtRepository;
 use App\Terceros\Repositories\TerceroRepository;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -46,6 +48,7 @@ class GastoService
         protected DocumentoTerceroService $documentosTercero,
         protected EmisorAuditoria $auditoria,
         protected ExportacionService $exportaciones,
+        protected ArchivoAdjuntoService $archivos,
     ) {}
 
     public function solicitarExportacion(Usuario $usuario, ?string $busqueda, FormatoExportacion $formato): Exportacion
@@ -63,9 +66,13 @@ class GastoService
         return $this->gastos->obtenerConDetalle($gasto);
     }
 
-    public function causar(array $datos): Gasto
+    /**
+     * `$soporte` es nulo solo desde la importación histórica (`ProcesadorGastos`): un gasto nuevo digitado por el
+     * usuario siempre trae su soporte porque `CrearGastoRequest` lo exige antes de llegar aquí.
+     */
+    public function causar(array $datos, ?UploadedFile $soporte = null): Gasto
     {
-        return DB::transaction(function () use ($datos) {
+        return DB::transaction(function () use ($datos, $soporte) {
             $tipoGasto = $this->tiposGasto->activo($datos['tipo_gasto_id']);
             if (! $tipoGasto) {
                 throw ValidationException::withMessages([
@@ -131,6 +138,10 @@ class GastoService
                 'estado' => EstadoGasto::Causado,
                 'creado_por' => Auth::id(),
             ]);
+
+            if ($soporte) {
+                $this->archivos->subir($gasto, $soporte);
+            }
 
             $comprobante = $this->comprobantes->crearComprobante(
                 $parametrizacion->tipo_comprobante_id,

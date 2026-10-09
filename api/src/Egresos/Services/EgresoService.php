@@ -10,10 +10,12 @@ use App\Contabilidad\Services\DocumentoTerceroService;
 use App\Core\Consecutivos\Enums\TipoDocumentoConsecutivo;
 use App\Core\Consecutivos\Services\ConsecutivoDocumentoService;
 use App\Core\Dinero\Dinero;
+use App\Documentos\Services\ArchivoAdjuntoService;
 use App\Egresos\Enums\MedioPagoEgreso;
 use App\Egresos\Models\Egreso;
 use App\Egresos\Repositories\EgresoRepository;
 use App\Terceros\Repositories\TerceroRepository;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +34,7 @@ class EgresoService
         protected ComprobanteService $comprobantes,
         protected ConsecutivoDocumentoService $consecutivos,
         protected EmisorAuditoria $auditoria,
+        protected ArchivoAdjuntoService $archivos,
     ) {}
 
     public function listar(?int $terceroId, ?string $desde, ?string $hasta, int $porPagina, int $pagina): LengthAwarePaginator
@@ -46,9 +49,9 @@ class EgresoService
     /**
      * @param  array{tercero_id: int, fecha: string, medio_pago: string, cuenta_caja_id: int, tipo_comprobante_id: int, concepto: string, aplicaciones: list<array{documento_tercero_id: int, valor: string}>}  $datos
      */
-    public function registrar(array $datos): Egreso
+    public function registrar(array $datos, UploadedFile $soporte): Egreso
     {
-        return DB::transaction(function () use ($datos) {
+        return DB::transaction(function () use ($datos, $soporte) {
             $tercero = $this->terceros->buscarPorIdOFallar($datos['tercero_id']);
 
             $ids = array_column($datos['aplicaciones'], 'documento_tercero_id');
@@ -97,6 +100,8 @@ class EgresoService
                 'concepto' => $datos['concepto'],
                 'creado_por' => Auth::id(),
             ]);
+
+            $this->archivos->subir($egreso, $soporte);
 
             $lineasComprobante = [];
 

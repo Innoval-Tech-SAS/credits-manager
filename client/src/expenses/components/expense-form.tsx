@@ -3,11 +3,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { ACCEPTED_DOCUMENT_TYPES } from '../../shared/constants/accepted-document-types';
 import { MunicipalitySelector } from '../../geography/components/municipality-selector';
 import { ThirdPartySelector } from '../../third-parties/components/third-party-selector';
 import type { ApiThirdParty } from '../../third-parties/types/api-third-party';
 import { Button } from '@ui/button/components/button';
 import { DatePicker } from '@ui/forms/components/date-picker';
+import { Dropzone } from '@ui/dropzone/components/dropzone';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
@@ -33,6 +35,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
     const [numeroDocumento, setNumeroDocumento] = useState('');
     const [concepto, setConcepto] = useState('');
     const [valorBruto, setValorBruto] = useState('');
+    const [soporte, setSoporte] = useState<File | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -49,20 +52,29 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
         setIsSubmitting(true);
 
         try {
-            const respuesta = await sendRequest<{ gasto: ApiExpense }>('/gastos', {
-                method: 'POST',
-                body: {
-                    tipo_gasto_id: Number(tipoGastoId),
-                    tercero_id: tercero?.id ?? null,
-                    municipio_id: municipioId ? Number(municipioId) : null,
-                    centro_costo_id: centroCostoId ? Number(centroCostoId) : null,
-                    fecha,
-                    fecha_vencimiento: fechaVencimiento || null,
-                    numero_documento: numeroDocumento,
-                    concepto,
-                    valor_bruto: parseFloat(valorBruto) || 0,
-                },
-            });
+            const formData = new FormData();
+            formData.append('tipo_gasto_id', tipoGastoId);
+            if (tercero) {
+                formData.append('tercero_id', String(tercero.id));
+            }
+            if (municipioId) {
+                formData.append('municipio_id', municipioId);
+            }
+            if (centroCostoId) {
+                formData.append('centro_costo_id', centroCostoId);
+            }
+            formData.append('fecha', fecha);
+            if (fechaVencimiento) {
+                formData.append('fecha_vencimiento', fechaVencimiento);
+            }
+            formData.append('numero_documento', numeroDocumento);
+            formData.append('concepto', concepto);
+            formData.append('valor_bruto', String(parseFloat(valorBruto) || 0));
+            if (soporte) {
+                formData.append('soporte', soporte);
+            }
+
+            const respuesta = await sendRequest<{ gasto: ApiExpense }>('/gastos', { method: 'POST', body: formData });
 
             navigate(`/gastos/${respuesta.gasto.id}`, { replace: true, state: { message: 'Gasto causado y contabilizado correctamente.' } });
         } catch (caught) {
@@ -152,6 +164,20 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                     <MunicipalitySelector onChange={setMunicipioId} />
                 </div>
 
+                <div>
+                    <Label htmlFor="soporte">Soporte (factura o documento del proveedor)</Label>
+                    {soporte ? (
+                        <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm dark:border-gray-800">
+                            <span className="text-gray-700 dark:text-gray-300">{soporte.name}</span>
+                            <button type="button" className="text-error-600 hover:underline dark:text-error-400" onClick={() => setSoporte(null)}>
+                                Quitar
+                            </button>
+                        </div>
+                    ) : (
+                        <Dropzone accept={ACCEPTED_DOCUMENT_TYPES} hint="PDF, PNG, JPG o WEBP" onFileAccepted={setSoporte} />
+                    )}
+                </div>
+
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                     El IVA y las retenciones (ReteFuente, ReteICA, ReteIVA) se calculan automáticamente según la parametrización vigente
                     del tipo de gasto y los datos fiscales del tercero — no se digitan aquí.
@@ -160,7 +186,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                     <Button
                         type="submit"
-                        disabled={isSubmitting || !tipoGastoId || (requiereTercero && !tercero)}
+                        disabled={isSubmitting || !tipoGastoId || !soporte || (requiereTercero && !tercero)}
                         startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
                         endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                     >

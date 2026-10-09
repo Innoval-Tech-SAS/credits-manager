@@ -27,7 +27,7 @@ class EgresoController extends Controller
 
     public function store(CrearEgresoRequest $peticion): JsonResponse
     {
-        $egreso = $this->egresos->registrar($peticion->validated());
+        $egreso = $this->egresos->registrar($peticion->validated(), $peticion->file('soporte'));
 
         return response()->json(['egreso' => $egreso], 201);
     }
