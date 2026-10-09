@@ -95,7 +95,7 @@ class ComprobanteService
         }
 
         if ($moduloOrigen === 'manual') {
-            $this->exigirCentroCostoSegunCuenta($lineas);
+            $this->exigirRequisitosParametrizados($lineas, $terceroId, $documentoSoporte);
         }
 
         $periodo = $this->periodos->obtenerAbierto($fecha);
@@ -316,16 +316,33 @@ class ComprobanteService
         });
     }
 
-    /** Una cuenta marcada `exige_centro_costo` lo exige en cada línea que la use, también en un asiento manual. */
-    private function exigirCentroCostoSegunCuenta(array $lineas): void
+    /**
+     * Cada cuenta declara qué exige al usarse en un asiento manual (centro de costo, tercero, documento cruce). El
+     * tercero se resuelve igual que al armar las líneas (`$linea['tercero_id'] ?? $terceroId`, el único del
+     * comprobante hoy) y el documento cruce es `documento_soporte`: no hay un campo de cruce por línea todavía.
+     * Los flujos automáticos resuelven esos datos por su cuenta y no pasan por aquí.
+     */
+    private function exigirRequisitosParametrizados(array $lineas, ?int $terceroId, ?string $documentoSoporte): void
     {
         $cuentas = PlanCuenta::query()->whereIn('id', array_column($lineas, 'cuenta_id'))->get()->keyBy('id');
 
         foreach ($lineas as $linea) {
-            $exigeCentroCosto = $cuentas[$linea['cuenta_id']]->exige_centro_costo ?? false;
+            $cuenta = $cuentas[$linea['cuenta_id']] ?? null;
 
-            if ($exigeCentroCosto && empty($linea['centro_costo_id'])) {
+            if (! $cuenta) {
+                continue;
+            }
+
+            if ($cuenta->exige_centro_costo && empty($linea['centro_costo_id'])) {
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.centro_costo_requerido')]);
+            }
+
+            if ($cuenta->exige_tercero && empty($linea['tercero_id'] ?? $terceroId)) {
+                throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.tercero_requerido')]);
+            }
+
+            if ($cuenta->exige_documento_cruce && empty($documentoSoporte)) {
+                throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.documento_cruce_requerido')]);
             }
         }
     }

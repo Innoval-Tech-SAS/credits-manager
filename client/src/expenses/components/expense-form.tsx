@@ -29,6 +29,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
     const [municipioId, setMunicipioId] = useState('');
     const [centroCostoId, setCentroCostoId] = useState('');
     const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
+    const [fechaVencimiento, setFechaVencimiento] = useState('');
     const [numeroDocumento, setNumeroDocumento] = useState('');
     const [concepto, setConcepto] = useState('');
     const [valorBruto, setValorBruto] = useState('');
@@ -56,6 +57,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                     municipio_id: municipioId ? Number(municipioId) : null,
                     centro_costo_id: centroCostoId ? Number(centroCostoId) : null,
                     fecha,
+                    fecha_vencimiento: fechaVencimiento || null,
                     numero_documento: numeroDocumento,
                     concepto,
                     valor_bruto: parseFloat(valorBruto) || 0,
@@ -122,6 +124,13 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                     <div className="md:col-span-2">
                         <Label htmlFor="concepto">Concepto</Label>
                         <Input id="concepto" name="concepto" required value={concepto} onChange={(event) => setConcepto(event.target.value)} />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <div>
+                        <Label htmlFor="fecha-vencimiento">Fecha de vencimiento (opcional)</Label>
+                        <DatePicker id="fecha-vencimiento" name="fecha-vencimiento" value={fechaVencimiento} onChange={setFechaVencimiento} />
                     </div>
                 </div>
 

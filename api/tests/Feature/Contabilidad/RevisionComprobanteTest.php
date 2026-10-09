@@ -218,6 +218,52 @@ class RevisionComprobanteTest extends TestCase
         $this->postJson(self::BASE, $payload)->assertStatus(201);
     }
 
+    public function test_un_asiento_manual_con_cuenta_que_exige_tercero_lo_exige(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->creador($empresa);
+        $cuentaCxp = $this->crearCuenta(['exige_tercero' => true]);
+        $cuentaBanco = $this->crearCuenta();
+        $payload = [
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Pago a proveedor',
+            'lineas' => [
+                ['cuenta_id' => $cuentaCxp->id, 'debito' => 80, 'credito' => 0],
+                ['cuenta_id' => $cuentaBanco->id, 'debito' => 0, 'credito' => 80],
+            ],
+        ];
+
+        $this->postJson(self::BASE, $payload)->assertStatus(422)->assertJsonValidationErrors('lineas');
+
+        $payload['tercero_id'] = $this->crearTercero()->id;
+
+        $this->postJson(self::BASE, $payload)->assertStatus(201);
+    }
+
+    public function test_un_asiento_manual_con_cuenta_que_exige_documento_cruce_lo_exige(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->creador($empresa);
+        $cuentaCxp = $this->crearCuenta(['exige_documento_cruce' => true]);
+        $cuentaBanco = $this->crearCuenta();
+        $payload = [
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Pago a proveedor',
+            'lineas' => [
+                ['cuenta_id' => $cuentaCxp->id, 'debito' => 80, 'credito' => 0],
+                ['cuenta_id' => $cuentaBanco->id, 'debito' => 0, 'credito' => 80],
+            ],
+        ];
+
+        $this->postJson(self::BASE, $payload)->assertStatus(422)->assertJsonValidationErrors('lineas');
+
+        $payload['documento_soporte'] = 'FE-4587';
+
+        $this->postJson(self::BASE, $payload)->assertStatus(201);
+    }
+
     public function test_sin_autenticar_no_puede_contabilizar(): void
     {
         $this->postJson(self::BASE.'/1/contabilizar')->assertStatus(401);

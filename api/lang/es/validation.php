@@ -233,7 +233,9 @@ return [
         'lineas' => [
             'descuadrado' => 'Comprobante descuadrado: débitos :debito distintos de créditos :credito. No se puede contabilizar.',
             'sin_valor' => 'El comprobante no tiene valor.',
-            'centro_costo_requerido' => 'Las cuentas de gasto y costo necesitan un centro de costo en cada línea.',
+            'centro_costo_requerido' => 'Esta cuenta exige centro de costo en cada línea que la use.',
+            'tercero_requerido' => 'Esta cuenta exige tercero: selecciona uno para el comprobante.',
+            'documento_cruce_requerido' => 'Esta cuenta exige documento cruce: indica el documento soporte.',
         ],
         'periodo' => [
             'no_cerrado' => 'Solo se puede solicitar la reapertura de un período cerrado.',
@@ -304,6 +306,7 @@ return [
             'saldo_insuficiente' => 'El valor a aplicar debe ser mayor a cero y no puede superar el saldo pendiente del documento.',
             'no_pendiente_o_no_pertenece' => 'Uno de los documentos seleccionados no pertenece a este tercero o ya no está pendiente.',
             'sin_cuenta_contable' => 'Uno de los documentos seleccionados no tiene una cuenta contable asignada.',
+            'vencimiento_requerido' => 'La cuenta de este documento exige fecha de vencimiento.',
         ],
         'tipo_gasto' => [
             'inactivo_o_no_existe' => 'El tipo de gasto no existe o está inactivo.',
