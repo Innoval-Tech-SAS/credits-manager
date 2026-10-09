@@ -40,6 +40,7 @@ class ClienteService
         protected AsignacionAsesorService $asignaciones,
         protected EmisorAuditoria $auditoria,
         protected ExportacionService $exportaciones,
+        protected ComportamientoMensualService $comportamiento,
     ) {}
 
     public function solicitarExportacion(
@@ -210,6 +211,7 @@ class ClienteService
             'ultimos_pagos' => $this->pagos->porCliente($cliente->id),
             'documentos' => $cliente->documentos()->orderByDesc('creado_en')->get(),
             'historial_empleadores' => $cliente->historialEmpleadores()->with('empleador')->orderByDesc('fecha_inicio')->get(),
+            'comportamiento_mensual' => $this->comportamiento->serie($cliente->id),
         ];
     }
 }

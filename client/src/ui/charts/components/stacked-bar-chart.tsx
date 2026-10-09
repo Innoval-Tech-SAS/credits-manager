@@ -4,7 +4,7 @@ import Chart from 'react-apexcharts';
 
 import type { StackedBarChartProps } from '../props/stacked-bar-chart-props';
 
-export const StackedBarChart: FC<StackedBarChartProps> = ({ categories, series, height = 300, valueFormatter }) => {
+export const StackedBarChart: FC<StackedBarChartProps> = ({ categories, series, height = 300, valueFormatter, integerValues = false }) => {
     const formatear = valueFormatter ?? ((value: number) => value.toLocaleString('es-CO'));
 
     const options: ApexOptions = {
@@ -18,7 +18,7 @@ export const StackedBarChart: FC<StackedBarChartProps> = ({ categories, series, 
             axisBorder: { show: false },
             axisTicks: { show: false },
         },
-        yaxis: { labels: { formatter: formatear } },
+        yaxis: { labels: { formatter: formatear }, ...(integerValues && { forceNiceScale: true, decimalsInFloat: 0 }) },
         grid: { yaxis: { lines: { show: true } } },
         legend: { position: 'top', horizontalAlign: 'right', fontFamily: 'Outfit, sans-serif', markers: { size: 6 } },
         tooltip: { y: { formatter: formatear } },

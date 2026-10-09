@@ -14,6 +14,7 @@ import { ClientCreditsTable } from '../components/client-credits-table';
 import { ClientDocuments } from '../components/client-documents';
 import { ClientEmploymentHistoryTable } from '../components/client-employment-history-table';
 import { ClientInfoCard } from '../components/client-info-card';
+import { ClientMonthlyBehaviorCard } from '../components/client-monthly-behavior-card';
 import { ClientSummaryCards } from '../components/client-summary-cards';
 import { WhatsAppButton } from '../components/whatsapp-button';
 import { EmailDispatchesCard } from '../../email/components/email-dispatches-card';
@@ -81,6 +82,7 @@ export const ClientDetailPage: FC = () => {
         ultimos_pagos: ultimosPagos,
         documentos: documentosIniciales,
         historial_empleadores: historialEmpleadores,
+        comportamiento_mensual: comportamientoMensual,
     } = resumen;
     const documentos = [...documentosNuevos, ...documentosIniciales];
 
@@ -102,6 +104,8 @@ export const ClientDetailPage: FC = () => {
             </div>
 
             <ClientSummaryCards cliente={cliente} saldoConsolidado={saldoConsolidado} creditosCount={creditos.length} />
+
+            <ClientMonthlyBehaviorCard comportamiento={comportamientoMensual} />
 
             <div className="mb-6">
                 <ClientInfoCard cliente={cliente} canEdit={canEdit} onEdit={() => navigate(`/clientes/${cliente.id}/editar`)} />
