@@ -20,7 +20,7 @@ class ExtractoBancarioRepository extends BaseRepository
     {
         return $this->consulta()
             ->where('cuenta_bancaria_id', $cuentaBancariaId)
-            ->orderByDesc('periodo')
+            ->orderByDesc('fecha_desde')
             ->get();
     }
 

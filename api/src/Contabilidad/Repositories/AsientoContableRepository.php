@@ -7,6 +7,7 @@ use App\Contabilidad\Support\EfectoContable;
 use App\Core\Base\BaseRepository;
 use App\Core\Dinero\Dinero;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 
@@ -200,6 +201,39 @@ class AsientoContableRepository extends BaseRepository
                 'asientos_contables.debito',
                 'asientos_contables.credito',
                 'terceros.nombre as tercero',
+            ])
+            ->get();
+    }
+
+    /**
+     * Asientos de una cuenta en el rango que todavía no tienen una marca de conciliación vigente (conciliado
+     * sin reversa): base del lado "libro" para sugerir candidatos de conciliación bancaria.
+     */
+    public function candidatosConciliables(int $empresaId, int $cuentaId, string $desde, string $hasta): Collection
+    {
+        return $this->consultaAuxiliar($empresaId, $cuentaId, null)
+            ->whereBetween('comprobantes.fecha', [$desde, $hasta])
+            ->whereNotExists(function (QueryBuilder $consulta) {
+                $consulta->selectRaw('1')
+                    ->from('marcas_conciliacion as mc')
+                    ->whereColumn('mc.asiento_contable_id', 'asientos_contables.id')
+                    ->where('mc.tipo', 'conciliado')
+                    ->whereNotExists(function (QueryBuilder $reversa) {
+                        $reversa->selectRaw('1')->from('marcas_conciliacion as r')->whereColumn('r.marca_origen_id', 'mc.id');
+                    });
+            })
+            ->orderBy('comprobantes.fecha')
+            ->select([
+                'asientos_contables.id',
+                'comprobantes.id as comprobante_id',
+                'comprobantes.fecha',
+                'comprobantes.consecutivo',
+                'comprobantes.modulo_origen',
+                'comprobantes.origen_id',
+                'tipos_comprobante.codigo as tipo_comprobante',
+                'asientos_contables.descripcion',
+                'asientos_contables.debito',
+                'asientos_contables.credito',
             ])
             ->get();
     }

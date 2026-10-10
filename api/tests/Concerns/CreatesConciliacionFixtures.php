@@ -3,9 +3,14 @@
 namespace Tests\Concerns;
 
 use App\Conciliacion\Enums\Banco;
+use App\Conciliacion\Enums\EstadoExtracto;
+use App\Conciliacion\Enums\EstadoMovimientoExtracto;
 use App\Conciliacion\Enums\TipoCuentaBancaria;
 use App\Conciliacion\Models\CuentaBancaria;
+use App\Conciliacion\Models\ExtractoBancario;
+use App\Conciliacion\Models\MovimientoExtracto;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use OpenSpout\Common\Entity\Cell\EmptyCell;
 use OpenSpout\Common\Entity\Cell\NumericCell;
 use OpenSpout\Common\Entity\Cell\StringCell;
@@ -27,6 +32,39 @@ trait CreatesConciliacionFixtures
             'numero_cuenta' => "1234567890{$contador}",
             'tipo_cuenta' => TipoCuentaBancaria::Ahorros,
             'plan_cuenta_id' => $this->crearCuenta()->id,
+        ], $overrides));
+    }
+
+    /** Extracto ya cargado (sin pasar por el job asíncrono): para tests de matching que no necesitan probar la carga. */
+    protected function crearExtractoBancario(CuentaBancaria $cuenta, array $overrides = []): ExtractoBancario
+    {
+        return ExtractoBancario::create(array_merge([
+            'cuenta_bancaria_id' => $cuenta->id,
+            'fecha_desde' => '2026-10-01',
+            'fecha_hasta' => '2026-10-10',
+            'saldo_anterior' => 0,
+            'total_abonos' => 0,
+            'total_cargos' => 0,
+            'saldo_actual' => 0,
+            'archivo_ruta' => 'conciliacion/extracto-de-prueba.xlsx',
+            'estado' => EstadoExtracto::Cargado,
+            'cargado_por' => Auth::id(),
+        ], $overrides));
+    }
+
+    protected function crearMovimientoExtracto(ExtractoBancario $extracto, array $overrides = []): MovimientoExtracto
+    {
+        static $orden = 0;
+        $orden++;
+
+        return MovimientoExtracto::create(array_merge([
+            'extracto_bancario_id' => $extracto->id,
+            'fecha' => '2026-10-05',
+            'descripcion' => 'CONSIGNACION',
+            'orden' => $orden,
+            'valor' => 1000,
+            'saldo' => 1000,
+            'estado' => EstadoMovimientoExtracto::Pendiente,
         ], $overrides));
     }
 
