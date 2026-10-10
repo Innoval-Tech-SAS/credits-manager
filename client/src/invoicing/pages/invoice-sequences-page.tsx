@@ -18,9 +18,12 @@ type Borrador = { prefijo: string; numeroInicial: string };
 export const InvoiceSequencesPage: FC = () => {
     const puedeConfigurar = usePermission('facturacion', 'configurar');
     const { sendRequest, isLoading: guardando } = useSendRequest();
+    const { sendRequest: sendRequestTope, isLoading: guardandoTope } = useSendRequest();
     const { data, error, refetch } = useResource<{ consecutivos: ApiInvoiceSequence[] }>('/facturacion/consecutivos');
+    const { data: configuracion, refetch: refetchConfiguracion } = useResource<{ parametros: { nota_debito_tope: string } }>('/facturacion/configuracion');
 
     const [borradores, setBorradores] = useState<Record<string, Borrador>>({});
+    const [topeBorrador, setTopeBorrador] = useState<string | null>(null);
     const [mensaje, setMensaje] = useState<string | null>(null);
     const [errorAccion, setErrorAccion] = useState<string | null>(null);
 
@@ -41,6 +44,26 @@ export const InvoiceSequencesPage: FC = () => {
 
     const cambiar = (secuencia: ApiInvoiceSequence, campo: keyof Borrador, valor: string) => {
         setBorradores({ ...borradores, [secuencia.tipo]: { ...borradorDe(secuencia), [campo]: valor } });
+    };
+
+    const topeActual = configuracion?.parametros.nota_debito_tope ?? '';
+    const topeValor = topeBorrador ?? topeActual;
+
+    const guardarTope = async () => {
+        if (topeBorrador === null) {
+            return;
+        }
+
+        try {
+            await sendRequestTope('/facturacion/configuracion', { method: 'PUT', body: { nota_debito_tope: topeBorrador } });
+            setTopeBorrador(null);
+            setErrorAccion(null);
+            setMensaje('Tope de nota débito guardado.');
+            void refetchConfiguracion();
+        } catch (caught) {
+            setMensaje(null);
+            setErrorAccion(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
+        }
     };
 
     const guardar = async (secuencia: ApiInvoiceSequence) => {
@@ -71,6 +94,30 @@ export const InvoiceSequencesPage: FC = () => {
 
             {mensaje && <Alert variant="success" title="Listo" message={mensaje} onDismiss={() => setMensaje(null)} />}
             {errorAccion && <Alert variant="danger" title="No se pudo guardar" message={errorAccion} onDismiss={() => setErrorAccion(null)} />}
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+                <h3 className="mb-1 text-base font-semibold text-gray-800 dark:text-white/90">Tope de la nota débito</h3>
+                <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Valor máximo que puede sumar una nota débito sobre una factura.</p>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-[1fr_auto] md:items-end">
+                    <div>
+                        <Label htmlFor="nota-debito-tope">Valor máximo</Label>
+                        <Input
+                            id="nota-debito-tope"
+                            type="number"
+                            min="0.01"
+                            step={0.01}
+                            value={topeValor}
+                            disabled={!puedeConfigurar || !configuracion}
+                            onChange={(event) => setTopeBorrador(event.target.value)}
+                        />
+                    </div>
+                    {puedeConfigurar && (
+                        <Button disabled={topeBorrador === null || guardandoTope} onClick={() => void guardarTope()}>
+                            Guardar
+                        </Button>
+                    )}
+                </div>
+            </div>
 
             <div className="flex flex-col gap-4">
                 {data.consecutivos.map((secuencia) => {

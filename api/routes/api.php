@@ -30,6 +30,7 @@ use App\Empresas\Controllers\EmpresaAdminController;
 use App\Empresas\Controllers\EmpresaController;
 use App\Exportacion\Controllers\ExportacionController;
 use App\Facturacion\Controllers\CobroFacturacionController;
+use App\Facturacion\Controllers\ConfiguracionFacturacionController;
 use App\Facturacion\Controllers\ConsecutivoFacturacionController;
 use App\Facturacion\Controllers\DocumentoFacturacionController;
 use App\Gastos\Controllers\ActividadEconomicaController;
@@ -310,6 +311,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/facturacion/documentos/{documento}/pdf', [DocumentoFacturacionController::class, 'pdf'])->middleware('permiso:facturacion,imprimir');
     Route::get('/facturacion/consecutivos', [ConsecutivoFacturacionController::class, 'index'])->middleware('permiso:facturacion,listar');
     Route::patch('/facturacion/consecutivos/{tipo}', [ConsecutivoFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');
+    Route::get('/facturacion/configuracion', [ConfiguracionFacturacionController::class, 'show'])->middleware('permiso:facturacion,listar');
+    Route::put('/facturacion/configuracion', [ConfiguracionFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');
     Route::post('/gastos', [GastoController::class, 'store'])->middleware('permiso:gastos,crear');
     Route::get('/gastos/{gasto}', [GastoController::class, 'show'])->middleware('permiso:gastos,listar');
     Route::delete('/gastos/{gasto}', [GastoController::class, 'destroy'])->middleware('permiso:gastos,anular');

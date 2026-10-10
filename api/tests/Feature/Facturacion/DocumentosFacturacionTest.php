@@ -197,6 +197,38 @@ class DocumentosFacturacionTest extends TestCase
         $this->assertFalse($detalle->json('totales.anulada'));
     }
 
+    public function test_nota_debito_que_supera_el_tope_configurado_de_la_empresa_se_rechaza(): void
+    {
+        $this->actingAsAdmin();
+        $factura = $this->factura($this->credito(), ['1000']);
+
+        // El default es 1.000.000; una nota de 1.000.000,01 lo supera.
+        $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
+            'tipo' => 'nota_debito', 'motivo' => 'Cargo excesivo',
+            'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Gastos de cobranza', 'valor' => '1000000.01']],
+        ])->assertStatus(422)->assertJsonValidationErrors('lineas');
+
+        $this->assertDatabaseMissing('documentos_facturacion', ['tipo' => 'nota_debito']);
+    }
+
+    public function test_nota_debito_dentro_del_tope_reconfigurado_se_acepta(): void
+    {
+        $this->actingAsAdmin();
+        $this->putJson('/api/v1/facturacion/configuracion', ['nota_debito_tope' => '100'])->assertOk();
+
+        $factura = $this->factura($this->credito(), ['1000']);
+
+        $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
+            'tipo' => 'nota_debito', 'motivo' => 'Cargo pequeño',
+            'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Gastos de cobranza', 'valor' => '50']],
+        ])->assertStatus(201);
+
+        $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
+            'tipo' => 'nota_debito', 'motivo' => 'Cargo que ya no cabe',
+            'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Gastos de cobranza', 'valor' => '150']],
+        ])->assertStatus(422)->assertJsonValidationErrors('lineas');
+    }
+
     public function test_el_pdf_solo_sale_de_un_documento_emitido(): void
     {
         $this->actingAsAdmin();

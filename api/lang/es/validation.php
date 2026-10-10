@@ -208,6 +208,7 @@ return [
             'cobro_excede_saldo' => 'El cobro supera el saldo pendiente de la factura (:saldo).',
             'cobro_no_reversible' => 'Solo se puede reversar un cobro, no una reversa.',
             'cobro_ya_reversado' => 'Este cobro ya fue reversado.',
+            'nota_debito_excede_tope' => 'La nota débito supera el tope configurado para la empresa (:tope).',
         ],
         'reversa' => [
             'estado_credito' => 'Solo se pueden reversar pagos de créditos desembolsados o pagados.',
