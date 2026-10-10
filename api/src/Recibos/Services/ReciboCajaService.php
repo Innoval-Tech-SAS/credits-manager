@@ -9,11 +9,13 @@ use App\Contabilidad\Models\Comprobante;
 use App\Core\Consecutivos\Enums\TipoDocumentoConsecutivo;
 use App\Core\Consecutivos\Services\ConsecutivoDocumentoService;
 use App\Empresas\Services\EmpresaService;
+use App\Facturacion\Models\CobroFacturacion;
 use App\Impresion\Data\PdfGenerado;
 use App\Impresion\Services\GeneradorPdf;
 use App\Pagos\Models\Pago;
 use App\Recibos\Documentos\ReciboCajaPdf;
 use App\Recibos\Enums\EstadoRecibo;
+use App\Recibos\Enums\OrigenReciboCaja;
 use App\Recibos\Models\ReciboCaja;
 use App\Recibos\Repositories\ReciboCajaRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -31,21 +33,45 @@ class ReciboCajaService
     /** Se llama dentro de la transacción del pago: si el pago falla, el número del recibo se libera con él. */
     public function emitir(Pago $pago, ?Comprobante $comprobante): ReciboCaja
     {
-        $consecutivo = $this->consecutivos->siguiente(TipoDocumentoConsecutivo::ReciboCaja);
-        $numero = trim(($consecutivo['prefijo'] ? $consecutivo['prefijo'].' ' : '').$consecutivo['numero']);
-
-        $recibo = $this->recibos->crear([
+        $recibo = $this->crear([
             'pago_id' => $pago->id,
+            'origen_tipo' => OrigenReciboCaja::Pago,
             'comprobante_id' => $comprobante?->id,
-            'consecutivo' => $consecutivo['numero'],
-            'numero' => $numero,
-            'estado' => EstadoRecibo::Emitido,
             'emitido_por' => $pago->registrado_por,
         ]);
 
-        $this->auditoria->registrarCreacion(AuditoriaConstants::MODULO_PAGOS, "Recibo de caja {$numero} emitido para el pago #{$pago->id}", $recibo);
+        $this->auditoria->registrarCreacion(AuditoriaConstants::MODULO_PAGOS, "Recibo de caja {$recibo->numero} emitido para el pago #{$pago->id}", $recibo);
 
         return $recibo;
+    }
+
+    /** Mismo documento que `emitir()`, pero para un cobro de factura. Se llama dentro de la transacción del cobro. */
+    public function emitirParaCobro(CobroFacturacion $cobro, ?Comprobante $comprobante): ReciboCaja
+    {
+        $recibo = $this->crear([
+            'cobro_facturacion_id' => $cobro->id,
+            'origen_tipo' => OrigenReciboCaja::CobroFacturacion,
+            'comprobante_id' => $comprobante?->id,
+            'emitido_por' => $cobro->registrado_por,
+        ]);
+
+        $this->auditoria->registrarCreacion(AuditoriaConstants::MODULO_FACTURACION, "Recibo de caja {$recibo->numero} emitido para el cobro #{$cobro->id}", $recibo);
+
+        return $recibo;
+    }
+
+    /** @param  array{pago_id?: int, cobro_facturacion_id?: int, origen_tipo: OrigenReciboCaja, comprobante_id: ?int, emitido_por: ?int}  $datos */
+    private function crear(array $datos): ReciboCaja
+    {
+        $consecutivo = $this->consecutivos->siguiente(TipoDocumentoConsecutivo::ReciboCaja);
+        $numero = trim(($consecutivo['prefijo'] ? $consecutivo['prefijo'].' ' : '').$consecutivo['numero']);
+
+        return $this->recibos->crear([
+            ...$datos,
+            'consecutivo' => $consecutivo['numero'],
+            'numero' => $numero,
+            'estado' => EstadoRecibo::Emitido,
+        ]);
     }
 
     /**
@@ -54,8 +80,17 @@ class ReciboCajaService
      */
     public function anularPorReversa(Pago $pago, string $motivo, ?int $usuarioId): void
     {
-        $recibo = $this->recibos->porPago($pago->id);
+        $this->anular($this->recibos->porPago($pago->id), $motivo, $usuarioId, AuditoriaConstants::MODULO_PAGOS, "la reversa del pago #{$pago->id}");
+    }
 
+    /** Mismo reverso que `anularPorReversa()`, pero para el recibo de un cobro de factura. */
+    public function anularPorReversaCobro(CobroFacturacion $cobro, string $motivo, ?int $usuarioId): void
+    {
+        $this->anular($this->recibos->porCobroFacturacion($cobro->id), $motivo, $usuarioId, AuditoriaConstants::MODULO_FACTURACION, "la reversa del cobro #{$cobro->id}");
+    }
+
+    private function anular(?ReciboCaja $recibo, string $motivo, ?int $usuarioId, string $modulo, string $origen): void
+    {
         if ($recibo === null) {
             return;
         }
@@ -70,8 +105,8 @@ class ReciboCajaService
         ]);
 
         $this->auditoria->registrarModificacion(
-            AuditoriaConstants::MODULO_PAGOS,
-            "Recibo de caja {$recibo->numero} anulado por la reversa del pago #{$pago->id}",
+            $modulo,
+            "Recibo de caja {$recibo->numero} anulado por {$origen}",
             $recibo,
             $anteriores,
             $motivo,
@@ -91,15 +126,33 @@ class ReciboCajaService
 
         abort_if($pago->recibo === null, 404);
 
-        $documento = new ReciboCajaPdf($pago);
+        $pago->recibo->setRelation('pago', $pago);
+
+        return $this->generarDesdeRecibo($pago->recibo, AuditoriaConstants::MODULO_PAGOS);
+    }
+
+    public function generarPdfParaCobro(CobroFacturacion $cobro): PdfGenerado
+    {
+        $cobro->load(['recibo.comprobante.tipoComprobante', 'recibo.comprobante.lineas.cuenta', 'recibo.anulador', 'documento.cliente.tercero', 'registrador']);
+
+        abort_if($cobro->recibo === null, 404);
+
+        $cobro->recibo->setRelation('cobroFacturacion', $cobro);
+
+        return $this->generarDesdeRecibo($cobro->recibo, AuditoriaConstants::MODULO_FACTURACION);
+    }
+
+    private function generarDesdeRecibo(ReciboCaja $recibo, string $modulo): PdfGenerado
+    {
+        $documento = new ReciboCajaPdf($recibo);
         $pdf = new PdfGenerado($this->generador->generar($documento, $this->empresas->obtenerPropia()), $documento->nombreArchivo());
 
         $this->auditoria->registrar(
             AccionAuditoria::Exportar,
-            AuditoriaConstants::MODULO_PAGOS,
-            "Recibo de caja {$pago->recibo->numero} descargado en PDF",
+            $modulo,
+            "Recibo de caja {$recibo->numero} descargado en PDF",
             'recibo_caja',
-            $pago->recibo->id,
+            $recibo->id,
         );
 
         return $pdf;

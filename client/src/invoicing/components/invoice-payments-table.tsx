@@ -9,7 +9,7 @@ import { PAYMENT_METHOD_LABELS } from '../constants/payment-methods';
 import type { InvoicePaymentsTableProps } from '../props/invoice-payments-table-props';
 
 /** Cobros y reversas en orden de registro. Un cobro ya reversado se marca y no admite otra reversa. */
-export const InvoicePaymentsTable: FC<InvoicePaymentsTableProps> = ({ cobros, puedeReversar, onReversar }) => {
+export const InvoicePaymentsTable: FC<InvoicePaymentsTableProps> = ({ cobros, puedeReversar, onReversar, onVerRecibo }) => {
     const reversados = useMemo(
         () => new Set(cobros.filter((fila) => fila.tipo === 'reversa').map((fila) => fila.cobro_origen_id)),
         [cobros],
@@ -52,6 +52,11 @@ export const InvoicePaymentsTable: FC<InvoicePaymentsTableProps> = ({ cobros, pu
                                 <span className={reversado ? 'text-error-600 dark:text-error-500' : 'text-success-600 dark:text-success-500'}>
                                     {reversado ? 'Reversado' : 'Vigente'}
                                 </span>
+                                {onVerRecibo && (
+                                    <Button variant="outline" size="sm" onClick={() => onVerRecibo(row)}>
+                                        Ver recibo
+                                    </Button>
+                                )}
                                 {puedeReversar && !reversado && (
                                     <Button variant="outline" size="sm" onClick={() => onReversar(row)}>
                                         Reversar

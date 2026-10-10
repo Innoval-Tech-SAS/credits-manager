@@ -7,10 +7,12 @@ use App\Core\Concerns\PerteneceAEmpresa;
 use App\Core\Dinero\DineroCast;
 use App\Facturacion\Enums\MedioCobroFacturacion;
 use App\Facturacion\Enums\MovimientoCobro;
+use App\Recibos\Models\ReciboCaja;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use LogicException;
 
 /**
@@ -52,6 +54,11 @@ class CobroFacturacion extends Model
     public function registrador(): BelongsTo
     {
         return $this->belongsTo(Usuario::class, 'registrado_por');
+    }
+
+    public function recibo(): HasOne
+    {
+        return $this->hasOne(ReciboCaja::class);
     }
 
     public function save(array $options = []): bool

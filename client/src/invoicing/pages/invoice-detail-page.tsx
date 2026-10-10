@@ -272,6 +272,11 @@ export const InvoiceDetailPage: FC = () => {
                         cobros={cobros}
                         puedeReversar={puedeAnular}
                         onReversar={(cobro) => setAccionConMotivo({ tipo: 'reversar', cobro })}
+                        onVerRecibo={
+                            puedeImprimir
+                                ? (cobro) => void download(`/facturacion/cobros/${cobro.id}/recibo/pdf`, `recibo-cobro-${cobro.id}.pdf`)
+                                : undefined
+                        }
                     />
                 </div>
             )}

@@ -9,6 +9,7 @@ use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\ReglaContabilizacion;
 use App\Empresas\Models\Empresa;
 use App\Facturacion\Models\CobroFacturacion;
+use App\Recibos\Models\ReciboCaja;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Testing\TestResponse;
 use LogicException;
@@ -100,6 +101,7 @@ class CobrosFacturacionTest extends TestCase
 
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/cobros', ['fecha' => '2026-10-05', 'valor' => '10', 'medio' => 'efectivo'])->assertStatus(404);
         $this->postJson(self::BASE.'/cobros/'.$cobro['id'].'/reversar', ['motivo' => 'Otra empresa'])->assertStatus(404);
+        $this->get(self::BASE.'/cobros/'.$cobro['id'].'/recibo/pdf')->assertStatus(404);
     }
 
     public function test_rechaza_un_cobro_mayor_al_saldo_y_datos_invalidos(): void
@@ -175,6 +177,53 @@ class CobrosFacturacionTest extends TestCase
 
         $this->postJson(self::BASE.'/cobros/'.$cobro['id'].'/reversar', ['motivo' => 'Otra vez'])->assertStatus(422)->assertJsonValidationErrors('cobro');
         $this->assertDatabaseCount('cobros_facturacion', 2);
+    }
+
+    public function test_un_cobro_emite_su_propio_recibo_de_caja_numerado(): void
+    {
+        $this->actingAsAdmin();
+        $factura = $this->factura('1000');
+        $cobro = $this->cobrar($factura, [], '400')->assertStatus(201)->json('cobro');
+
+        $recibo = ReciboCaja::where('cobro_facturacion_id', $cobro['id'])->firstOrFail();
+
+        $this->assertSame('cobro_facturacion', $recibo->origen_tipo->value);
+        $this->assertNull($recibo->pago_id);
+        $this->assertSame('emitido', $recibo->estado->value);
+        $this->assertNotNull($recibo->numero);
+        $this->assertSame($cobro['comprobante_id'], $recibo->comprobante_id);
+    }
+
+    public function test_reversar_un_cobro_anula_su_recibo_de_caja_sin_liberar_el_numero(): void
+    {
+        $this->actingAsAdmin();
+        $factura = $this->factura('1000');
+        $cobro = $this->cobrar($factura, [], '400')->assertStatus(201)->json('cobro');
+        $numeroOriginal = ReciboCaja::where('cobro_facturacion_id', $cobro['id'])->firstOrFail()->numero;
+
+        $this->postJson(self::BASE.'/cobros/'.$cobro['id'].'/reversar', ['motivo' => 'Cheque devuelto'])->assertOk();
+
+        $recibo = ReciboCaja::where('cobro_facturacion_id', $cobro['id'])->firstOrFail();
+        $this->assertSame('anulado', $recibo->estado->value);
+        $this->assertSame($numeroOriginal, $recibo->numero);
+        $this->assertSame('Cheque devuelto', $recibo->motivo_anulacion);
+    }
+
+    public function test_el_recibo_del_cobro_se_descarga_en_pdf_vigente_y_anulado(): void
+    {
+        $this->actingAsAdmin();
+        $factura = $this->factura('1000');
+        $cobro = $this->cobrar($factura, [], '400')->assertStatus(201)->json('cobro');
+
+        $vigente = $this->get(self::BASE.'/cobros/'.$cobro['id'].'/recibo/pdf');
+        $vigente->assertOk();
+        $this->assertStringStartsWith('application/pdf', $vigente->headers->get('Content-Type'));
+
+        $this->postJson(self::BASE.'/cobros/'.$cobro['id'].'/reversar', ['motivo' => 'Cheque devuelto'])->assertOk();
+
+        $anulado = $this->get(self::BASE.'/cobros/'.$cobro['id'].'/recibo/pdf');
+        $anulado->assertOk();
+        $this->assertStringStartsWith('application/pdf', $anulado->headers->get('Content-Type'));
     }
 
     public function test_una_reversa_no_se_reversa_y_el_motivo_es_obligatorio(): void

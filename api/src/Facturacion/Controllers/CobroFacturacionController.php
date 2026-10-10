@@ -10,13 +10,16 @@ use App\Facturacion\Requests\RegistrarCobroMultipleFacturaRequest;
 use App\Facturacion\Services\CobroFacturacionService;
 use App\Facturacion\Services\DocumentoFacturacionService;
 use App\Http\Controllers\Controller;
+use App\Recibos\Services\ReciboCajaService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 
 class CobroFacturacionController extends Controller
 {
     public function __construct(
         protected CobroFacturacionService $cobros,
         protected DocumentoFacturacionService $documentos,
+        protected ReciboCajaService $recibos,
     ) {}
 
     public function store(RegistrarCobroFacturaRequest $peticion, DocumentoFacturacion $documento): JsonResponse
@@ -38,5 +41,15 @@ class CobroFacturacionController extends Controller
         $reversa = $this->cobros->reversar($cobro, $peticion->validated('motivo'), $peticion->user());
 
         return response()->json([...$this->documentos->detalle($reversa->documento), 'reversa' => $reversa]);
+    }
+
+    public function pdf(CobroFacturacion $cobro): Response
+    {
+        $pdf = $this->recibos->generarPdfParaCobro($cobro);
+
+        return response($pdf->contenido, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="'.$pdf->nombreArchivo.'.pdf"',
+        ]);
     }
 }
