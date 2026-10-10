@@ -9,6 +9,7 @@ use App\Cartera\Controllers\CarteraController;
 use App\Clientes\Controllers\ClienteController;
 use App\Conciliacion\Controllers\CuentaBancariaController;
 use App\Conciliacion\Controllers\ExtractoBancarioController;
+use App\Conciliacion\Controllers\MatchConciliacionController;
 use App\Contabilidad\Controllers\AuxiliarContableController;
 use App\Contabilidad\Controllers\CarteraTerceroController;
 use App\Contabilidad\Controllers\CentroCostoController;
@@ -329,4 +330,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/conciliacion/cuentas-bancarias/{cuenta_bancaria}', [CuentaBancariaController::class, 'update'])->middleware('permiso:conciliacion,configurar');
     Route::get('/conciliacion/cuentas-bancarias/{cuenta_bancaria}/extractos', [ExtractoBancarioController::class, 'index'])->middleware('permiso:conciliacion,listar');
     Route::post('/conciliacion/cuentas-bancarias/{cuenta_bancaria}/extractos', [ExtractoBancarioController::class, 'store'])->middleware('permiso:conciliacion,cargar_extracto');
+    Route::get('/conciliacion/extractos/{extracto}/candidatos', [MatchConciliacionController::class, 'candidatos'])->middleware('permiso:conciliacion,listar');
+    Route::post('/conciliacion/movimientos/{movimiento}/conciliar', [MatchConciliacionController::class, 'conciliar'])->middleware('permiso:conciliacion,conciliar');
+    Route::post('/conciliacion/movimientos/{movimiento}/enviar-a-puente', [MatchConciliacionController::class, 'enviarAPuente'])->middleware('permiso:conciliacion,conciliar');
+    Route::post('/conciliacion/marcas/{marca}/desmarcar', [MatchConciliacionController::class, 'desmarcar'])->middleware('permiso:conciliacion,conciliar');
 });

@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { Upload } from 'lucide-react';
 
 import { useResource } from '../../shared/hooks/use-resource';
@@ -17,6 +17,7 @@ import type { ApiBankStatement } from '../types/api-bank-statement';
 export const BankStatementsPage: FC = () => {
     const { id } = useParams<{ id: string }>();
     const cuentaBancariaId = Number(id);
+    const navigate = useNavigate();
 
     const canCargar = usePermission('conciliacion', 'cargar_extracto');
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -79,6 +80,16 @@ export const BankStatementsPage: FC = () => {
                             ),
                         },
                         { key: 'motivo_rechazo', label: 'Motivo', render: (row) => row.motivo_rechazo ?? '—' },
+                        {
+                            key: 'acciones',
+                            label: 'Acción',
+                            render: (row) =>
+                                row.estado === 'cargado' && (
+                                    <Button size="sm" variant="outline" onClick={() => navigate(`/conciliacion/extractos/${row.id}/conciliar`)}>
+                                        Conciliar
+                                    </Button>
+                                ),
+                        },
                     ]}
                     rows={extractos}
                     getRowKey={(row) => row.id}

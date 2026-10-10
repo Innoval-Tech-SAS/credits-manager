@@ -342,6 +342,15 @@ return [
             'saldos_no_cuadran' => 'Los movimientos del archivo no cuadran con los saldos que reporta el extracto.',
             'error_inesperado' => 'No se pudo procesar el archivo por un error inesperado.',
         ],
+        'conciliacion' => [
+            'asiento_no_pertenece' => 'El asiento contable no existe o no pertenece a tu empresa.',
+            'asiento_ya_conciliado' => 'Ese asiento ya está conciliado con otro movimiento.',
+            'valor_no_coincide' => 'El valor del asiento no coincide con el del movimiento del extracto.',
+            'movimiento_no_pendiente' => 'Este movimiento ya fue conciliado o enviado a cuenta puente.',
+            'sin_cuenta_puente' => 'La cuenta bancaria no tiene configurada una cuenta puente para movimientos sin origen.',
+            'marca_no_reversable' => 'Una reversa no se puede volver a desmarcar.',
+            'marca_ya_reversada' => 'Esta marca ya fue desmarcada.',
+        ],
     ],
 
     /*

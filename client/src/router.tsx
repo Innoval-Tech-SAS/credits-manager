@@ -21,6 +21,7 @@ import { ReceiptsListPage } from './receipts/pages/receipts-list-page';
 import { BankAccountsPage } from './reconciliation/pages/bank-accounts-page';
 import { BankStatementsPage } from './reconciliation/pages/bank-statements-page';
 import { CreateBankAccountPage } from './reconciliation/pages/create-bank-account-page';
+import { ReconciliationMatchingPage } from './reconciliation/pages/reconciliation-matching-page';
 import { PeriodsPage } from './accounting/pages/periods-page';
 import { PostingRulesPage } from './accounting/pages/posting-rules-page';
 import { TrialBalancePage } from './accounting/pages/trial-balance-page';
@@ -795,6 +796,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="conciliacion" accion="listar">
                                 <BankStatementsPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'conciliacion/extractos/:id/conciliar',
+                        element: (
+                            <RequireModulePermission modulo="conciliacion" accion="listar">
+                                <ReconciliationMatchingPage />
                             </RequireModulePermission>
                         ),
                     },
