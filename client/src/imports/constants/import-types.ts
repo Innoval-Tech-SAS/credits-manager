@@ -1,4 +1,16 @@
-export const IMPORT_TYPES = ['clientes', 'creditos', 'plan_cuotas', 'pagos', 'saldos_iniciales', 'plan_cuentas', 'terceros', 'gastos'] as const;
+export const IMPORT_TYPES = [
+    'clientes',
+    'creditos',
+    'plan_cuotas',
+    'pagos',
+    'saldos_iniciales',
+    'plan_cuentas',
+    'terceros',
+    'gastos',
+    'actividades_economicas',
+    'valores_uvt',
+    'tarifas_reteica',
+] as const;
 
 export type ImportType = (typeof IMPORT_TYPES)[number];
 
@@ -11,6 +23,9 @@ export const IMPORT_TYPE_LABELS: Record<ImportType, string> = {
     plan_cuentas: 'Plan de cuentas (formato anterior)',
     terceros: 'Terceros (formato anterior)',
     gastos: 'Gastos',
+    actividades_economicas: 'Actividades económicas (CIIU)',
+    valores_uvt: 'Valores UVT',
+    tarifas_reteica: 'Tarifas ReteICA',
 };
 
 /** Orden en que deben cargarse: cada hoja depende de las anteriores. */
@@ -23,6 +38,9 @@ export const IMPORT_TYPE_OPTIONS = [
     { value: 'plan_cuentas', label: 'Plan de cuentas (formato anterior)' },
     { value: 'terceros', label: 'Terceros (formato anterior)' },
     { value: 'gastos', label: 'Gastos y costos' },
+    { value: 'actividades_economicas', label: 'Actividades económicas (CIIU)' },
+    { value: 'valores_uvt', label: 'Valores UVT' },
+    { value: 'tarifas_reteica', label: 'Tarifas ReteICA' },
 ] satisfies { value: ImportType; label: string }[];
 
 export const IMPORT_TYPES_WITH_EMPLOYER_CHECK: ImportType[] = ['clientes'];

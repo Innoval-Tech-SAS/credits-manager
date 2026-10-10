@@ -148,6 +148,38 @@ final class DefinicionImportacion
                     self::c('correo', 'correo', false, 'texto'),
                 ],
             ],
+            TipoImportacion::ActividadesEconomicas => [
+                'hoja' => 'Actividades_Economicas',
+                'orden' => 9,
+                'nota' => 'Si el código CIIU ya existe para la empresa, se actualiza el nombre; si no, se crea una actividad nueva.',
+                'permiso' => ['tributario', 'parametrizar'],
+                'columnas' => [
+                    self::c('codigo', 'Código CIIU', true, 'texto'),
+                    self::c('nombre', 'Actividad económica', true, 'texto'),
+                ],
+            ],
+            TipoImportacion::ValoresUvt => [
+                'hoja' => 'Valores_UVT',
+                'orden' => 10,
+                'nota' => 'Un valor por año. Si el año ya existe, se reemplaza.',
+                'permiso' => ['tributario', 'parametrizar'],
+                'columnas' => [
+                    self::c('anio', 'Año', true, 'entero'),
+                    self::c('valor', 'Valor UVT', true, 'monto'),
+                ],
+            ],
+            TipoImportacion::TarifasReteica => [
+                'hoja' => 'Tarifas_ReteICA',
+                'orden' => 11,
+                'nota' => 'Requiere que el municipio (código DANE) y la actividad económica (código CIIU) ya existan. Abre una nueva vigencia desde la fecha indicada; si había una vigencia abierta para ese municipio y esa actividad, se cierra el día anterior.',
+                'permiso' => ['tributario', 'parametrizar'],
+                'columnas' => [
+                    self::c('municipio', 'Código DANE del municipio', true, 'texto'),
+                    self::c('actividad_economica', 'Código CIIU de la actividad', true, 'texto'),
+                    self::c('fecha_desde', 'Fecha desde', true, 'fecha'),
+                    self::c('tarifa', 'Tarifa (%)', true, 'decimal'),
+                ],
+            ],
         };
     }
 
@@ -164,7 +196,8 @@ final class DefinicionImportacion
             TipoImportacion::PlanCuotas => ['codigo' => 'CR-2023-001', 'numero' => '1'],
             TipoImportacion::Pagos => ['codigo' => 'CR-2023-001', 'valor' => '280500'],
             TipoImportacion::SaldosIniciales => ['cuenta' => '133005', 'debito' => '45000000'],
-            TipoImportacion::PlanCuentas, TipoImportacion::Terceros, TipoImportacion::Gastos => [],
+            TipoImportacion::PlanCuentas, TipoImportacion::Terceros, TipoImportacion::Gastos,
+            TipoImportacion::ActividadesEconomicas, TipoImportacion::ValoresUvt, TipoImportacion::TarifasReteica => [],
         };
     }
 

@@ -12,4 +12,7 @@ enum TipoImportacion: string
     case PlanCuentas = 'plan_cuentas';
     case Terceros = 'terceros';
     case Gastos = 'gastos';
+    case ActividadesEconomicas = 'actividades_economicas';
+    case ValoresUvt = 'valores_uvt';
+    case TarifasReteica = 'tarifas_reteica';
 }

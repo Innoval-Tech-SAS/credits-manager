@@ -8,6 +8,7 @@ use App\Contabilidad\Models\SaldoApertura;
 use App\Creditos\Models\Credito;
 use App\Creditos\Models\Cuota;
 use App\Empleadores\Models\Empleador;
+use App\Gastos\Models\ActividadEconomica;
 use App\Importacion\Lectura\ConvertidorValor;
 use App\Pagos\Models\Pago;
 use App\Usuarios\Models\Usuario;
@@ -62,6 +63,21 @@ class DatosImportacionRepository
             ->where('empresa_id', $empresaId)
             ->whereIn('codigo', $codigos)
             ->pluck('id', 'codigo')
+            ->all();
+    }
+
+    /** @param list<string> $codigos @return array<string, ActividadEconomica> código CIIU → actividad económica */
+    public function actividadesEconomicasPorCodigos(int $empresaId, array $codigos): array
+    {
+        if ($codigos === []) {
+            return [];
+        }
+
+        return ActividadEconomica::query()
+            ->where('empresa_id', $empresaId)
+            ->whereIn('codigo', $codigos)
+            ->get()
+            ->keyBy('codigo')
             ->all();
     }
 
