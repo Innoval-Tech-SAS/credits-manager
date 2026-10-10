@@ -16,14 +16,13 @@ export const AccountStatementPaymentsTable: FC<AccountStatementPaymentsTableProp
                         <th className="py-2 pr-4 font-medium whitespace-nowrap">Valor</th>
                         <th className="py-2 pr-4 font-medium whitespace-nowrap">Capital</th>
                         <th className="py-2 pr-4 font-medium whitespace-nowrap">Intereses</th>
-                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Otros gastos</th>
                         <th className="py-2 pr-4 font-medium whitespace-nowrap">Forma de pago</th>
                     </tr>
                 </thead>
                 <tbody>
                     {pagos.length === 0 ? (
                         <tr>
-                            <td colSpan={7} className="py-4 text-center text-gray-500 dark:text-gray-400">
+                            <td colSpan={6} className="py-4 text-center text-gray-500 dark:text-gray-400">
                                 Aún no se han registrado pagos.
                             </td>
                         </tr>
@@ -41,7 +40,6 @@ export const AccountStatementPaymentsTable: FC<AccountStatementPaymentsTableProp
                                 <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(pago.valor_pago)}</td>
                                 <td className="py-2 pr-4 whitespace-nowrap">{pago.valor_capital === null ? '—' : formatMoney(pago.valor_capital)}</td>
                                 <td className="py-2 pr-4 whitespace-nowrap">{pago.valor_interes === null ? '—' : formatMoney(pago.valor_interes)}</td>
-                                <td className="py-2 pr-4 whitespace-nowrap">{pago.valor_otros_gastos === null ? '—' : formatMoney(pago.valor_otros_gastos)}</td>
                                 <td className="py-2 pr-4 whitespace-nowrap capitalize">{pago.forma_pago}</td>
                             </tr>
                         ))
@@ -51,7 +49,7 @@ export const AccountStatementPaymentsTable: FC<AccountStatementPaymentsTableProp
                             Total pagado
                         </td>
                         <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(totalPagado)}</td>
-                        <td className="py-2" colSpan={4} />
+                        <td className="py-2" colSpan={3} />
                     </tr>
                 </tbody>
             </table>

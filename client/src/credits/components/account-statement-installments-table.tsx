@@ -19,7 +19,6 @@ export const AccountStatementInstallmentsTable: FC<AccountStatementInstallmentsT
                         <th className="py-2 pr-4 font-medium whitespace-nowrap">Vencimiento</th>
                         <th className="py-2 pr-4 font-medium whitespace-nowrap">Capital</th>
                         <th className="py-2 pr-4 font-medium whitespace-nowrap">Intereses</th>
-                        <th className="py-2 pr-4 font-medium whitespace-nowrap">Otros gastos</th>
                         <th className="py-2 pr-4 font-medium whitespace-nowrap">Total de la cuota</th>
                         <th className="py-2 pr-4 font-medium whitespace-nowrap">Saldo capital</th>
                         <th className="py-2 pr-4 font-medium whitespace-nowrap">Estado</th>
@@ -32,14 +31,13 @@ export const AccountStatementInstallmentsTable: FC<AccountStatementInstallmentsT
                             <td className="py-2 pr-4 whitespace-nowrap">{formatDateEs(cuota.fecha_vencimiento)}</td>
                             <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(cuota.valor_capital)}</td>
                             <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(cuota.valor_interes)}</td>
-                            <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(cuota.valor_otros_gastos)}</td>
                             <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(cuota.valor_total_cuota)}</td>
                             <td className="py-2 pr-4 whitespace-nowrap">{formatMoney(saldoCapitalTeoricoPorCuota[cuota.numero_cuota] ?? 0)}</td>
                             <td className="py-2 pr-4 whitespace-nowrap capitalize">{cuota.estado}</td>
                         </tr>
                     ))}
                     <tr className="border-t-2 border-gray-800 font-semibold text-gray-800 dark:border-white/90 dark:text-white/90">
-                        <td className="py-2 pr-4" colSpan={6}>
+                        <td className="py-2 pr-4" colSpan={5}>
                             Saldo pendiente a la fecha
                         </td>
                         <td className="py-2 pr-4" colSpan={2}>
