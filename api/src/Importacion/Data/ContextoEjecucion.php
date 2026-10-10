@@ -4,6 +4,7 @@ namespace App\Importacion\Data;
 
 use App\Core\Dinero\Dinero;
 use App\Creditos\Models\Cuota;
+use App\Gastos\Models\ActividadEconomica;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Eloquent\Collection;
 
@@ -24,6 +25,9 @@ final class ContextoEjecucion
 
     /** @var array<string, int> cédula → id de cliente, precargado por lote */
     public array $clientesPorCedula = [];
+
+    /** @var array<string, ActividadEconomica> código CIIU → actividad económica, precargado por lote */
+    public array $actividadesEconomicasPorCodigo = [];
 
     /** @var array<string, int> código de crédito → id, precargado por lote */
     public array $creditosPorCodigo = [];

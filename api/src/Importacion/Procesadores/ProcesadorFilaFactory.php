@@ -17,6 +17,9 @@ class ProcesadorFilaFactory
             TipoImportacion::PlanCuentas => ProcesadorPlanCuentas::class,
             TipoImportacion::Terceros => ProcesadorTerceros::class,
             TipoImportacion::Gastos => ProcesadorGastos::class,
+            TipoImportacion::ActividadesEconomicas => ProcesadorActividadesEconomicas::class,
+            TipoImportacion::ValoresUvt => ProcesadorValoresUvt::class,
+            TipoImportacion::TarifasReteica => ProcesadorTarifasReteica::class,
         });
     }
 }
