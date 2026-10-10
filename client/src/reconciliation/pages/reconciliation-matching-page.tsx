@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useParams } from 'react-router';
+import { Lock, Unlock } from 'lucide-react';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
@@ -11,6 +12,7 @@ import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { DataTable } from '@ui/table/components/data-table';
 import { MotivoModal } from '../../shared/components/motivo-modal';
+import { CloseStatementModal } from '../components/close-statement-modal';
 import { SendToBridgeModal } from '../components/send-to-bridge-modal';
 import {
     MOVEMENT_MATCH_STATUS_BADGE_CLASSES,
@@ -26,10 +28,14 @@ export const ReconciliationMatchingPage: FC = () => {
     const extractoId = Number(id);
 
     const canConciliar = usePermission('conciliacion', 'conciliar');
+    const canCerrar = usePermission('conciliacion', 'cerrar');
+    const canReabrir = usePermission('conciliacion', 'reabrir');
 
     const [seleccionado, setSeleccionado] = useState<number | null>(null);
     const [puenteMovimiento, setPuenteMovimiento] = useState<ApiExtractoMovimiento | null>(null);
     const [marcaADesmarcar, setMarcaADesmarcar] = useState<number | null>(null);
+    const [isCerrarOpen, setIsCerrarOpen] = useState(false);
+    const [isReabrirOpen, setIsReabrirOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -45,6 +51,8 @@ export const ReconciliationMatchingPage: FC = () => {
         setSeleccionado(null);
         setPuenteMovimiento(null);
         setMarcaADesmarcar(null);
+        setIsCerrarOpen(false);
+        setIsReabrirOpen(false);
         setSuccessMessage(mensaje);
         refetch();
     };
@@ -85,12 +93,36 @@ export const ReconciliationMatchingPage: FC = () => {
         }
     };
 
+    const reabrir = async (motivo: string) => {
+        try {
+            await sendRequest(`/conciliacion/extractos/${extractoId}/reabrir`, { method: 'POST', body: { motivo } });
+            onExito(`Extracto #${extractoId} reabierto.`);
+        } catch (caught) {
+            onFallo(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
+        }
+    };
+
     return (
         <div className="flex min-h-full flex-col gap-6 pb-6">
             <PageBreadcrumb pageTitle="Conciliar extracto" />
 
             {successMessage && <Alert variant="success" title="Listo" message={successMessage} onDismiss={() => setSuccessMessage(null)} />}
             {errorMessage && <Alert variant="danger" title="Error" message={errorMessage} onDismiss={() => setErrorMessage(null)} />}
+
+            {data && (canCerrar || canReabrir) && (data.extracto.estado === 'cargado' || data.extracto.estado === 'cerrado') && (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                    {canReabrir && data.extracto.estado === 'cerrado' && (
+                        <Button variant="outline" startIcon={<Unlock className="size-4" />} onClick={() => setIsReabrirOpen(true)}>
+                            Reabrir extracto
+                        </Button>
+                    )}
+                    {canCerrar && data.extracto.estado === 'cargado' && (
+                        <Button startIcon={<Lock className="size-4" />} onClick={() => setIsCerrarOpen(true)}>
+                            Cerrar extracto
+                        </Button>
+                    )}
+                </div>
+            )}
 
             {data && (
                 <Alert
@@ -209,6 +241,25 @@ export const ReconciliationMatchingPage: FC = () => {
                 isSubmitting={isEnviando}
                 onClose={() => setMarcaADesmarcar(null)}
                 onConfirm={(motivo) => void desmarcar(motivo)}
+            />
+
+            <CloseStatementModal
+                isOpen={isCerrarOpen}
+                extracto={data ? { id: data.extracto.id, saldo_actual: data.extracto.saldo_actual } : null}
+                pendientes={pendientes}
+                onClose={() => setIsCerrarOpen(false)}
+                onClosed={onExito}
+                onError={onFallo}
+            />
+
+            <MotivoModal
+                isOpen={isReabrirOpen}
+                title="Reabrir extracto"
+                description="El extracto vuelve a quedar cargado y disponible para conciliar. El motivo queda registrado en la bitácora."
+                confirmLabel="Reabrir"
+                isSubmitting={isEnviando}
+                onClose={() => setIsReabrirOpen(false)}
+                onConfirm={(motivo) => void reabrir(motivo)}
             />
         </div>
     );

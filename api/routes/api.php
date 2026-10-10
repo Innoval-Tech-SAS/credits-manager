@@ -7,6 +7,7 @@ use App\Auth\Controllers\AuthController;
 use App\Calendario\Controllers\CalendarioController;
 use App\Cartera\Controllers\CarteraController;
 use App\Clientes\Controllers\ClienteController;
+use App\Conciliacion\Controllers\CierreExtractoController;
 use App\Conciliacion\Controllers\CuentaBancariaController;
 use App\Conciliacion\Controllers\ExtractoBancarioController;
 use App\Conciliacion\Controllers\MatchConciliacionController;
@@ -334,4 +335,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/conciliacion/movimientos/{movimiento}/conciliar', [MatchConciliacionController::class, 'conciliar'])->middleware('permiso:conciliacion,conciliar');
     Route::post('/conciliacion/movimientos/{movimiento}/enviar-a-puente', [MatchConciliacionController::class, 'enviarAPuente'])->middleware('permiso:conciliacion,conciliar');
     Route::post('/conciliacion/marcas/{marca}/desmarcar', [MatchConciliacionController::class, 'desmarcar'])->middleware('permiso:conciliacion,conciliar');
+    Route::post('/conciliacion/extractos/{extracto}/cerrar', [CierreExtractoController::class, 'cerrar'])->middleware('permiso:conciliacion,cerrar');
+    Route::post('/conciliacion/extractos/{extracto}/reabrir', [CierreExtractoController::class, 'reabrir'])->middleware('permiso:conciliacion,reabrir');
 });
