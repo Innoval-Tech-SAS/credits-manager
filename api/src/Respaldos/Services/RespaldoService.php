@@ -20,6 +20,7 @@ class RespaldoService
         protected VolcadoBaseDatosService $volcado,
         protected ArchivosRespaldoService $archivos,
         protected RetencionRespaldosService $retencion,
+        protected SubidaRespaldoExternoService $subidaExterna,
     ) {}
 
     /**
@@ -42,6 +43,7 @@ class RespaldoService
         }
 
         $this->retencion->aplicar($ahora);
+        $this->subidaExterna->subir($creadas[$principal->value], $principal);
 
         return $creadas;
     }
