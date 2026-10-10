@@ -125,4 +125,9 @@ final class FacturaPdf implements DocumentoPdf
     {
         return 'Documento interno de facturación. No corresponde a una factura electrónica de venta ante la DIAN.';
     }
+
+    public function marcaAgua(): ?string
+    {
+        return null;
+    }
 }

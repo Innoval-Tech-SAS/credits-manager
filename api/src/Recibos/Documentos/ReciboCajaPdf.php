@@ -113,7 +113,7 @@ final class ReciboCajaPdf implements DocumentoPdf
 
     public function totales(): array
     {
-        return [new TotalDocumento($this->anulado() ? 'Valor anulado' : 'Total recibido', $this->valorTotal())];
+        return [new TotalDocumento('Total recibido', $this->valorTotal())];
     }
 
     private function anulado(): bool
@@ -166,6 +166,11 @@ final class ReciboCajaPdf implements DocumentoPdf
     public function pie(): ?string
     {
         return 'Conserve este recibo como soporte de su pago. No corresponde a una factura electrónica de venta.';
+    }
+
+    public function marcaAgua(): ?string
+    {
+        return $this->anulado() ? 'ANULADO' : null;
     }
 
     private function esPago(): bool

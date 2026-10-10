@@ -4,6 +4,7 @@
     $totales = $documento->totales();
     $secciones = $documento->secciones();
     $pie = $documento->pie();
+    $marcaAgua = $documento->marcaAgua();
 @endphp
 <!DOCTYPE html>
 <html lang="es">
@@ -61,9 +62,26 @@
         .totales .valor { text-align: right; }
 
         .pie { margin-top: 24pt; text-align: center; font-size: 6.5pt; color: #4b5563; line-height: 1.4; }
+
+        .marca-agua {
+            position: fixed;
+            top: 260pt;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 64pt;
+            font-weight: bold;
+            color: #dc2626;
+            opacity: 0.14;
+            transform: rotate(-30deg);
+        }
     </style>
 </head>
 <body class="{{ $horizontal ? 'horizontal' : '' }}">
+    @if ($marcaAgua)
+        <div class="marca-agua">{{ $marcaAgua }}</div>
+    @endif
+
     <table class="cabecera">
         <tr>
             <td style="width: 30%;">

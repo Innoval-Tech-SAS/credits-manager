@@ -102,4 +102,9 @@ final class InformeContablePdf implements DocumentoPdf
     {
         return 'Cifras calculadas sobre comprobantes contabilizados. Los comprobantes borrador o revisados no se incluyen.';
     }
+
+    public function marcaAgua(): ?string
+    {
+        return null;
+    }
 }

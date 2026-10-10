@@ -27,6 +27,7 @@ final class DocumentoPdfDePrueba implements DocumentoPdf
         private readonly OrientacionDocumento $orientacion = OrientacionDocumento::Vertical,
         private readonly array $tablasAdicionales = [],
         private readonly ?string $tituloTabla = null,
+        private readonly ?string $marcaAgua = null,
     ) {}
 
     public function titulo(): string
@@ -112,5 +113,10 @@ final class DocumentoPdfDePrueba implements DocumentoPdf
     public function pie(): ?string
     {
         return 'Documento interno sin validez fiscal. No corresponde a una factura electrónica de venta.';
+    }
+
+    public function marcaAgua(): ?string
+    {
+        return $this->marcaAgua;
     }
 }

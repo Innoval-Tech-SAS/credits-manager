@@ -63,4 +63,7 @@ interface DocumentoPdf
 
     /** Texto legal al final del documento, bajo los totales. */
     public function pie(): ?string;
+
+    /** Texto de la marca de agua diagonal sobre todo el documento (p. ej. "ANULADO"); nulo si no aplica. */
+    public function marcaAgua(): ?string;
 }
