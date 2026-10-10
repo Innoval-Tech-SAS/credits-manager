@@ -350,6 +350,10 @@ return [
             'sin_cuenta_puente' => 'La cuenta bancaria no tiene configurada una cuenta puente para movimientos sin origen.',
             'marca_no_reversable' => 'Una reversa no se puede volver a desmarcar.',
             'marca_ya_reversada' => 'Esta marca ya fue desmarcada.',
+            'extracto_no_cargado' => 'El extracto debe estar cargado para poder cerrarlo.',
+            'movimientos_pendientes' => 'Hay movimientos pendientes de conciliar; resuélvelos antes de cerrar el extracto.',
+            'cierre_no_cuadra' => 'El saldo según el libro (:saldo_libro) no coincide con el saldo que reporta el extracto (:saldo_extracto).',
+            'extracto_no_cerrado' => 'El extracto debe estar cerrado para poder reabrirlo.',
         ],
     ],
 

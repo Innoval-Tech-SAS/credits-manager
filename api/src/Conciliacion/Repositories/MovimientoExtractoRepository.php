@@ -43,4 +43,12 @@ class MovimientoExtractoRepository extends BaseRepository
             'ultima_actualizacion' => $ahora,
         ], $movimientos));
     }
+
+    public function contarPendientes(int $extractoBancarioId): int
+    {
+        return $this->consulta()
+            ->where('extracto_bancario_id', $extractoBancarioId)
+            ->where('estado', EstadoMovimientoExtracto::Pendiente->value)
+            ->count();
+    }
 }
