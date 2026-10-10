@@ -1,5 +1,6 @@
 import {
     ArchiveRestore,
+    Banknote,
     DatabaseBackup,
     BookOpen,
     BookText,
@@ -292,6 +293,19 @@ export const NAV_ITEMS: NavItem[] = [
                 path: "/facturacion",
                 icon: FileText,
                 moduleKey: "facturacion",
+                action: "listar",
+            },
+        ],
+    },
+    {
+        name: "Conciliación Bancaria",
+        icon: Banknote,
+        subItems: [
+            {
+                name: "Cuentas Bancarias",
+                path: "/conciliacion/cuentas-bancarias",
+                icon: Landmark,
+                moduleKey: "conciliacion",
                 action: "listar",
             },
         ],

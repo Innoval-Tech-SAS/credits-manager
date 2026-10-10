@@ -5,7 +5,7 @@ import { Upload } from 'lucide-react';
 import { ACCEPTED_IMAGE_TYPES } from '../constants/accepted-image-types';
 import type { DropzoneProps } from '../props/dropzone-props';
 
-export const Dropzone: FC<DropzoneProps> = ({ onFileAccepted, hint, accept = ACCEPTED_IMAGE_TYPES }) => {
+export const Dropzone: FC<DropzoneProps> = ({ onFileAccepted, label, hint, accept = ACCEPTED_IMAGE_TYPES }) => {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         accept,
         multiple: false,
@@ -35,7 +35,7 @@ export const Dropzone: FC<DropzoneProps> = ({ onFileAccepted, hint, accept = ACC
                     </div>
 
                     <p className="mb-2 font-semibold text-gray-800 dark:text-white/90">
-                        {isDragActive ? 'Suelta el archivo aquí' : 'Arrastra y suelta tu imagen aquí'}
+                        {isDragActive ? 'Suelta el archivo aquí' : label ?? 'Arrastra y suelta tu imagen aquí'}
                     </p>
 
                     <p className="mb-3 max-w-70 text-sm text-gray-500 dark:text-gray-400">

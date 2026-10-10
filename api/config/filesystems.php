@@ -63,6 +63,14 @@ return [
             'report' => false,
         ],
 
+        // Volumen `conciliacion_data`: extractos bancarios subidos. Ningún endpoint los sirve; solo el worker los lee.
+        'conciliacion' => [
+            'driver' => 'local',
+            'root' => env('CONCILIACION_PATH', '/var/conciliacion'),
+            'throw' => true,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

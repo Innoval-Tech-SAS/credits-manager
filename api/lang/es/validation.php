@@ -333,6 +333,13 @@ return [
         'gasto' => [
             'tiene_cruces_registrados' => 'No se puede anular un gasto con pagos (cruces) registrados. Reversa primero los egresos asociados antes de anularlo.',
         ],
+        'extracto_bancario' => [
+            'cuenta_no_coincide' => 'El número de cuenta del archivo no coincide con la cuenta bancaria seleccionada.',
+            'periodo_ya_cargado' => 'Ya existe un extracto cargado para esta cuenta y este período.',
+            'formato_invalido' => 'El archivo no tiene el formato esperado del extracto bancario.',
+            'saldos_no_cuadran' => 'Los movimientos del archivo no cuadran con los saldos que reporta el extracto.',
+            'error_inesperado' => 'No se pudo procesar el archivo por un error inesperado.',
+        ],
     ],
 
     /*

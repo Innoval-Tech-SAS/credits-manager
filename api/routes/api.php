@@ -7,6 +7,8 @@ use App\Auth\Controllers\AuthController;
 use App\Calendario\Controllers\CalendarioController;
 use App\Cartera\Controllers\CarteraController;
 use App\Clientes\Controllers\ClienteController;
+use App\Conciliacion\Controllers\CuentaBancariaController;
+use App\Conciliacion\Controllers\ExtractoBancarioController;
 use App\Contabilidad\Controllers\AuxiliarContableController;
 use App\Contabilidad\Controllers\CarteraTerceroController;
 use App\Contabilidad\Controllers\CentroCostoController;
@@ -316,4 +318,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/anticipos/proveedores', [AnticipoController::class, 'storeProveedor'])->middleware('permiso:anticipos,crear');
     Route::post('/anticipos/clientes', [AnticipoController::class, 'storeCliente'])->middleware('permiso:anticipos,crear');
     Route::post('/anticipos/cruzar', [AnticipoController::class, 'cruzar'])->middleware('permiso:anticipos,crear');
+
+    Route::get('/conciliacion/cuentas-bancarias', [CuentaBancariaController::class, 'index'])->middleware('permiso:conciliacion,listar');
+    Route::post('/conciliacion/cuentas-bancarias', [CuentaBancariaController::class, 'store'])->middleware('permiso:conciliacion,configurar');
+    Route::patch('/conciliacion/cuentas-bancarias/{cuenta_bancaria}', [CuentaBancariaController::class, 'update'])->middleware('permiso:conciliacion,configurar');
+    Route::get('/conciliacion/cuentas-bancarias/{cuenta_bancaria}/extractos', [ExtractoBancarioController::class, 'index'])->middleware('permiso:conciliacion,listar');
+    Route::post('/conciliacion/cuentas-bancarias/{cuenta_bancaria}/extractos', [ExtractoBancarioController::class, 'store'])->middleware('permiso:conciliacion,cargar_extracto');
 });

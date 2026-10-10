@@ -130,6 +130,25 @@ services:
       - importaciones_data:/var/importaciones
     restart: unless-stopped
 
+  # Valida y carga los extractos bancarios (cola `conciliacion`). Worker propio: un archivo mal formado no debe retrasar importaciones ni exportaciones.
+  conciliacion-worker:
+    image: credits-manager-api:latest
+    container_name: credits-manager-conciliacion-worker
+    entrypoint: ["php", "artisan", "queue:work", "redis", "--queue=conciliacion", "--timeout=300", "--tries=1", "--sleep=1"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
+    environment: *api-worker-env
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_storage:/var/www/html/storage
+      - conciliacion_data:/var/conciliacion
+    restart: unless-stopped
+
   # Envía los recordatorios de cobranza por correo (cola `correos`). Worker propio: un SMTP lento no retrasa importaciones ni exportaciones.
   correos-worker:
     image: credits-manager-api:latest
@@ -165,6 +184,7 @@ services:
       - api_storage:/var/www/html/storage
       - exportaciones_data:/var/exportaciones
       - importaciones_data:/var/importaciones
+      - conciliacion_data:/var/conciliacion
       - ${RESPALDOS_ORIGEN:-respaldos_data}:/var/respaldos
     restart: unless-stopped
 
@@ -240,12 +260,15 @@ services:
         condition: service_started
       importaciones-worker:
         condition: service_started
+      conciliacion-worker:
+        condition: service_started
       reverb:
         condition: service_started
     volumes:
       - api_storage:/var/www/html/storage
       - exportaciones_data:/var/exportaciones
       - importaciones_data:/var/importaciones
+      - conciliacion_data:/var/conciliacion
       - ${RESPALDOS_ORIGEN:-respaldos_data}:/var/respaldos
     healthcheck:
       test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
@@ -290,4 +313,5 @@ volumes:
   api_storage:
   exportaciones_data:
   importaciones_data:
+  conciliacion_data:
   respaldos_data:
