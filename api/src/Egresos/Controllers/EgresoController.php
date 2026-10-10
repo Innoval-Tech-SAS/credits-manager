@@ -2,11 +2,14 @@
 
 namespace App\Egresos\Controllers;
 
+use App\Egresos\Models\Egreso;
 use App\Egresos\Requests\CrearEgresoRequest;
 use App\Egresos\Requests\ListarEgresosRequest;
+use App\Egresos\Requests\ReversarEgresoRequest;
 use App\Egresos\Services\EgresoService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 
 class EgresoController extends Controller
 {
@@ -30,5 +33,12 @@ class EgresoController extends Controller
         $egreso = $this->egresos->registrar($peticion->validated(), $peticion->file('soporte'));
 
         return response()->json(['egreso' => $egreso], 201);
+    }
+
+    public function reversar(ReversarEgresoRequest $peticion, Egreso $egreso): JsonResponse
+    {
+        $reversa = $this->egresos->reversar($egreso, $peticion->validated('motivo'), Auth::id());
+
+        return response()->json(['reversa' => $reversa]);
     }
 }

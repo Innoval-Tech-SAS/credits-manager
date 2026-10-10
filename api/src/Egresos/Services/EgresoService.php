@@ -3,8 +3,10 @@
 namespace App\Egresos\Services;
 
 use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Enums\NaturalezaDocumento;
+use App\Contabilidad\Repositories\AplicacionDocumentoRepository;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Contabilidad\Services\DocumentoTerceroService;
 use App\Core\Consecutivos\Enums\TipoDocumentoConsecutivo;
@@ -13,7 +15,9 @@ use App\Core\Dinero\Dinero;
 use App\Documentos\Services\ArchivoAdjuntoService;
 use App\Egresos\Enums\MedioPagoEgreso;
 use App\Egresos\Models\Egreso;
+use App\Egresos\Models\ReversaEgreso;
 use App\Egresos\Repositories\EgresoRepository;
+use App\Egresos\Repositories\ReversaEgresoRepository;
 use App\Terceros\Repositories\TerceroRepository;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -35,6 +39,8 @@ class EgresoService
         protected ConsecutivoDocumentoService $consecutivos,
         protected EmisorAuditoria $auditoria,
         protected ArchivoAdjuntoService $archivos,
+        protected ReversaEgresoRepository $reversas,
+        protected AplicacionDocumentoRepository $aplicacionesDocumento,
     ) {}
 
     public function listar(?int $terceroId, ?string $desde, ?string $hasta, int $porPagina, int $pagina): LengthAwarePaginator
@@ -164,6 +170,61 @@ class EgresoService
             );
 
             return $this->egresos->buscarPorIdOFallar($egreso->id);
+        });
+    }
+
+    /**
+     * Reversa un egreso mediante movimiento compensatorio: el egreso no se toca (sigue inmutable); los documentos
+     * por pagar que había cruzado recuperan el saldo abonado y el comprobante se reversa con un asiento enlazado.
+     */
+    public function reversar(Egreso $egreso, string $motivo, ?int $usuarioId): ReversaEgreso
+    {
+        return DB::transaction(function () use ($egreso, $motivo, $usuarioId) {
+            if ($this->reversas->existePara($egreso->id)) {
+                throw ValidationException::withMessages([
+                    'egreso' => __('validation.custom.egreso.ya_reversado'),
+                ]);
+            }
+
+            $vigentes = $this->aplicacionesDocumento->vigentesDe('egresos', $egreso->id);
+            $documentos = $this->documentosTercero
+                ->buscarVariosPorId($vigentes->pluck('documento_tercero_id')->unique()->all())
+                ->keyBy('id');
+
+            foreach ($vigentes as $aplicacion) {
+                $documento = $documentos[$aplicacion->documento_tercero_id];
+                $this->documentosTercero->incrementarValor($documento, $aplicacion->valor_aplicado, 'egresos_reversa', $egreso->id);
+            }
+
+            $this->aplicacionesDocumento->marcarReversadas($vigentes->pluck('id')->all());
+
+            $comprobante = $this->comprobantes->buscarContabilizadoPorOrigen('egresos', $egreso->id);
+            $reverso = $comprobante ? $this->comprobantes->reversarComprobante($comprobante, $motivo) : null;
+
+            $reversa = $this->reversas->crear([
+                'egreso_id' => $egreso->id,
+                'comprobante_reverso_id' => $reverso?->id,
+                'fecha' => now('America/Bogota')->toDateString(),
+                'valor' => $egreso->valor,
+                'motivo' => $motivo,
+                'registrado_por' => $usuarioId,
+            ]);
+
+            $this->auditoria->registrar(
+                AccionAuditoria::Reversar,
+                AuditoriaConstants::MODULO_EGRESOS,
+                "Egreso {$egreso->numero} de {$egreso->valor->aDecimalString()} reversado",
+                'egreso',
+                $egreso->id,
+                nuevos: [
+                    'reversa_id' => $reversa->id,
+                    'comprobante_reverso_id' => $reverso?->id,
+                    'documentos_afectados' => $documentos->keys()->all(),
+                ],
+                motivo: $motivo,
+            );
+
+            return $reversa;
         });
     }
 }

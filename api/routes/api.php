@@ -315,6 +315,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/egresos', [EgresoController::class, 'index'])->middleware('permiso:egresos,listar');
     Route::post('/egresos', [EgresoController::class, 'store'])->middleware('permiso:egresos,crear');
+    Route::post('/egresos/{egreso}/reversar', [EgresoController::class, 'reversar'])->middleware('permiso:egresos,reversar')->whereNumber('egreso');
     Route::post('/anticipos/proveedores', [AnticipoController::class, 'storeProveedor'])->middleware('permiso:anticipos,crear');
     Route::post('/anticipos/clientes', [AnticipoController::class, 'storeCliente'])->middleware('permiso:anticipos,crear');
     Route::post('/anticipos/cruzar', [AnticipoController::class, 'cruzar'])->middleware('permiso:anticipos,crear');
