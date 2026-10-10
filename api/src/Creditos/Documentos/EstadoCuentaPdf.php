@@ -178,6 +178,11 @@ final class EstadoCuentaPdf implements DocumentoPdf
         return "Este documento es válido para pago total únicamente al día de generado.\nCualquier inquietud, favor comunicarla por escrito a los canales de atención de la empresa.";
     }
 
+    public function marcaAgua(): ?string
+    {
+        return null;
+    }
+
     /** Los pagos reversados siguen en el detalle para trazabilidad, pero no suman al total recaudado. */
     private function pagosVigentes(): Collection
     {

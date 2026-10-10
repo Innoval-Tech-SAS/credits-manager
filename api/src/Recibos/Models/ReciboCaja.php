@@ -5,17 +5,20 @@ namespace App\Recibos\Models;
 use App\Contabilidad\Models\Comprobante;
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
+use App\Facturacion\Models\CobroFacturacion;
 use App\Pagos\Models\Pago;
 use App\Recibos\Enums\EstadoRecibo;
+use App\Recibos\Enums\OrigenReciboCaja;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Documento numerado de un pago. El valor, el cliente y el medio de pago no se copian: salen del pago, que no se edita.
- * `numero` sí es una copia deliberada, asignada al emitir y nunca modificada. La anulación no libera el número.
+ * Documento numerado de un pago de crédito o de un cobro de factura (`origen_tipo` dice cuál; son mutuamente
+ * excluyentes). El valor, el cliente y el medio de pago no se copian: salen del documento de origen, que no se
+ * edita. `numero` sí es una copia deliberada, asignada al emitir y nunca modificada. La anulación no libera el número.
  */
-#[Fillable(['pago_id', 'comprobante_id', 'consecutivo', 'numero', 'estado', 'emitido_por', 'anulado_en', 'anulado_por', 'motivo_anulacion'])]
+#[Fillable(['pago_id', 'origen_tipo', 'cobro_facturacion_id', 'comprobante_id', 'consecutivo', 'numero', 'estado', 'emitido_por', 'anulado_en', 'anulado_por', 'motivo_anulacion'])]
 class ReciboCaja extends BaseModel
 {
     use PerteneceAEmpresa;
@@ -25,6 +28,7 @@ class ReciboCaja extends BaseModel
     protected function casts(): array
     {
         return [
+            'origen_tipo' => OrigenReciboCaja::class,
             'estado' => EstadoRecibo::class,
             'consecutivo' => 'integer',
             'anulado_en' => 'datetime',
@@ -34,6 +38,11 @@ class ReciboCaja extends BaseModel
     public function pago(): BelongsTo
     {
         return $this->belongsTo(Pago::class);
+    }
+
+    public function cobroFacturacion(): BelongsTo
+    {
+        return $this->belongsTo(CobroFacturacion::class);
     }
 
     public function comprobante(): BelongsTo

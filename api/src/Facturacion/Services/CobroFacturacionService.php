@@ -18,6 +18,7 @@ use App\Facturacion\Models\CobroFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Repositories\CobroFacturacionRepository;
 use App\Facturacion\Repositories\DocumentoFacturacionRepository;
+use App\Recibos\Services\ReciboCajaService;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +39,7 @@ class CobroFacturacionService
         protected AsientosFacturacionService $asientos,
         protected ComprobanteService $comprobantes,
         protected DocumentoTerceroService $documentosTercero,
+        protected ReciboCajaService $recibos,
         protected EmisorAuditoria $auditoria,
     ) {}
 
@@ -128,6 +130,8 @@ class CobroFacturacionService
             'registrado_por' => $usuario->id,
         ]);
 
+        $this->recibos->emitirParaCobro($cobro, $asiento);
+
         if ($bloqueada->documento_tercero_id) {
             $this->documentosTercero->aplicarValor(
                 $bloqueada->cliente->tercero,
@@ -174,6 +178,7 @@ class CobroFacturacionService
             }
 
             $reverso = $this->comprobantes->reversarComprobante($cobro->comprobante, $motivo);
+            $this->recibos->anularPorReversaCobro($cobro, $motivo, $usuario->id);
 
             $reversa = $this->cobros->crear([
                 'documento_id' => $factura->id,

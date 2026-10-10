@@ -153,6 +153,11 @@ final class ComprobantePdf implements DocumentoPdf
             : null;
     }
 
+    public function marcaAgua(): ?string
+    {
+        return null;
+    }
+
     private function numero(Comprobante $comprobante): string
     {
         return "{$comprobante->tipoComprobante->codigo} {$comprobante->consecutivo}";

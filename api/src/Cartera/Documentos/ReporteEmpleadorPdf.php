@@ -127,4 +127,9 @@ final class ReporteEmpleadorPdf implements DocumentoPdf
     {
         return null;
     }
+
+    public function marcaAgua(): ?string
+    {
+        return null;
+    }
 }

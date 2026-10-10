@@ -2,6 +2,8 @@
 
 namespace App\Recibos\Documentos;
 
+use App\Core\Dinero\Dinero;
+use App\Facturacion\Models\CobroFacturacion;
 use App\Impresion\Contracts\DocumentoPdf;
 use App\Impresion\Data\ColumnaDocumento;
 use App\Impresion\Data\DestinatarioDocumento;
@@ -13,12 +15,19 @@ use App\Impresion\Enums\TipoColumnaDocumento;
 use App\Impresion\Services\NumeroALetras;
 use App\Pagos\Models\Pago;
 use App\Recibos\Enums\EstadoRecibo;
+use App\Recibos\Enums\OrigenReciboCaja;
+use App\Recibos\Models\ReciboCaja;
 use Illuminate\Support\Str;
 
-/** Recibo de caja de un pago. Espera el pago con `recibo.comprobante`, `cliente.tercero`, `detalles.cuota` y `registrador` ya cargados. */
+/**
+ * Recibo de caja de un pago de crédito o de un cobro de factura (`$recibo->origen_tipo` dice cuál). Espera el
+ * recibo con `pago.cliente.tercero`/`pago.detalles.cuota`/`pago.registrador` o
+ * `cobroFacturacion.documento.cliente.tercero`/`cobroFacturacion.registrador` ya cargados según corresponda,
+ * además de `comprobante.tipoComprobante`, `comprobante.lineas.cuenta` y `anulador`.
+ */
 final class ReciboCajaPdf implements DocumentoPdf
 {
-    public function __construct(private readonly Pago $pago) {}
+    public function __construct(private readonly ReciboCaja $recibo) {}
 
     public function titulo(): string
     {
@@ -27,12 +36,12 @@ final class ReciboCajaPdf implements DocumentoPdf
 
     public function consecutivo(): ?string
     {
-        return $this->pago->recibo->numero;
+        return $this->recibo->numero;
     }
 
     public function nombreArchivo(): string
     {
-        return 'recibo-de-caja-'.Str::slug($this->pago->recibo->numero);
+        return 'recibo-de-caja-'.Str::slug($this->recibo->numero);
     }
 
     public function orientacion(): OrientacionDocumento
@@ -42,7 +51,7 @@ final class ReciboCajaPdf implements DocumentoPdf
 
     public function destinatario(): DestinatarioDocumento
     {
-        $tercero = $this->pago->cliente->tercero;
+        $tercero = $this->esPago() ? $this->pago()->cliente->tercero : $this->cobro()->documento->cliente->tercero;
 
         return DestinatarioDocumento::desdeTercero($tercero);
     }
@@ -50,8 +59,8 @@ final class ReciboCajaPdf implements DocumentoPdf
     public function fechas(): array
     {
         return [
-            new FechaDocumento('Fecha de pago', $this->pago->fecha_pago, true),
-            new FechaDocumento('Expedición', $this->pago->recibo->creado_en, true),
+            new FechaDocumento($this->esPago() ? 'Fecha de pago' : 'Fecha de cobro', $this->esPago() ? $this->pago()->fecha_pago : $this->cobro()->fecha, true),
+            new FechaDocumento('Expedición', $this->recibo->creado_en, true),
         ];
     }
 
@@ -71,19 +80,27 @@ final class ReciboCajaPdf implements DocumentoPdf
 
     public function filas(): iterable
     {
-        // La liquidación anticipada cierra las cuotas sin detalle por cuota: se imprime el pago completo en una línea.
-        if ($this->pago->detalles->isEmpty()) {
-            yield ['item' => 1, 'descripcion' => "Pago del crédito #{$this->pago->credito_id}", 'valor' => $this->pago->valor_pago];
+        if (! $this->esPago()) {
+            yield ['item' => 1, 'descripcion' => "Cobro de la factura {$this->cobro()->documento->numero}", 'valor' => $this->cobro()->valor];
 
             return;
         }
 
-        foreach ($this->pago->detalles->values() as $indice => $detalle) {
+        $pago = $this->pago();
+
+        // La liquidación anticipada cierra las cuotas sin detalle por cuota: se imprime el pago completo en una línea.
+        if ($pago->detalles->isEmpty()) {
+            yield ['item' => 1, 'descripcion' => "Pago del crédito #{$pago->credito_id}", 'valor' => $pago->valor_pago];
+
+            return;
+        }
+
+        foreach ($pago->detalles->values() as $indice => $detalle) {
             $cuota = $detalle->cuota;
 
             yield [
                 'item' => $indice + 1,
-                'descripcion' => "Cuota {$cuota->numero_cuota} del crédito #{$this->pago->credito_id}",
+                'descripcion' => "Cuota {$cuota->numero_cuota} del crédito #{$pago->credito_id}",
                 'valor' => $detalle->valor_aplicado,
             ];
         }
@@ -96,19 +113,19 @@ final class ReciboCajaPdf implements DocumentoPdf
 
     public function totales(): array
     {
-        return [new TotalDocumento($this->anulado() ? 'Valor anulado' : 'Total recibido', $this->pago->valor_pago)];
+        return [new TotalDocumento('Total recibido', $this->valorTotal())];
     }
 
     private function anulado(): bool
     {
-        return $this->pago->recibo->estado === EstadoRecibo::Anulado;
+        return $this->recibo->estado === EstadoRecibo::Anulado;
     }
 
     public function secciones(): array
     {
         $secciones = [
-            new SeccionDocumento('Valor en Letras', NumeroALetras::pesos($this->pago->valor_pago)),
-            new SeccionDocumento('Forma de pago', ucfirst($this->pago->forma_pago->value)),
+            new SeccionDocumento('Valor en Letras', NumeroALetras::pesos($this->valorTotal())),
+            new SeccionDocumento('Forma de pago', $this->esPago() ? ucfirst($this->pago()->forma_pago->value) : $this->cobro()->medio->etiqueta()),
         ];
 
         $cuentaCajaBanco = $this->cuentaDeCajaOBanco();
@@ -117,26 +134,29 @@ final class ReciboCajaPdf implements DocumentoPdf
             $secciones[] = new SeccionDocumento('Cuenta de caja o banco', $cuentaCajaBanco);
         }
 
-        $comprobante = $this->pago->recibo->comprobante;
+        $comprobante = $this->recibo->comprobante;
 
         if ($comprobante) {
             $secciones[] = new SeccionDocumento('Comprobante contable', "{$comprobante->tipoComprobante->codigo} {$comprobante->consecutivo}");
         }
 
-        if ($this->pago->registrador) {
-            $secciones[] = new SeccionDocumento('Recibido por', $this->pago->registrador->nombre);
+        $registrador = $this->esPago() ? $this->pago()->registrador : $this->cobro()->registrador;
+
+        if ($registrador) {
+            $secciones[] = new SeccionDocumento('Recibido por', $registrador->nombre);
         }
 
-        if ($this->pago->observacion) {
-            $secciones[] = new SeccionDocumento('Observaciones', $this->pago->observacion);
+        $observacion = $this->esPago() ? $this->pago()->observacion : $this->cobro()->observacion;
+
+        if ($observacion) {
+            $secciones[] = new SeccionDocumento('Observaciones', $observacion);
         }
 
         if ($this->anulado()) {
-            $recibo = $this->pago->recibo;
-            $anuladoPor = $recibo->anulador?->nombre ?? 'Sin usuario registrado';
+            $anuladoPor = $this->recibo->anulador?->nombre ?? 'Sin usuario registrado';
             $secciones[] = new SeccionDocumento(
                 'Anulación',
-                "Anulado el {$recibo->anulado_en->timezone('America/Bogota')->format('d/m/Y H:i')} por {$anuladoPor}.\nMotivo: {$recibo->motivo_anulacion}\nEl valor de este recibo no tiene efecto sobre el pago.",
+                "Anulado el {$this->recibo->anulado_en->timezone('America/Bogota')->format('d/m/Y H:i')} por {$anuladoPor}.\nMotivo: {$this->recibo->motivo_anulacion}\nEl valor de este recibo no tiene efecto sobre el documento de origen.",
             );
         }
 
@@ -148,10 +168,35 @@ final class ReciboCajaPdf implements DocumentoPdf
         return 'Conserve este recibo como soporte de su pago. No corresponde a una factura electrónica de venta.';
     }
 
+    public function marcaAgua(): ?string
+    {
+        return $this->anulado() ? 'ANULADO' : null;
+    }
+
+    private function esPago(): bool
+    {
+        return $this->recibo->origen_tipo === OrigenReciboCaja::Pago;
+    }
+
+    private function pago(): Pago
+    {
+        return $this->recibo->pago;
+    }
+
+    private function cobro(): CobroFacturacion
+    {
+        return $this->recibo->cobroFacturacion;
+    }
+
+    private function valorTotal(): Dinero
+    {
+        return $this->esPago() ? $this->pago()->valor_pago : $this->cobro()->valor;
+    }
+
     /** La cuenta que se debitó en el asiento del recaudo: donde entró el dinero. */
     private function cuentaDeCajaOBanco(): ?string
     {
-        $linea = $this->pago->recibo->comprobante?->lineas->first(fn ($asiento) => $asiento->debito->esPositivo());
+        $linea = $this->recibo->comprobante?->lineas->first(fn ($asiento) => $asiento->debito->esPositivo());
 
         return $linea?->cuenta ? "{$linea->cuenta->codigo} {$linea->cuenta->nombre}" : null;
     }

@@ -306,6 +306,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/facturacion/documentos/{documento}/cobros', [CobroFacturacionController::class, 'store'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/cobros', [CobroFacturacionController::class, 'storeMultiple'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/cobros/{cobro}/reversar', [CobroFacturacionController::class, 'reversar'])->middleware('permiso:facturacion,anular');
+    Route::get('/facturacion/cobros/{cobro}/recibo/pdf', [CobroFacturacionController::class, 'pdf'])->middleware('permiso:facturacion,imprimir');
     Route::get('/facturacion/documentos/{documento}/pdf', [DocumentoFacturacionController::class, 'pdf'])->middleware('permiso:facturacion,imprimir');
     Route::get('/facturacion/consecutivos', [ConsecutivoFacturacionController::class, 'index'])->middleware('permiso:facturacion,listar');
     Route::patch('/facturacion/consecutivos/{tipo}', [ConsecutivoFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');

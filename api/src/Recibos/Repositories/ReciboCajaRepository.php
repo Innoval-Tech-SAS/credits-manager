@@ -19,6 +19,11 @@ class ReciboCajaRepository extends BaseRepository
         return $this->consulta()->where('pago_id', $pagoId)->first();
     }
 
+    public function porCobroFacturacion(int $cobroFacturacionId): ?ReciboCaja
+    {
+        return $this->consulta()->where('cobro_facturacion_id', $cobroFacturacionId)->first();
+    }
+
     /**
      * Recibos de la empresa filtrados por tercero, rango de fecha del pago y estado. El `whereHas('pago')` hereda el
      * alcance por asesor del pago, así que un asesor solo ve los recibos de sus clientes.
