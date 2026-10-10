@@ -32,6 +32,8 @@ class AuditoriaConstants
 
     public const MODULO_FACTURACION = 'facturacion';
 
+    public const MODULO_CONCILIACION = 'conciliacion';
+
     public const MODULO_GEOGRAFIA = 'geografia';
 
     public const MODULO_CORREO = 'correo';

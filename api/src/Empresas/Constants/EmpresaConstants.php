@@ -41,6 +41,8 @@ class EmpresaConstants
             'cartera.listar', 'cartera.exportar', 'cartera.imprimir_reporte_empleador',
             'clientes.listar', 'clientes.ver', 'clientes.exportar',
             'pagos.exportar', 'pagos.reversar', 'recibos.listar',
+            'conciliacion.listar', 'conciliacion.configurar', 'conciliacion.cargar_extracto',
+            'conciliacion.conciliar', 'conciliacion.cerrar', 'conciliacion.exportar',
         ],
         'cartera' => [
             'clientes.listar', 'clientes.ver', 'clientes.editar', 'clientes.exportar',
@@ -58,6 +60,7 @@ class EmpresaConstants
             'calendario.listar',
             'contabilidad.listar', 'contabilidad.imprimir_comprobante',
             'configuracion_contable.listar', 'informes_contables.listar', 'terceros.listar',
+            'conciliacion.listar',
         ],
         'auditoria' => [
             'contabilidad.listar', 'contabilidad.imprimir_comprobante',
@@ -65,6 +68,7 @@ class EmpresaConstants
             'cartera.listar', 'cartera.exportar', 'cartera.imprimir_reporte_empleador',
             'auditoria.listar',
             'auditoria.exportar',
+            'conciliacion.listar',
         ],
     ];
 }

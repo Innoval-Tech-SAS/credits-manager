@@ -12,4 +12,6 @@ export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, { Icon: LucideIco
     importacion_validada: { Icon: CircleCheck, className: 'text-brand-500' },
     importacion_completada: { Icon: CircleCheck, className: 'text-success-500' },
     importacion_fallida: { Icon: AlertCircle, className: 'text-error-500' },
+    extracto_bancario_cargado: { Icon: CircleCheck, className: 'text-success-500' },
+    extracto_bancario_rechazado: { Icon: AlertCircle, className: 'text-error-500' },
 };

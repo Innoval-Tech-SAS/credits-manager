@@ -12,4 +12,6 @@ enum TipoNotificacion: string
     case ImportacionValidada = 'importacion_validada';
     case ImportacionCompletada = 'importacion_completada';
     case ImportacionFallida = 'importacion_fallida';
+    case ExtractoBancarioCargado = 'extracto_bancario_cargado';
+    case ExtractoBancarioRechazado = 'extracto_bancario_rechazado';
 }

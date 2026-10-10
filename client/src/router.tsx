@@ -18,6 +18,9 @@ import { ImportDetailPage } from './imports/pages/import-detail-page';
 import { JournalPage } from './accounting/pages/journal-page';
 import { LedgerPage } from './accounting/pages/ledger-page';
 import { ReceiptsListPage } from './receipts/pages/receipts-list-page';
+import { BankAccountsPage } from './reconciliation/pages/bank-accounts-page';
+import { BankStatementsPage } from './reconciliation/pages/bank-statements-page';
+import { CreateBankAccountPage } from './reconciliation/pages/create-bank-account-page';
 import { PeriodsPage } from './accounting/pages/periods-page';
 import { PostingRulesPage } from './accounting/pages/posting-rules-page';
 import { TrialBalancePage } from './accounting/pages/trial-balance-page';
@@ -768,6 +771,30 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="gastos" accion="parametrizar">
                                 <CreateParametrizationPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'conciliacion/cuentas-bancarias',
+                        element: (
+                            <RequireModulePermission modulo="conciliacion" accion="listar">
+                                <BankAccountsPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'conciliacion/cuentas-bancarias/crear',
+                        element: (
+                            <RequireModulePermission modulo="conciliacion" accion="configurar">
+                                <CreateBankAccountPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'conciliacion/cuentas-bancarias/:id/extractos',
+                        element: (
+                            <RequireModulePermission modulo="conciliacion" accion="listar">
+                                <BankStatementsPage />
                             </RequireModulePermission>
                         ),
                     },
