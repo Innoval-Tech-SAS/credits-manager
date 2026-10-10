@@ -314,6 +314,7 @@ return [
         'egreso' => [
             'descuento_mayor_o_igual_al_valor' => 'El descuento de una línea no puede ser mayor o igual que el valor aplicado: algo debe quedar pagado en efectivo.',
             'cuenta_descuento_requerida' => 'Si alguna línea tiene descuento por pronto pago, debes indicar la cuenta de descuentos comerciales condicionados.',
+            'ya_reversado' => 'Este egreso ya fue reversado.',
         ],
         'tipo_gasto' => [
             'inactivo_o_no_existe' => 'El tipo de gasto no existe o está inactivo.',

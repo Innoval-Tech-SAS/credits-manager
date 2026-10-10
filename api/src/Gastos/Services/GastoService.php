@@ -199,10 +199,9 @@ class GastoService
             }
 
             if ($gasto->documento_tercero_id) {
-                // TODO(Fase B - Egresos): una vez exista `aplicaciones_documento.reversado_en`,
-                // filtrar aquí `whereNull('reversado_en')` para permitir anular un gasto cuyos
-                // cruces ya fueron reversados (RF-14).
-                $tieneCruces = AplicacionDocumento::where('documento_tercero_id', $gasto->documento_tercero_id)->exists();
+                $tieneCruces = AplicacionDocumento::where('documento_tercero_id', $gasto->documento_tercero_id)
+                    ->whereNull('reversado_en')
+                    ->exists();
 
                 if ($tieneCruces) {
                     throw ValidationException::withMessages([
