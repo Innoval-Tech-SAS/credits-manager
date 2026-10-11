@@ -5,6 +5,8 @@ export type ApiCompany = {
     nit: string | null;
     digito_verificacion: string | null;
     direccion: string | null;
+    actividad_economica_id: number | null;
+    actividad_economica: { id: number; codigo: string; nombre: string } | null;
     municipio_id: number | null;
     /** En el listado del superadmin solo trae `id` y `nombre`; el resto llega en el detalle y en la empresa propia. */
     municipio: { id: number; nombre: string; estado?: { id: number; pais_id: number; nombre: string } } | null;
