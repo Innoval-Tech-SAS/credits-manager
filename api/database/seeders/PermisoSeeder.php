@@ -29,7 +29,7 @@ class PermisoSeeder extends Seeder
         'gastos' => ['listar', 'crear', 'anular', 'parametrizar', 'exportar'],
         'egresos' => ['listar', 'crear'],
         'auditoria' => ['listar', 'exportar'],
-        'facturacion' => ['listar', 'crear', 'anular', 'imprimir', 'configurar'],
+        'facturacion' => ['listar', 'crear', 'anular', 'anular_nota_credito', 'anular_nota_debito', 'imprimir', 'configurar'],
         'importaciones' => ['listar', 'ejecutar'],
         'metas' => ['listar', 'configurar', 'recalcular'],
     ];

@@ -51,8 +51,10 @@ class BackfillDocumentoTerceroFacturasMigracionTest extends TestCase
 
     private function nota(array $documento, string $tipo, array $linea): array
     {
+        $motivoCodigo = $tipo === 'nota_credito' ? 'ajuste_precio' : 'cambio_valor';
+
         return $this->postJson(self::BASE.'/documentos/'.$documento['id'].'/notas', [
-            'tipo' => $tipo, 'motivo' => 'Ajuste', 'lineas' => [$linea],
+            'tipo' => $tipo, 'motivo_codigo' => $motivoCodigo, 'lineas' => [$linea],
         ])->assertStatus(201)->json('documento');
     }
 

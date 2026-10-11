@@ -44,6 +44,12 @@ class DocumentoFacturacionRepository extends BaseRepository
         return $this->consulta()->lockForUpdate()->findOrFail($id);
     }
 
+    /** Explícito por empresa: lo usa el job de envío de correo, que no tiene sesión. */
+    public function deEmpresa(int $id, int $empresaId): ?DocumentoFacturacion
+    {
+        return $this->consulta()->where('empresa_id', $empresaId)->whereKey($id)->first();
+    }
+
     /** Igual que `bloquear()` pero para varias filas a la vez: un cobro que cruza varias facturas las bloquea todas en la misma transacción. */
     public function bloquearVarias(array $ids): Collection
     {

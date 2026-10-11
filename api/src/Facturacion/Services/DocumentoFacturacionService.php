@@ -12,9 +12,12 @@ use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Models\Credito;
 use App\Creditos\Repositories\CreditoRepository;
+use App\Empresas\Models\Empresa;
 use App\Empresas\Services\EmpresaService;
 use App\Facturacion\Documentos\FacturaPdf;
 use App\Facturacion\Enums\EstadoDocumentoFacturacion;
+use App\Facturacion\Enums\MotivoNotaCredito;
+use App\Facturacion\Enums\MotivoNotaDebito;
 use App\Facturacion\Enums\SituacionFactura;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
@@ -34,7 +37,8 @@ use Illuminate\Validation\ValidationException;
  * Facturas y notas internas. Reglas que el Service garantiza (la base no puede expresarlas):
  * - un borrador se edita y se borra; un documento emitido no cambia;
  * - el número sale de la secuencia del tipo dentro de la misma transacción de la emisión (sin huecos);
- * - una nota crédito no acredita más que lo que queda de la línea original ni más que el saldo pendiente;
+ * - una nota crédito no acredita más que lo que queda de cada línea original; si la factura ya estaba pagada, el
+ *   excedente queda como saldo a favor del cliente en vez de bloquear la nota;
  * - cada emisión y nota genera su asiento en la misma transacción; sin regla contable, no se opera;
  * - la situación de la factura (emitida, parcialmente pagada, pagada, anulada) es derivada de sus notas y cobros.
  */
@@ -197,11 +201,20 @@ class DocumentoFacturacionService
      * Nota crédito sobre una factura, o nota débito sobre una factura o una nota crédito.
      * Nota crédito: cada línea corrige una línea de la factura, con el concepto de esa línea y sin pasarse de lo que queda.
      * Nota débito: líneas libres (concepto, descripción y valor), opcionalmente vinculadas a una línea de origen.
+     * El motivo sale de la lista cerrada del tipo (`MotivoNotaCredito`/`MotivoNotaDebito`); con «otros» se guarda el
+     * detalle en texto libre, si no, la etiqueta del motivo elegido.
      *
      * @param  list<array<string, mixed>>  $lineas
      */
-    public function emitirNota(DocumentoFacturacion $origen, TipoDocumentoFacturacion $tipo, string $motivo, array $lineas, Usuario $usuario): DocumentoFacturacion
-    {
+    public function emitirNota(
+        DocumentoFacturacion $origen,
+        TipoDocumentoFacturacion $tipo,
+        string $motivoCodigo,
+        ?string $motivoDetalle,
+        ?string $fechaVencimiento,
+        array $lineas,
+        Usuario $usuario,
+    ): DocumentoFacturacion {
         $this->exigirEmitido($origen);
 
         $tipoOrigenValido = $tipo === TipoDocumentoFacturacion::NotaCredito
@@ -212,7 +225,9 @@ class DocumentoFacturacionService
             throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.origen_tipo_invalido')]);
         }
 
-        return DB::transaction(function () use ($origen, $tipo, $motivo, $lineas, $usuario) {
+        $motivo = $motivoDetalle ?? $this->etiquetaMotivo($tipo, $motivoCodigo);
+
+        return DB::transaction(function () use ($origen, $tipo, $motivo, $fechaVencimiento, $lineas, $usuario) {
             // Bloquear el origen: dos notas o cobros simultáneos sobre la misma factura se serializan y no acreditan dos veces el mismo saldo.
             $bloqueado = $this->documentos->bloquear($origen->id);
             $this->exigirEmitido($bloqueado);
@@ -225,7 +240,7 @@ class DocumentoFacturacionService
                 $this->exigirDentroDelTope($lineasNota, (int) $usuario->empresa_id);
             }
 
-            return $this->crearNota($bloqueado, $tipo, $motivo, $lineasNota, $usuario);
+            return $this->crearNota($bloqueado, $tipo, $motivo, $lineasNota, $usuario, fechaVencimiento: $fechaVencimiento);
         });
     }
 
@@ -310,6 +325,7 @@ class DocumentoFacturacionService
             'total_nota_debito' => $totalNotaDebito,
             'total_cobrado' => $totalCobrado,
             'saldo' => $saldo,
+            'saldo_a_favor' => $saldo->esNegativo() ? $saldo->absoluto() : Dinero::cero(),
             'anulada' => $anulada,
             'situacion' => $this->situacion($anulada, $saldo, $totalNotaCredito->sumar($totalCobrado)),
         ];
@@ -336,8 +352,26 @@ class DocumentoFacturacionService
         return $pdf;
     }
 
-    /** Crea la nota emitida y su asiento. Una nota débito no se emite sobre una factura anulada; una crédito no supera el saldo. */
-    private function crearNota(DocumentoFacturacion $origen, TipoDocumentoFacturacion $tipo, string $motivo, array $lineasNota, Usuario $usuario, bool $anulacion = false): DocumentoFacturacion
+    /** Para el job de envío por correo: sin sesión (la empresa llega explícita) y sin auditoría de descarga, porque nadie la pidió. */
+    public function generarPdfInterno(DocumentoFacturacion $documento, Empresa $empresa): PdfGenerado
+    {
+        $this->exigirEmitido($documento);
+
+        $documento->load(['lineas', 'cliente.tercero', 'credito', 'origen']);
+
+        $documentoPdf = new FacturaPdf($documento, $this->totales($documento));
+
+        return new PdfGenerado($this->generador->generar($documentoPdf, $empresa), $documentoPdf->nombreArchivo());
+    }
+
+    /**
+     * Crea la nota emitida y su asiento. Una nota débito no se emite sobre una factura anulada. Una nota crédito no
+     * supera el valor de la factura (el tope real ya lo exige `lineasDeNotaCredito()` por línea, contra la línea de
+     * la factura, no contra lo pendiente de cobro): si la factura ya estaba pagada, el excedente no se aplica al
+     * documento por cobrar (no puede quedar en saldo negativo) y queda como saldo a favor del cliente, visible en
+     * `totales()`, sin cruzarlo automáticamente — eso lo hace el usuario desde Anticipos si decide devolverlo.
+     */
+    private function crearNota(DocumentoFacturacion $origen, TipoDocumentoFacturacion $tipo, string $motivo, array $lineasNota, Usuario $usuario, bool $anulacion = false, ?string $fechaVencimiento = null): DocumentoFacturacion
     {
         if ($origen->tipo === TipoDocumentoFacturacion::Factura) {
             $totales = $this->totales($origen);
@@ -345,16 +379,13 @@ class DocumentoFacturacionService
             if ($tipo === TipoDocumentoFacturacion::NotaDebito && $totales['anulada']) {
                 throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.ya_anulada')]);
             }
-
-            if ($tipo === TipoDocumentoFacturacion::NotaCredito && Dinero::sumarVarios(...array_column($lineasNota, 'valor'))->mayorQue($totales['saldo'])) {
-                throw ValidationException::withMessages(['lineas' => __('validation.custom.facturacion.excede_saldo_pendiente')]);
-            }
         }
 
         $nota = $this->documentos->crear([
             'tipo' => $tipo,
             'estado' => EstadoDocumentoFacturacion::Borrador,
             'fecha' => now('America/Bogota')->toDateString(),
+            'fecha_vencimiento' => $tipo === TipoDocumentoFacturacion::NotaDebito ? $fechaVencimiento : null,
             'cliente_id' => $origen->cliente_id,
             'credito_id' => $origen->credito_id,
             'documento_origen_id' => $origen->id,
@@ -372,14 +403,19 @@ class DocumentoFacturacionService
 
         if ($factura?->documento_tercero_id && $valorNota->esPositivo()) {
             if ($tipo === TipoDocumentoFacturacion::NotaCredito) {
-                $this->documentosTercero->aplicarValor(
-                    $factura->cliente->tercero,
-                    NaturalezaDocumento::PorCobrar,
-                    [['documento_tercero_id' => $factura->documento_tercero_id, 'valor' => $valorNota]],
-                    'facturacion_nota',
-                    $emitida->id,
-                    $emitida->fecha->toDateString(),
-                );
+                // No puede exceder el saldo del documento por cobrar: lo que sobre queda como saldo a favor, sin aplicar.
+                $valorAAplicar = $valorNota->menorEntre($factura->documentoTercero->saldo);
+
+                if ($valorAAplicar->esPositivo()) {
+                    $this->documentosTercero->aplicarValor(
+                        $factura->cliente->tercero,
+                        NaturalezaDocumento::PorCobrar,
+                        [['documento_tercero_id' => $factura->documento_tercero_id, 'valor' => $valorAAplicar]],
+                        'facturacion_nota',
+                        $emitida->id,
+                        $emitida->fecha->toDateString(),
+                    );
+                }
             } else {
                 $this->documentosTercero->incrementarValor(
                     $factura->documentoTercero,
@@ -485,6 +521,9 @@ class DocumentoFacturacionService
                 'concepto' => $entrada['concepto'],
                 'descripcion' => $entrada['descripcion'],
                 'valor' => Dinero::desdePesos($entrada['valor']),
+                'tasa_mora' => $entrada['tasa_mora'] ?? null,
+                'dias_mora' => $entrada['dias_mora'] ?? null,
+                'base_mora' => isset($entrada['base_mora']) ? Dinero::desdePesos($entrada['base_mora']) : null,
             ];
         }, $lineas);
     }
@@ -510,10 +549,21 @@ class DocumentoFacturacionService
         ], $lineas);
     }
 
+    private function etiquetaMotivo(TipoDocumentoFacturacion $tipo, string $codigo): string
+    {
+        return $tipo === TipoDocumentoFacturacion::NotaCredito
+            ? MotivoNotaCredito::from($codigo)->etiqueta()
+            : MotivoNotaDebito::from($codigo)->etiqueta();
+    }
+
     private function situacion(bool $anulada, Dinero $saldo, Dinero $liquidado): SituacionFactura
     {
         if ($anulada) {
             return SituacionFactura::Anulada;
+        }
+
+        if ($saldo->esNegativo()) {
+            return SituacionFactura::ConSaldoAFavor;
         }
 
         if (! $saldo->esPositivo()) {
