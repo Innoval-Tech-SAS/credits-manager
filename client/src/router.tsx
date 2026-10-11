@@ -7,8 +7,10 @@ import { CreateAdvancePage } from './advances/pages/create-advance-page';
 import { CrossAdvancePage } from './advances/pages/cross-advance-page';
 import { ChartOfAccountsPage } from './accounting/pages/chart-of-accounts-page';
 import { CostCentersPage } from './accounting/pages/cost-centers-page';
+import { CostCenterDetailPage } from './accounting/pages/cost-center-detail-page';
 import { CreateAccountPage } from './accounting/pages/create-account-page';
 import { CreateCostCenterPage } from './accounting/pages/create-cost-center-page';
+import { EditCostCenterPage } from './accounting/pages/edit-cost-center-page';
 import { CreateVoucherPage } from './accounting/pages/create-voucher-page';
 import { CreateVoucherTypePage } from './accounting/pages/create-voucher-type-page';
 import { EditVoucherTypePage } from './accounting/pages/edit-voucher-type-page';
@@ -542,6 +544,22 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="configuracion_contable" accion="crear">
                                 <CreateCostCenterPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/centros-costo/:id',
+                        element: (
+                            <RequireModulePermission modulo="configuracion_contable" accion="listar">
+                                <CostCenterDetailPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/centros-costo/:id/editar',
+                        element: (
+                            <RequireModulePermission modulo="configuracion_contable" accion="editar">
+                                <EditCostCenterPage />
                             </RequireModulePermission>
                         ),
                     },

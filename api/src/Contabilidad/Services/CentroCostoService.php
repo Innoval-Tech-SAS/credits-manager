@@ -7,6 +7,7 @@ use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Models\CentroCosto;
 use App\Contabilidad\Repositories\CentroCostoRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Validation\ValidationException;
 
 class CentroCostoService
 {
@@ -29,6 +30,12 @@ class CentroCostoService
         return $centro;
     }
 
+    /** Para que el frontend deshabilite la eliminación con una pista, en vez de que el usuario choque con un 422. */
+    public function tieneMovimientosAsociados(CentroCosto $centro): bool
+    {
+        return $this->centros->tieneMovimientosAsociados($centro->id);
+    }
+
     public function editar(CentroCosto $centro, array $datos): CentroCosto
     {
         $anteriores = $this->auditoria->instantanea($centro);
@@ -37,5 +44,20 @@ class CentroCostoService
         $this->auditoria->registrarModificacion(AuditoriaConstants::MODULO_CONTABILIDAD, "Centro de costo {$centro->codigo} modificado", $centro, $anteriores);
 
         return $centro;
+    }
+
+    public function eliminar(CentroCosto $centro): bool
+    {
+        if ($this->centros->tieneMovimientosAsociados($centro->id)) {
+            throw ValidationException::withMessages([
+                'centro_costo' => __('validation.custom.centro_costo.tiene_movimientos_asociados'),
+            ]);
+        }
+
+        $eliminado = $this->centros->eliminar($centro);
+
+        $this->auditoria->registrarEliminacion(AuditoriaConstants::MODULO_CONTABILIDAD, "Centro de costo {$centro->codigo} eliminado", $centro);
+
+        return $eliminado;
     }
 }

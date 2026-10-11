@@ -2,8 +2,10 @@
 
 namespace App\Contabilidad\Repositories;
 
+use App\Contabilidad\Models\AsientoContable;
 use App\Contabilidad\Models\CentroCosto;
 use App\Core\Base\BaseRepository;
+use App\Gastos\Models\Gasto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -32,5 +34,12 @@ class CentroCostoRepository extends BaseRepository
         }
 
         return $consulta->paginate(perPage: $porPagina, page: $pagina);
+    }
+
+    /** Regla de negocio "sin movimientos": el centro ya tiene gastos causados o asientos contabilizados. */
+    public function tieneMovimientosAsociados(int $centroCostoId): bool
+    {
+        return Gasto::where('centro_costo_id', $centroCostoId)->exists()
+            || AsientoContable::where('centro_costo_id', $centroCostoId)->exists();
     }
 }

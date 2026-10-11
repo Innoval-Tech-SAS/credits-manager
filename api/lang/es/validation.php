@@ -345,6 +345,9 @@ return [
             'no_configurado' => 'No hay un valor de UVT configurado para el año de la fecha del documento.',
             'tiene_gastos_asociados' => 'No se puede modificar ni eliminar: ya hay gastos causados con fecha de ese año.',
         ],
+        'centro_costo' => [
+            'tiene_movimientos_asociados' => 'No se puede eliminar: ya tiene gastos o asientos contables asociados.',
+        ],
         'tipo_comprobante' => [
             'tiene_comprobantes_asociados' => 'No se puede eliminar: ya tiene comprobantes asociados.',
             'en_uso_por_configuracion' => 'No se puede eliminar: está en uso por una regla de contabilización o una parametrización de gasto.',
