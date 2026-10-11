@@ -84,6 +84,9 @@ import { CompaniesListPage } from './company/pages/companies-list-page';
 import { CreateCompanyPage } from './company/pages/create-company-page';
 import { EditCompanyPage } from './company/pages/edit-company-page';
 import { EmailSettingsPage } from './email/pages/email-settings-page';
+import { EmailTemplatesPage } from './email/pages/email-templates-page';
+import { CreateEmailTemplatePage } from './email/pages/create-email-template-page';
+import { EditEmailTemplatePage } from './email/pages/edit-email-template-page';
 import { AppLayout } from './layout/components/app-layout';
 import { ErrorPage } from './layout/pages/error-page';
 import { HomePage } from './layout/pages/home-page';
@@ -312,6 +315,30 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireAdmin>
                                 <EmailSettingsPage />
+                            </RequireAdmin>
+                        ),
+                    },
+                    {
+                        path: 'plantillas-correo',
+                        element: (
+                            <RequireAdmin>
+                                <EmailTemplatesPage />
+                            </RequireAdmin>
+                        ),
+                    },
+                    {
+                        path: 'plantillas-correo/:tipo/crear',
+                        element: (
+                            <RequireAdmin>
+                                <CreateEmailTemplatePage />
+                            </RequireAdmin>
+                        ),
+                    },
+                    {
+                        path: 'plantillas-correo/:tipo/:id/editar',
+                        element: (
+                            <RequireAdmin>
+                                <EditEmailTemplatePage />
                             </RequireAdmin>
                         ),
                     },
