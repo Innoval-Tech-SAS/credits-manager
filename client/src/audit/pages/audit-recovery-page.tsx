@@ -115,6 +115,7 @@ export const AuditRecoveryPage: FC = () => {
                 getRowKey={(row) => `${row.evento_id ?? 'sin-id'}-${row.registrado_en}`}
                 loading={isLoading}
                 emptyMessage="No hay entradas en el log de respaldo para el estado seleccionado."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

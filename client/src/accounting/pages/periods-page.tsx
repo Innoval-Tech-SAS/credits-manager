@@ -1,11 +1,13 @@
 import type { FC } from 'react';
 import { useState } from 'react';
+import { Lock, Send, Unlock } from 'lucide-react';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { formatDateTimeEs } from '../../shared/utils/format-datetime-es';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Alert } from '@ui/alert/components/alert';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Label } from '@ui/forms/components/label';
@@ -130,26 +132,22 @@ export const PeriodsPage: FC = () => {
                             render: (row) => {
                                 if (row.estado === 'abierto') {
                                     return canClose ? (
-                                        <button
-                                            type="button"
-                                            onClick={() => void handleCerrar(row)}
+                                        <ActionButton
+                                            icon={<Lock className="size-5" />}
+                                            label={cerrandoId === row.id ? 'Cerrando…' : 'Cerrar'}
                                             disabled={cerrandoId === row.id}
-                                            className="text-brand-600 hover:underline disabled:opacity-50 dark:text-brand-400"
-                                        >
-                                            {cerrandoId === row.id ? 'Cerrando…' : 'Cerrar'}
-                                        </button>
+                                            onClick={() => void handleCerrar(row)}
+                                        />
                                     ) : null;
                                 }
 
                                 if (canReopen) {
                                     return (
-                                        <button
-                                            type="button"
+                                        <ActionButton
+                                            icon={<Unlock className="size-5" />}
+                                            label="Reabrir"
                                             onClick={() => setReopenTarget({ periodo: row, mode: 'reabrir' })}
-                                            className="text-brand-600 hover:underline dark:text-brand-400"
-                                        >
-                                            Reabrir
-                                        </button>
+                                        />
                                     );
                                 }
 
@@ -160,13 +158,11 @@ export const PeriodsPage: FC = () => {
                                 return pendingPeriodIds.has(row.id) ? (
                                     <span className="text-xs text-gray-500 dark:text-gray-400">Solicitud pendiente</span>
                                 ) : (
-                                    <button
-                                        type="button"
+                                    <ActionButton
+                                        icon={<Send className="size-5" />}
+                                        label="Solicitar reapertura"
                                         onClick={() => setReopenTarget({ periodo: row, mode: 'solicitar' })}
-                                        className="text-left text-brand-600 hover:underline dark:text-brand-400"
-                                    >
-                                        Solicitar reapertura
-                                    </button>
+                                    />
                                 );
                             },
                         },
@@ -175,6 +171,7 @@ export const PeriodsPage: FC = () => {
                     getRowKey={(row) => row.id}
                     loading={isLoading}
                     emptyMessage="Aún no hay períodos registrados."
+                    maxHeightClassName="max-h-[65vh]"
                 />
             </div>
 

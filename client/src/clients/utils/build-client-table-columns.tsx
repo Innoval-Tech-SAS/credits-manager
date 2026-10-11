@@ -1,5 +1,6 @@
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { CLIENT_STATUS_BADGE_CLASSES } from '../constants/client-status-badge-classes';
 import { WhatsAppButton } from '../components/whatsapp-button';
 import type { ApiClient } from '../types/api-client';
@@ -49,36 +50,14 @@ export function buildClientTableColumns({
             label: 'Acción',
             render: (row) => (
                 <div className="flex w-full items-center gap-3">
-                    {canView && (
-                        <button
-                            type="button"
-                            onClick={() => onView(row)}
-                            className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90"
-                        >
-                            <Eye className="size-5" />
-                        </button>
-                    )}
+                    {canView && <ActionButton icon={<Eye className="size-5" />} label="Ver" onClick={() => onView(row)} />}
 
                     <WhatsAppButton variant="icono" nombre={row.tercero.nombre} celular={row.tercero.celular} />
 
-                    {canEdit && (
-                        <button
-                            type="button"
-                            onClick={() => onEdit(row)}
-                            className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90"
-                        >
-                            <Pencil className="size-5" />
-                        </button>
-                    )}
+                    {canEdit && <ActionButton icon={<Pencil className="size-5" />} label="Editar" onClick={() => onEdit(row)} />}
 
                     {canDelete && (
-                        <button
-                            type="button"
-                            onClick={() => onDelete(row)}
-                            className="text-gray-500 hover:text-error-500 dark:text-gray-400 dark:hover:text-error-500"
-                        >
-                            <Trash2 className="size-5" />
-                        </button>
+                        <ActionButton icon={<Trash2 className="size-5" />} label="Eliminar" variant="danger" onClick={() => onDelete(row)} />
                     )}
                 </div>
             ),

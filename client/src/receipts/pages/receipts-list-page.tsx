@@ -53,6 +53,7 @@ export const ReceiptsListPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="No hay recibos de caja con esos filtros."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

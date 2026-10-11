@@ -53,6 +53,7 @@ export const CompaniesListPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="No hay empresas que coincidan con la búsqueda."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

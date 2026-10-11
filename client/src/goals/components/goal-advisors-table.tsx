@@ -18,5 +18,6 @@ export const GoalAdvisorsTable: FC<GoalAdvisorsTableProps> = ({ asesores }) => (
         rows={asesores}
         getRowKey={(row) => row.usuario_id}
         emptyMessage="Esta meta no está distribuida entre asesores."
+        maxHeightClassName="max-h-80"
     />
 );

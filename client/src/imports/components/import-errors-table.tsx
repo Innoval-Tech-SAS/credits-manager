@@ -23,6 +23,7 @@ export const ImportErrorsTable: FC<ImportErrorsTableProps> = ({ importId }) => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Sin errores ni avisos."
+                maxHeightClassName="max-h-80"
             />
             <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
         </div>

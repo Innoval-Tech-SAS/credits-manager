@@ -5,6 +5,7 @@ import { Eye, Landmark } from 'lucide-react';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { useResource } from '../../shared/hooks/use-resource';
 import { usePermission } from '../../auth/hooks/use-permission';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
@@ -57,13 +58,11 @@ export const BankAccountsPage: FC = () => {
                         key: 'acciones',
                         label: 'Extractos',
                         render: (row) => (
-                            <button
-                                type="button"
+                            <ActionButton
+                                icon={<Eye className="size-5" />}
+                                label="Ver extractos"
                                 onClick={() => navigate(`/conciliacion/cuentas-bancarias/${row.id}/extractos`)}
-                                className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90"
-                            >
-                                <Eye className="size-5" />
-                            </button>
+                            />
                         ),
                     },
                 ]}
@@ -71,6 +70,7 @@ export const BankAccountsPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Sin cuentas bancarias registradas."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

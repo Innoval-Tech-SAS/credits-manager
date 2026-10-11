@@ -1,9 +1,10 @@
 import type { FC } from 'react';
 import { useNavigate } from 'react-router';
-import { FileInput, Search } from 'lucide-react';
+import { Eye, FileInput, Search } from 'lucide-react';
 
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { usePermission } from '../../auth/hooks/use-permission';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -55,21 +56,14 @@ export const ImportsPage: FC = () => {
                     {
                         key: 'ver',
                         label: '',
-                        render: (row) => (
-                            <button
-                                type="button"
-                                onClick={() => navigate(`/importaciones/${row.id}`)}
-                                className="text-sm font-medium text-brand-500 hover:text-brand-600"
-                            >
-                                Ver
-                            </button>
-                        ),
+                        render: (row) => <ActionButton icon={<Eye className="size-5" />} label="Ver" onClick={() => navigate(`/importaciones/${row.id}`)} />,
                     },
                 ]}
                 rows={items}
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Sin importaciones registradas."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

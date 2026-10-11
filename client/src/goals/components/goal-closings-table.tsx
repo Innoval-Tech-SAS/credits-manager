@@ -21,5 +21,6 @@ export const GoalClosingsTable: FC<GoalClosingsTableProps> = ({ cierres }) => (
         rows={cierres}
         getRowKey={(row) => row.id}
         emptyMessage="Todavía no hay cierres para este período."
+        maxHeightClassName="max-h-80"
     />
 );

@@ -78,6 +78,7 @@ export const ExpensesListPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Sin gastos registrados."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

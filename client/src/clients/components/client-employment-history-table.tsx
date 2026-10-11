@@ -31,6 +31,7 @@ export const ClientEmploymentHistoryTable: FC<ClientEmploymentHistoryTableProps>
             rows={historial}
             getRowKey={(row) => row.id}
             emptyMessage="Este cliente aún no tiene empleadores registrados."
+            maxHeightClassName="max-h-80"
         />
     </div>
 );

@@ -1,8 +1,11 @@
 import { Link } from 'react-router';
+import { Eye } from 'lucide-react';
 
 import { formatDateEs } from '../../shared/utils/format-date-es';
 import { formatMoney } from '../../shared/utils/format-money';
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
+import { Tooltip } from '@ui/tooltip/components/tooltip';
+import { ACTION_BUTTON_VARIANT_CLASSES } from '@ui/action-button/constants/action-button-styles';
 import type { ApiVoucher } from '../types/api-voucher';
 import { VOUCHER_STATUS_BADGE_CLASSES } from '../constants/voucher-status-badge-classes';
 
@@ -26,9 +29,11 @@ export function buildVoucherTableColumns(): DataTableColumn<ApiVoucher>[] {
             key: 'acciones',
             label: '',
             render: (row) => (
-                <Link to={`/contabilidad/comprobantes/${row.id}`} className="text-brand-600 hover:underline dark:text-brand-400">
-                    Ver
-                </Link>
+                <Tooltip label="Ver">
+                    <Link to={`/contabilidad/comprobantes/${row.id}`} aria-label="Ver" className={ACTION_BUTTON_VARIANT_CLASSES.default}>
+                        <Eye className="size-5" />
+                    </Link>
+                </Tooltip>
             ),
         },
     ];

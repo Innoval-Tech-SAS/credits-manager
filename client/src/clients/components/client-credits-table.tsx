@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 
 import { formatMoney } from '../../shared/utils/format-money';
-import { Button } from '@ui/button/components/button';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { DataTable } from '@ui/table/components/data-table';
 import { CREDIT_STATUS_BADGE_CLASSES } from '../../credits/constants/credit-status-badge-classes';
 import { CREDIT_STATUS_LABEL } from '../../credits/constants/credit-status-label';
@@ -30,9 +30,7 @@ export const ClientCreditsTable: FC<ClientCreditsTableProps> = ({ creditos, onVi
                     label: '',
                     render: (row) => (
                         <div className="text-right">
-                            <Button iconOnly startIcon={<Eye className="size-4" />} variant="outline" onClick={() => onView(row.id)}>
-                                Ver
-                            </Button>
+                            <ActionButton icon={<Eye className="size-5" />} label="Ver" onClick={() => onView(row.id)} />
                         </div>
                     ),
                 },
@@ -40,6 +38,7 @@ export const ClientCreditsTable: FC<ClientCreditsTableProps> = ({ creditos, onVi
             rows={creditos}
             getRowKey={(row) => row.id}
             emptyMessage="Este cliente aún no tiene créditos."
+            maxHeightClassName="max-h-80"
         />
     </div>
 );

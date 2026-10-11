@@ -51,6 +51,7 @@ export const TrialBalancePage: FC = () => {
                     getRowKey={(row) => row.codigo}
                     loading={isLoading}
                     emptyMessage="Sin movimientos."
+                    maxHeightClassName="max-h-[65vh]"
                 />
 
                 {data && (

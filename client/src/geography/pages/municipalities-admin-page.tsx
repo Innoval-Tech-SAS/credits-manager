@@ -5,6 +5,7 @@ import { MapPin, Pencil } from 'lucide-react';
 
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
@@ -94,9 +95,7 @@ export const MunicipalitiesAdminPage: FC = () => {
                         key: 'acciones',
                         label: 'Acciones',
                         render: (municipality) => (
-                            <Button iconOnly size="sm" variant="outline" startIcon={<Pencil className="size-4" />} onClick={() => setEditing(municipality)}>
-                                Editar
-                            </Button>
+                            <ActionButton icon={<Pencil className="size-5" />} label="Editar" onClick={() => setEditing(municipality)} />
                         ),
                     },
                 ]}
@@ -104,6 +103,7 @@ export const MunicipalitiesAdminPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage={stateId ? 'Este departamento no tiene municipios.' : 'Selecciona un departamento.'}
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

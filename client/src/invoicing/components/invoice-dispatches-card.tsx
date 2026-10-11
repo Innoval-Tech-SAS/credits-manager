@@ -5,6 +5,7 @@ import { RotateCcw } from 'lucide-react';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Alert } from '@ui/alert/components/alert';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { DataTable } from '@ui/table/components/data-table';
 import { DISPATCH_STATUS_LABELS } from '../../email/constants/email-options';
 import type { InvoiceDispatchesCardProps } from '../props/invoice-dispatches-card-props';
@@ -64,15 +65,12 @@ export const InvoiceDispatchesCard: FC<InvoiceDispatchesCardProps> = ({ document
                         label: 'Acción',
                         render: (envio) =>
                             envio.estado === 'fallido' ? (
-                                <button
-                                    type="button"
+                                <ActionButton
+                                    icon={<RotateCcw className="size-5" />}
+                                    label={retryingId === envio.id ? 'Reintentando...' : 'Reintentar'}
                                     disabled={retryingId !== null}
                                     onClick={() => void handleRetry(envio.id)}
-                                    className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-500 hover:text-brand-600 disabled:opacity-50 dark:text-brand-400"
-                                >
-                                    <RotateCcw className="size-4" />
-                                    {retryingId === envio.id ? 'Reintentando...' : 'Reintentar'}
-                                </button>
+                                />
                             ) : (
                                 <span className="text-gray-400 dark:text-gray-500">—</span>
                             ),
@@ -82,6 +80,7 @@ export const InvoiceDispatchesCard: FC<InvoiceDispatchesCardProps> = ({ document
                 getRowKey={(envio) => envio.id}
                 loading={!data}
                 emptyMessage="Aún no se han enviado correos de este documento."
+                maxHeightClassName="max-h-80"
             />
         </section>
     );

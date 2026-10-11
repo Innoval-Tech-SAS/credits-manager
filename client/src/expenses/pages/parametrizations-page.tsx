@@ -65,6 +65,7 @@ export const ParametrizationsPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage={tipoGastoId ? 'Este tipo de gasto no tiene parametrizaciones registradas.' : 'Selecciona un tipo de gasto para ver su historial.'}
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

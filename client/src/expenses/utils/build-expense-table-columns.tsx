@@ -1,5 +1,6 @@
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
 import { Eye } from 'lucide-react';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { formatDateEs } from '../../shared/utils/format-date-es';
 import { formatMoney } from '../../shared/utils/format-money';
 import type { ApiExpense } from '../types/api-expense';
@@ -15,15 +16,7 @@ export function buildExpenseTableColumns(onView: (row: ApiExpense) => void): Dat
         {
             key: 'acciones',
             label: 'Acción',
-            render: (gasto) => (
-                <button
-                    type="button"
-                    onClick={() => onView(gasto)}
-                    className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90"
-                >
-                    <Eye className="size-5" />
-                </button>
-            ),
+            render: (gasto) => <ActionButton icon={<Eye className="size-5" />} label="Ver" onClick={() => onView(gasto)} />,
         },
     ];
 }

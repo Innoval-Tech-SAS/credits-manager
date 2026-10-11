@@ -70,6 +70,7 @@ export const InvoicePaymentsTable: FC<InvoicePaymentsTableProps> = ({ cobros, pu
             rows={cobros}
             getRowKey={(row) => row.id}
             emptyMessage="Sin cobros registrados."
+            maxHeightClassName="max-h-80"
         />
     );
 };

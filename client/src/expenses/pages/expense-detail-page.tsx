@@ -156,6 +156,7 @@ export const ExpenseDetailPage: FC = () => {
                             ]}
                             rows={gasto.reglas_fiscales_aplicadas ?? []}
                             getRowKey={(row) => row.id}
+                            maxHeightClassName="max-h-80"
                         />
                     </>
                 )}

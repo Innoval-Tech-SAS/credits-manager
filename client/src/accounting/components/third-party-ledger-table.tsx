@@ -238,6 +238,7 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                             getRowKey={(row) => row.id}
                             loading={isLoading}
                             emptyMessage="Sin documentos para los filtros seleccionados."
+                            maxHeightClassName="max-h-[65vh]"
                         />
 
                         {!isLoading && items.length > 0 && (

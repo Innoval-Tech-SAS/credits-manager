@@ -1,5 +1,6 @@
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
 import { RotateCcw } from 'lucide-react';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { formatDateTimeEs } from '../../shared/utils/format-datetime-es';
 import { AUDIT_ACTION_LABELS } from '../constants/audit-actions';
 import { AUDIT_BACKUP_REASON_LABELS, AUDIT_BACKUP_STATUS_CLASSES, AUDIT_BACKUP_STATUS_LABELS } from '../constants/audit-backup';
@@ -52,15 +53,12 @@ export function buildAuditBackupTableColumns(
             label: 'Acción',
             render: (entry) =>
                 entry.estado === 'pendiente' && entry.evento_id ? (
-                    <button
-                        type="button"
+                    <ActionButton
+                        icon={<RotateCcw className="size-5" />}
+                        label={recoveringId === entry.evento_id ? 'Recuperando…' : 'Recuperar'}
                         disabled={recoveringId !== null}
                         onClick={() => onRecover(entry)}
-                        className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-500 hover:text-brand-600 disabled:opacity-50 dark:text-brand-400"
-                    >
-                        <RotateCcw className="size-4" />
-                        {recoveringId === entry.evento_id ? 'Recuperando…' : 'Recuperar'}
-                    </button>
+                    />
                 ) : (
                     <span className="text-gray-400 dark:text-gray-500">—</span>
                 ),

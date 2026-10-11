@@ -269,6 +269,7 @@ export const InvoiceDetailPage: FC = () => {
                         rows={documento.lineas ?? []}
                         getRowKey={(row) => row.id}
                         emptyMessage="Sin líneas."
+                        maxHeightClassName="max-h-80"
                     />
                 )}
 

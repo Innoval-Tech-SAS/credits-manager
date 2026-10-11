@@ -40,7 +40,13 @@ export const PaymentHistoryTable: FC<PaymentHistoryTableProps> = ({ pagos, showC
     return (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
             <h2 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">Historial de pagos</h2>
-            <DataTable columns={columns} rows={pagos} getRowKey={(row) => row.id} emptyMessage="Aún no se han registrado pagos." />
+            <DataTable
+                columns={columns}
+                rows={pagos}
+                getRowKey={(row) => row.id}
+                emptyMessage="Aún no se han registrado pagos."
+                maxHeightClassName="max-h-80"
+            />
         </div>
     );
 };

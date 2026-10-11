@@ -128,6 +128,7 @@ export const CreditsListPage: FC = () => {
                 onSortChange={toggleSort}
                 loading={isLoading}
                 emptyMessage="No hay créditos registrados aún."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

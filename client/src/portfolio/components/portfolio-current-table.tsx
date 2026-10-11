@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 
 import { formatMoney } from '../../shared/utils/format-money';
-import { Button } from '@ui/button/components/button';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { DataTable } from '@ui/table/components/data-table';
 import type { PortfolioCurrentTableProps } from '../props/portfolio-current-table-props';
 import { Eye } from 'lucide-react';
@@ -20,9 +20,7 @@ export const PortfolioCurrentTable: FC<PortfolioCurrentTableProps> = ({ entradas
                     label: '',
                     render: (row) => (
                         <div className="text-right">
-                            <Button iconOnly startIcon={<Eye className="size-4" />} variant="outline" onClick={() => onView(row.credito.id)}>
-                                Ver
-                            </Button>
+                            <ActionButton icon={<Eye className="size-5" />} label="Ver" onClick={() => onView(row.credito.id)} />
                         </div>
                     ),
                 },
