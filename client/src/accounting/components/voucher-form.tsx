@@ -19,10 +19,19 @@ import type { VoucherFormLine } from '../types/voucher-form-line';
 let nextLineKey = 1;
 
 function nuevaLinea(): VoucherFormLine {
-    return { key: nextLineKey++, cuenta_id: '', descripcion: '', debito: '', credito: '' };
+    return {
+        key: nextLineKey++,
+        cuenta_id: '',
+        centro_costo_id: '',
+        documento_cruce: '',
+        fecha_vencimiento: '',
+        descripcion: '',
+        debito: '',
+        credito: '',
+    };
 }
 
-export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
+export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto }) => {
     const navigate = useNavigate();
     const { sendRequest } = useSendRequest();
 
@@ -37,6 +46,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const cuentaOptions = cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }));
+    const centroCostoOptions = centrosCosto.map((centro) => ({ value: String(centro.id), label: `${centro.codigo} - ${centro.nombre}` }));
     const tipoOptions = tipos.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }));
     const tipoSeleccionado = tipos.find((tipo) => String(tipo.id) === tipoComprobanteId);
     const esNumeracionManual = tipoSeleccionado?.tipo_numeracion === 'manual';
@@ -79,6 +89,9 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
                     tercero_id: tercero?.id ?? null,
                     lineas: lineasValidas.map((linea) => ({
                         cuenta_id: Number(linea.cuenta_id),
+                        centro_costo_id: linea.centro_costo_id ? Number(linea.centro_costo_id) : null,
+                        documento_cruce: linea.documento_cruce || null,
+                        fecha_vencimiento: linea.fecha_vencimiento || null,
                         descripcion: linea.descripcion || null,
                         debito: parseFloat(linea.debito) || 0,
                         credito: parseFloat(linea.credito) || 0,
@@ -164,10 +177,13 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
                     </div>
 
                     <div className="custom-scrollbar overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
-                        <table className="w-full min-w-160 text-left text-sm">
+                        <table className="w-full min-w-240 text-left text-sm">
                             <thead>
                                 <tr className="border-b border-gray-100 dark:border-gray-800">
                                     <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Cuenta</th>
+                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Centro de costo</th>
+                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Doc. cruce</th>
+                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Vence</th>
                                     <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Descripción</th>
                                     <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Débito</th>
                                     <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Crédito</th>
@@ -183,6 +199,27 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
                                                 placeholder="--"
                                                 defaultValue={linea.cuenta_id}
                                                 onChange={(value) => actualizarLinea(linea.key, { cuenta_id: value })}
+                                            />
+                                        </td>
+                                        <td className="px-4 py-2">
+                                            <Select
+                                                options={centroCostoOptions}
+                                                placeholder="--"
+                                                defaultValue={linea.centro_costo_id}
+                                                onChange={(value) => actualizarLinea(linea.key, { centro_costo_id: value })}
+                                            />
+                                        </td>
+                                        <td className="px-4 py-2">
+                                            <Input
+                                                value={linea.documento_cruce}
+                                                onChange={(event) => actualizarLinea(linea.key, { documento_cruce: event.target.value })}
+                                            />
+                                        </td>
+                                        <td className="px-4 py-2">
+                                            <DatePicker
+                                                id={`vencimiento-${linea.key}`}
+                                                value={linea.fecha_vencimiento}
+                                                onChange={(value) => actualizarLinea(linea.key, { fecha_vencimiento: value })}
                                             />
                                         </td>
                                         <td className="px-4 py-2">

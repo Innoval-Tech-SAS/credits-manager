@@ -5,6 +5,9 @@ export type ApiVoucherLine = {
     cuenta?: { id: number; codigo: string; nombre: string };
     tercero_id: number | null;
     centro_costo_id: number | null;
+    centro_costo?: { id: number; codigo: string; nombre: string } | null;
+    documento_cruce: string | null;
+    fecha_vencimiento: string | null;
     debito: string;
     credito: string;
     descripcion: string | null;

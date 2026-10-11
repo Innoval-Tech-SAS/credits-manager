@@ -97,7 +97,7 @@ class ComprobanteService
         }
 
         if ($moduloOrigen === 'manual') {
-            $this->exigirRequisitosParametrizados($lineas, $terceroId, $documentoSoporte);
+            $this->exigirRequisitosParametrizados($lineas, $terceroId);
         }
 
         $periodo = $this->periodos->obtenerAbierto($fecha);
@@ -136,6 +136,8 @@ class ComprobanteService
                 'cuenta_id' => $linea['cuenta_id'],
                 'tercero_id' => $linea['tercero_id'] ?? $terceroId,
                 'centro_costo_id' => $linea['centro_costo_id'] ?? null,
+                'documento_cruce' => $linea['documento_cruce'] ?? null,
+                'fecha_vencimiento' => $linea['fecha_vencimiento'] ?? null,
                 'debito' => $linea['debito'],
                 'credito' => $linea['credito'],
                 'descripcion' => $linea['descripcion'] ?? $concepto,
@@ -187,6 +189,8 @@ class ComprobanteService
             'cuenta_id' => $linea->cuenta_id,
             'tercero_id' => $linea->tercero_id,
             'centro_costo_id' => $linea->centro_costo_id,
+            'documento_cruce' => $linea->documento_cruce,
+            'fecha_vencimiento' => $linea->fecha_vencimiento?->toDateString(),
             'debito' => $linea->credito,
             'credito' => $linea->debito,
             'descripcion' => 'Reverso: '.$linea->descripcion,
@@ -327,12 +331,12 @@ class ComprobanteService
     }
 
     /**
-     * Cada cuenta declara qué exige al usarse en un asiento manual (centro de costo, tercero, documento cruce). El
-     * tercero se resuelve igual que al armar las líneas (`$linea['tercero_id'] ?? $terceroId`, el único del
-     * comprobante hoy) y el documento cruce es `documento_soporte`: no hay un campo de cruce por línea todavía.
-     * Los flujos automáticos resuelven esos datos por su cuenta y no pasan por aquí.
+     * Cada cuenta declara qué exige al usarse en un asiento manual (centro de costo, tercero, documento cruce,
+     * vencimiento). El tercero se resuelve igual que al armar las líneas (`$linea['tercero_id'] ?? $terceroId`, el
+     * único del comprobante hoy); documento cruce y vencimiento son propios de cada línea. Los flujos automáticos
+     * resuelven esos datos por su cuenta y no pasan por aquí.
      */
-    private function exigirRequisitosParametrizados(array $lineas, ?int $terceroId, ?string $documentoSoporte): void
+    private function exigirRequisitosParametrizados(array $lineas, ?int $terceroId): void
     {
         $cuentas = PlanCuenta::query()->whereIn('id', array_column($lineas, 'cuenta_id'))->get()->keyBy('id');
 
@@ -351,8 +355,12 @@ class ComprobanteService
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.tercero_requerido')]);
             }
 
-            if ($cuenta->exige_documento_cruce && empty($documentoSoporte)) {
+            if ($cuenta->exige_documento_cruce && empty($linea['documento_cruce'])) {
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.documento_cruce_requerido')]);
+            }
+
+            if ($cuenta->exige_vencimiento && empty($linea['fecha_vencimiento'])) {
+                throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.vencimiento_requerido')]);
             }
         }
     }

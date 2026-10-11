@@ -36,7 +36,7 @@ class ComprobanteRepository extends BaseRepository
 
     public function obtenerConLineas(Comprobante $comprobante): Comprobante
     {
-        return $comprobante->load(['tipoComprobante', 'tercero', 'comprobanteReverso', 'lineas.cuenta', 'revisor']);
+        return $comprobante->load(['tipoComprobante', 'tercero', 'comprobanteReverso', 'lineas.cuenta', 'lineas.centroCosto', 'revisor']);
     }
 
     public function buscarContabilizadoPorOrigen(string $moduloOrigen, int $origenId): ?Comprobante

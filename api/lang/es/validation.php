@@ -243,7 +243,8 @@ return [
             'sin_valor' => 'El comprobante no tiene valor.',
             'centro_costo_requerido' => 'Esta cuenta exige centro de costo en cada línea que la use.',
             'tercero_requerido' => 'Esta cuenta exige tercero: selecciona uno para el comprobante.',
-            'documento_cruce_requerido' => 'Esta cuenta exige documento cruce: indica el documento soporte.',
+            'documento_cruce_requerido' => 'Esta cuenta exige documento cruce: indica el documento que se está cruzando en esa línea.',
+            'vencimiento_requerido' => 'Esta cuenta exige fecha de vencimiento.',
         ],
         'periodo' => [
             'no_cerrado' => 'Solo se puede solicitar la reapertura de un período cerrado.',

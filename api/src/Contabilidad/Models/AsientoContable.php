@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'cuenta_id',
     'tercero_id',
     'centro_costo_id',
+    'documento_cruce',
+    'fecha_vencimiento',
     'debito',
     'credito',
     'descripcion',
@@ -28,6 +30,7 @@ class AsientoContable extends BaseModel
             'debito' => DineroCast::class,
             'credito' => DineroCast::class,
             'orden' => 'integer',
+            'fecha_vencimiento' => 'date:Y-m-d',
         ];
     }
 
