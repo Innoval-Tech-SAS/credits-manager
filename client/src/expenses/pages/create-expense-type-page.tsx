@@ -7,7 +7,7 @@ import { ExpenseTypeForm } from '../components/expense-type-form';
 export const CreateExpenseTypePage: FC = () => {
     const navigate = useNavigate();
 
-    const handleCreated = () => {
+    const handleSaved = () => {
         navigate('/gastos/tipos-gasto', { replace: true, state: { message: 'Tipo de gasto creado correctamente.' } });
     };
 
@@ -16,7 +16,7 @@ export const CreateExpenseTypePage: FC = () => {
             <PageBreadcrumb pageTitle="Crear tipo de gasto" />
 
             <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3">
-                <ExpenseTypeForm onCreated={handleCreated} />
+                <ExpenseTypeForm onSaved={handleSaved} />
             </div>
         </div>
     );

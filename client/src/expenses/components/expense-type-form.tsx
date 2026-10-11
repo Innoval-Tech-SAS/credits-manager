@@ -10,13 +10,15 @@ import { Spinner } from '@ui/spinner/components/spinner';
 import type { ExpenseTypeFormProps } from '../props/expense-type-form-props';
 import type { ApiExpenseType } from '../types/api-expense-type';
 
-export const ExpenseTypeForm: FC<ExpenseTypeFormProps> = ({ onCreated }) => {
+export const ExpenseTypeForm: FC<ExpenseTypeFormProps> = ({ expenseTypeId, initialData, onSaved }) => {
     const { sendRequest } = useSendRequest();
+    const isEditMode = expenseTypeId !== undefined;
 
-    const [codigo, setCodigo] = useState('');
-    const [nombre, setNombre] = useState('');
-    const [requiereTercero, setRequiereTercero] = useState(true);
-    const [aplicaIva, setAplicaIva] = useState(false);
+    const [codigo, setCodigo] = useState(initialData?.codigo ?? '');
+    const [nombre, setNombre] = useState(initialData?.nombre ?? '');
+    const [requiereTercero, setRequiereTercero] = useState(initialData?.requiere_tercero ?? true);
+    const [aplicaIva, setAplicaIva] = useState(initialData?.aplica_iva ?? false);
+    const [activo, setActivo] = useState(initialData?.activo ?? true);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,14 +28,28 @@ export const ExpenseTypeForm: FC<ExpenseTypeFormProps> = ({ onCreated }) => {
         setIsSubmitting(true);
 
         try {
-            const respuesta = await sendRequest<{ tipo_gasto: ApiExpenseType }>('/gastos/tipos-gasto', {
-                method: 'POST',
-                body: { codigo, nombre, requiere_tercero: requiereTercero, aplica_iva: aplicaIva },
-            });
+            const respuesta = isEditMode
+                ? await sendRequest<{ tipo_gasto: ApiExpenseType }>(`/gastos/tipos-gasto/${expenseTypeId}`, {
+                      method: 'PATCH',
+                      body: {
+                          codigo,
+                          nombre,
+                          requiere_tercero: requiereTercero,
+                          aplica_iva: aplicaIva,
+                          activo,
+                      },
+                  })
+                : await sendRequest<{ tipo_gasto: ApiExpenseType }>('/gastos/tipos-gasto', {
+                      method: 'POST',
+                      body: { codigo, nombre, requiere_tercero: requiereTercero, aplica_iva: aplicaIva },
+                  });
 
-            onCreated(respuesta.tipo_gasto);
-            setCodigo('');
-            setNombre('');
+            onSaved(respuesta.tipo_gasto);
+
+            if (!isEditMode) {
+                setCodigo('');
+                setNombre('');
+            }
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         } finally {
@@ -77,11 +93,12 @@ export const ExpenseTypeForm: FC<ExpenseTypeFormProps> = ({ onCreated }) => {
                         onChange={setRequiereTercero}
                     />
                     <ToggleSwitchInput id="aplica-iva" label="Aplica IVA" checked={aplicaIva} onChange={setAplicaIva} />
+                    {isEditMode && <ToggleSwitchInput id="activo" label="Activo" checked={activo} onChange={setActivo} />}
                 </div>
 
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                     <Button type="submit" disabled={isSubmitting} startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}>
-                        {isSubmitting ? 'Creando…' : 'Crear tipo de gasto'}
+                        {isSubmitting ? 'Guardando…' : isEditMode ? 'Actualizar tipo de gasto' : 'Crear tipo de gasto'}
                     </Button>
                 </div>
             </div>

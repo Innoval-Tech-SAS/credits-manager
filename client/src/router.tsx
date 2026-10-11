@@ -39,6 +39,8 @@ import { CalendarPage } from './calendar/pages/calendar-page';
 import { CreateEconomicActivityPage } from './expenses/pages/create-economic-activity-page';
 import { CreateExpensePage } from './expenses/pages/create-expense-page';
 import { CreateExpenseTypePage } from './expenses/pages/create-expense-type-page';
+import { EditExpenseTypePage } from './expenses/pages/edit-expense-type-page';
+import { ExpenseTypeDetailPage } from './expenses/pages/expense-type-detail-page';
 import { CreateMunicipalityPage } from './geography/pages/create-municipality-page';
 import { CreateParametrizationPage } from './expenses/pages/create-parametrization-page';
 import { CreateReteicaTariffPage } from './expenses/pages/create-reteica-tariff-page';
@@ -788,6 +790,22 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="gastos" accion="parametrizar">
                                 <CreateExpenseTypePage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'gastos/tipos-gasto/:id',
+                        element: (
+                            <RequireModulePermission modulo="gastos" accion="listar">
+                                <ExpenseTypeDetailPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'gastos/tipos-gasto/:id/editar',
+                        element: (
+                            <RequireModulePermission modulo="gastos" accion="parametrizar">
+                                <EditExpenseTypePage />
                             </RequireModulePermission>
                         ),
                     },
