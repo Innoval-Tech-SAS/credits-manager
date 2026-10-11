@@ -50,7 +50,9 @@ import { CreateInvoicePage } from './invoicing/pages/create-invoice-page';
 import { CreateMultiplePaymentPage } from './invoicing/pages/create-multiple-payment-page';
 import { InvoiceDetailPage } from './invoicing/pages/invoice-detail-page';
 import { InvoiceSequencesPage } from './invoicing/pages/invoice-sequences-page';
-import { InvoicesListPage } from './invoicing/pages/invoices-list-page';
+import { FacturasListPage } from './invoicing/pages/facturas-list-page';
+import { NotasCreditoListPage } from './invoicing/pages/notas-credito-list-page';
+import { NotasDebitoListPage } from './invoicing/pages/notas-debito-list-page';
 import { MunicipalitiesAdminPage } from './geography/pages/municipalities-admin-page';
 import { ParametrizationsPage } from './expenses/pages/parametrizations-page';
 import { ReteicaTariffsPage } from './expenses/pages/reteica-tariffs-page';
@@ -670,7 +672,23 @@ const routes: RouteObject[] = [
                         path: 'facturacion',
                         element: (
                             <RequireModulePermission modulo="facturacion" accion="listar">
-                                <InvoicesListPage />
+                                <FacturasListPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'facturacion/notas-credito',
+                        element: (
+                            <RequireModulePermission modulo="facturacion" accion="listar">
+                                <NotasCreditoListPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'facturacion/notas-debito',
+                        element: (
+                            <RequireModulePermission modulo="facturacion" accion="listar">
+                                <NotasDebitoListPage />
                             </RequireModulePermission>
                         ),
                     },

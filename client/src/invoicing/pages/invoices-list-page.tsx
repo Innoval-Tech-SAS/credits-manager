@@ -17,13 +17,13 @@ export const InvoicesListPage: FC = () => {
     const canCreate = usePermission('facturacion', 'crear');
     const puedeConfigurar = usePermission('facturacion', 'configurar');
 
-    const { items, isLoading, page, setPage, totalPages, totalItems } = usePaginatedResource<ApiInvoice>('/facturacion/documentos');
+    const { items, isLoading, page, setPage, totalPages, totalItems } = usePaginatedResource<ApiInvoice>('/facturacion/documentos', { tipo: 'factura' });
 
     const mensaje = (location.state as { message?: string } | null)?.message ?? null;
 
     return (
         <ModuleListPage
-            pageTitle="Facturación"
+            pageTitle="Facturas"
             successMessage={mensaje}
             countLabel={`${totalItems} ${totalItems === 1 ? 'documento' : 'documentos'}`}
             toolbar={
@@ -81,12 +81,8 @@ export const InvoicesListPage: FC = () => {
                 rows={items}
                 getRowKey={(row) => row.id}
                 loading={isLoading}
-                emptyMessage="Todavía no hay documentos de facturación."
+                emptyMessage="Todavía no hay facturas."
             />
         </ModuleListPage>
     );
 };
-
-function tipoEtiqueta(row: ApiInvoice): string {
-    return row.tipo === 'factura' ? 'Factura' : row.tipo === 'nota_credito' ? 'Nota crédito' : 'Nota débito';
-}
