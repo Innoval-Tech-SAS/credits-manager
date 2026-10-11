@@ -191,6 +191,7 @@ export const RegisterPaymentPage: FC = () => {
                             ]}
                             rows={cuotasPendientes}
                             getRowKey={(row) => row.id}
+                            maxHeightClassName="max-h-80"
                         />
                     </>
                 )}

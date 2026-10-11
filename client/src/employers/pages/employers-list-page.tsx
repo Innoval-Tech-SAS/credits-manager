@@ -118,6 +118,7 @@ export const EmployersListPage: FC = () => {
                 onSortChange={toggleSort}
                 loading={isLoading}
                 emptyMessage="No hay empleadores que coincidan con la búsqueda."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

@@ -187,6 +187,7 @@ export const ReconciliationMatchingPage: FC = () => {
                         getRowKey={(row) => row.id}
                         loading={isLoading}
                         emptyMessage="El extracto no tiene movimientos."
+                        maxHeightClassName="max-h-[65vh]"
                     />
                 </div>
 
@@ -221,6 +222,7 @@ export const ReconciliationMatchingPage: FC = () => {
                         getRowKey={(row) => row.id}
                         loading={isLoading}
                         emptyMessage="No hay asientos candidatos en la ventana de fechas del extracto."
+                        maxHeightClassName="max-h-[65vh]"
                     />
                 </div>
             </div>

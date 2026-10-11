@@ -46,6 +46,7 @@ export const ReteicaTariffsPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Sin tarifas de ReteICA registradas."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

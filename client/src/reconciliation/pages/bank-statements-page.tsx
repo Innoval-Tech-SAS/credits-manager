@@ -95,6 +95,7 @@ export const BankStatementsPage: FC = () => {
                     getRowKey={(row) => row.id}
                     loading={isLoading}
                     emptyMessage="Sin extractos cargados para esta cuenta."
+                    maxHeightClassName="max-h-[65vh]"
                 />
             </ModuleListPage>
     );

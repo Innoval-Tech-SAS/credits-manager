@@ -1,9 +1,10 @@
 import type { FC } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { FileText, HandCoins, Settings } from 'lucide-react';
+import { Eye, FileText, HandCoins, Settings } from 'lucide-react';
 
 import { usePermission } from '../../auth/hooks/use-permission';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { DataTable } from '@ui/table/components/data-table';
 import { Pagination } from '@ui/table/components/pagination';
@@ -70,17 +71,14 @@ export const NotasDebitoListPage: FC = () => {
                     {
                         key: 'acciones',
                         label: 'Acciones',
-                        render: (row) => (
-                            <Button size="sm" variant="outline" onClick={() => navigate(`/facturacion/${row.id}`)}>
-                                Ver
-                            </Button>
-                        ),
+                        render: (row) => <ActionButton icon={<Eye className="size-5" />} label="Ver" onClick={() => navigate(`/facturacion/${row.id}`)} />,
                     },
                 ]}
                 rows={items}
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Todavía no hay notas débito."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

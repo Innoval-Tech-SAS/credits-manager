@@ -2,6 +2,8 @@ import { Link } from 'react-router';
 
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
 import { Pencil } from 'lucide-react';
+import { Tooltip } from '@ui/tooltip/components/tooltip';
+import { ACTION_BUTTON_VARIANT_CLASSES } from '@ui/action-button/constants/action-button-styles';
 import { THIRD_PARTY_TYPE_BADGE_CLASSES, THIRD_PARTY_TYPE_BADGE_LABEL } from '../constants/third-party-type-badge-styles';
 import { PERSON_TYPE_LABELS } from '../constants/person-type-choices';
 import type { ApiThirdParty } from '../types/api-third-party';
@@ -50,9 +52,11 @@ export function buildThirdPartyTableColumns(canEdit: boolean): DataTableColumn<A
             key: 'acciones',
             label: '',
             render: (row) => (
-                <Link to={`/terceros/${row.id}/editar`} className="text-brand-600 hover:underline dark:text-brand-400">
-                    <Pencil className="size-4" />
-                </Link>
+                <Tooltip label="Editar">
+                    <Link to={`/terceros/${row.id}/editar`} aria-label="Editar" className={ACTION_BUTTON_VARIANT_CLASSES.default}>
+                        <Pencil className="size-5" />
+                    </Link>
+                </Tooltip>
             ),
         });
     }

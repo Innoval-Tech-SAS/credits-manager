@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { RotateCcw } from 'lucide-react';
 
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { DataTable } from '@ui/table/components/data-table';
 import { DISPATCH_STATUS_LABELS } from '../constants/email-options';
 import type { EmailDispatchesCardProps } from '../props/email-dispatches-card-props';
@@ -34,15 +35,12 @@ export const EmailDispatchesCard: FC<EmailDispatchesCardProps> = ({ envios, onRe
                               label: 'Acción',
                               render: (envio: ApiEmailDispatch) =>
                                   envio.estado === 'fallido' ? (
-                                      <button
-                                          type="button"
+                                      <ActionButton
+                                          icon={<RotateCcw className="size-5" />}
+                                          label={retryingId === envio.id ? 'Reintentando...' : 'Reintentar'}
                                           disabled={retryingId !== null}
                                           onClick={() => onRetry(envio.id)}
-                                          className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-500 hover:text-brand-600 disabled:opacity-50 dark:text-brand-400"
-                                      >
-                                          <RotateCcw className="size-4" />
-                                          {retryingId === envio.id ? 'Reintentando...' : 'Reintentar'}
-                                      </button>
+                                      />
                                   ) : (
                                       <span className="text-gray-400 dark:text-gray-500">—</span>
                                   ),
@@ -53,6 +51,7 @@ export const EmailDispatchesCard: FC<EmailDispatchesCardProps> = ({ envios, onRe
             rows={envios}
             getRowKey={(envio) => envio.id}
             emptyMessage="Aún no se han enviado correos de cobranza a este cliente."
+            maxHeightClassName="max-h-80"
         />
     </section>
 );

@@ -45,6 +45,7 @@ export const ExpenseTypesPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Sin tipos de gasto registrados."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

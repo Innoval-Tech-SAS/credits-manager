@@ -7,6 +7,7 @@ import { useLocationSuccessMessage } from '../../shared/hooks/use-location-succe
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { usePermission } from '../../auth/hooks/use-permission';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -81,22 +82,17 @@ export const UvtValuesPage: FC = () => {
                                   label: 'Acciones',
                                   render: (valorUvt: ApiUvtValue) => (
                                       <div className="flex items-center gap-3">
-                                          <button
-                                              type="button"
+                                          <ActionButton
+                                              icon={<Pencil className="size-5" />}
+                                              label="Editar"
                                               onClick={() => navigate(`/gastos/valores-uvt/${valorUvt.id}/editar`)}
-                                              className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400"
-                                          >
-                                              <Pencil className="size-4" />
-                                              Editar
-                                          </button>
-                                          <button
-                                              type="button"
+                                          />
+                                          <ActionButton
+                                              icon={<Trash2 className="size-5" />}
+                                              label="Eliminar"
+                                              variant="danger"
                                               onClick={() => setPorEliminar(valorUvt)}
-                                              className="inline-flex items-center gap-1.5 text-sm font-medium text-error-600 hover:text-error-700 dark:text-error-400"
-                                          >
-                                              <Trash2 className="size-4" />
-                                              Eliminar
-                                          </button>
+                                          />
                                       </div>
                                   ),
                               },
@@ -107,6 +103,7 @@ export const UvtValuesPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoadingValores}
                 emptyMessage="Sin valores de UVT registrados."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

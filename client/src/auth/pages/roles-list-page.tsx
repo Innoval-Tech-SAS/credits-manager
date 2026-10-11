@@ -110,6 +110,7 @@ export const RolesListPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="No hay roles registrados."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

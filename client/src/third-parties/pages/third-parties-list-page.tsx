@@ -88,6 +88,7 @@ export const ThirdPartiesListPage: FC = () => {
                 onSortChange={toggleSort}
                 loading={isLoading}
                 emptyMessage="No hay terceros que coincidan con la búsqueda."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

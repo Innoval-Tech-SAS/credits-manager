@@ -72,6 +72,7 @@ export const OpeningReconciliationPage: FC = () => {
                     getRowKey={(row) => row.codigo}
                     loading={isLoading}
                     emptyMessage="No hay saldos cargados ni movimientos a esta fecha."
+                    maxHeightClassName="max-h-[65vh]"
                 />
 
                 {data && (

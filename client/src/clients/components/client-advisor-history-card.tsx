@@ -37,6 +37,7 @@ export const ClientAdvisorHistoryCard: FC<ClientAdvisorHistoryCardProps> = ({ cl
                 rows={data?.historial ?? []}
                 getRowKey={(row) => row.id}
                 emptyMessage="Este cliente aún no tiene asignaciones registradas."
+                maxHeightClassName="max-h-80"
             />
 
             <ReassignAdvisorModal

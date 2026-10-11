@@ -58,6 +58,7 @@ export const VouchersListPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Sin comprobantes."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

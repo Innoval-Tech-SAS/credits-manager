@@ -36,6 +36,7 @@ export const PagosDelDiaCard: FC<PagosDelDiaCardProps> = ({ pagos, puedeRegistra
                 rows={pagos}
                 getRowKey={(row) => row.cuota_id}
                 emptyMessage="No hay cuotas con vencimiento hoy."
+                maxHeightClassName="max-h-80"
             />
         </section>
     );

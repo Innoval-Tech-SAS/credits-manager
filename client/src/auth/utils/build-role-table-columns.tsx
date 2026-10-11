@@ -1,5 +1,6 @@
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
 import { Pencil, Trash2 } from 'lucide-react';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import type { ApiRoleWithPermisos } from '../types/api-role';
 import type { BuildRoleTableColumnsOptions } from '../types/build-role-table-columns-options';
 
@@ -28,21 +29,9 @@ export function buildRoleTableColumns({ onEdit, onDelete }: BuildRoleTableColumn
             render: (row) => (
                 <div className="flex w-full items-center gap-2">
                     {row.nombre !== 'admin' && (
-                        <button
-                            type="button"
-                            onClick={() => onDelete(row)}
-                            className="text-gray-500 hover:text-error-500 dark:text-gray-400 dark:hover:text-error-500"
-                        >
-                            <Trash2 className="size-5" />
-                        </button>
+                        <ActionButton icon={<Trash2 className="size-5" />} label="Eliminar" variant="danger" onClick={() => onDelete(row)} />
                     )}
-                    <button
-                        type="button"
-                        onClick={() => onEdit(row)}
-                        className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90"
-                    >
-                        <Pencil className="size-5" />
-                    </button>
+                    <ActionButton icon={<Pencil className="size-5" />} label="Editar" onClick={() => onEdit(row)} />
                 </div>
             ),
         },

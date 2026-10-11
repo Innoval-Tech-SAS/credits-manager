@@ -127,6 +127,7 @@ export const PaymentsListPage: FC = () => {
                     getRowKey={(row) => row.id}
                     loading={isLoading}
                     emptyMessage={mes ? 'No hay pagos registrados en este mes.' : 'No hay pagos registrados aún.'}
+                    maxHeightClassName="max-h-[65vh]"
                 />
             </ModuleListPage>
 

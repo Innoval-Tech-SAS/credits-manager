@@ -62,6 +62,7 @@ export const ClientMonthlyBehaviorCard: FC<ClientMonthlyBehaviorCardProps> = ({ 
                     rows={meses}
                     getRowKey={(row) => row.mes}
                     emptyMessage="Sin movimientos en los últimos 12 meses."
+                    maxHeightClassName="max-h-80"
                 />
             </div>
         </section>

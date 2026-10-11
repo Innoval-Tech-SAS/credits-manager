@@ -59,6 +59,7 @@ export const CostCentersPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Sin centros de costo registrados."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

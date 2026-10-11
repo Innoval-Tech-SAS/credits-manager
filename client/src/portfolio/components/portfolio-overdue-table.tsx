@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 
 import { formatMoney } from '../../shared/utils/format-money';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { DataTable } from '@ui/table/components/data-table';
 import type { PortfolioOverdueTableProps } from '../props/portfolio-overdue-table-props';
@@ -34,9 +35,7 @@ export const PortfolioOverdueTable: FC<PortfolioOverdueTableProps> = ({ entradas
                     label: '',
                     render: (row) => (
                         <div className="text-right">
-                            <Button iconOnly startIcon={<Eye className="size-4" />} variant="outline" onClick={() => onView(row.credito.id)}>
-                                Ver
-                            </Button>
+                            <ActionButton icon={<Eye className="size-5" />} label="Ver" onClick={() => onView(row.credito.id)} />
                         </div>
                     ),
                 },

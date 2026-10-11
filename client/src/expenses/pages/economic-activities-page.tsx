@@ -43,6 +43,7 @@ export const EconomicActivitiesPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Sin actividades económicas registradas."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );

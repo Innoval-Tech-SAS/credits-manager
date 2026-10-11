@@ -84,6 +84,7 @@ export const ExpenseCostCenterReportPage: FC = () => {
                     getRowKey={(row) => `${row.mes}-${row.centro_costo?.id ?? 'sin'}`}
                     loading={isLoading}
                     emptyMessage="Sin gastos causados en el rango."
+                    maxHeightClassName="max-h-[65vh]"
                 />
 
                 {data && (

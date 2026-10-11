@@ -1,5 +1,6 @@
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
 import { Eye, X } from 'lucide-react';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { formatMoney } from '../../shared/utils/format-money';
 import { CREDIT_STATUS_BADGE_CLASSES } from '../constants/credit-status-badge-classes';
 import { CREDIT_STATUS_LABEL } from '../constants/credit-status-label';
@@ -59,22 +60,10 @@ export function buildCreditTableColumns({ canCancel, onView, onCancel }: BuildCr
             label: 'Acción',
             render: (row) => (
                 <div className="flex w-full items-center gap-3">
-                    <button
-                        type="button"
-                        onClick={() => onView(row)}
-                        className="text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90"
-                    >
-                        <Eye className="size-5" />
-                    </button>
+                    <ActionButton icon={<Eye className="size-5" />} label="Ver" onClick={() => onView(row)} />
 
                     {canCancel && puedeCancelarCredito(row, (row.pagos_count ?? 0) > 0) && (
-                        <button
-                            type="button"
-                            onClick={() => onCancel(row)}
-                            className="text-gray-500 hover:text-error-500 dark:text-gray-400 dark:hover:text-error-500"
-                        >
-                            <X className="size-5" />
-                        </button>
+                        <ActionButton icon={<X className="size-5" />} label="Cancelar" variant="danger" onClick={() => onCancel(row)} />
                     )}
                 </div>
             ),

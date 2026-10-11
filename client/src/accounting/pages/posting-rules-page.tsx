@@ -1,7 +1,10 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 
+import { Pencil } from 'lucide-react';
+
 import { useResource } from '../../shared/hooks/use-resource';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Modal } from '@ui/modal/components/modal';
 import { DataTable } from '@ui/table/components/data-table';
@@ -73,13 +76,11 @@ export const PostingRulesPage: FC = () => {
                             key: 'accion',
                             label: '',
                             render: (evento) => (
-                                <button
-                                    type="button"
+                                <ActionButton
+                                    icon={<Pencil className="size-5" />}
+                                    label={reglas[evento] ? 'Editar' : 'Configurar'}
                                     onClick={() => setEventoAConfigurar(evento)}
-                                    className="text-sm font-medium text-brand-500 hover:text-brand-600"
-                                >
-                                    {reglas[evento] ? 'Editar' : 'Configurar'}
-                                </button>
+                                />
                             ),
                         },
                     ]}
@@ -87,6 +88,7 @@ export const PostingRulesPage: FC = () => {
                     getRowKey={(evento) => evento}
                     loading={isLoading}
                     emptyMessage="No hay eventos configurables."
+                    maxHeightClassName="max-h-[65vh]"
                 />
             </div>
 

@@ -7,6 +7,7 @@ import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { Alert } from '@ui/alert/components/alert';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
@@ -121,33 +122,25 @@ export const EmailTemplatesPage: FC = () => {
                             label: 'Acciones',
                             render: (plantilla) => (
                                 <div className="flex items-center gap-3">
-                                    <button
-                                        type="button"
+                                    <ActionButton
+                                        icon={<Pencil className="size-5" />}
+                                        label="Editar"
                                         onClick={() => navigate(`/plantillas-correo/${tipo}/${plantilla.id}/editar`)}
-                                        className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400"
-                                    >
-                                        <Pencil className="size-4" />
-                                        Editar
-                                    </button>
+                                    />
                                     {!plantilla.es_predeterminada && (
-                                        <button
-                                            type="button"
+                                        <ActionButton
+                                            icon={<Star className="size-5" />}
+                                            label={marcandoId === plantilla.id ? 'Marcando...' : 'Marcar predeterminada'}
                                             disabled={marcandoId !== null}
                                             onClick={() => void marcarPredeterminada(plantilla)}
-                                            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 disabled:opacity-50 dark:text-gray-400 dark:hover:text-white/90"
-                                        >
-                                            <Star className="size-4" />
-                                            {marcandoId === plantilla.id ? 'Marcando...' : 'Marcar predeterminada'}
-                                        </button>
+                                        />
                                     )}
-                                    <button
-                                        type="button"
+                                    <ActionButton
+                                        icon={<Trash2 className="size-5" />}
+                                        label="Eliminar"
+                                        variant="danger"
                                         onClick={() => setPorEliminar(plantilla)}
-                                        className="inline-flex items-center gap-1.5 text-sm font-medium text-error-600 hover:text-error-700 dark:text-error-400"
-                                    >
-                                        <Trash2 className="size-4" />
-                                        Eliminar
-                                    </button>
+                                    />
                                 </div>
                             ),
                         },
@@ -156,6 +149,7 @@ export const EmailTemplatesPage: FC = () => {
                     getRowKey={(plantilla) => plantilla.id}
                     loading={isLoadingPlantillas}
                     emptyMessage="Sin plantillas para este tipo."
+                    maxHeightClassName="max-h-[65vh]"
                 />
             </div>
 

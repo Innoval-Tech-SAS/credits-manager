@@ -7,6 +7,7 @@ import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource'
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { usePermission } from '../../auth/hooks/use-permission';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
@@ -152,32 +153,24 @@ export const VoucherTypesPage: FC = () => {
                         label: 'Acciones',
                         render: (tipo) => (
                             <div className="flex items-center gap-3">
-                                <button
-                                    type="button"
+                                <ActionButton
+                                    icon={<Eye className="size-5" />}
+                                    label="Ver"
                                     onClick={() => navigate(`/contabilidad/tipos-comprobante/${tipo.id}`)}
-                                    className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400"
-                                >
-                                    <Eye className="size-4" />
-                                    Ver
-                                </button>
+                                />
                                 {canEdit && (
                                     <>
-                                        <button
-                                            type="button"
+                                        <ActionButton
+                                            icon={<Pencil className="size-5" />}
+                                            label="Editar"
                                             onClick={() => navigate(`/contabilidad/tipos-comprobante/${tipo.id}/editar`)}
-                                            className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400"
-                                        >
-                                            <Pencil className="size-4" />
-                                            Editar
-                                        </button>
-                                        <button
-                                            type="button"
+                                        />
+                                        <ActionButton
+                                            icon={<Trash2 className="size-5" />}
+                                            label="Eliminar"
+                                            variant="danger"
                                             onClick={() => setTipoAEliminar(tipo)}
-                                            className="inline-flex items-center gap-1.5 text-sm font-medium text-error-600 hover:text-error-700 dark:text-error-400"
-                                        >
-                                            <Trash2 className="size-4" />
-                                            Eliminar
-                                        </button>
+                                        />
                                     </>
                                 )}
                             </div>
@@ -188,6 +181,7 @@ export const VoucherTypesPage: FC = () => {
                 getRowKey={(row) => row.id}
                 loading={isLoading}
                 emptyMessage="Sin tipos de comprobante registrados."
+                maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
     );
