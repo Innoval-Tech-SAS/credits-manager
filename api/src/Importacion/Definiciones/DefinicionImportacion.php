@@ -46,6 +46,7 @@ final class DefinicionImportacion
                     self::c('plazo', 'Plazo (# cuotas)', true, 'entero'),
                     self::c('periodicidad', 'Periodicidad (Mensual/Quincenal)', true, 'texto'),
                     self::c('cuota', 'Cuota fija (si ya la calcularon)', false, 'monto'),
+                    self::c('gastos_administracion', 'Gastos administrativos (%)', false, 'decimal'),
                     self::c('es_refinanciacion', '¿Es refinanciación? (Sí/No)', false, 'si_no'),
                     self::c('codigo_anterior', 'Código del crédito anterior (si refinancia)', false, 'texto'),
                     self::c('saldo_refinanciado', 'Saldo refinanciado', false, 'monto'),

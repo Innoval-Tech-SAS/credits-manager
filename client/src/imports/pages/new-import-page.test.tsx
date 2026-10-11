@@ -109,6 +109,14 @@ describe('NewImportPage', () => {
         expect(opciones.body.get('archivo')).toBeInstanceOf(File);
     });
 
+    it('muestra un ejemplo visual del CSV para créditos con la columna de gastos administrativos', async () => {
+        renderPagina('/importaciones/nueva?tipo=creditos');
+
+        expect(await screen.findByText('Ejemplo de estructura')).toBeTruthy();
+        expect(screen.getByText('Gastos administrativos (%)')).toBeTruthy();
+        expect(screen.getByText('0,20')).toBeTruthy();
+    });
+
     it('al subir navega a la pantalla de la importación creada', async () => {
         mocks.sendRequest.mockResolvedValue({ importacion: { id: 7 } });
         renderPagina('/importaciones/nueva?tipo=clientes');
