@@ -44,10 +44,10 @@ class EmpresaService
         return $empresaId === null ? null : $this->conMunicipio($this->empresas->buscarPorIdOFallar($empresaId));
     }
 
-    /** Con el municipio y su estado, lo que el formulario necesita para mostrar la ciudad ya elegida. */
+    /** Con el municipio, su estado y la actividad económica, lo que el formulario necesita para mostrar lo ya elegido. */
     public function conMunicipio(Empresa $empresa): Empresa
     {
-        return $empresa->load(['municipio:id,estado_id,nombre', 'municipio.estado:id,pais_id,nombre']);
+        return $empresa->load(['municipio:id,estado_id,nombre', 'municipio.estado:id,pais_id,nombre', 'actividadEconomica:id,codigo,nombre']);
     }
 
     /** Crea una empresa nueva junto con su primer usuario admin y sus roles base. */

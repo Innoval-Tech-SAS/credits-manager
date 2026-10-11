@@ -18,7 +18,7 @@ export const EmployerForm: FC<EmployerFormProps> = ({ employerId, initialData })
     const isEditMode = employerId !== undefined;
 
     const [nombre, setNombre] = useState(initialData?.nombre ?? '');
-    const [nit, setNit] = useState(initialData?.nit ?? '');
+    const [nit, setNit] = useState(initialData?.nit?.replace(/\D/g, '') ?? '');
     const digitoVerificacion = calculateVerificationDigit(nit);
     const [direccion, setDireccion] = useState(initialData?.direccion ?? '');
     const [telefono, setTelefono] = useState(initialData?.telefono ?? '');

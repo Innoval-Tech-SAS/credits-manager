@@ -1,27 +1,34 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
+import { Link } from 'react-router';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { useResource } from '../../shared/hooks/use-resource';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Dropzone } from '@ui/dropzone/components/dropzone';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
+import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { API_ROOT } from '../../shared/constants/api';
 import { calculateVerificationDigit } from '../../shared/utils/calculate-verification-digit';
 import { MunicipalitySelector } from '../../geography/components/municipality-selector';
 import { useCompany } from '../hooks/use-company';
+import type { ApiEconomicActivity } from '../../expenses/types/api-economic-activity';
 
 export const EditCompanyPage: FC = () => {
     const { sendRequest } = useSendRequest();
     const { company, refresh } = useCompany();
+    const { data: economicActivitiesData } = useResource<{ actividades_economicas: ApiEconomicActivity[] }>('/gastos/actividades-economicas');
+    const economicActivities = economicActivitiesData?.actividades_economicas ?? [];
 
     const [name, setName] = useState(company?.name ?? '');
-    const [taxId, setTaxId] = useState(company?.taxId ?? '');
+    const [taxId, setTaxId] = useState(company?.taxId?.replace(/\D/g, '') ?? '');
     const taxVerificationDigit = calculateVerificationDigit(taxId);
     const [address, setAddress] = useState(company?.address ?? '');
     const [municipalityId, setMunicipalityId] = useState(company?.municipality ? String(company.municipality.id) : '');
+    const [economicActivityId, setEconomicActivityId] = useState(company?.economicActivity ? String(company.economicActivity.id) : '');
     const [phone, setPhone] = useState(company?.phone ?? '');
     const [email, setEmail] = useState(company?.email ?? '');
     const [error, setError] = useState<string | null>(null);
@@ -62,6 +69,7 @@ export const EditCompanyPage: FC = () => {
                     digito_verificacion: taxVerificationDigit,
                     direccion: address,
                     municipio_id: Number(municipalityId),
+                    actividad_economica_id: economicActivityId ? Number(economicActivityId) : null,
                     telefono: phone,
                     correo: email,
                 },
@@ -156,6 +164,29 @@ export const EditCompanyPage: FC = () => {
                                             : undefined
                                     }
                                 />
+
+                                <div>
+                                    <Label htmlFor="economic-activity">Actividad económica</Label>
+                                    <Select
+                                        options={economicActivities.map((actividad) => ({
+                                            value: String(actividad.id),
+                                            label: `${actividad.codigo} - ${actividad.nombre}`,
+                                        }))}
+                                        placeholder="Selecciona una actividad económica"
+                                        placeholderSelectable
+                                        defaultValue={economicActivityId}
+                                        onChange={setEconomicActivityId}
+                                    />
+                                    {economicActivities.length === 0 && (
+                                        <p className="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+                                            Aún no has registrado actividades económicas.{' '}
+                                            <Link to="/gastos/actividades-economicas/crear" className="text-brand-500 hover:underline">
+                                                Crea una
+                                            </Link>{' '}
+                                            para poder elegirla aquí.
+                                        </p>
+                                    )}
+                                </div>
 
                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
