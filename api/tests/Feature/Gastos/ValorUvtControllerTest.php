@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Gastos;
 
+use App\Empresas\Models\Empresa;
 use App\Gastos\Models\Gasto;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
@@ -44,9 +45,9 @@ class ValorUvtControllerTest extends TestCase
 
     public function test_sin_permiso_no_puede_editar(): void
     {
-        $this->actingAsAdmin();
+        $admin = $this->actingAsAdmin();
         $valorUvt = $this->crearValorUvt(2027);
-        $this->actingAsAsesor();
+        $this->actingAsAsesor(Empresa::find($admin->empresa_id));
 
         $this->patchJson("/api/v1/gastos/valores-uvt/{$valorUvt->id}", ['valor' => 48000])->assertStatus(403);
     }
@@ -107,9 +108,9 @@ class ValorUvtControllerTest extends TestCase
 
     public function test_sin_permiso_no_puede_eliminar(): void
     {
-        $this->actingAsAdmin();
+        $admin = $this->actingAsAdmin();
         $valorUvt = $this->crearValorUvt(2028);
-        $this->actingAsAsesor();
+        $this->actingAsAsesor(Empresa::find($admin->empresa_id));
 
         $this->deleteJson("/api/v1/gastos/valores-uvt/{$valorUvt->id}")->assertStatus(403);
     }

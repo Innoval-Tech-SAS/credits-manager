@@ -3,7 +3,6 @@
 namespace App\Gastos\Repositories;
 
 use App\Core\Base\BaseRepository;
-use App\Core\Scopes\EmpresaScope;
 use App\Gastos\Models\Gasto;
 use App\Gastos\Models\ValorUvt;
 use Illuminate\Database\Eloquent\Collection;
@@ -30,9 +29,9 @@ class ValorUvtRepository extends BaseRepository
         return $this->consulta()->updateOrCreate(['anio' => $anio], ['valor' => $valor]);
     }
 
-    /** La UVT es global (sin `empresa_id`): protege el valor si algún gasto de CUALQUIER empresa ya se causó con ese año. */
+    /** Protege el valor si la propia empresa ya causó un gasto con fecha de ese año. */
     public function tieneGastosEnAnio(int $anio): bool
     {
-        return Gasto::withoutGlobalScope(EmpresaScope::class)->whereYear('fecha', $anio)->exists();
+        return Gasto::whereYear('fecha', $anio)->exists();
     }
 }
