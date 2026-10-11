@@ -2,6 +2,7 @@
 
 namespace App\Empresas\Requests;
 
+use App\Terceros\Rules\DigitoVerificacionValido;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
@@ -18,6 +19,7 @@ class CrearEmpresaRequest extends FormRequest
         return [
             'nombre_empresa' => ['required', 'string', 'max:150'],
             'nit' => ['required', 'string', 'max:50'],
+            'digito_verificacion' => ['required', 'digits:1', new DigitoVerificacionValido('nit', 'empresa.digito_verificacion.invalido')],
             'direccion' => ['required', 'string', 'max:200'],
             'municipio_id' => ['required', 'integer', Rule::exists('municipios', 'id')->where('activo', true)->whereNull('borrado_en')],
             'telefono' => ['required', 'string', 'max:50'],

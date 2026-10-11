@@ -172,6 +172,11 @@ return [
     */
 
     'custom' => [
+        'empresa' => [
+            'digito_verificacion' => [
+                'invalido' => 'El dígito de verificación no corresponde al NIT.',
+            ],
+        ],
         'metas' => [
             'periodo_tipo_repetido' => 'Ya existe una meta de este tipo para el período.',
             'sin_meta' => 'No existe una meta de este tipo para el período.',
@@ -289,6 +294,9 @@ return [
         ],
         'empleador' => [
             'tiene_clientes_asignados' => 'No se puede eliminar un empleador con clientes asignados actualmente.',
+            'digito_verificacion' => [
+                'invalido' => 'El dígito de verificación no corresponde al NIT.',
+            ],
         ],
         'asesor_id' => [
             'mismo_asesor' => 'El cliente ya está asignado a ese asesor.',

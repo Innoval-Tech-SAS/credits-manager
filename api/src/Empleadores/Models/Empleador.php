@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['nombre', 'nit', 'direccion', 'telefono'])]
+#[Fillable(['nombre', 'nit', 'digito_verificacion', 'direccion', 'telefono'])]
 class Empleador extends BaseModel
 {
     use PerteneceAEmpresa;

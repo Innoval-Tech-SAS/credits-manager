@@ -21,6 +21,7 @@ class MunicipioDeEmpresaTest extends TestCase
         return array_merge([
             'nombre_empresa' => $empresa->nombre_empresa,
             'nit' => $empresa->nit,
+            'digito_verificacion' => $empresa->digito_verificacion,
             'direccion' => $empresa->direccion,
             'municipio_id' => $empresa->municipio_id,
             'telefono' => $empresa->telefono,
@@ -33,7 +34,7 @@ class MunicipioDeEmpresaTest extends TestCase
         $this->actingAsSuperAdmin();
         $inactivo = $this->crearMunicipio(['activo' => false]);
         $datos = [
-            'nombre_empresa' => 'Empresa nueva SAS', 'nit' => '900123456-7', 'direccion' => 'Calle 1', 'telefono' => '3000000000',
+            'nombre_empresa' => 'Empresa nueva SAS', 'nit' => '900123456-7', 'digito_verificacion' => '7', 'direccion' => 'Calle 1', 'telefono' => '3000000000',
             'correo' => 'contacto@empresanueva.com', 'admin_nombre' => 'Admin Nuevo', 'admin_usuario' => 'admin_nuevo', 'admin_password' => 'Clave123!',
         ];
 
@@ -50,7 +51,7 @@ class MunicipioDeEmpresaTest extends TestCase
         $municipio = $this->crearMunicipio(['nombre' => 'Barranquilla']);
 
         $respuesta = $this->postJson('/api/v1/empresas', [
-            'nombre_empresa' => 'Empresa nueva SAS', 'nit' => '900123456-7', 'direccion' => 'Calle 1', 'municipio_id' => $municipio->id,
+            'nombre_empresa' => 'Empresa nueva SAS', 'nit' => '900123456-7', 'digito_verificacion' => '7', 'direccion' => 'Calle 1', 'municipio_id' => $municipio->id,
             'telefono' => '3000000000', 'correo' => 'contacto@empresanueva.com', 'admin_nombre' => 'Admin Nuevo', 'admin_usuario' => 'admin_nuevo', 'admin_password' => 'Clave123!',
         ])->assertCreated();
 

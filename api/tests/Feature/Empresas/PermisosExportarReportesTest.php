@@ -48,7 +48,7 @@ class PermisosExportarReportesTest extends TestCase
         $this->actingAsSuperAdmin();
 
         $empresaId = $this->postJson('/api/v1/empresas', [
-            'nombre_empresa' => 'Empresa exportadora SAS', 'nit' => '900777666-1', 'direccion' => 'Calle 1', 'municipio_id' => $this->municipioDePrueba()->id, 'telefono' => '3001112222',
+            'nombre_empresa' => 'Empresa exportadora SAS', 'nit' => '900777666-1', 'digito_verificacion' => '1', 'direccion' => 'Calle 1', 'municipio_id' => $this->municipioDePrueba()->id, 'telefono' => '3001112222',
             'correo' => 'exportadora@example.com', 'admin_nombre' => 'Admin', 'admin_usuario' => 'admin_exportador', 'admin_password' => 'Clave123!',
         ])->assertCreated()->json('empresa.id');
 

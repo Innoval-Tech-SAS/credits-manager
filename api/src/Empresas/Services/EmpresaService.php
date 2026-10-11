@@ -57,6 +57,7 @@ class EmpresaService
             $empresa = $this->empresas->crear([
                 'nombre_empresa' => $datos['nombre_empresa'],
                 'nit' => $datos['nit'],
+                'digito_verificacion' => $datos['digito_verificacion'],
                 'direccion' => $datos['direccion'],
                 'municipio_id' => $datos['municipio_id'],
                 'telefono' => $datos['telefono'],
@@ -80,7 +81,7 @@ class EmpresaService
                 "Empresa {$empresa->nombre_empresa} creada con su administrador {$datos['admin_usuario']}",
                 'empresa',
                 $empresa->id,
-                nuevos: $empresa->only(['nombre_empresa', 'nit', 'direccion', 'municipio_id', 'telefono', 'correo']) + ['admin_usuario' => strtolower($datos['admin_usuario'])],
+                nuevos: $empresa->only(['nombre_empresa', 'nit', 'digito_verificacion', 'direccion', 'municipio_id', 'telefono', 'correo']) + ['admin_usuario' => strtolower($datos['admin_usuario'])],
             );
 
             return $this->conMunicipio($empresa);

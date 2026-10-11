@@ -3,6 +3,7 @@ export type ApiEmployer = {
     id: number;
     nombre: string;
     nit: string | null;
+    digito_verificacion: string | null;
     direccion: string | null;
     telefono: string | null;
 };

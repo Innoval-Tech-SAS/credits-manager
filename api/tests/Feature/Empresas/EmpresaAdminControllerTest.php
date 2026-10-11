@@ -16,7 +16,8 @@ class EmpresaAdminControllerTest extends TestCase
     {
         return [
             'nombre_empresa' => 'Empresa nueva SAS',
-            'nit' => '900123456-7',
+            'nit' => '900123456',
+            'digito_verificacion' => '8',
             'direccion' => 'Calle 1 # 2-3',
             'municipio_id' => $this->municipioDePrueba()->id,
             'telefono' => '3000000000',
@@ -67,6 +68,7 @@ class EmpresaAdminControllerTest extends TestCase
         $respuesta = $this->patchJson("/api/v1/empresas/{$creada['id']}", [
             'nombre_empresa' => 'Empresa nueva SAS (renombrada)',
             'nit' => $creada['nit'],
+            'digito_verificacion' => $creada['digito_verificacion'],
             'direccion' => $creada['direccion'],
             'municipio_id' => $creada['municipio_id'],
             'telefono' => $creada['telefono'],
