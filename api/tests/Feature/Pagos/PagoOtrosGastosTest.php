@@ -7,6 +7,7 @@ use App\Core\Dinero\Dinero;
 use App\Pagos\Enums\FormaPago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
@@ -43,6 +44,7 @@ class PagoOtrosGastosTest extends TestCase
 
     public function test_el_pago_cubre_primero_interes_luego_otros_gastos_y_al_final_capital(): void
     {
+        $this->configurarReglas();
         $credito = $this->crearCredito($this->crearCliente(), ['gastos_administracion_pct' => 1]);
         $cuota = $this->crearCuota($credito, [
             'numero_cuota' => 1,
@@ -64,6 +66,7 @@ class PagoOtrosGastosTest extends TestCase
 
     public function test_la_cuota_se_marca_pagada_solo_al_cubrir_capital_interes_y_otros_gastos(): void
     {
+        $this->configurarReglas();
         $credito = $this->crearCredito($this->crearCliente(), ['gastos_administracion_pct' => 1]);
         $cuota = $this->crearCuota($credito, [
             'numero_cuota' => 1,
@@ -85,6 +88,7 @@ class PagoOtrosGastosTest extends TestCase
 
     public function test_abono_parcial_ajusta_los_otros_gastos_de_las_cuotas_restantes_al_saldo(): void
     {
+        $this->configurarReglas();
         $credito = $this->crearCredito($this->crearCliente(), ['valor_prestamo' => 900, 'gastos_administracion_pct' => 1]);
         foreach ([1, 2, 3] as $numero) {
             $this->crearCuota($credito, [
@@ -159,7 +163,7 @@ class PagoOtrosGastosTest extends TestCase
         $this->assertDatabaseHas('asientos_contables', ['credito' => 3000]); // otros gastos
     }
 
-    public function test_un_pago_con_otros_gastos_sin_regla_de_otros_no_se_contabiliza(): void
+    public function test_un_pago_con_otros_gastos_sin_regla_de_otros_se_rechaza(): void
     {
         $this->configurarReglas(conOtros: false);
         $credito = $this->crearCredito($this->crearCliente(), ['gastos_administracion_pct' => 1]);
@@ -172,9 +176,13 @@ class PagoOtrosGastosTest extends TestCase
             'valor_pagado' => 0,
         ]);
 
-        app(PagoService::class)->registrarPago($credito->fresh(), Dinero::desdePesos(330), FormaPago::Efectivo, null, null);
+        $this->expectException(ValidationException::class);
 
-        $this->assertDatabaseCount('comprobantes', 0);
-        $this->assertSame(33000, $credito->pagos()->sole()->valor_pago->centavos());
+        try {
+            app(PagoService::class)->registrarPago($credito->fresh(), Dinero::desdePesos(330), FormaPago::Efectivo, null, null);
+        } finally {
+            $this->assertDatabaseCount('pagos', 0);
+            $this->assertDatabaseCount('comprobantes', 0);
+        }
     }
 }

@@ -5,12 +5,14 @@ namespace Tests\Feature\Pagos;
 use App\Creditos\Enums\EstadoCredito;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class LiquidarCreditoValidationTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
@@ -89,6 +91,7 @@ class LiquidarCreditoValidationTest extends TestCase
     public function test_liquidacion_valida_registra_el_pago_y_marca_el_credito_pagado(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $cliente = $this->crearCliente();
         $credito = $this->crearCredito($cliente);
         $this->crearCuota($credito, ['valor' => 300]);

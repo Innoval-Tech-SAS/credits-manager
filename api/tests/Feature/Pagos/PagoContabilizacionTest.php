@@ -7,6 +7,7 @@ use App\Core\Dinero\Dinero;
 use App\Pagos\Enums\FormaPago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
@@ -93,15 +94,19 @@ class PagoContabilizacionTest extends TestCase
         $this->assertDatabaseHas('asientos_contables', ['credito' => 5000]);
     }
 
-    public function test_recaudo_no_bloquea_el_pago_sin_reglas_configuradas(): void
+    public function test_recaudo_se_rechaza_sin_reglas_configuradas_y_no_deja_el_pago_a_medias(): void
     {
         $cliente = $this->crearCliente();
         $credito = $this->crearCredito($cliente);
         $this->crearCuota($credito, ['numero_cuota' => 1, 'valor' => 300, 'valor_interes' => 50, 'valor_capital' => 250]);
 
-        $resultado = app(PagoService::class)->registrarPago($credito->fresh(), Dinero::desdePesos(300), FormaPago::Efectivo, null, null);
+        $this->expectException(ValidationException::class);
 
-        $this->assertNotNull($resultado['pago']->id);
-        $this->assertDatabaseCount('comprobantes', 0);
+        try {
+            app(PagoService::class)->registrarPago($credito->fresh(), Dinero::desdePesos(300), FormaPago::Efectivo, null, null);
+        } finally {
+            $this->assertDatabaseCount('pagos', 0);
+            $this->assertDatabaseCount('comprobantes', 0);
+        }
     }
 }

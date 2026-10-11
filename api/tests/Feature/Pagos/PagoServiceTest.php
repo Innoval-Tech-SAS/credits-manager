@@ -13,6 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\AfirmaAuditoria;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
@@ -20,6 +21,7 @@ class PagoServiceTest extends TestCase
 {
     use ActsAsAdmin;
     use AfirmaAuditoria;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
@@ -28,6 +30,7 @@ class PagoServiceTest extends TestCase
         parent::setUp();
 
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
     }
 
     /**

@@ -7,12 +7,14 @@ use App\Pagos\Enums\FormaPago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class CalendarioControllerTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
@@ -107,6 +109,7 @@ class CalendarioControllerTest extends TestCase
     public function test_incluye_cuotas_pagadas_desde_pagoservice_con_color_success(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $cliente = $this->crearCliente();
         $credito = $this->crearCredito($cliente, ['valor_prestamo' => 100]);
         $cuota = $this->crearCuota($credito, [

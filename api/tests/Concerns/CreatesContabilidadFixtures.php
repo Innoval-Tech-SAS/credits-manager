@@ -54,6 +54,27 @@ trait CreatesContabilidadFixtures
         ]);
     }
 
+    /**
+     * Las cuatro reglas que `ComprobanteService` exige para desembolsar un crédito o registrar un
+     * recaudo (incluido el de otros gastos): sin ellas, esas operaciones ya no se confirman en silencio,
+     * se rechazan. Úsala en el `setUp()` (o en un helper que paga/desembolsa varias veces) de los tests
+     * de Créditos/Pagos que no versan sobre contabilidad — es segura de llamar más de una vez: el
+     * evento es único por empresa y una ya creada no se vuelve a crear.
+     */
+    protected function crearReglasDeCreditoYPago(): void
+    {
+        foreach ([
+            EventoContable::DesembolsoCredito,
+            EventoContable::RecaudoCapital,
+            EventoContable::RecaudoInteres,
+            EventoContable::RecaudoOtrosGastos,
+        ] as $evento) {
+            if (ReglaContabilizacion::where('evento', $evento)->doesntExist()) {
+                $this->crearRegla($evento);
+            }
+        }
+    }
+
     protected function crearTercero(array $overrides = []): Tercero
     {
         static $contador = 0;

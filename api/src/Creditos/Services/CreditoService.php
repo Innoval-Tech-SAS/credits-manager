@@ -313,7 +313,7 @@ class CreditoService
 
             $this->auditoria->registrarModificacion(
                 AuditoriaConstants::MODULO_CREDITOS,
-                "Crédito #{$credito->id} desembolsado".($comprobante ? '' : ' sin contabilizar (sin regla activa o sin dinero nuevo)'),
+                "Crédito #{$credito->id} desembolsado".($comprobante ? '' : ' sin contabilizar (sin dinero nuevo: el saldo venía de la refinanciación)'),
                 $credito,
                 $anteriores,
                 accion: AccionAuditoria::Desembolsar,

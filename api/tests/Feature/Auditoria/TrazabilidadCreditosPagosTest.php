@@ -63,6 +63,7 @@ class TrazabilidadCreditosPagosTest extends TestCase
     public function test_una_refinanciacion_deja_el_evento_del_origen_solo_al_desembolsarla(): void
     {
         $this->actingAsAdmin();
+        $this->crearRegla(EventoContable::DesembolsoCredito);
         $cliente = $this->crearCliente();
         $origen = $this->crearCredito($cliente, ['estado' => EstadoCredito::Desembolsado]);
         $this->crearCuota($origen);
@@ -110,18 +111,17 @@ class TrazabilidadCreditosPagosTest extends TestCase
         $this->assertSinEventosDeAuditoria();
     }
 
-    public function test_desembolsar_sin_regla_contable_lo_deja_dicho_en_el_evento(): void
+    public function test_desembolsar_sin_regla_contable_se_rechaza_y_no_deja_evento(): void
     {
         $this->actingAsAdmin();
         $credito = $this->crearCredito($this->crearCliente(), ['estado' => EstadoCredito::Aprobado]);
 
-        $this->postJson("/api/v1/creditos/{$credito->id}/desembolsar")->assertOk();
+        $this->postJson("/api/v1/creditos/{$credito->id}/desembolsar")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('contabilidad');
 
-        $evento = $this->assertEventoAuditoria('desembolsar', 'creditos', 'credito', $credito->id);
-        $this->assertFalse($evento['valores_nuevos']['contabilizado']);
-        $this->assertNull($evento['valores_nuevos']['comprobante_id'] ?? null);
-        $this->assertStringContainsString('sin contabilizar', $evento['descripcion']);
-        $this->assertSinEventosDeAuditoria('contabilizar');
+        $this->assertSinEventosDeAuditoria();
+        $this->assertSame(EstadoCredito::Aprobado, $credito->fresh()->estado);
     }
 
     public function test_desembolsar_con_regla_deja_el_evento_del_credito_y_el_del_comprobante_enlazados(): void
@@ -173,6 +173,7 @@ class TrazabilidadCreditosPagosTest extends TestCase
     public function test_un_pago_deja_su_desglose_y_el_sobrante_descartado_y_marca_el_credito_saldado(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $credito = $this->crearCredito($this->crearCliente(), ['valor_prestamo' => 300]);
         $cuota = $this->crearCuota($credito, ['valor' => 300, 'valor_interes' => 50, 'valor_capital' => 250]);
 
@@ -193,6 +194,7 @@ class TrazabilidadCreditosPagosTest extends TestCase
     public function test_un_pago_parcial_no_marca_el_credito_como_saldado(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $credito = $this->crearCredito($this->crearCliente());
         $this->crearCuota($credito, ['numero_cuota' => 1]);
         $this->crearCuota($credito, ['numero_cuota' => 2]);
@@ -233,6 +235,7 @@ class TrazabilidadCreditosPagosTest extends TestCase
     public function test_la_liquidacion_anticipada_deja_el_pago_y_el_credito_saldado(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $credito = $this->crearCredito($this->crearCliente());
         $this->crearCuota($credito);
 

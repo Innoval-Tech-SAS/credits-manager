@@ -9,12 +9,14 @@ use App\Pagos\Models\Pago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class ListarPagosMesTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
@@ -28,6 +30,8 @@ class ListarPagosMesTest extends TestCase
 
     private function pagar(Credito $credito): Pago
     {
+        $this->crearReglasDeCreditoYPago();
+
         return app(PagoService::class)->registrarPago($credito->fresh(), Dinero::desdePesos(100), FormaPago::Efectivo, null, null)['pago'];
     }
 

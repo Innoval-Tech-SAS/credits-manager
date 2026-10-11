@@ -48,6 +48,7 @@ class CreditoTransicionesEstadoTest extends TestCase
     public function test_desembolsa_un_credito_aprobado(): void
     {
         $this->actingAsAdmin();
+        $this->crearRegla(EventoContable::DesembolsoCredito);
         $cliente = $this->crearCliente();
         $credito = $this->crearCredito($cliente, ['estado' => EstadoCredito::Aprobado]);
 
@@ -98,6 +99,7 @@ class CreditoTransicionesEstadoTest extends TestCase
     public function test_rechaza_cancelar_un_credito_con_pagos_registrados_aunque_este_dentro_de_24_horas(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $cliente = $this->crearCliente();
         $credito = $this->crearCredito($cliente, [
             'estado' => EstadoCredito::Desembolsado,

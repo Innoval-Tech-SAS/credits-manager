@@ -66,6 +66,7 @@ class RefinanciacionTest extends TestCase
     private function refinanciar(): Credito
     {
         $origen = $this->crearOrigen();
+        $this->crearRegla(EventoContable::DesembolsoCredito);
         $id = $this->aprobarRefinanciacion($origen);
         $this->postJson("/api/v1/creditos/{$id}/desembolsar")->assertOk();
 
@@ -149,6 +150,7 @@ class RefinanciacionTest extends TestCase
     {
         $origen = $this->crearOrigen();
         $id = $this->aprobarRefinanciacion($origen);
+        $this->crearReglasDeCreditoYPago();
 
         $this->postJson("/api/v1/creditos/{$origen->id}/pagos", ['valor_pago' => 100, 'forma_pago' => 'efectivo'])->assertCreated();
 
@@ -254,6 +256,7 @@ class RefinanciacionTest extends TestCase
     public function test_al_solicitar_la_refinanciacion_el_original_sigue_desembolsado_y_recibe_pagos(): void
     {
         $origen = $this->crearOrigen();
+        $this->crearReglasDeCreditoYPago();
 
         $this->solicitarRefinanciacion($origen)->assertCreated();
 

@@ -61,6 +61,8 @@ class ReversarPagoTest extends TestCase
 
     private function pagar(Credito $credito, float $valor): Pago
     {
+        $this->crearReglasDeCreditoYPago();
+
         return app(PagoService::class)->registrarPago($credito->fresh(), Dinero::desdePesos($valor), FormaPago::Efectivo, null, null)['pago'];
     }
 
@@ -205,6 +207,7 @@ class ReversarPagoTest extends TestCase
     public function test_una_liquidacion_sin_cuotas_aplicadas_no_se_reversa(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $credito = $this->creditoConTresCuotas();
         $liquidacion = app(PagoService::class)->liquidarCredito($credito, FormaPago::Efectivo, null, null)['pago'];
 
