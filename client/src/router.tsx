@@ -41,6 +41,7 @@ import { CreateMunicipalityPage } from './geography/pages/create-municipality-pa
 import { CreateParametrizationPage } from './expenses/pages/create-parametrization-page';
 import { CreateReteicaTariffPage } from './expenses/pages/create-reteica-tariff-page';
 import { CreateUvtValuePage } from './expenses/pages/create-uvt-value-page';
+import { EditUvtValuePage } from './expenses/pages/edit-uvt-value-page';
 import { ExpenseCostCenterReportPage } from './expenses/pages/expense-cost-center-report-page';
 import { EconomicActivitiesPage } from './expenses/pages/economic-activities-page';
 import { ExpenseDetailPage } from './expenses/pages/expense-detail-page';
@@ -801,6 +802,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="tributario" accion="parametrizar">
                                 <CreateUvtValuePage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'gastos/valores-uvt/:id/editar',
+                        element: (
+                            <RequireModulePermission modulo="tributario" accion="parametrizar">
+                                <EditUvtValuePage />
                             </RequireModulePermission>
                         ),
                     },

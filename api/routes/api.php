@@ -293,6 +293,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/gastos/valores-uvt', [ValorUvtController::class, 'index'])->middleware('permiso:tributario,listar');
     Route::post('/gastos/valores-uvt', [ValorUvtController::class, 'store'])->middleware('permiso:tributario,parametrizar');
+    Route::patch('/gastos/valores-uvt/{valorUvt}', [ValorUvtController::class, 'update'])->middleware('permiso:tributario,parametrizar');
+    Route::delete('/gastos/valores-uvt/{valorUvt}', [ValorUvtController::class, 'destroy'])->middleware('permiso:tributario,parametrizar');
 
     Route::get('/gastos/parametrizaciones', [ParametrizacionTipoGastoController::class, 'index'])->middleware('permiso:gastos,listar');
     Route::post('/gastos/parametrizaciones', [ParametrizacionTipoGastoController::class, 'store'])->middleware('permiso:gastos,parametrizar');

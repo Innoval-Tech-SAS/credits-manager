@@ -341,6 +341,7 @@ return [
         ],
         'valor_uvt' => [
             'no_configurado' => 'No hay un valor de UVT configurado para el año de la fecha del documento.',
+            'tiene_gastos_asociados' => 'No se puede modificar ni eliminar: ya hay gastos causados con fecha de ese año.',
         ],
         'gasto' => [
             'tiene_cruces_registrados' => 'No se puede anular un gasto con pagos (cruces) registrados. Reversa primero los egresos asociados antes de anularlo.',
