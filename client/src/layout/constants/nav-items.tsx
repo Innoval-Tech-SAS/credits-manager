@@ -289,9 +289,23 @@ export const NAV_ITEMS: NavItem[] = [
         icon: FileText,
         subItems: [
             {
-                name: "Facturación",
+                name: "Facturas",
                 path: "/facturacion",
                 icon: FileText,
+                moduleKey: "facturacion",
+                action: "listar",
+            },
+            {
+                name: "Notas débito",
+                path: "/facturacion/notas-debito",
+                icon: ReceiptText,
+                moduleKey: "facturacion",
+                action: "listar",
+            },
+            {
+                name: "Notas crédito",
+                path: "/facturacion/notas-credito",
+                icon: FileCheck,
                 moduleKey: "facturacion",
                 action: "listar",
             },
