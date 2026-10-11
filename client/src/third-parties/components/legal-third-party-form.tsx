@@ -8,7 +8,7 @@ import { useThirdPartySubmit } from '../hooks/use-third-party-submit';
 import type { LegalThirdPartyFormProps } from '../props/legal-third-party-form-props';
 import type { ThirdPartyRole } from '../types/third-party-role';
 import { buildContactPayload } from '../utils/build-contact-payload';
-import { calculateVerificationDigit } from '../utils/calculate-verification-digit';
+import { calculateVerificationDigit } from '../../shared/utils/calculate-verification-digit';
 import { ThirdPartyContactFields } from './third-party-contact-fields';
 import { ThirdPartyFormFooter } from './third-party-form-footer';
 import { ThirdPartyFormHeader } from './third-party-form-header';

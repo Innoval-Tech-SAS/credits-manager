@@ -3,6 +3,7 @@ export type ApiCompany = {
     id: number;
     nombre_empresa: string;
     nit: string | null;
+    digito_verificacion: string | null;
     direccion: string | null;
     municipio_id: number | null;
     /** En el listado del superadmin solo trae `id` y `nombre`; el resto llega en el detalle y en la empresa propia. */

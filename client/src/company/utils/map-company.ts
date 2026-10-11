@@ -6,6 +6,7 @@ export function mapCompany(apiCompany: ApiCompany): Company {
         id: apiCompany.id,
         name: apiCompany.nombre_empresa,
         taxId: apiCompany.nit,
+        taxVerificationDigit: apiCompany.digito_verificacion,
         address: apiCompany.direccion,
         municipality: apiCompany.municipio
             ? {

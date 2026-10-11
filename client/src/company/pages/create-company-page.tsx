@@ -8,6 +8,7 @@ import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Spinner } from '@ui/spinner/components/spinner';
+import { calculateVerificationDigit } from '../../shared/utils/calculate-verification-digit';
 import { MunicipalitySelector } from '../../geography/components/municipality-selector';
 import { KeyRound, User, Save } from 'lucide-react';
 
@@ -17,6 +18,7 @@ export const CreateCompanyPage: FC = () => {
 
     const [name, setName] = useState('');
     const [taxId, setTaxId] = useState('');
+    const taxVerificationDigit = calculateVerificationDigit(taxId);
     const [address, setAddress] = useState('');
     const [municipalityId, setMunicipalityId] = useState('');
     const [phone, setPhone] = useState('');
@@ -47,6 +49,7 @@ export const CreateCompanyPage: FC = () => {
                 body: {
                     nombre_empresa: name,
                     nit: taxId,
+                    digito_verificacion: taxVerificationDigit,
                     direccion: address,
                     municipio_id: Number(municipalityId),
                     telefono: phone,
@@ -84,26 +87,33 @@ export const CreateCompanyPage: FC = () => {
                                     Datos de la empresa
                                 </h3>
                                 <div className="space-y-6">
-                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                                        <div>
-                                            <Label htmlFor="name">Nombre de la empresa</Label>
-                                            <Input
-                                                id="name"
-                                                name="name"
-                                                required
-                                                value={name}
-                                                onChange={(event) => setName(event.target.value)}
-                                            />
-                                        </div>
+                                    <div>
+                                        <Label htmlFor="name">Nombre de la empresa</Label>
+                                        <Input id="name" name="name" required value={name} onChange={(event) => setName(event.target.value)} />
+                                    </div>
 
+                                    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                         <div>
                                             <Label htmlFor="tax-id">NIT</Label>
                                             <Input
                                                 id="tax-id"
                                                 name="tax-id"
                                                 required
+                                                minLength={6}
+                                                maxLength={15}
                                                 value={taxId}
-                                                onChange={(event) => setTaxId(event.target.value)}
+                                                onChange={(event) => setTaxId(event.target.value.replace(/\D/g, ''))}
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <Label htmlFor="tax-verification-digit">Dígito de verificación</Label>
+                                            <Input
+                                                id="tax-verification-digit"
+                                                name="tax-verification-digit"
+                                                disabled
+                                                value={taxVerificationDigit}
+                                                hint="Se calcula a partir del NIT."
                                             />
                                         </div>
                                     </div>

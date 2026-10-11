@@ -7,6 +7,7 @@ import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Spinner } from '@ui/spinner/components/spinner';
+import { calculateVerificationDigit } from '../../shared/utils/calculate-verification-digit';
 import { Save } from 'lucide-react';
 import type { EmployerFormProps } from '../props/employer-form-props';
 
@@ -18,6 +19,7 @@ export const EmployerForm: FC<EmployerFormProps> = ({ employerId, initialData })
 
     const [nombre, setNombre] = useState(initialData?.nombre ?? '');
     const [nit, setNit] = useState(initialData?.nit ?? '');
+    const digitoVerificacion = calculateVerificationDigit(nit);
     const [direccion, setDireccion] = useState(initialData?.direccion ?? '');
     const [telefono, setTelefono] = useState(initialData?.telefono ?? '');
     const [error, setError] = useState<string | null>(null);
@@ -31,6 +33,7 @@ export const EmployerForm: FC<EmployerFormProps> = ({ employerId, initialData })
         const body = {
             nombre,
             nit: nit || null,
+            digito_verificacion: digitoVerificacion || null,
             direccion: direccion || null,
             telefono: telefono || null,
         };
@@ -70,7 +73,24 @@ export const EmployerForm: FC<EmployerFormProps> = ({ employerId, initialData })
 
                     <div>
                         <Label htmlFor="nit">NIT</Label>
-                        <Input id="nit" name="nit" value={nit} onChange={(event) => setNit(event.target.value)} />
+                        <Input
+                            id="nit"
+                            name="nit"
+                            maxLength={15}
+                            value={nit}
+                            onChange={(event) => setNit(event.target.value.replace(/\D/g, ''))}
+                        />
+                    </div>
+
+                    <div>
+                        <Label htmlFor="digito-verificacion">Dígito de verificación</Label>
+                        <Input
+                            id="digito-verificacion"
+                            name="digito-verificacion"
+                            disabled
+                            value={digitoVerificacion}
+                            hint="Se calcula a partir del NIT."
+                        />
                     </div>
 
                     <div>

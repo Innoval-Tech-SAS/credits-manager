@@ -26,6 +26,7 @@ class EmpleadorService
         $empleador = $this->empleadores->crear([
             'nombre' => $datos['nombre'],
             'nit' => $datos['nit'] ?? null,
+            'digito_verificacion' => $datos['digito_verificacion'] ?? null,
             'direccion' => $datos['direccion'] ?? null,
             'telefono' => $datos['telefono'] ?? null,
         ]);
@@ -42,6 +43,7 @@ class EmpleadorService
         $empleador = $this->empleadores->actualizar($empleador, [
             'nombre' => $datos['nombre'],
             'nit' => $datos['nit'] ?? null,
+            'digito_verificacion' => $datos['digito_verificacion'] ?? null,
             'direccion' => $datos['direccion'] ?? null,
             'telefono' => $datos['telefono'] ?? null,
         ]);

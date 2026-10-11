@@ -9,6 +9,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { API_ROOT } from '../../shared/constants/api';
+import { calculateVerificationDigit } from '../../shared/utils/calculate-verification-digit';
 import { MunicipalitySelector } from '../../geography/components/municipality-selector';
 import { useCompany } from '../hooks/use-company';
 
@@ -18,6 +19,7 @@ export const EditCompanyPage: FC = () => {
 
     const [name, setName] = useState(company?.name ?? '');
     const [taxId, setTaxId] = useState(company?.taxId ?? '');
+    const taxVerificationDigit = calculateVerificationDigit(taxId);
     const [address, setAddress] = useState(company?.address ?? '');
     const [municipalityId, setMunicipalityId] = useState(company?.municipality ? String(company.municipality.id) : '');
     const [phone, setPhone] = useState(company?.phone ?? '');
@@ -57,6 +59,7 @@ export const EditCompanyPage: FC = () => {
                 body: {
                     nombre_empresa: name,
                     nit: taxId,
+                    digito_verificacion: taxVerificationDigit,
                     direccion: address,
                     municipio_id: Number(municipalityId),
                     telefono: phone,
@@ -98,26 +101,33 @@ export const EditCompanyPage: FC = () => {
                                     </div>
                                 )}
 
-                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                                    <div>
-                                        <Label htmlFor="name">Nombre de la empresa</Label>
-                                        <Input
-                                            id="name"
-                                            name="name"
-                                            required
-                                            value={name}
-                                            onChange={(event) => setName(event.target.value)}
-                                        />
-                                    </div>
+                                <div>
+                                    <Label htmlFor="name">Nombre de la empresa</Label>
+                                    <Input id="name" name="name" required value={name} onChange={(event) => setName(event.target.value)} />
+                                </div>
 
+                                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                                     <div>
                                         <Label htmlFor="tax-id">NIT</Label>
                                         <Input
                                             id="tax-id"
                                             name="tax-id"
                                             required
+                                            minLength={6}
+                                            maxLength={15}
                                             value={taxId}
-                                            onChange={(event) => setTaxId(event.target.value)}
+                                            onChange={(event) => setTaxId(event.target.value.replace(/\D/g, ''))}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="tax-verification-digit">Dígito de verificación</Label>
+                                        <Input
+                                            id="tax-verification-digit"
+                                            name="tax-verification-digit"
+                                            disabled
+                                            value={taxVerificationDigit}
+                                            hint="Se calcula a partir del NIT."
                                         />
                                     </div>
                                 </div>

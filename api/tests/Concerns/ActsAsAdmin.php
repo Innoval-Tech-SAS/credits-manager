@@ -24,6 +24,7 @@ trait ActsAsAdmin
         return Empresa::create(array_merge([
             'nombre_empresa' => "Empresa de prueba {$contador}",
             'nit' => "90000000{$contador}-0",
+            'digito_verificacion' => '0',
             'direccion' => 'Calle falsa 123',
             'municipio_id' => $this->municipioDePrueba()->id,
             'telefono' => '3000000000',
