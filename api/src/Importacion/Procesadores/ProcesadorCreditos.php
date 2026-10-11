@@ -8,6 +8,7 @@ use App\Creditos\Enums\TipoPago;
 use App\Creditos\Repositories\CreditoRepository;
 use App\Creditos\Repositories\CuotaRepository;
 use App\Creditos\Services\AmortizacionCalculator;
+use App\Creditos\Services\OtrosGastosCalculator;
 use App\Importacion\Data\ContextoEjecucion;
 use App\Importacion\Data\FilaRechazada;
 use App\Importacion\Lectura\ConvertidorValor;
@@ -53,6 +54,12 @@ final class ProcesadorCreditos implements ProcesadorFila
             ?? throw new FilaRechazada('El plazo es obligatorio.', 'plazo');
         $cuotaArchivo = ConvertidorValor::monto($valores['cuota'], 'cuota');
         $tipoPago = $this->periodicidad($valores['periodicidad']);
+        $gastosAdministracion = ConvertidorValor::decimal($valores['gastos_administracion'] ?? '', 'gastos_administracion');
+        $porcentajeGastos = $gastosAdministracion !== null ? (float) $gastosAdministracion : 0.0;
+
+        if ($gastosAdministracion !== null && ($porcentajeGastos < 0 || $porcentajeGastos > 100)) {
+            throw new FilaRechazada('El porcentaje de gastos administrativos debe estar entre 0 y 100.', 'gastos_administracion');
+        }
 
         if (! $valor->esPositivo()) {
             throw new FilaRechazada('El valor desembolsado debe ser mayor que cero.', 'valor');
@@ -98,6 +105,7 @@ final class ProcesadorCreditos implements ProcesadorFila
                 'tipo_credito' => TipoCredito::Nuevo,
                 'valor_prestamo' => $valor,
                 'tasa_interes' => $tasa,
+                'gastos_administracion_pct' => $porcentajeGastos,
                 'plazo' => $plazo,
                 'tipo_pago' => $tipoPago,
                 'valor_cuota' => $calculo['valor_cuota'],
@@ -108,7 +116,12 @@ final class ProcesadorCreditos implements ProcesadorFila
                 'creado_por' => $ctx->usuario->id,
             ]);
 
-            $this->cuotas->crearVarias($credito->id, $calculo['cuotas']);
+            $cuotasConOtrosGastos = array_map(
+                fn (array $cuota) => [...$cuota, 'valor_otros_gastos' => OtrosGastosCalculator::valorPorCuota($valor, $porcentajeGastos)],
+                $calculo['cuotas'],
+            );
+
+            $this->cuotas->crearVarias($credito->id, $cuotasConOtrosGastos);
             $ctx->creditosPorCodigo[$codigo] = $credito->id;
 
             if ($ctx->generarAsiento) {
