@@ -10,7 +10,7 @@ import type { EmailTestSendModalProps } from '../props/email-test-send-modal-pro
 import type { ApiEmailTestResult } from '../types/api-email-preview';
 
 /** Envío de prueba con la configuración guardada. Muestra el resultado sin credenciales. */
-export const EmailTestSendModal: FC<EmailTestSendModalProps> = ({ onClose }) => {
+export const EmailTestSendModal: FC<EmailTestSendModalProps> = ({ tipo, onClose }) => {
     const { sendRequest } = useSendRequest();
 
     const [destinatario, setDestinatario] = useState('');
@@ -25,7 +25,7 @@ export const EmailTestSendModal: FC<EmailTestSendModalProps> = ({ onClose }) => 
 
         try {
             setResultado(
-                await sendRequest<ApiEmailTestResult>('/correo/configuracion/prueba', {
+                await sendRequest<ApiEmailTestResult>(`/correo/configuracion/${tipo}/prueba`, {
                     method: 'POST',
                     body: { destinatario },
                 }),

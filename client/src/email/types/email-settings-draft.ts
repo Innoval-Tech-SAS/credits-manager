@@ -8,6 +8,4 @@ export type EmailSettingsDraft = {
     nombreRemitente: string;
     usuario: string;
     clave: string;
-    asunto: string;
-    cuerpo: string;
 };

@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 
+import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Modal } from '@ui/modal/components/modal';
 import { Select } from '@ui/forms/components/select';
@@ -8,25 +9,37 @@ import { Spinner } from '@ui/spinner/components/spinner';
 import { HtmlPreview } from './html-preview';
 import type { EmailReminderModalProps } from '../props/email-reminder-button-props';
 import type { ApiEmailPreview } from '../types/api-email-preview';
+import type { ApiPlantillaCorreo } from '../types/api-plantilla-correo';
 
-/** Elige la cuota, muestra el correo exacto que saldrá y lo encola. Lo envía el worker de correos. */
+/** Elige la plantilla y la cuota, muestra el correo exacto que saldrá y lo encola. Lo envía el worker de correos. */
 export const EmailReminderModal: FC<EmailReminderModalProps> = ({ clienteId, cuotasCobrables, correo, onClose, onSent }) => {
     const { sendRequest } = useSendRequest();
+    const { data: plantillasData } = useResource<{ plantillas: ApiPlantillaCorreo[] }>('/correo/plantillas?tipo=cobranza');
+    const plantillas = plantillasData?.plantillas ?? [];
 
     const [cuotaId, setCuotaId] = useState('');
+    const [plantillaId, setPlantillaId] = useState('');
     const [preview, setPreview] = useState<ApiEmailPreview | null>(null);
     const [isPreviewing, setIsPreviewing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [sent, setSent] = useState(false);
     const [isSending, setIsSending] = useState(false);
 
-    const opciones = cuotasCobrables.map((cuota) => ({
+    /** Sin elección explícita, la predeterminada del tipo cobranza (o la primera, si aún no hay ninguna marcada). */
+    const plantillaPredeterminada = plantillas.find((plantilla) => plantilla.es_predeterminada) ?? plantillas[0] ?? null;
+    const plantillaActualId = plantillaId !== '' ? plantillaId : plantillaPredeterminada ? String(plantillaPredeterminada.id) : '';
+
+    const opcionesCuota = cuotasCobrables.map((cuota) => ({
         value: String(cuota.id),
         label: `Cuota ${cuota.numero_cuota} · ${cuota.credito_codigo} · vence ${cuota.fecha_vencimiento}`,
     }));
 
-    const handleCuotaChange = async (valor: string) => {
-        setCuotaId(valor);
+    const opcionesPlantilla = plantillas.map((plantilla) => ({
+        value: String(plantilla.id),
+        label: plantilla.es_predeterminada ? `${plantilla.nombre} (predeterminada)` : plantilla.nombre,
+    }));
+
+    const buscarVistaPrevia = async (cuota: string, plantilla: string) => {
         setPreview(null);
         setError(null);
         setSent(false);
@@ -35,13 +48,26 @@ export const EmailReminderModal: FC<EmailReminderModalProps> = ({ clienteId, cuo
         try {
             const respuesta = await sendRequest<{ vista_previa: ApiEmailPreview }>(`/clientes/${clienteId}/recordatorios-correo/vista-previa`, {
                 method: 'POST',
-                body: { cuota_id: Number(valor) },
+                body: { cuota_id: Number(cuota), plantilla_correo_id: plantilla !== '' ? Number(plantilla) : null },
             });
             setPreview(respuesta.vista_previa);
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         } finally {
             setIsPreviewing(false);
+        }
+    };
+
+    const handleCuotaChange = (valor: string) => {
+        setCuotaId(valor);
+        void buscarVistaPrevia(valor, plantillaActualId);
+    };
+
+    const handlePlantillaChange = (valor: string) => {
+        setPlantillaId(valor);
+
+        if (cuotaId !== '') {
+            void buscarVistaPrevia(cuotaId, valor);
         }
     };
 
@@ -52,7 +78,7 @@ export const EmailReminderModal: FC<EmailReminderModalProps> = ({ clienteId, cuo
         try {
             await sendRequest(`/clientes/${clienteId}/recordatorios-correo`, {
                 method: 'POST',
-                body: { cuota_id: Number(cuotaId) },
+                body: { cuota_id: Number(cuotaId), plantilla_correo_id: plantillaActualId !== '' ? Number(plantillaActualId) : null },
             });
             setSent(true);
             onSent();
@@ -83,9 +109,21 @@ export const EmailReminderModal: FC<EmailReminderModalProps> = ({ clienteId, cuo
                     </div>
                 )}
 
-                <div>
-                    <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Cuota a recordar</p>
-                    <Select options={opciones} placeholder="Selecciona una cuota" onChange={(valor) => void handleCuotaChange(valor)} />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Plantilla</p>
+                        <Select
+                            key={plantillasData ? 'loaded' : 'loading'}
+                            options={opcionesPlantilla}
+                            placeholder={plantillasData ? 'Selecciona una plantilla' : 'Cargando plantillas…'}
+                            defaultValue={plantillaActualId !== '' ? plantillaActualId : undefined}
+                            onChange={handlePlantillaChange}
+                        />
+                    </div>
+                    <div>
+                        <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Cuota a recordar</p>
+                        <Select options={opcionesCuota} placeholder="Selecciona una cuota" onChange={handleCuotaChange} />
+                    </div>
                 </div>
 
                 {isPreviewing && (

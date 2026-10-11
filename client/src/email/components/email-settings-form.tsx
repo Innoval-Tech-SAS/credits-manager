@@ -1,18 +1,15 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Eye, Save, Send } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Save, Send } from 'lucide-react';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { EMAIL_SETTINGS_LAST_STEP, EMAIL_SETTINGS_STEPS } from '../constants/email-settings-steps';
-import { EmailPreviewModal } from './email-preview-modal';
 import { EmailSettingsAccountStep } from './email-settings-account-step';
 import { EmailSettingsServerStep } from './email-settings-server-step';
 import { EmailSettingsStepper } from './email-settings-stepper';
-import { EmailSettingsTemplateStep } from './email-settings-template-step';
 import { EmailTestSendModal } from './email-test-send-modal';
 import type { EmailSettingsFormProps } from '../props/email-settings-form-props';
-import type { ApiEmailPreview } from '../types/api-email-preview';
 import type { ApiEmailSettings } from '../types/api-email-settings';
 import type { EmailSettingsDraft } from '../types/email-settings-draft';
 import type { EmailSettingsErrors } from '../utils/validate-email-settings-step';
@@ -28,13 +25,11 @@ function borradorDesde(settings: ApiEmailSettings): EmailSettingsDraft {
         nombreRemitente: settings.nombre_remitente ?? '',
         usuario: settings.usuario ?? '',
         clave: '',
-        asunto: settings.plantilla.asunto,
-        cuerpo: settings.plantilla.cuerpo,
     };
 }
 
-/** Asistente de tres pasos. Cada paso valida antes de avanzar; la configuración se guarda solo al final. */
-export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSaved }) => {
+/** Asistente de dos pasos (servidor y cuenta). Cada paso valida antes de avanzar; la configuración se guarda solo al final. */
+export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ tipo, settings, onSaved }) => {
     const { sendRequest } = useSendRequest();
 
     const [draft, setDraft] = useState<EmailSettingsDraft>(() => borradorDesde(settings));
@@ -44,9 +39,6 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSave
     const [success, setSuccess] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [preview, setPreview] = useState<ApiEmailPreview | null>(null);
-    const [previewError, setPreviewError] = useState<string | null>(null);
-    const [isPreviewing, setIsPreviewing] = useState(false);
     const [pruebaAbierta, setPruebaAbierta] = useState(false);
 
     const actualizar = (cambios: Partial<EmailSettingsDraft>) => {
@@ -107,7 +99,7 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSave
         const esSmtp = draft.driver === 'smtp';
 
         try {
-            await sendRequest('/correo/configuracion', {
+            await sendRequest(`/correo/configuracion/${tipo}`, {
                 method: 'PUT',
                 body: {
                     remitente: draft.remitente,
@@ -118,8 +110,6 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSave
                     cifrado: draft.cifrado,
                     usuario: esSmtp && draft.usuario !== '' ? draft.usuario : null,
                     clave: esSmtp && draft.clave !== '' ? draft.clave : null,
-                    plantilla_asunto: draft.asunto,
-                    plantilla_cuerpo: draft.cuerpo,
                 },
             });
 
@@ -130,23 +120,6 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSave
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         } finally {
             setIsSubmitting(false);
-        }
-    };
-
-    const handlePreview = async () => {
-        setPreviewError(null);
-        setIsPreviewing(true);
-
-        try {
-            const respuesta = await sendRequest<{ vista_previa: ApiEmailPreview }>('/correo/vista-previa', {
-                method: 'POST',
-                body: { asunto: draft.asunto, cuerpo: draft.cuerpo },
-            });
-            setPreview(respuesta.vista_previa);
-        } catch (caught) {
-            setPreviewError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
-        } finally {
-            setIsPreviewing(false);
         }
     };
 
@@ -167,28 +140,16 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSave
                         Configuración guardada correctamente.
                     </div>
                 )}
-                {previewError && (
-                    <div className="rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400">
-                        {previewError}
-                    </div>
-                )}
-
                 {paso === 0 && <EmailSettingsServerStep draft={draft} errores={errores} onChange={actualizar} />}
                 {paso === 1 && (
                     <EmailSettingsAccountStep draft={draft} errores={errores} claveGuardada={settings.clave_estado === 'configurada'} onChange={actualizar} />
                 )}
-                {paso === 2 && <EmailSettingsTemplateStep draft={draft} errores={errores} variables={settings.variables} onChange={actualizar} />}
 
-                {esUltimo && (
+                {esUltimo && settings.estado === 'configurada' && (
                     <div className="flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row dark:border-gray-800">
-                        <Button type="button" variant="outline" startIcon={<Eye className="size-4" />} disabled={isPreviewing} onClick={() => void handlePreview()}>
-                            {isPreviewing ? 'Generando...' : 'Ver'}
+                        <Button type="button" variant="outline" startIcon={<Send className="size-4" />} onClick={() => setPruebaAbierta(true)}>
+                            Probar
                         </Button>
-                        {settings.estado === 'configurada' && (
-                            <Button type="button" variant="outline" startIcon={<Send className="size-4" />} onClick={() => setPruebaAbierta(true)}>
-                                Probar
-                            </Button>
-                        )}
                     </div>
                 )}
 
@@ -214,9 +175,7 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ settings, onSave
                 </div>
             </form>
 
-            {preview && <EmailPreviewModal preview={preview} onClose={() => setPreview(null)} />}
-
-            {pruebaAbierta && <EmailTestSendModal onClose={() => setPruebaAbierta(false)} />}
+            {pruebaAbierta && <EmailTestSendModal tipo={tipo} onClose={() => setPruebaAbierta(false)} />}
         </div>
     );
 };
