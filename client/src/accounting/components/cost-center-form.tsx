@@ -5,15 +5,18 @@ import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
+import { ToggleSwitchInput } from '@ui/forms/components/toggle-switch-input';
 import { Spinner } from '@ui/spinner/components/spinner';
 import type { CostCenterFormProps } from '../props/cost-center-form-props';
 import type { ApiCostCenter } from '../types/api-cost-center';
 
-export const CostCenterForm: FC<CostCenterFormProps> = ({ onCreated }) => {
+export const CostCenterForm: FC<CostCenterFormProps> = ({ costCenterId, initialData, onSaved }) => {
     const { sendRequest } = useSendRequest();
+    const isEditMode = costCenterId !== undefined;
 
-    const [codigo, setCodigo] = useState('');
-    const [nombre, setNombre] = useState('');
+    const [codigo, setCodigo] = useState(initialData?.codigo ?? '');
+    const [nombre, setNombre] = useState(initialData?.nombre ?? '');
+    const [activo, setActivo] = useState(initialData?.activo ?? true);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,14 +26,22 @@ export const CostCenterForm: FC<CostCenterFormProps> = ({ onCreated }) => {
         setIsSubmitting(true);
 
         try {
-            const respuesta = await sendRequest<{ centro: ApiCostCenter }>('/contabilidad/centros-costo', {
-                method: 'POST',
-                body: { codigo, nombre },
-            });
+            const respuesta = isEditMode
+                ? await sendRequest<{ centro: ApiCostCenter }>(`/contabilidad/centros-costo/${costCenterId}`, {
+                      method: 'PATCH',
+                      body: { codigo, nombre, activo },
+                  })
+                : await sendRequest<{ centro: ApiCostCenter }>('/contabilidad/centros-costo', {
+                      method: 'POST',
+                      body: { codigo, nombre },
+                  });
 
-            onCreated(respuesta.centro);
-            setCodigo('');
-            setNombre('');
+            onSaved(respuesta.centro);
+
+            if (!isEditMode) {
+                setCodigo('');
+                setNombre('');
+            }
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         } finally {
@@ -59,9 +70,15 @@ export const CostCenterForm: FC<CostCenterFormProps> = ({ onCreated }) => {
                     </div>
                 </div>
 
+                {isEditMode && (
+                    <div className="flex flex-wrap gap-8">
+                        <ToggleSwitchInput id="activo" label="Activo" checked={activo} onChange={setActivo} />
+                    </div>
+                )}
+
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                     <Button type="submit" disabled={isSubmitting} startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}>
-                        {isSubmitting ? 'Creando…' : 'Crear centro de costo'}
+                        {isSubmitting ? 'Guardando…' : isEditMode ? 'Actualizar centro de costo' : 'Crear centro de costo'}
                     </Button>
                 </div>
             </div>

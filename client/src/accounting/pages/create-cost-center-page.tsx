@@ -7,7 +7,7 @@ import { CostCenterForm } from '../components/cost-center-form';
 export const CreateCostCenterPage: FC = () => {
     const navigate = useNavigate();
 
-    const handleCreated = () => {
+    const handleSaved = () => {
         navigate('/contabilidad/centros-costo', { replace: true, state: { message: 'Centro de costo creado correctamente.' } });
     };
 
@@ -16,7 +16,7 @@ export const CreateCostCenterPage: FC = () => {
             <PageBreadcrumb pageTitle="Crear centro de costo" />
 
             <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3">
-                <CostCenterForm onCreated={handleCreated} />
+                <CostCenterForm onSaved={handleSaved} />
             </div>
         </div>
     );

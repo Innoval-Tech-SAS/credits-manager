@@ -9,6 +9,7 @@ use App\Contabilidad\Services\CentroCostoService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class CentroCostoController extends Controller
 {
@@ -25,6 +26,14 @@ class CentroCostoController extends Controller
         return response()->json($centros);
     }
 
+    public function show(CentroCosto $centro): JsonResponse
+    {
+        return response()->json(['centro' => [
+            ...$centro->toArray(),
+            'tiene_movimientos_asociados' => $this->centros->tieneMovimientosAsociados($centro),
+        ]]);
+    }
+
     public function store(CrearCentroCostoRequest $peticion): JsonResponse
     {
         $centro = $this->centros->crear($peticion->validated());
@@ -37,5 +46,12 @@ class CentroCostoController extends Controller
         $centro = $this->centros->editar($centro, $peticion->validated());
 
         return response()->json(['centro' => $centro]);
+    }
+
+    public function destroy(CentroCosto $centro): Response
+    {
+        $this->centros->eliminar($centro);
+
+        return response()->noContent();
     }
 }
