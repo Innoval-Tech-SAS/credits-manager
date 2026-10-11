@@ -53,7 +53,7 @@ export const JournalPage: FC = () => {
                 <DataTable
                     columns={[
                         { key: 'fecha', label: 'Fecha', render: (row) => formatDateEs(row.fecha) },
-                        { key: 'comp', label: 'Comp.', render: (row) => `${row.tipo}-${row.consecutivo}` },
+                        { key: 'comp', label: 'Comp.', render: (row) => row.numero },
                         { key: 'cuenta', label: 'Cuenta', render: (row) => `${row.cuenta_codigo} ${row.cuenta_nombre}` },
                         { key: 'descripcion', label: 'Descripción', render: (row) => row.descripcion ?? '—' },
                         { key: 'debito', label: 'Débito', render: (row) => (parseFloat(row.debito) > 0 ? formatMoney(row.debito) : '') },

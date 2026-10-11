@@ -30,14 +30,47 @@ class TipoComprobanteService
         return $tipo;
     }
 
+    /** Para que el frontend deshabilite `consecutivo_inicial` con una pista, en vez de que el usuario choque con un 422. */
+    public function tieneComprobantesAsociados(TipoComprobante $tipo): bool
+    {
+        return $this->tipos->tieneComprobantesAsociados($tipo->id);
+    }
+
     public function editar(TipoComprobante $tipo, array $datos): TipoComprobante
     {
+        $this->validarConfiguracionConsecutivo($tipo, $datos);
+
         $anteriores = $this->auditoria->instantanea($tipo);
         $tipo = $this->tipos->actualizar($tipo, $datos);
 
         $this->auditoria->registrarModificacion(AuditoriaConstants::MODULO_CONTABILIDAD, "Tipo de comprobante {$tipo->codigo} modificado", $tipo, $anteriores);
 
         return $tipo;
+    }
+
+    /**
+     * El inicial no se puede mover si ya hay comprobantes (reescribiría el punto de partida de números ya
+     * usados). El final, si se define, nunca puede quedar por debajo del inicial ni de lo ya consumido
+     * (`consecutivo_actual`): ambos dejarían el tipo en un estado "agotado" de forma inconsistente.
+     */
+    private function validarConfiguracionConsecutivo(TipoComprobante $tipo, array $datos): void
+    {
+        if (array_key_exists('consecutivo_inicial', $datos)
+            && $datos['consecutivo_inicial'] !== $tipo->consecutivo_inicial
+            && $this->tipos->tieneComprobantesAsociados($tipo->id)) {
+            throw ValidationException::withMessages([
+                'consecutivo_inicial' => __('validation.custom.tipo_comprobante.consecutivo_inicial_bloqueado'),
+            ]);
+        }
+
+        $consecutivoInicial = $datos['consecutivo_inicial'] ?? $tipo->consecutivo_inicial;
+        $consecutivoFinal = array_key_exists('consecutivo_final', $datos) ? $datos['consecutivo_final'] : $tipo->consecutivo_final;
+
+        if ($consecutivoFinal !== null && ($consecutivoFinal < $consecutivoInicial || $consecutivoFinal < $tipo->consecutivo_actual)) {
+            throw ValidationException::withMessages([
+                'consecutivo_final' => __('validation.custom.tipo_comprobante.rango_invalido'),
+            ]);
+        }
     }
 
     public function eliminar(TipoComprobante $tipo): bool

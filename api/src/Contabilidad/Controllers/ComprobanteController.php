@@ -44,6 +44,7 @@ class ComprobanteController extends Controller
             $datos['documento_soporte'] ?? null,
             $datos['tercero_id'] ?? null,
             contabilizarInmediato: false,
+            consecutivoManual: $datos['consecutivo'] ?? null,
         );
 
         return response()->json(['comprobante' => $this->comprobantes->mostrar($comprobante)], 201);

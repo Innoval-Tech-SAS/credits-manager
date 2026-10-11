@@ -6,6 +6,7 @@ use App\Contabilidad\Enums\NaturalezaCuenta;
 use App\Contabilidad\Exportaciones\FuenteAuxiliarContable;
 use App\Contabilidad\Repositories\AsientoContableRepository;
 use App\Contabilidad\Repositories\PlanCuentaRepository;
+use App\Contabilidad\Support\NumeroComprobante;
 use App\Core\Dinero\Dinero;
 use App\Exportacion\Enums\FormatoExportacion;
 use App\Exportacion\Models\Exportacion;
@@ -81,7 +82,7 @@ class AuxiliarContableService
 
             $filas[] = [
                 'fecha' => $movimiento->fecha,
-                'comprobante' => "{$movimiento->tipo}-{$movimiento->consecutivo}",
+                'comprobante' => NumeroComprobante::formatear($movimiento->tipo, $movimiento->ciclo_numeracion, $movimiento->consecutivo),
                 'descripcion' => $movimiento->descripcion,
                 'tercero' => $movimiento->tercero,
                 'debito' => $movimiento->debito,

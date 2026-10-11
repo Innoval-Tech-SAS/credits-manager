@@ -28,6 +28,7 @@ class CrearComprobanteRequest extends FormRequest
             'fecha' => ['required', 'date'],
             'concepto' => ['required', 'string', 'max:255'],
             'documento_soporte' => ['nullable', 'string', 'max:150'],
+            'consecutivo' => ['nullable', 'integer', 'min:1'],
             'tercero_id' => [
                 'nullable',
                 Rule::exists('terceros', 'id')->where('empresa_id', $this->user()->empresa_id),

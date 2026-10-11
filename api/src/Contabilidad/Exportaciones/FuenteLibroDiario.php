@@ -3,6 +3,7 @@
 namespace App\Contabilidad\Exportaciones;
 
 use App\Contabilidad\Repositories\AsientoContableRepository;
+use App\Contabilidad\Support\NumeroComprobante;
 use App\Core\Dinero\Dinero;
 use App\Exportacion\Contracts\FuenteExportable;
 use App\Exportacion\Data\ColumnaExportable;
@@ -61,7 +62,7 @@ final class FuenteLibroDiario implements FuenteExportable
         foreach ($asientos->cursorLibroDiario($this->empresaId, $this->desde, $this->hasta) as $movimiento) {
             yield [
                 'fecha' => $movimiento->fecha,
-                'comprobante' => "{$movimiento->tipo}-{$movimiento->consecutivo}",
+                'comprobante' => NumeroComprobante::formatear($movimiento->tipo, $movimiento->ciclo_numeracion, $movimiento->consecutivo),
                 'cuenta_codigo' => $movimiento->cuenta_codigo,
                 'cuenta_nombre' => $movimiento->cuenta_nombre,
                 'descripcion' => $movimiento->descripcion,

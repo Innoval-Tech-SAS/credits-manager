@@ -82,6 +82,61 @@ class TipoComprobanteControllerTest extends TestCase
         $respuesta->assertStatus(422)->assertJsonValidationErrors('codigo');
     }
 
+    public function test_edita_la_configuracion_del_consecutivo(): void
+    {
+        $this->actingAsAdmin();
+        $tipo = $this->crearTipoComprobante();
+
+        $respuesta = $this->patchJson("/api/v1/contabilidad/tipos-comprobante/{$tipo->id}", [
+            'consecutivo_inicial' => 100,
+            'consecutivo_final' => 200,
+            'tipo_numeracion' => 'manual',
+            'reinicio_periodo' => 'anual',
+        ]);
+
+        $respuesta->assertStatus(200);
+        $this->assertDatabaseHas('tipos_comprobante', [
+            'id' => $tipo->id,
+            'consecutivo_inicial' => 100,
+            'consecutivo_final' => 200,
+            'tipo_numeracion' => 'manual',
+            'reinicio_periodo' => 'anual',
+        ]);
+    }
+
+    public function test_no_se_puede_cambiar_el_consecutivo_inicial_con_comprobantes_asociados(): void
+    {
+        $this->actingAsAdmin();
+        $tipo = $this->crearTipoComprobante(['consecutivo_inicial' => 1]);
+        $debito = $this->crearCuenta();
+        $credito = $this->crearCuenta();
+
+        $this->postJson('/api/v1/contabilidad/comprobantes', [
+            'tipo_comprobante_id' => $tipo->id,
+            'fecha' => now()->toDateString(),
+            'concepto' => 'Comprobante de prueba',
+            'lineas' => [
+                ['cuenta_id' => $debito->id, 'debito' => 100, 'credito' => 0],
+                ['cuenta_id' => $credito->id, 'debito' => 0, 'credito' => 100],
+            ],
+        ])->assertCreated();
+
+        $respuesta = $this->patchJson("/api/v1/contabilidad/tipos-comprobante/{$tipo->id}", ['consecutivo_inicial' => 50]);
+
+        $respuesta->assertStatus(422)->assertJsonValidationErrors('consecutivo_inicial');
+        $this->assertDatabaseHas('tipos_comprobante', ['id' => $tipo->id, 'consecutivo_inicial' => 1]);
+    }
+
+    public function test_el_consecutivo_final_no_puede_quedar_por_debajo_del_inicial(): void
+    {
+        $this->actingAsAdmin();
+        $tipo = $this->crearTipoComprobante(['consecutivo_inicial' => 10]);
+
+        $respuesta = $this->patchJson("/api/v1/contabilidad/tipos-comprobante/{$tipo->id}", ['consecutivo_final' => 5]);
+
+        $respuesta->assertStatus(422)->assertJsonValidationErrors('consecutivo_final');
+    }
+
     public function test_un_tipo_de_comprobante_inexistente_responde_404_al_editar(): void
     {
         $this->actingAsAdmin();

@@ -113,9 +113,7 @@ export const LedgerPage: FC<LedgerPageProps> = ({ modo = 'mayor' }) => {
                                     {movimientosConSaldo.map((movimiento, index) => (
                                         <tr key={index} className="border-b border-gray-100 dark:border-gray-800">
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatDateEs(movimiento.fecha)}</td>
-                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                                                {movimiento.tipo}-{movimiento.consecutivo}
-                                            </td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{movimiento.numero}</td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{movimiento.tercero ?? '-'}</td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{movimiento.descripcion ?? ''}</td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300">

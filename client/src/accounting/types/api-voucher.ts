@@ -17,6 +17,8 @@ export type ApiVoucher = {
     tipo_comprobante_id: number;
     tipo_comprobante?: { id: number; codigo: string; nombre: string };
     consecutivo: number;
+    /** Número visible ya formateado (incluye el ciclo del reinicio periódico cuando aplica). */
+    numero: string;
     periodo_id: number;
     fecha: string;
     tercero_id: number | null;

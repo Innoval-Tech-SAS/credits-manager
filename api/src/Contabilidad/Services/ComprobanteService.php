@@ -70,6 +70,7 @@ class ComprobanteService
         ?string $documentoSoporte = null,
         ?int $terceroId = null,
         bool $contabilizarInmediato = true,
+        ?int $consecutivoManual = null,
     ): Comprobante {
         $lineas = array_map(fn (array $linea) => [
             ...$linea,
@@ -100,16 +101,24 @@ class ComprobanteService
         }
 
         $periodo = $this->periodos->obtenerAbierto($fecha);
-        $consecutivo = $this->tiposComprobante->incrementarConsecutivo($tipoComprobanteId);
 
         return DB::transaction(function () use (
             $tipoComprobanteId, $fecha, $lineas, $concepto, $moduloOrigen, $origenId,
             $documentoSoporte, $terceroId, $contabilizarInmediato, $totalDebito,
-            $totalCredito, $periodo, $consecutivo,
+            $totalCredito, $periodo, $consecutivoManual,
         ) {
+            // Dentro de la transacción (no antes, como el diseño anterior): si algo falla después, el
+            // ROLLBACK también libera el consecutivo asignado — sin huecos en la numeración.
+            ['consecutivo' => $consecutivo, 'ciclo_numeracion' => $ciclo] = $this->tiposComprobante->asignarConsecutivo(
+                $tipoComprobanteId,
+                $moduloOrigen === 'manual',
+                $consecutivoManual,
+            );
+
             $comprobante = $this->comprobantes->crear([
                 'tipo_comprobante_id' => $tipoComprobanteId,
                 'consecutivo' => $consecutivo,
+                'ciclo_numeracion' => $ciclo,
                 'periodo_id' => $periodo->id,
                 'fecha' => $fecha,
                 'tercero_id' => $terceroId,
