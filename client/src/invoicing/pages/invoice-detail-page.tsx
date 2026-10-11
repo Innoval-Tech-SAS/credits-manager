@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
-import { Ban, Download, Mail, Send, Trash2, Wallet } from 'lucide-react';
+import { Ban, Download, FileText, Mail, Send, Trash2, Wallet } from 'lucide-react';
 
 import { usePermission } from '../../auth/hooks/use-permission';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
@@ -48,6 +48,7 @@ export const InvoiceDetailPage: FC = () => {
     const [confirmarEliminar, setConfirmarEliminar] = useState(false);
     const [lineasEdicion, setLineasEdicion] = useState<InvoiceLineDraft[] | null>(null);
     const [cobroAbierto, setCobroAbierto] = useState(false);
+    const [notaAbierta, setNotaAbierta] = useState(false);
     const [accionConMotivo, setAccionConMotivo] = useState<AccionConMotivo | null>(null);
     const [dispatchesVersion, setDispatchesVersion] = useState(0);
 
@@ -193,13 +194,20 @@ export const InvoiceDetailPage: FC = () => {
                             </Button>
                         )}
                         {puedeAnularFactura && (
-                            <Button variant="outline" startIcon={<Ban className="size-4" />} disabled={enviando} onClick={() => setAccionConMotivo({ tipo: 'anular' })}>
+                            <Button
+                                variant="outline"
+                                iconOnly
+                                startIcon={<Ban className="size-4" />}
+                                disabled={enviando}
+                                onClick={() => setAccionConMotivo({ tipo: 'anular' })}
+                            >
                                 Anular factura
                             </Button>
                         )}
                         {!esBorrador && puedeImprimir && (
                             <Button
                                 variant="outline"
+                                iconOnly
                                 startIcon={<Download className="size-4" />}
                                 disabled={isDownloading}
                                 onClick={() => void download(`/facturacion/documentos/${documento.id}/pdf`, `${documento.numero ?? 'documento'}.pdf`)}
@@ -208,8 +216,13 @@ export const InvoiceDetailPage: FC = () => {
                             </Button>
                         )}
                         {!esBorrador && puedeImprimir && (
-                            <Button variant="outline" startIcon={<Mail className="size-4" />} disabled={enviando} onClick={() => void reenviarPorCorreo()}>
+                            <Button variant="outline" iconOnly startIcon={<Mail className="size-4" />} disabled={enviando} onClick={() => void reenviarPorCorreo()}>
                                 Reenviar por correo
+                            </Button>
+                        )}
+                        {!esBorrador && puedeAnular && (
+                            <Button variant="outline" iconOnly startIcon={<FileText className="size-4" />} onClick={() => setNotaAbierta(true)}>
+                                Emitir nota
                             </Button>
                         )}
                     </div>
@@ -307,17 +320,20 @@ export const InvoiceDetailPage: FC = () => {
             )}
 
             {!esBorrador && puedeAnular && (
-                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-                    <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">Emitir nota</h3>
-                    <InvoiceNoteForm
-                        documento={documento}
-                        onEmitida={() => informarExito('Nota emitida con su número consecutivo.')}
-                        onError={(texto) => {
-                            setMensaje(null);
-                            setErrorAccion(texto);
-                        }}
-                    />
-                </div>
+                <InvoiceNoteForm
+                    isOpen={notaAbierta}
+                    documento={documento}
+                    onClose={() => setNotaAbierta(false)}
+                    onEmitida={() => {
+                        setNotaAbierta(false);
+                        informarExito('Nota emitida con su número consecutivo.');
+                    }}
+                    onError={(texto) => {
+                        setNotaAbierta(false);
+                        setMensaje(null);
+                        setErrorAccion(texto);
+                    }}
+                />
             )}
 
             {esFactura && (

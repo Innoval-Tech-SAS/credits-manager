@@ -6,6 +6,7 @@ import { Button } from '@ui/button/components/button';
 import { DatePicker } from '@ui/forms/components/date-picker';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
+import { Modal } from '@ui/modal/components/modal';
 import { Select } from '@ui/forms/components/select';
 import { NOTE_CREDIT_REASON_OPTIONS, NOTE_DEBIT_REASON_OPTIONS } from '../constants/invoice-note-reasons';
 import { InvoiceLinesForm } from './invoice-lines-form';
@@ -15,13 +16,22 @@ import type { ApiInvoiceNoteCreditReason, ApiInvoiceNoteDebitReason } from '../t
 
 type NoteKind = 'nota_credito' | 'nota_debito';
 
+/** Abre el formulario en un modal; se monta solo al abrir, para partir siempre de un estado limpio. */
+export const InvoiceNoteForm: FC<InvoiceNoteFormProps> = ({ isOpen, documento, onClose, onEmitida, onError }) => (
+    <Modal isOpen={isOpen} onClose={onClose} size="lg">
+        {isOpen && <FormularioNota documento={documento} onClose={onClose} onEmitida={onEmitida} onError={onError} />}
+    </Modal>
+);
+
+type FormularioNotaProps = Omit<InvoiceNoteFormProps, 'isOpen'>;
+
 /**
  * Nota crédito: un valor opcional por cada línea de la factura (vacío = no se corrige esa línea).
  * Nota débito: líneas libres. Las reglas de saldo las aplica el servidor.
  * El motivo sale de la lista cerrada del tipo; «otros» pide el detalle en texto libre. La nota débito también
  * acepta su propia fecha de vencimiento y, si el motivo es «intereses», el soporte del cálculo por línea.
  */
-export const InvoiceNoteForm: FC<InvoiceNoteFormProps> = ({ documento, onEmitida, onError }) => {
+const FormularioNota: FC<FormularioNotaProps> = ({ documento, onClose, onEmitida, onError }) => {
     const { sendRequest, isLoading } = useSendRequest();
 
     const tiposPermitidos: NoteKind[] = documento.tipo === 'factura' ? ['nota_credito', 'nota_debito'] : ['nota_debito'];
@@ -67,10 +77,6 @@ export const InvoiceNoteForm: FC<InvoiceNoteFormProps> = ({ documento, onEmitida
                     lineas,
                 },
             });
-            setMotivoDetalle('');
-            setFechaVencimiento('');
-            setValoresCredito({});
-            setLineasDebito([{ concepto: '', descripcion: '', valor: '' }]);
             onEmitida();
         } catch (caught) {
             onError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
@@ -79,6 +85,8 @@ export const InvoiceNoteForm: FC<InvoiceNoteFormProps> = ({ documento, onEmitida
 
     return (
         <div className="flex flex-col gap-6">
+            <h3 className="pr-10 text-lg font-semibold text-gray-800 dark:text-white/90">Emitir nota</h3>
+
             {tiposPermitidos.length > 1 && (
                 <div className="max-w-xs">
                     <Label htmlFor="tipo-nota">Tipo de nota</Label>
@@ -141,7 +149,10 @@ export const InvoiceNoteForm: FC<InvoiceNoteFormProps> = ({ documento, onEmitida
                 <InvoiceLinesForm lineas={lineasDebito} onChange={setLineasDebito} mostrarSoporteMora={esMora} />
             )}
 
-            <div className="flex justify-end">
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                    Cancelar
+                </Button>
                 <Button disabled={isLoading || (esOtros && motivoDetalle.trim() === '')} onClick={() => void emitir()}>
                     {isLoading ? 'Emitiendo…' : `Emitir ${tipo === 'nota_credito' ? 'nota crédito' : 'nota débito'}`}
                 </Button>
