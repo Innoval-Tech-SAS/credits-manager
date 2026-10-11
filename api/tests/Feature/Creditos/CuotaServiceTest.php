@@ -8,12 +8,14 @@ use App\Pagos\Enums\FormaPago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class CuotaServiceTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
@@ -43,6 +45,7 @@ class CuotaServiceTest extends TestCase
     public function test_resumen_al_dia_separa_interes_y_capital_tras_un_abono_parcial(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $cliente = $this->crearCliente();
         $credito = $this->crearCredito($cliente, ['valor_prestamo' => 900]);
 
@@ -63,6 +66,7 @@ class CuotaServiceTest extends TestCase
     public function test_resumen_al_dia_cuando_un_abono_no_alcanza_a_cubrir_el_interes(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $cliente = $this->crearCliente();
         $credito = $this->crearCredito($cliente, ['valor_prestamo' => 900]);
 

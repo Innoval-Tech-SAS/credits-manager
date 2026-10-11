@@ -5,12 +5,14 @@ namespace Tests\Feature\Pagos;
 use App\Creditos\Enums\EstadoCuota;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class CrearPagoValidationTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
@@ -94,6 +96,7 @@ class CrearPagoValidationTest extends TestCase
     public function test_pago_valido_se_registra_y_actualiza_la_cuota(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $cliente = $this->crearCliente();
         $credito = $this->crearCredito($cliente);
         $this->crearCuota($credito, ['valor' => 300]);

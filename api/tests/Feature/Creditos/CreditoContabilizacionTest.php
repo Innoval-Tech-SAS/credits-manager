@@ -3,10 +3,12 @@
 namespace Tests\Feature\Creditos;
 
 use App\Contabilidad\Enums\EventoContable;
+use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\TipoCredito;
 use App\Creditos\Enums\TipoPago;
 use App\Creditos\Services\CreditoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
@@ -63,7 +65,7 @@ class CreditoContabilizacionTest extends TestCase
         $this->assertDatabaseHas('asientos_contables', ['cuenta_id' => $cuentaBancos->id, 'credito' => 100000]);
     }
 
-    public function test_desembolso_no_bloquea_la_creacion_del_credito_sin_regla_configurada(): void
+    public function test_desembolso_se_rechaza_sin_regla_configurada_y_el_credito_no_queda_desembolsado(): void
     {
         $cliente = $this->crearCliente();
 
@@ -77,10 +79,15 @@ class CreditoContabilizacionTest extends TestCase
             'fecha_desembolso' => '2026-01-01',
         ]);
         $credito = app(CreditoService::class)->aprobar($credito);
-        app(CreditoService::class)->desembolsar($credito);
 
-        $this->assertNotNull($credito->id);
-        $this->assertDatabaseCount('comprobantes', 0);
+        $this->expectException(ValidationException::class);
+
+        try {
+            app(CreditoService::class)->desembolsar($credito);
+        } finally {
+            $this->assertSame(EstadoCredito::Aprobado, $credito->refresh()->estado);
+            $this->assertDatabaseCount('comprobantes', 0);
+        }
     }
 
     public function test_solicitar_un_credito_todavia_no_genera_comprobante(): void

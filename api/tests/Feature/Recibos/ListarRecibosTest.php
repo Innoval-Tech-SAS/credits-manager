@@ -10,18 +10,21 @@ use App\Pagos\Models\Pago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class ListarRecibosTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
     /** @return array{0: Cliente, 1: Pago} */
     private function pagoDeCliente(string $nombre, float $valor): array
     {
+        $this->crearReglasDeCreditoYPago();
         $cliente = $this->crearCliente(['nombre' => $nombre]);
         $credito = $this->crearCredito($cliente, ['valor_prestamo' => 1000, 'valor_cuota' => 1000, 'valor_total' => 1000, 'plazo' => 1]);
         $this->crearCuota($credito, ['numero_cuota' => 1, 'fecha_vencimiento' => now()->addMonth()->toDateString(), 'valor' => 1000, 'valor_interes' => 0, 'valor_capital' => 1000]);

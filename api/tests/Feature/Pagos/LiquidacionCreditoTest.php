@@ -11,12 +11,14 @@ use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class LiquidacionCreditoTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
@@ -76,6 +78,7 @@ class LiquidacionCreditoTest extends TestCase
 
     public function test_liquidar_credito_cierra_todas_las_cuotas_y_marca_el_credito_como_pagado(): void
     {
+        $this->crearReglasDeCreditoYPago();
         $cliente = $this->crearCliente();
         $credito = $this->crearCredito($cliente, ['valor_prestamo' => 900, 'tasa_interes' => 0]);
         $this->crearCuota($credito, ['numero_cuota' => 1, 'fecha_vencimiento' => '2026-01-01']);

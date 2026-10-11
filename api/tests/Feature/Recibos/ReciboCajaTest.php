@@ -29,6 +29,7 @@ class ReciboCajaTest extends TestCase
     private function creditoConCuotas(string $nombreCliente = 'Maria Fernanda Lopez'): Credito
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $credito = $this->crearCredito($this->crearCliente(['nombre' => $nombreCliente]));
         $this->crearCuota($credito, ['numero_cuota' => 1, 'valor' => 300]);
         $this->crearCuota($credito, ['numero_cuota' => 2, 'valor' => 300, 'fecha_vencimiento' => '2026-03-01']);
@@ -77,6 +78,7 @@ class ReciboCajaTest extends TestCase
     public function test_un_pago_que_falla_no_consume_el_consecutivo(): void
     {
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
         $sinDesembolso = $this->crearCredito($this->crearCliente(), ['estado' => EstadoCredito::Solicitado]);
 
         $this->postJson("/api/v1/creditos/{$sinDesembolso->id}/pagos", ['valor_pago' => 100, 'forma_pago' => 'efectivo'])->assertStatus(422);

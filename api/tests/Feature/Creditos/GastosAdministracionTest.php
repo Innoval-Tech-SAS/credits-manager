@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Creditos;
 
+use App\Contabilidad\Enums\EventoContable;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Models\Credito;
@@ -10,6 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\AfirmaAuditoria;
 use Tests\Concerns\CreatesAuditoriaFixtures;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
@@ -18,6 +20,7 @@ class GastosAdministracionTest extends TestCase
     use ActsAsAdmin;
     use AfirmaAuditoria;
     use CreatesAuditoriaFixtures;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
@@ -43,6 +46,8 @@ class GastosAdministracionTest extends TestCase
 
     private function desembolsar(Credito $credito): Credito
     {
+        $this->crearRegla(EventoContable::DesembolsoCredito);
+
         $this->postJson("/api/v1/creditos/{$credito->id}/aprobar")->assertOk();
         $this->postJson("/api/v1/creditos/{$credito->id}/desembolsar")->assertOk();
 

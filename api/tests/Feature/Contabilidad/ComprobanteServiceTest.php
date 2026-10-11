@@ -161,13 +161,20 @@ class ComprobanteServiceTest extends TestCase
         $this->assertEquals(2, $segundo->consecutivo);
     }
 
-    public function test_contabilizar_recaudo_no_bloquea_si_no_hay_regla_configurada(): void
+    public function test_contabilizar_recaudo_se_rechaza_si_no_hay_regla_configurada(): void
     {
         $this->actingAsAdmin();
 
-        // Ni siquiera necesita un Pago persistido: sin reglas activas, el motor
-        // retorna null antes de tocar cualquier propiedad del pago.
-        $resultado = app(ComprobanteService::class)->contabilizarRecaudoPago(new Pago, Dinero::desdePesos(100), Dinero::cero());
+        $this->expectException(ValidationException::class);
+
+        app(ComprobanteService::class)->contabilizarRecaudoPago(new Pago, Dinero::desdePesos(100), Dinero::cero());
+    }
+
+    public function test_contabilizar_recaudo_sin_nada_que_aplicar_no_contabiliza_ni_exige_regla(): void
+    {
+        $this->actingAsAdmin();
+
+        $resultado = app(ComprobanteService::class)->contabilizarRecaudoPago(new Pago, Dinero::cero(), Dinero::cero());
 
         $this->assertNull($resultado);
     }

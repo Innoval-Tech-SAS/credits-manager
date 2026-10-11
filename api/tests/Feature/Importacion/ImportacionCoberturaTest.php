@@ -543,14 +543,18 @@ class ImportacionCoberturaTest extends TestCase
         );
     }
 
-    public function test_sin_una_regla_de_desembolso_no_hay_asiento_de_apertura(): void
+    public function test_sin_una_regla_de_desembolso_el_asiento_de_apertura_se_rechaza(): void
     {
         $this->actingAsAdmin();
         $comprobantes = app(ComprobanteService::class);
         $contrapartida = $this->crearCuenta(['codigo' => '390505', 'nombre' => 'Apertura']);
 
-        $this->assertNull($comprobantes->contabilizarAperturaCartera(Dinero::desdePesos(100), $contrapartida->id, now()->toDateString(), 1));
         $this->assertFalse($comprobantes->eventosContablesActivos(EventoContable::DesembolsoCredito));
+        $this->assertNull($comprobantes->contabilizarAperturaCartera(Dinero::cero(), $contrapartida->id, now()->toDateString(), 1));
+
+        $this->expectException(ValidationException::class);
+
+        $comprobantes->contabilizarAperturaCartera(Dinero::desdePesos(100), $contrapartida->id, now()->toDateString(), 1);
     }
 
     public function test_con_regla_de_desembolso_y_valor_positivo_el_asiento_de_apertura_se_crea(): void

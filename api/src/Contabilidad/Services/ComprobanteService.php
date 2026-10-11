@@ -10,6 +10,7 @@ use App\Contabilidad\Enums\EstadoPeriodo;
 use App\Contabilidad\Enums\EventoContable;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\PlanCuenta;
+use App\Contabilidad\Models\ReglaContabilizacion;
 use App\Contabilidad\Repositories\AsientoContableRepository;
 use App\Contabilidad\Repositories\ComprobanteRepository;
 use App\Contabilidad\Repositories\ReglaContabilizacionRepository;
@@ -351,13 +352,14 @@ class ComprobanteService
 
     public function contabilizarDesembolsoCredito(Credito $credito): ?Comprobante
     {
-        $regla = $this->reglas->activaParaEvento(EventoContable::DesembolsoCredito);
         // En una refinanciación el saldo tomado ya está en cartera: solo el dinero nuevo mueve caja y cartera.
         $valor = $credito->valorDesembolsado();
 
-        if (! $regla || ! $valor->esPositivo()) {
+        if (! $valor->esPositivo()) {
             return null;
         }
+
+        $regla = $this->reglaActiva(EventoContable::DesembolsoCredito);
 
         return $this->crearComprobante(
             $regla->tipo_comprobante_id,
@@ -399,11 +401,11 @@ class ComprobanteService
 
     public function contabilizarAperturaCartera(Dinero $valor, int $cuentaContrapartidaId, string $fecha, int $importacionId): ?Comprobante
     {
-        $regla = $this->reglas->activaParaEvento(EventoContable::DesembolsoCredito);
-
-        if (! $regla || ! $valor->esPositivo()) {
+        if (! $valor->esPositivo()) {
             return null;
         }
+
+        $regla = $this->reglaActiva(EventoContable::DesembolsoCredito);
 
         return $this->crearComprobante(
             $regla->tipo_comprobante_id,
@@ -418,22 +420,19 @@ class ComprobanteService
         );
     }
 
-    /** Sin regla activa de otros gastos no se contabiliza un recaudo que los incluye: el asiento no cuadraría. */
+    /** Si hay algo que contabilizar, exige las tres reglas del recaudo (capital, interés y, si aplica, otros gastos): nunca se recauda en silencio sin asiento. */
     public function contabilizarRecaudoPago(Pago $pago, Dinero $capital, Dinero $interes, ?Dinero $otros = null): ?Comprobante
     {
         $otros ??= Dinero::cero();
-
-        $reglaCapital = $this->reglas->activaParaEvento(EventoContable::RecaudoCapital);
-        $reglaInteres = $this->reglas->activaParaEvento(EventoContable::RecaudoInteres);
-        $reglaOtros = $otros->esPositivo() ? $this->reglas->activaParaEvento(EventoContable::RecaudoOtrosGastos) : null;
-        if (! $reglaCapital || ! $reglaInteres || ($otros->esPositivo() && ! $reglaOtros)) {
-            return null;
-        }
 
         $aplicado = $capital->sumar($interes)->sumar($otros);
         if (! $aplicado->esPositivo()) {
             return null;
         }
+
+        $reglaCapital = $this->reglaActiva(EventoContable::RecaudoCapital);
+        $reglaInteres = $this->reglaActiva(EventoContable::RecaudoInteres);
+        $reglaOtros = $otros->esPositivo() ? $this->reglaActiva(EventoContable::RecaudoOtrosGastos) : null;
 
         $lineas = [
             ['cuenta_id' => $reglaCapital->cuenta_debito_id, 'debito' => $aplicado, 'credito' => 0],
@@ -461,5 +460,19 @@ class ComprobanteService
     private static function aDinero(Dinero|int|float|string $valor): Dinero
     {
         return $valor instanceof Dinero ? $valor : Dinero::desdePesos($valor);
+    }
+
+    /** Sin regla activa la operación no se confirma: nunca se desembolsa ni se recauda sin que quede su asiento. */
+    private function reglaActiva(EventoContable $evento): ReglaContabilizacion
+    {
+        $regla = $this->reglas->activaParaEvento($evento);
+
+        if ($regla === null) {
+            throw ValidationException::withMessages([
+                'contabilidad' => __('validation.custom.contabilidad.sin_regla_contable', ['evento' => $evento->etiqueta()]),
+            ]);
+        }
+
+        return $regla;
     }
 }

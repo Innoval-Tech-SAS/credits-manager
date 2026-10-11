@@ -11,12 +11,14 @@ use App\Creditos\Services\CreditoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class CreditoServiceTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
@@ -25,6 +27,7 @@ class CreditoServiceTest extends TestCase
         parent::setUp();
 
         $this->actingAsAdmin();
+        $this->crearReglasDeCreditoYPago();
     }
 
     public function test_crear_credito_nuevo_genera_las_cuotas_de_la_amortizacion(): void

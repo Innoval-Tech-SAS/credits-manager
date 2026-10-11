@@ -8,17 +8,21 @@ use App\Pagos\Enums\FormaPago;
 use App\Pagos\Services\PagoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\TestCase;
 
 class PagoControllerTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
     private function pagar(Credito $credito, float $valor): void
     {
+        $this->crearReglasDeCreditoYPago();
+
         app(PagoService::class)->registrarPago($credito->fresh(), Dinero::desdePesos($valor), FormaPago::Efectivo, null, null);
     }
 
