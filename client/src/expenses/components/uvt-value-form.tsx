@@ -9,11 +9,12 @@ import { Spinner } from '@ui/spinner/components/spinner';
 import type { UvtValueFormProps } from '../props/uvt-value-form-props';
 import type { ApiUvtValue } from '../types/api-uvt-value';
 
-export const UvtValueForm: FC<UvtValueFormProps> = ({ onCreated }) => {
+export const UvtValueForm: FC<UvtValueFormProps> = ({ valorUvtId, initialData, onSaved }) => {
     const { sendRequest } = useSendRequest();
+    const isEditMode = valorUvtId !== undefined;
 
-    const [anio, setAnio] = useState(String(new Date().getFullYear()));
-    const [valor, setValor] = useState('');
+    const [anio, setAnio] = useState(initialData?.anio ? String(initialData.anio) : String(new Date().getFullYear()));
+    const [valor, setValor] = useState(initialData?.valor ?? '');
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,13 +24,21 @@ export const UvtValueForm: FC<UvtValueFormProps> = ({ onCreated }) => {
         setIsSubmitting(true);
 
         try {
-            const respuesta = await sendRequest<{ valor_uvt: ApiUvtValue }>('/gastos/valores-uvt', {
-                method: 'POST',
-                body: { anio: Number(anio), valor: parseFloat(valor) || 0 },
-            });
+            const respuesta = isEditMode
+                ? await sendRequest<{ valor_uvt: ApiUvtValue }>(`/gastos/valores-uvt/${valorUvtId}`, {
+                      method: 'PATCH',
+                      body: { valor: parseFloat(valor) || 0 },
+                  })
+                : await sendRequest<{ valor_uvt: ApiUvtValue }>('/gastos/valores-uvt', {
+                      method: 'POST',
+                      body: { anio: Number(anio), valor: parseFloat(valor) || 0 },
+                  });
 
-            onCreated(respuesta.valor_uvt);
-            setValor('');
+            onSaved(respuesta.valor_uvt);
+
+            if (!isEditMode) {
+                setValor('');
+            }
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         } finally {
@@ -49,14 +58,7 @@ export const UvtValueForm: FC<UvtValueFormProps> = ({ onCreated }) => {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="anio">Año</Label>
-                        <Input
-                            id="anio"
-                            name="anio"
-                            type="number"
-                            required
-                            value={anio}
-                            onChange={(event) => setAnio(event.target.value)}
-                        />
+                        <Input id="anio" name="anio" type="number" required disabled={isEditMode} value={anio} onChange={(event) => setAnio(event.target.value)} />
                     </div>
 
                     <div className="md:col-span-2">
@@ -75,7 +77,7 @@ export const UvtValueForm: FC<UvtValueFormProps> = ({ onCreated }) => {
 
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                     <Button type="submit" disabled={isSubmitting} startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}>
-                        {isSubmitting ? 'Guardando…' : 'Guardar valor UVT'}
+                        {isSubmitting ? 'Guardando…' : isEditMode ? 'Actualizar valor UVT' : 'Guardar valor UVT'}
                     </Button>
                 </div>
             </div>

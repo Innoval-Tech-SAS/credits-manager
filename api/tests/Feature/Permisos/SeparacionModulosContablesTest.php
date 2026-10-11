@@ -10,6 +10,7 @@ use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Models\SolicitudReaperturaPeriodo;
 use App\Empresas\Models\Empresa;
 use App\Gastos\Models\ActividadEconomica;
+use App\Gastos\Models\ValorUvt;
 use App\Proveedores\Models\Proveedor;
 use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
@@ -58,6 +59,8 @@ class SeparacionModulosContablesTest extends TestCase
 
     private ActividadEconomica $actividad;
 
+    private ValorUvt $valorUvt;
+
     /** @var list<string> todo el catálogo vigente, "modulo.accion" */
     private array $catalogo;
 
@@ -89,6 +92,7 @@ class SeparacionModulosContablesTest extends TestCase
         $this->terceroJuridico = $this->crearTercero(['nombre' => 'Empresa de prueba SAS']);
         $this->proveedor = Proveedor::create(['tercero_id' => $this->terceroJuridico->id, 'activo' => true]);
         $this->actividad = $this->crearActividadEconomica();
+        $this->valorUvt = $this->crearValorUvt(2031, 47065);
 
         $this->cuenta = $this->crearCuenta();
         $this->centroId = $this->postJson('/api/v1/contabilidad/centros-costo', ['codigo' => 'ADM', 'nombre' => 'Administración'])
@@ -175,6 +179,8 @@ class SeparacionModulosContablesTest extends TestCase
             ['PATCH', "/api/v1/gastos/actividades-economicas/{$this->actividad->id}", 'tributario.parametrizar', []],
             ['GET', '/api/v1/gastos/valores-uvt', 'tributario.listar', []],
             ['POST', '/api/v1/gastos/valores-uvt', 'tributario.parametrizar', []],
+            ['PATCH', "/api/v1/gastos/valores-uvt/{$this->valorUvt->id}", 'tributario.parametrizar', []],
+            ['DELETE', "/api/v1/gastos/valores-uvt/{$this->valorUvt->id}", 'tributario.parametrizar', []],
             ['GET', '/api/v1/gastos/tarifas-reteica', 'tributario.listar', []],
             ['POST', '/api/v1/gastos/tarifas-reteica', 'tributario.parametrizar', []],
         ];
