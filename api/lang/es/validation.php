@@ -180,11 +180,14 @@ return [
             'distribucion_incompleta' => 'La distribución debe sumar exactamente la meta de :meta.',
         ],
         'correo' => [
-            'sin_configurar' => 'La empresa no tiene configurado el correo de cobranza.',
+            'sin_configurar' => 'La empresa no tiene configurado el servidor de correo.',
+            'sin_plantilla' => 'La empresa no tiene una plantilla predeterminada para este tipo de correo.',
             'cuota_no_del_cliente' => 'La cuota no pertenece a este cliente.',
             'cuota_pagada' => 'La cuota ya está pagada; no se le envía recordatorio.',
             'cliente_sin_correo' => 'El cliente no tiene un correo registrado.',
             'variable_desconocida' => 'La plantilla usa variables que no existen: :variables.',
+            'elimina_predeterminada' => 'No se puede eliminar la plantilla predeterminada. Marca otra como predeterminada antes de eliminar esta.',
+            'reintento_no_aplica' => 'Solo se puede reintentar un envío que haya fallado.',
         ],
         'exportacion' => [
             'excede_limite' => 'La exportación tiene :filas filas y el máximo es :maximo (límite de Excel). Acota los filtros e inténtalo de nuevo.',
@@ -203,7 +206,6 @@ return [
             'ya_anulada' => 'La factura ya está anulada.',
             'con_cobros' => 'La factura tiene cobros vigentes. Reversa primero los cobros y luego anula la factura.',
             'con_notas_debito' => 'La factura tiene notas débito emitidas. No se puede anular mientras existan.',
-            'excede_saldo_pendiente' => 'La nota crédito supera el saldo pendiente de la factura.',
             'cobro_no_factura_emitida' => 'Solo se pueden registrar cobros sobre una factura emitida.',
             'cobro_excede_saldo' => 'El cobro supera el saldo pendiente de la factura (:saldo).',
             'cobro_no_reversible' => 'Solo se puede reversar un cobro, no una reversa.',

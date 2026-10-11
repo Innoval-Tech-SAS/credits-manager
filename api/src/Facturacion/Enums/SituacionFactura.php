@@ -11,5 +11,6 @@ enum SituacionFactura: string
     case Emitida = 'emitida';
     case ParcialmentePagada = 'parcialmente_pagada';
     case Pagada = 'pagada';
+    case ConSaldoAFavor = 'con_saldo_a_favor';
     case Anulada = 'anulada';
 }

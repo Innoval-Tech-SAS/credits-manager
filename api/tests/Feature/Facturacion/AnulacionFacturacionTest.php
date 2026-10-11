@@ -116,7 +116,7 @@ class AnulacionFacturacionTest extends TestCase
 
         $this->postJson(self::BASE.'/cobros/'.$cobro['id'].'/reversar', ['motivo' => 'Se reversa el cobro'])->assertOk();
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_debito', 'motivo' => 'Intereses de mora',
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar',
             'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],
         ])->assertStatus(201);
 
@@ -132,12 +132,12 @@ class AnulacionFacturacionTest extends TestCase
 
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/anular', ['motivo' => 'Segunda vez'])->assertStatus(422)->assertJsonValidationErrors('documento');
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_debito', 'motivo' => 'Sobre anulada',
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar',
             'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],
         ])->assertStatus(422)->assertJsonValidationErrors('documento');
     }
 
-    public function test_una_nota_credito_parcial_tras_un_cobro_no_supera_el_saldo_y_la_situacion_se_deriva(): void
+    public function test_una_nota_credito_tras_un_cobro_parcial_puede_dejar_saldo_a_favor_pero_no_excede_la_linea(): void
     {
         $this->actingAsAdmin();
         $factura = $this->factura('1000');
@@ -145,18 +145,21 @@ class AnulacionFacturacionTest extends TestCase
 
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/cobros', ['fecha' => '2026-10-05', 'valor' => '300', 'medio' => 'efectivo'])->assertStatus(201);
 
-        // La línea tiene 1000 por acreditar, pero el saldo pendiente es 700: la nota no puede pasarse del saldo.
+        // La línea tiene 1000 por acreditar: una nota de 800 no la excede, aunque ya solo quedaban 700 por cobrar.
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_credito', 'motivo' => 'Descuento', 'lineas' => [['linea_origen_id' => $linea, 'valor' => '800']],
-        ])->assertStatus(422)->assertJsonValidationErrors('lineas');
-
-        $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_credito', 'motivo' => 'Descuento', 'lineas' => [['linea_origen_id' => $linea, 'valor' => '700']],
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'rebaja_descuento', 'lineas' => [['linea_origen_id' => $linea, 'valor' => '800']],
         ])->assertStatus(201);
 
         $detalle = $this->getJson(self::BASE.'/documentos/'.$factura['id'])->assertOk();
 
-        $this->assertSame('pagada', $detalle->json('totales.situacion'));
+        $this->assertSame('con_saldo_a_favor', $detalle->json('totales.situacion'));
+        $this->assertSame('-100.00', $detalle->json('totales.saldo'));
+        $this->assertSame('100.00', $detalle->json('totales.saldo_a_favor'));
+
+        // Pero no puede exceder lo que queda de la línea (200 = 1000 - 800 ya acreditados).
+        $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'rebaja_descuento', 'lineas' => [['linea_origen_id' => $linea, 'valor' => '300']],
+        ])->assertStatus(422)->assertJsonValidationErrors('lineas');
         $this->assertFalse($detalle->json('totales.anulada'));
     }
 }

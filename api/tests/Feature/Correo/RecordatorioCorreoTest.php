@@ -5,6 +5,7 @@ namespace Tests\Feature\Correo;
 use App\Clientes\Models\Cliente;
 use App\Correo\Constants\CorreoConstants;
 use App\Correo\Enums\EstadoEnvioCorreo;
+use App\Correo\Enums\TipoCorreo;
 use App\Correo\Jobs\EnviarRecordatorioCobranzaJob;
 use App\Correo\Mail\CorreoCobranza;
 use App\Correo\Models\EnvioCorreo;
@@ -44,6 +45,7 @@ class RecordatorioCorreoTest extends TestCase
         Queue::fake();
         $this->actingAsAdmin();
         $this->configuracionDeCorreo();
+        $plantilla = $this->plantillaDeCorreo();
         ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota();
 
         $respuesta = $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo", ['cuota_id' => $cuota->id]);
@@ -53,7 +55,7 @@ class RecordatorioCorreoTest extends TestCase
             'cliente_id' => $cliente->id,
             'cuota_id' => $cuota->id,
             'destinatario' => 'juan@example.com',
-            'plantilla' => CorreoConstants::PLANTILLA_RECORDATORIO,
+            'plantilla_correo_id' => $plantilla->id,
             'estado' => 'en_cola',
         ]);
         Queue::assertPushed(EnviarRecordatorioCobranzaJob::class);
@@ -65,6 +67,7 @@ class RecordatorioCorreoTest extends TestCase
         $fake = $this->simulaCorreo();
         $admin = $this->actingAsAdmin();
         $this->configuracionDeCorreo();
+        $this->plantillaDeCorreo();
         ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota();
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo", ['cuota_id' => $cuota->id])->assertStatus(202);
 
@@ -74,9 +77,9 @@ class RecordatorioCorreoTest extends TestCase
         $this->assertDatabaseHas('envios_correo', ['id' => $envio->id, 'estado' => 'enviado']);
         $this->assertNotNull(EnvioCorreo::query()->find($envio->id)->enviado_en);
         $fake->assertSent(CorreoCobranza::class, fn (CorreoCobranza $correo) => $correo->destinatario === 'juan@example.com'
-            && str_contains($correo->cuerpoHtml, 'Hola Juan Pérez')
+            && str_contains($correo->cuerpoHtml, 'Estimado(a) <strong>Juan Pérez</strong>')
             && str_contains($correo->cuerpoHtml, '$ 350.000,00')
-            && str_contains($correo->cuerpoHtml, 'cuota 3')
+            && str_contains($correo->cuerpoHtml, '>3<')
             && str_contains($correo->cuerpoHtml, '01/02/2026'));
     }
 
@@ -85,6 +88,7 @@ class RecordatorioCorreoTest extends TestCase
         Queue::fake();
         $admin = $this->actingAsAdmin();
         $this->configuracionDeCorreo();
+        $this->plantillaDeCorreo();
         ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota();
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo", ['cuota_id' => $cuota->id])->assertStatus(202);
 
@@ -107,6 +111,7 @@ class RecordatorioCorreoTest extends TestCase
         $fake = $this->simulaCorreo();
         $admin = $this->actingAsAdmin();
         $this->configuracionDeCorreo();
+        $this->plantillaDeCorreo();
         ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota();
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo", ['cuota_id' => $cuota->id])->assertStatus(202);
 
@@ -124,6 +129,7 @@ class RecordatorioCorreoTest extends TestCase
         Queue::fake();
         $this->actingAsAdmin();
         $this->configuracionDeCorreo();
+        $this->plantillaDeCorreo();
         ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota(['estado' => EstadoCuota::Pagada]);
 
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo", ['cuota_id' => $cuota->id])
@@ -137,6 +143,7 @@ class RecordatorioCorreoTest extends TestCase
         Queue::fake();
         $this->actingAsAdmin();
         $this->configuracionDeCorreo();
+        $this->plantillaDeCorreo();
         ['cliente' => $clienteA] = $this->clienteConCuota();
         ['cuota' => $cuotaDeB] = $this->clienteConCuota(['numero_cuota' => 1], ['correo' => 'otro@example.com']);
 
@@ -150,6 +157,7 @@ class RecordatorioCorreoTest extends TestCase
         Queue::fake();
         $this->actingAsAdmin();
         $this->configuracionDeCorreo();
+        $this->plantillaDeCorreo();
         ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota(cliente: ['correo' => null]);
 
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo", ['cuota_id' => $cuota->id])
@@ -161,6 +169,18 @@ class RecordatorioCorreoTest extends TestCase
     {
         Queue::fake();
         $this->actingAsAdmin();
+        ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota();
+
+        $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo", ['cuota_id' => $cuota->id])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['cuota_id']);
+    }
+
+    public function test_422_si_no_hay_plantilla_predeterminada(): void
+    {
+        Queue::fake();
+        $this->actingAsAdmin();
+        $this->configuracionDeCorreo();
         ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota();
 
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo", ['cuota_id' => $cuota->id])
@@ -205,16 +225,20 @@ class RecordatorioCorreoTest extends TestCase
         $this->assertDatabaseCount('envios_correo', 0);
     }
 
-    public function test_vista_previa_del_cliente_usa_su_cuota_y_no_guarda_nada(): void
+    public function test_vista_previa_del_cliente_usa_la_plantilla_elegida(): void
     {
         $this->simulaCorreo();
         $this->actingAsAdmin();
+        $this->configuracionDeCorreo();
+        $plantilla = $this->plantillaDeCorreo(TipoCorreo::Cobranza, [
+            'asunto' => 'Cuota {cuota} - {empresa}',
+            'cuerpo' => '<p>{cliente}: {valor} vence {fecha_vencimiento}</p>',
+        ]);
         ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota();
 
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo/vista-previa", [
             'cuota_id' => $cuota->id,
-            'asunto' => 'Cuota {cuota} - {empresa}',
-            'cuerpo' => '<p>{cliente}: {valor} vence {fecha_vencimiento}</p>',
+            'plantilla_correo_id' => $plantilla->id,
         ])
             ->assertOk()
             ->assertJsonPath('vista_previa.destinatario', 'juan@example.com')
@@ -222,11 +246,12 @@ class RecordatorioCorreoTest extends TestCase
         $this->assertDatabaseCount('envios_correo', 0);
     }
 
-    public function test_vista_previa_sin_plantilla_usa_la_guardada_de_la_empresa(): void
+    public function test_vista_previa_sin_plantilla_usa_la_predeterminada_de_la_empresa(): void
     {
         $this->simulaCorreo();
         $this->actingAsAdmin();
-        $this->configuracionDeCorreo(['plantilla_asunto' => 'Cobro {cuota}', 'plantilla_cuerpo' => '<p>{cliente} debe {valor}</p>']);
+        $this->configuracionDeCorreo();
+        $this->plantillaDeCorreo(TipoCorreo::Cobranza, ['asunto' => 'Cobro {cuota}', 'cuerpo' => '<p>{cliente} debe {valor}</p>']);
         ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota();
 
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo/vista-previa", ['cuota_id' => $cuota->id])
@@ -240,6 +265,7 @@ class RecordatorioCorreoTest extends TestCase
         Queue::fake();
         $this->actingAsAdmin();
         $this->configuracionDeCorreo();
+        $this->plantillaDeCorreo();
         ['cliente' => $cliente, 'cuota' => $cuota] = $this->clienteConCuota();
         $this->crearCuota($cuota->credito, ['numero_cuota' => 2, 'estado' => EstadoCuota::Pagada]);
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo", ['cuota_id' => $cuota->id])->assertStatus(202);

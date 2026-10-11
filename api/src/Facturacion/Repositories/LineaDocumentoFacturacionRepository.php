@@ -61,6 +61,9 @@ class LineaDocumentoFacturacionRepository extends BaseRepository
                 'concepto' => $datos['concepto'],
                 'descripcion' => $datos['descripcion'],
                 'valor' => $datos['valor'],
+                'tasa_mora' => $datos['tasa_mora'] ?? null,
+                'dias_mora' => $datos['dias_mora'] ?? null,
+                'base_mora' => $datos['base_mora'] ?? null,
             ]);
         }
     }

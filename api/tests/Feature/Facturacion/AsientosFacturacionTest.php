@@ -84,11 +84,11 @@ class AsientosFacturacionTest extends TestCase
         $linea = $factura['lineas'][0]['id'];
 
         $credito = $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_credito', 'motivo' => 'Ajuste', 'lineas' => [['linea_origen_id' => $linea, 'valor' => '200']],
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'ajuste_precio', 'lineas' => [['linea_origen_id' => $linea, 'valor' => '200']],
         ])->assertStatus(201)->json('documento');
 
         $debito = $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_debito', 'motivo' => 'Mora', 'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],
         ])->assertStatus(201)->json('documento');
 
         $asientoCredito = $this->asientoDe($credito['id']);

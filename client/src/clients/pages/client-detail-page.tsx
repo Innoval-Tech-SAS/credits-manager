@@ -6,6 +6,7 @@ import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useAuth } from '../../auth/hooks/use-auth';
 import { usePermission } from '../../auth/hooks/use-permission';
+import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { PaymentHistoryTable } from '../../payments/components/payment-history-table';
@@ -38,6 +39,22 @@ export const ClientDetailPage: FC = () => {
     const [documentosNuevos, setDocumentosNuevos] = useState<ApiClientDocument[]>([]);
     const [uploadError, setUploadError] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [retryingId, setRetryingId] = useState<number | null>(null);
+    const [retryError, setRetryError] = useState<string | null>(null);
+
+    const handleRetry = async (envioId: number) => {
+        setRetryError(null);
+        setRetryingId(envioId);
+
+        try {
+            await sendRequest(`/clientes/${id}/recordatorios-correo/${envioId}/reintentar`, { method: 'POST' });
+            refetchRecordatorios();
+        } catch (caught) {
+            setRetryError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
+        } finally {
+            setRetryingId(null);
+        }
+    };
 
     const handleUpload = async (archivo: File) => {
         setUploadError(null);
@@ -121,7 +138,19 @@ export const ClientDetailPage: FC = () => {
                 <PaymentHistoryTable pagos={ultimosPagos} showCredito onViewCredito={(creditoId) => navigate(`/creditos/${creditoId}`)} />
             </div>
 
-            {recordatorios && <EmailDispatchesCard envios={recordatorios.envios} />}
+            {retryError && (
+                <div className="mb-6">
+                    <Alert variant="danger" title="No se pudo reintentar el envío" message={retryError} onDismiss={() => setRetryError(null)} />
+                </div>
+            )}
+
+            {recordatorios && (
+                <EmailDispatchesCard
+                    envios={recordatorios.envios}
+                    onRetry={canSendReminder ? (envioId) => void handleRetry(envioId) : undefined}
+                    retryingId={retryingId}
+                />
+            )}
 
             <ClientDocuments
                 documentos={documentos}

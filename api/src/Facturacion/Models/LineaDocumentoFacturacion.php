@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Línea de un documento de facturación. La nota crédito enlaza la línea de la factura que corrige (`linea_origen_id`),
  * así el saldo por concepto se controla contra la línea original y no contra el total.
  */
-#[Fillable(['documento_id', 'linea_origen_id', 'orden', 'concepto', 'descripcion', 'valor'])]
+#[Fillable(['documento_id', 'linea_origen_id', 'orden', 'concepto', 'descripcion', 'valor', 'tasa_mora', 'dias_mora', 'base_mora'])]
 class LineaDocumentoFacturacion extends BaseModel
 {
     use PerteneceAEmpresa;
@@ -24,6 +24,9 @@ class LineaDocumentoFacturacion extends BaseModel
         return [
             'orden' => 'integer',
             'valor' => DineroCast::class,
+            'tasa_mora' => 'decimal:4',
+            'dias_mora' => 'integer',
+            'base_mora' => DineroCast::class,
         ];
     }
 

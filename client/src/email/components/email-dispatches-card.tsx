@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { RotateCcw } from 'lucide-react';
 
 import { DataTable } from '@ui/table/components/data-table';
 import { DISPATCH_STATUS_LABELS } from '../constants/email-options';
@@ -6,7 +7,7 @@ import type { EmailDispatchesCardProps } from '../props/email-dispatches-card-pr
 import type { ApiEmailDispatch } from '../types/api-email-dispatch';
 
 /** Últimos correos de cobranza enviados al cliente, con su resultado. */
-export const EmailDispatchesCard: FC<EmailDispatchesCardProps> = ({ envios }) => (
+export const EmailDispatchesCard: FC<EmailDispatchesCardProps> = ({ envios, onRetry, retryingId = null }) => (
     <section className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
         <h2 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">Correos de cobranza</h2>
         <DataTable<ApiEmailDispatch>
@@ -26,6 +27,28 @@ export const EmailDispatchesCard: FC<EmailDispatchesCardProps> = ({ envios }) =>
                         </div>
                     ),
                 },
+                ...(onRetry
+                    ? [
+                          {
+                              key: 'acciones',
+                              label: 'Acción',
+                              render: (envio: ApiEmailDispatch) =>
+                                  envio.estado === 'fallido' ? (
+                                      <button
+                                          type="button"
+                                          disabled={retryingId !== null}
+                                          onClick={() => onRetry(envio.id)}
+                                          className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-500 hover:text-brand-600 disabled:opacity-50 dark:text-brand-400"
+                                      >
+                                          <RotateCcw className="size-4" />
+                                          {retryingId === envio.id ? 'Reintentando...' : 'Reintentar'}
+                                      </button>
+                                  ) : (
+                                      <span className="text-gray-400 dark:text-gray-500">—</span>
+                                  ),
+                          },
+                      ]
+                    : []),
             ]}
             rows={envios}
             getRowKey={(envio) => envio.id}

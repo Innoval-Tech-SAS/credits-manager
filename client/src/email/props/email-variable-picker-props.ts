@@ -1,6 +1,6 @@
-import type { ApiEmailSettings } from '../types/api-email-settings';
+import type { EmailTemplateVariable } from '../types/email-template-variable';
 
 export type EmailVariablePickerProps = {
-    variables: ApiEmailSettings['variables'];
+    variables: EmailTemplateVariable[];
     onPick: (clave: string) => void;
 };

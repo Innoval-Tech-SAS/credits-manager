@@ -3,11 +3,13 @@
 namespace App\Correo\Requests;
 
 use App\Correo\Constants\CorreoConstants;
+use App\Correo\Enums\TipoCorreo;
 use App\Correo\Requests\Concerns\ValidaPlantillaCorreo;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
-class VistaPreviaCorreoRequest extends FormRequest
+class VistaPreviaPlantillaCorreoRequest extends FormRequest
 {
     use ValidaPlantillaCorreo;
 
@@ -19,6 +21,7 @@ class VistaPreviaCorreoRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'tipo' => ['required', Rule::enum(TipoCorreo::class)],
             'asunto' => ['required', 'string', 'max:200'],
             'cuerpo' => ['required', 'string', 'max:'.CorreoConstants::MAXIMO_CARACTERES_CUERPO],
         ];

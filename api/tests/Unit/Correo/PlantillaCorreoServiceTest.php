@@ -5,6 +5,7 @@ namespace Tests\Unit\Correo;
 use App\Core\Dinero\Dinero;
 use App\Correo\Enums\CifradoCorreo;
 use App\Correo\Enums\DriverCorreo;
+use App\Correo\Enums\TipoCorreo;
 use App\Correo\Models\ConfiguracionCorreo;
 use App\Correo\Services\FabricaMailerCobranza;
 use App\Correo\Services\PlantillaCorreoService;
@@ -23,8 +24,15 @@ class PlantillaCorreoServiceTest extends TestCase
 
     public function test_detecta_variables_que_no_existen(): void
     {
-        $this->assertSame(['clente'], PlantillaCorreoService::variablesDesconocidas('Hola {cliente}, {clente}'));
-        $this->assertSame([], PlantillaCorreoService::variablesDesconocidas('Hola {cliente} {valor}'));
+        $this->assertSame(['clente'], PlantillaCorreoService::variablesDesconocidas('Hola {cliente}, {clente}', TipoCorreo::Cobranza));
+        $this->assertSame([], PlantillaCorreoService::variablesDesconocidas('Hola {cliente} {valor}', TipoCorreo::Cobranza));
+    }
+
+    public function test_detecta_variables_que_no_existen_segun_el_tipo(): void
+    {
+        // "valor" es de cobranza; facturación usa "valor_total" en su lugar.
+        $this->assertSame(['valor'], PlantillaCorreoService::variablesDesconocidas('{cliente} {valor}', TipoCorreo::Facturacion));
+        $this->assertSame([], PlantillaCorreoService::variablesDesconocidas('{cliente} {valor_total}', TipoCorreo::Facturacion));
     }
 
     public function test_escapa_los_valores_del_html_pero_no_la_plantilla(): void

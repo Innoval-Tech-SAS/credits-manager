@@ -22,7 +22,7 @@ use Illuminate\Support\Str;
  */
 final class FacturaPdf implements DocumentoPdf
 {
-    /** @param array{total: Dinero, total_nota_credito: Dinero, total_nota_debito: Dinero, total_cobrado: Dinero, saldo: Dinero} $totales */
+    /** @param array{total: Dinero, total_nota_credito: Dinero, total_nota_debito: Dinero, total_cobrado: Dinero, saldo: Dinero, saldo_a_favor: Dinero} $totales */
     public function __construct(
         private readonly DocumentoFacturacion $documento,
         private readonly array $totales,
@@ -99,6 +99,10 @@ final class FacturaPdf implements DocumentoPdf
             $totales[] = new TotalDocumento('Notas débito', $this->totales['total_nota_debito']);
             $totales[] = new TotalDocumento('Cobros', $this->totales['total_cobrado']);
             $totales[] = new TotalDocumento('Saldo', $this->totales['saldo']);
+
+            if ($this->totales['saldo_a_favor']->esPositivo()) {
+                $totales[] = new TotalDocumento('Saldo a favor del cliente', $this->totales['saldo_a_favor']);
+            }
         }
 
         return $totales;
@@ -118,7 +122,31 @@ final class FacturaPdf implements DocumentoPdf
             $secciones[] = new SeccionDocumento('Motivo', $this->documento->motivo);
         }
 
+        $soporteMora = $this->soporteMora();
+
+        if ($soporteMora !== null) {
+            $secciones[] = new SeccionDocumento('Soporte del cálculo de mora', $soporteMora);
+        }
+
         return $secciones;
+    }
+
+    /** Una línea por cada línea con tasa de mora: «Concepto — Tasa: X % · Días: Y · Base: $Z». */
+    private function soporteMora(): ?string
+    {
+        $lineas = $this->documento->lineas->filter(fn ($linea) => $linea->tasa_mora !== null);
+
+        if ($lineas->isEmpty()) {
+            return null;
+        }
+
+        return $lineas->map(fn ($linea) => sprintf(
+            '%s — Tasa: %s %% · Días: %d · Base: $%s',
+            $linea->concepto,
+            rtrim(rtrim((string) $linea->tasa_mora, '0'), '.'),
+            $linea->dias_mora,
+            $linea->base_mora->aDecimalString(),
+        ))->implode("\n");
     }
 
     public function pie(): ?string

@@ -7,6 +7,10 @@ export type ApiInvoiceLine = {
     /** Decimal string en pesos, ej. "1500.50". */
     valor: string;
     linea_origen_id: number | null;
+    /** Soporte del cálculo, solo presente en una línea de nota débito por intereses de mora. */
+    tasa_mora: string | null;
+    dias_mora: number | null;
+    base_mora: string | null;
 };
 
 /** Raw shape of a facturación document: `POST/GET /facturacion/documentos`. */
@@ -17,6 +21,8 @@ export type ApiInvoice = {
     consecutivo: number | null;
     numero: string | null;
     fecha: string;
+    /** Solo se usa en la nota débito: la fecha desde la que el mayor valor entra al cobro. */
+    fecha_vencimiento: string | null;
     cliente_id: number;
     credito_id: number;
     documento_origen_id: number | null;
@@ -28,7 +34,7 @@ export type ApiInvoice = {
 };
 
 /** Situación visible de una factura, derivada de sus notas y cobros. Las notas no tienen situación. */
-export type ApiInvoiceSituation = 'emitida' | 'parcialmente_pagada' | 'pagada' | 'anulada';
+export type ApiInvoiceSituation = 'emitida' | 'parcialmente_pagada' | 'pagada' | 'con_saldo_a_favor' | 'anulada';
 
 /** Totales de un documento. Las notas y los cobros solo se cuentan sobre la factura. */
 export type ApiInvoiceTotals = {
@@ -37,9 +43,15 @@ export type ApiInvoiceTotals = {
     total_nota_debito?: string;
     total_cobrado?: string;
     saldo?: string;
+    /** Positivo solo cuando `saldo` queda negativo: lo que la nota crédito dejó a favor del cliente. */
+    saldo_a_favor?: string;
     anulada?: boolean;
     situacion?: ApiInvoiceSituation;
 };
+
+export type ApiInvoiceNoteCreditReason = 'devolucion' | 'anulacion' | 'rebaja_descuento' | 'ajuste_precio' | 'otros';
+
+export type ApiInvoiceNoteDebitReason = 'intereses' | 'gastos_por_cobrar' | 'cambio_valor' | 'otros';
 
 export type ApiInvoicePaymentMethod = 'efectivo' | 'transferencia' | 'consignacion' | 'cheque' | 'tarjeta';
 

@@ -11,6 +11,7 @@ use App\Facturacion\Requests\EmitirNotaRequest;
 use App\Facturacion\Requests\ListarDocumentosFacturacionRequest;
 use App\Facturacion\Requests\MotivoAccionFacturacionRequest;
 use App\Facturacion\Services\DocumentoFacturacionService;
+use App\Facturacion\Services\EnvioFacturacionService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,7 +19,10 @@ use Illuminate\Http\Response;
 
 class DocumentoFacturacionController extends Controller
 {
-    public function __construct(protected DocumentoFacturacionService $documentos) {}
+    public function __construct(
+        protected DocumentoFacturacionService $documentos,
+        protected EnvioFacturacionService $envios,
+    ) {}
 
     public function index(ListarDocumentosFacturacionRequest $peticion): JsonResponse
     {
@@ -73,10 +77,19 @@ class DocumentoFacturacionController extends Controller
 
     public function nota(EmitirNotaRequest $peticion, DocumentoFacturacion $documento): JsonResponse
     {
+        $tipo = TipoDocumentoFacturacion::from($peticion->validated('tipo'));
+        $accion = $tipo === TipoDocumentoFacturacion::NotaCredito ? 'anular_nota_credito' : 'anular_nota_debito';
+
+        if (! $peticion->user()->tienePermiso('facturacion', $accion)) {
+            abort(403, 'No tienes permiso para realizar esta acción.');
+        }
+
         $nota = $this->documentos->emitirNota(
             $documento,
-            TipoDocumentoFacturacion::from($peticion->validated('tipo')),
-            $peticion->validated('motivo'),
+            $tipo,
+            $peticion->validated('motivo_codigo'),
+            $peticion->validated('motivo_detalle'),
+            $peticion->validated('fecha_vencimiento'),
             $peticion->validated('lineas'),
             $peticion->user(),
         );
@@ -99,5 +112,24 @@ class DocumentoFacturacionController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="'.$pdf->nombreArchivo.'.pdf"',
         ]);
+    }
+
+    public function reenviar(Request $peticion, DocumentoFacturacion $documento): JsonResponse
+    {
+        $envio = $this->envios->solicitar($peticion->user(), $documento);
+
+        return response()->json(['envio' => $this->envios->representar($envio)], 202);
+    }
+
+    public function historialEnvios(DocumentoFacturacion $documento): JsonResponse
+    {
+        return response()->json($this->envios->historial($documento));
+    }
+
+    public function reintentarEnvio(Request $peticion, DocumentoFacturacion $documento, int $envio): JsonResponse
+    {
+        $reintentado = $this->envios->reintentar($peticion->user(), $documento, $envio);
+
+        return response()->json(['envio' => $this->envios->representar($reintentado)], 202);
     }
 }

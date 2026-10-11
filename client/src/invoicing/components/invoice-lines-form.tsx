@@ -9,7 +9,7 @@ import type { InvoiceLineDraft, InvoiceLinesFormProps } from '../props/invoice-l
 const EMPTY_LINE: InvoiceLineDraft = { concepto: '', descripcion: '', valor: '' };
 
 /** Líneas de una factura o de una nota débito. El concepto se digita: los nombres exactos los define DDA. */
-export const InvoiceLinesForm: FC<InvoiceLinesFormProps> = ({ lineas, onChange, disabled = false }) => {
+export const InvoiceLinesForm: FC<InvoiceLinesFormProps> = ({ lineas, onChange, disabled = false, mostrarSoporteMora = false }) => {
     const actualizar = (indice: number, campo: keyof InvoiceLineDraft, valor: string) => {
         onChange(lineas.map((linea, i) => (i === indice ? { ...linea, [campo]: valor } : linea)));
     };
@@ -59,6 +59,46 @@ export const InvoiceLinesForm: FC<InvoiceLinesFormProps> = ({ lineas, onChange, 
                         <Button iconOnly variant="outline" startIcon={<Trash2 className="size-4" />} disabled={lineas.length === 1} onClick={() => quitar(indice)}>
                             Quitar línea
                         </Button>
+                    )}
+                    {mostrarSoporteMora && (
+                        <div className="grid grid-cols-1 gap-4 md:col-span-4 md:grid-cols-3">
+                            <div>
+                                <Label htmlFor={`tasa-mora-${indice}`}>Tasa de mora (%)</Label>
+                                <Input
+                                    id={`tasa-mora-${indice}`}
+                                    type="number"
+                                    min="0"
+                                    step={0.01}
+                                    value={linea.tasa_mora ?? ''}
+                                    disabled={disabled}
+                                    onChange={(event) => actualizar(indice, 'tasa_mora', event.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor={`dias-mora-${indice}`}>Días de mora</Label>
+                                <Input
+                                    id={`dias-mora-${indice}`}
+                                    type="number"
+                                    min="0"
+                                    step={1}
+                                    value={linea.dias_mora ?? ''}
+                                    disabled={disabled}
+                                    onChange={(event) => actualizar(indice, 'dias_mora', event.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <Label htmlFor={`base-mora-${indice}`}>Base del cálculo</Label>
+                                <Input
+                                    id={`base-mora-${indice}`}
+                                    type="number"
+                                    min="0.01"
+                                    step={0.01}
+                                    value={linea.base_mora ?? ''}
+                                    disabled={disabled}
+                                    onChange={(event) => actualizar(indice, 'base_mora', event.target.value)}
+                                />
+                            </div>
+                        </div>
                     )}
                 </div>
             ))}
