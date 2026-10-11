@@ -19,7 +19,7 @@ class EditarTipoGastoRequest extends FormRequest
                 'sometimes', 'string', 'max:20',
                 Rule::unique('tipos_gasto', 'codigo')
                     ->where('empresa_id', $this->user()->empresa_id)
-                    ->ignore($this->route('tipo_gasto')),
+                    ->ignore($this->route('tipoGasto')),
             ],
             'nombre' => ['sometimes', 'string', 'max:150'],
             'requiere_tercero' => ['sometimes', 'boolean'],
