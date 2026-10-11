@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
-import { Ban, Download, Send, Trash2, Wallet } from 'lucide-react';
+import { Ban, Download, Mail, Send, Trash2, Wallet } from 'lucide-react';
 
 import { usePermission } from '../../auth/hooks/use-permission';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
@@ -15,6 +15,7 @@ import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { DataTable } from '@ui/table/components/data-table';
+import { InvoiceDispatchesCard } from '../components/invoice-dispatches-card';
 import { InvoiceLinesForm } from '../components/invoice-lines-form';
 import { MotivoModal } from '../../shared/components/motivo-modal';
 import { InvoiceNoteForm } from '../components/invoice-note-form';
@@ -48,6 +49,7 @@ export const InvoiceDetailPage: FC = () => {
     const [lineasEdicion, setLineasEdicion] = useState<InvoiceLineDraft[] | null>(null);
     const [cobroAbierto, setCobroAbierto] = useState(false);
     const [accionConMotivo, setAccionConMotivo] = useState<AccionConMotivo | null>(null);
+    const [dispatchesVersion, setDispatchesVersion] = useState(0);
 
     const reportarError = (caught: unknown) => {
         setMensaje(null);
@@ -112,6 +114,16 @@ export const InvoiceDetailPage: FC = () => {
             });
             setLineasEdicion(null);
             informarExito('Borrador actualizado.');
+        } catch (caught) {
+            reportarError(caught);
+        }
+    };
+
+    const reenviarPorCorreo = async () => {
+        try {
+            await sendRequest(`/facturacion/documentos/${documento.id}/reenviar`, { method: 'POST' });
+            setDispatchesVersion((version) => version + 1);
+            informarExito('Correo encolado. Se enviará en los próximos minutos.');
         } catch (caught) {
             reportarError(caught);
         }
@@ -195,6 +207,11 @@ export const InvoiceDetailPage: FC = () => {
                                 {isDownloading ? 'Generando…' : 'Descargar PDF'}
                             </Button>
                         )}
+                        {!esBorrador && puedeImprimir && (
+                            <Button variant="outline" startIcon={<Mail className="size-4" />} disabled={enviando} onClick={() => void reenviarPorCorreo()}>
+                                Reenviar por correo
+                            </Button>
+                        )}
                     </div>
                 </div>
 
@@ -204,6 +221,8 @@ export const InvoiceDetailPage: FC = () => {
                     </p>
                 )}
             </div>
+
+            {!esBorrador && puedeImprimir && <InvoiceDispatchesCard key={dispatchesVersion} documentoId={documento.id} />}
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                 <div className="mb-4 flex items-center justify-between">
@@ -253,6 +272,12 @@ export const InvoiceDetailPage: FC = () => {
                             <dd className="text-right text-gray-800 dark:text-white/90">{formatMoney(totales.total_cobrado ?? '0')}</dd>
                             <dt className="text-gray-500 dark:text-gray-400">Saldo</dt>
                             <dd className="text-right text-base font-semibold text-gray-800 dark:text-white/90">{formatMoney(totales.saldo ?? totales.total)}</dd>
+                            {totales.situacion === 'con_saldo_a_favor' && (
+                                <>
+                                    <dt className="text-warning-600 dark:text-orange-400">Saldo a favor del cliente</dt>
+                                    <dd className="text-right font-semibold text-warning-600 dark:text-orange-400">{formatMoney(totales.saldo_a_favor ?? '0')}</dd>
+                                </>
+                            )}
                         </>
                     )}
                 </dl>
