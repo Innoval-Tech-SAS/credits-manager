@@ -53,7 +53,7 @@ class ValorUvtService
         return $eliminado;
     }
 
-    /** La UVT es global: si ya hay un gasto causado con fecha de ese año (de cualquier empresa), el valor queda protegido. */
+    /** Si la empresa ya causó un gasto con fecha de ese año, el valor queda protegido. */
     private function exigirSinGastos(ValorUvt $valorUvt): void
     {
         if ($this->valoresUvt->tieneGastosEnAnio($valorUvt->anio)) {

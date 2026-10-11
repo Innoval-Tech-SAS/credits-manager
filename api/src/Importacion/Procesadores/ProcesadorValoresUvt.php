@@ -7,7 +7,7 @@ use App\Importacion\Data\ContextoEjecucion;
 use App\Importacion\Data\FilaRechazada;
 use App\Importacion\Lectura\ConvertidorValor;
 
-/** Constante nacional, sin empresa: un valor por año. Reimportar un año existente lo reemplaza. */
+/** Un valor por año, propio de la empresa que importa. Reimportar un año existente lo reemplaza. */
 final class ProcesadorValoresUvt implements ProcesadorFila
 {
     public function __construct(private readonly ValorUvtService $valoresUvt) {}
