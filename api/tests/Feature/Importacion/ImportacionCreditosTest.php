@@ -26,7 +26,7 @@ class ImportacionCreditosTest extends TestCase
     use ImportaArchivos;
     use RefreshDatabase;
 
-    private const ENCABEZADO_CREDITOS = "Código de crédito;Cédula cliente;Fecha de desembolso;Valor desembolsado (capital);Tasa de interés mensual (%);Plazo (# cuotas);Periodicidad (Mensual/Quincenal);Cuota fija (si ya la calcularon);¿Es refinanciación? (Sí/No);Código del crédito anterior (si refinancia);Saldo refinanciado;Estado actual;Observaciones\n";
+    private const ENCABEZADO_CREDITOS = "Código de crédito;Cédula cliente;Fecha de desembolso;Valor desembolsado (capital);Tasa de interés mensual (%);Plazo (# cuotas);Periodicidad (Mensual/Quincenal);Cuota fija (si ya la calcularon);Gastos administrativos (%);¿Es refinanciación? (Sí/No);Código del crédito anterior (si refinancia);Saldo refinanciado;Estado actual;Observaciones\n";
 
     private const ENCABEZADO_CLIENTES = "Cédula;Nombre completo;Teléfono;Correo electrónico;Empresa (nómina);Dirección;Barrio;Ciudad;Fecha de vínculo (si se conoce);Observaciones\n";
 
@@ -39,9 +39,9 @@ class ImportacionCreditosTest extends TestCase
         $this->prepararImportaciones();
     }
 
-    private function creditoCSV(string $codigo = 'CR-1', string $cedula = '1001'): string
+    private function creditoCSV(string $codigo = 'CR-1', string $cedula = '1001', string $gastos = '0'): string
     {
-        return self::ENCABEZADO_CREDITOS."{$codigo};{$cedula};01/10/2023;2000000;2,5;4;mensual;;No;;;;\n";
+        return self::ENCABEZADO_CREDITOS."{$codigo};{$cedula};01/10/2023;2000000;2,5;4;mensual;;{$gastos};No;;;;\n";
     }
 
     private function clienteCon(string $cedula = '1001'): void
@@ -77,6 +77,21 @@ class ImportacionCreditosTest extends TestCase
         $this->assertSame('2023-10-01', $credito->fecha_desembolso->toDateString());
         $this->assertSame(4, Cuota::query()->where('credito_id', $credito->id)->count());
         $this->assertDatabaseCount('comprobantes', 0);
+    }
+
+    public function test_un_credito_importado_guarda_el_porcentaje_de_otros_gastos_y_lo_aplica_a_las_cuotas(): void
+    {
+        $this->actingAsAdmin();
+        $this->clienteCon();
+
+        $id = $this->importarCompleto('creditos', $this->creditoCSV('CR-OG', '1001', '0,2'));
+
+        $this->assertSame(1, $this->importacion($id)->filas_aceptadas);
+        $credito = Credito::query()->where('codigo', 'CR-OG')->firstOrFail();
+
+        $this->assertSame('0.200', $credito->gastos_administracion_pct);
+        $this->assertSame(4, Cuota::query()->where('credito_id', $credito->id)->count());
+        $this->assertTrue(Cuota::query()->where('credito_id', $credito->id)->every(fn (Cuota $cuota) => $cuota->valor_otros_gastos->centavos() === 4000));
     }
 
     public function test_un_credito_de_un_cliente_de_otra_empresa_no_se_importa(): void
