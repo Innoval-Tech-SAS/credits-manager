@@ -27,6 +27,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
     const { sendRequest } = useSendRequest();
 
     const [tipoComprobanteId, setTipoComprobanteId] = useState('');
+    const [consecutivo, setConsecutivo] = useState('');
     const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
     const [concepto, setConcepto] = useState('');
     const [documentoSoporte, setDocumentoSoporte] = useState('');
@@ -37,6 +38,8 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
 
     const cuentaOptions = cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }));
     const tipoOptions = tipos.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }));
+    const tipoSeleccionado = tipos.find((tipo) => String(tipo.id) === tipoComprobanteId);
+    const esNumeracionManual = tipoSeleccionado?.tipo_numeracion === 'manual';
 
     const totalDebito = lineas.reduce((total, linea) => total + (parseFloat(linea.debito) || 0), 0);
     const totalCredito = lineas.reduce((total, linea) => total + (parseFloat(linea.credito) || 0), 0);
@@ -69,6 +72,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
                 method: 'POST',
                 body: {
                     tipo_comprobante_id: Number(tipoComprobanteId),
+                    consecutivo: esNumeracionManual ? Number(consecutivo) || null : null,
                     fecha,
                     concepto,
                     documento_soporte: documentoSoporte || null,
@@ -107,6 +111,21 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
                         <Label htmlFor="tipo-comprobante">Tipo de comprobante</Label>
                         <Select options={tipoOptions} defaultValue={tipoComprobanteId} onChange={setTipoComprobanteId} />
                     </div>
+
+                    {esNumeracionManual && (
+                        <div>
+                            <Label htmlFor="consecutivo">Consecutivo</Label>
+                            <Input
+                                id="consecutivo"
+                                name="consecutivo"
+                                type="number"
+                                min="1"
+                                required
+                                value={consecutivo}
+                                onChange={(event) => setConsecutivo(event.target.value)}
+                            />
+                        </div>
+                    )}
 
                     <div>
                         <Label htmlFor="fecha">Fecha</Label>
@@ -219,7 +238,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas }) => {
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                     <Button
                         type="submit"
-                        disabled={isSubmitting || !tipoComprobanteId}
+                        disabled={isSubmitting || !tipoComprobanteId || (esNumeracionManual && !consecutivo)}
                         startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
                         endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                     >

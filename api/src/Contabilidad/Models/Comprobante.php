@@ -3,18 +3,21 @@
 namespace App\Contabilidad\Models;
 
 use App\Contabilidad\Enums\EstadoComprobante;
+use App\Contabilidad\Support\NumeroComprobante;
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
 use App\Core\Dinero\DineroCast;
 use App\Terceros\Models\Tercero;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'tipo_comprobante_id',
     'consecutivo',
+    'ciclo_numeracion',
     'periodo_id',
     'fecha',
     'tercero_id',
@@ -39,6 +42,8 @@ class Comprobante extends BaseModel
     use PerteneceAEmpresa;
 
     protected $table = 'comprobantes';
+
+    protected $appends = ['numero'];
 
     protected function casts(): array
     {
@@ -87,5 +92,12 @@ class Comprobante extends BaseModel
     public function lineas(): HasMany
     {
         return $this->hasMany(AsientoContable::class)->orderBy('orden');
+    }
+
+    protected function numero(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => NumeroComprobante::formatear($this->tipoComprobante->codigo, $this->ciclo_numeracion, $this->consecutivo),
+        );
     }
 }

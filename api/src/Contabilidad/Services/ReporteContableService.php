@@ -11,6 +11,7 @@ use App\Contabilidad\Exportaciones\FuenteLibroMayor;
 use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Repositories\AsientoContableRepository;
 use App\Contabilidad\Repositories\PlanCuentaRepository;
+use App\Contabilidad\Support\NumeroComprobante;
 use App\Core\Dinero\Dinero;
 use App\Exportacion\Enums\FormatoExportacion;
 use App\Exportacion\Models\Exportacion;
@@ -27,7 +28,8 @@ class ReporteContableService
 
     public function libroDiario(int $empresaId, string $desde, string $hasta): array
     {
-        $movimientos = $this->asientos->movimientosLibroDiario($empresaId, $desde, $hasta);
+        $movimientos = $this->asientos->movimientosLibroDiario($empresaId, $desde, $hasta)
+            ->each(fn ($fila) => $fila->numero = NumeroComprobante::formatear($fila->tipo, $fila->ciclo_numeracion, $fila->consecutivo));
 
         return [
             'movimientos' => $movimientos,
@@ -39,11 +41,13 @@ class ReporteContableService
     public function libroMayor(int $empresaId, int $cuentaId, string $desde, string $hasta): array
     {
         $cuenta = $this->cuentas->buscarDeEmpresaOFallar($empresaId, $cuentaId);
+        $movimientos = $this->asientos->movimientosLibroMayor($empresaId, $cuentaId, $desde, $hasta)
+            ->each(fn ($fila) => $fila->numero = NumeroComprobante::formatear($fila->tipo, $fila->ciclo_numeracion, $fila->consecutivo));
 
         return [
             'cuenta' => $cuenta,
             'saldo_inicial' => $this->saldoInicialDeCuenta($empresaId, $cuenta, $desde),
-            'movimientos' => $this->asientos->movimientosLibroMayor($empresaId, $cuentaId, $desde, $hasta),
+            'movimientos' => $movimientos,
         ];
     }
 

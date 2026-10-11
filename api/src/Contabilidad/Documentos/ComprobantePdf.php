@@ -160,6 +160,6 @@ final class ComprobantePdf implements DocumentoPdf
 
     private function numero(Comprobante $comprobante): string
     {
-        return "{$comprobante->tipoComprobante->codigo} {$comprobante->consecutivo}";
+        return $comprobante->numero;
     }
 }

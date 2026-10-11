@@ -5,6 +5,8 @@ export type ApiLedgerMovement = {
     fecha: string;
     consecutivo: number;
     tipo: string;
+    /** Número visible ya formateado (incluye el ciclo del reinicio periódico cuando aplica). */
+    numero: string;
     descripcion: string | null;
     debito: string;
     credito: string;

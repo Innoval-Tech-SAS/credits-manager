@@ -3,6 +3,8 @@ export type ApiJournalEntry = {
     fecha: string;
     consecutivo: number;
     tipo: string;
+    /** Número visible ya formateado (incluye el ciclo del reinicio periódico cuando aplica). */
+    numero: string;
     cuenta_codigo: string;
     cuenta_nombre: string;
     descripcion: string | null;

@@ -2,6 +2,8 @@
 
 namespace App\Contabilidad\Repositories;
 
+use App\Contabilidad\Enums\ReinicioConsecutivo;
+use App\Contabilidad\Enums\TipoNumeracionComprobante;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\ReglaContabilizacion;
 use App\Contabilidad\Models\TipoComprobante;
@@ -9,7 +11,7 @@ use App\Core\Base\BaseRepository;
 use App\Gastos\Models\ParametrizacionTipoGasto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class TipoComprobanteRepository extends BaseRepository
 {
@@ -46,19 +48,85 @@ class TipoComprobanteRepository extends BaseRepository
     }
 
     /**
-     * Incrementa y devuelve el consecutivo en su propia transacción corta con lock,
-     * ANTES de crear el comprobante — igual que `siguienteConsecutivo()` en el legado.
-     * Si la creación del comprobante falla después, el número queda consumido (gaps
-     * aceptables, estándar en numeración de comprobantes contables).
+     * Asigna el consecutivo de un comprobante nuevo con `lockForUpdate()`. A diferencia del diseño anterior
+     * (que incrementaba en su propia transacción corta, ANTES de crear el comprobante, aceptando huecos si
+     * la creación fallaba después), este método asume que el llamador ya abrió la transacción del
+     * comprobante: así, si algo falla después, el `ROLLBACK` también revierte el consecutivo — sin huecos.
+     *
+     * Detecta el cambio de ciclo (reinicio anual/mensual) de forma perezosa: si el ciclo calculado para hoy
+     * no coincide con el guardado, reinicia `consecutivo_actual` a `consecutivo_inicial - 1` antes de
+     * asignar. `$origenManual` solo lo manda `ComprobanteController::store` (comprobante manual); los flujos
+     * automáticos (créditos, pagos, importación, reverso) siempre auto-incrementan, sin importar cómo esté
+     * configurado `tipo_numeracion` en el tipo — así un tipo mal configurado como "manual" nunca rompe un
+     * flujo de negocio automático.
+     *
+     * @return array{consecutivo: int, ciclo_numeracion: string}
      */
-    public function incrementarConsecutivo(int $tipoComprobanteId): int
+    public function asignarConsecutivo(int $tipoComprobanteId, bool $origenManual, ?int $consecutivoManual = null): array
     {
-        return DB::transaction(function () use ($tipoComprobanteId) {
-            $tipo = $this->consulta()->whereKey($tipoComprobanteId)->lockForUpdate()->firstOrFail();
-            $tipo->consecutivo_actual += 1;
-            $tipo->save();
+        $tipo = $this->consulta()->whereKey($tipoComprobanteId)->lockForUpdate()->firstOrFail();
+        $ciclo = $this->calcularCiclo($tipo->reinicio_periodo);
 
-            return $tipo->consecutivo_actual;
-        });
+        if ($tipo->ciclo_numeracion_actual !== $ciclo) {
+            $tipo->consecutivo_actual = $tipo->consecutivo_inicial - 1;
+            $tipo->ciclo_numeracion_actual = $ciclo;
+        }
+
+        if ($origenManual && $tipo->tipo_numeracion === TipoNumeracionComprobante::Manual) {
+            $consecutivo = $this->validarConsecutivoManual($tipo, $consecutivoManual, $ciclo);
+
+            if ($consecutivo > $tipo->consecutivo_actual) {
+                $tipo->consecutivo_actual = $consecutivo;
+            }
+        } else {
+            $consecutivo = $tipo->consecutivo_actual + 1;
+            $this->exigirDentroDelRango($tipo, $consecutivo);
+            $tipo->consecutivo_actual = $consecutivo;
+        }
+
+        $tipo->save();
+
+        return ['consecutivo' => $consecutivo, 'ciclo_numeracion' => $ciclo];
+    }
+
+    private function calcularCiclo(ReinicioConsecutivo $reinicio): string
+    {
+        return match ($reinicio) {
+            ReinicioConsecutivo::Nunca => '',
+            ReinicioConsecutivo::Anual => (string) now()->year,
+            ReinicioConsecutivo::Mensual => now()->format('Y-m'),
+        };
+    }
+
+    private function exigirDentroDelRango(TipoComprobante $tipo, int $consecutivo): void
+    {
+        if ($tipo->consecutivo_final !== null && $consecutivo > $tipo->consecutivo_final) {
+            throw ValidationException::withMessages([
+                'tipo_comprobante' => __('validation.custom.tipo_comprobante.rango_agotado'),
+            ]);
+        }
+    }
+
+    private function validarConsecutivoManual(TipoComprobante $tipo, ?int $consecutivo, string $ciclo): int
+    {
+        if ($consecutivo === null) {
+            throw ValidationException::withMessages([
+                'consecutivo' => __('validation.custom.tipo_comprobante.consecutivo_requerido'),
+            ]);
+        }
+
+        if ($consecutivo < $tipo->consecutivo_inicial || ($tipo->consecutivo_final !== null && $consecutivo > $tipo->consecutivo_final)) {
+            throw ValidationException::withMessages([
+                'consecutivo' => __('validation.custom.tipo_comprobante.consecutivo_fuera_de_rango'),
+            ]);
+        }
+
+        if (Comprobante::where('tipo_comprobante_id', $tipo->id)->where('ciclo_numeracion', $ciclo)->where('consecutivo', $consecutivo)->exists()) {
+            throw ValidationException::withMessages([
+                'consecutivo' => __('validation.custom.tipo_comprobante.consecutivo_duplicado'),
+            ]);
+        }
+
+        return $consecutivo;
     }
 }

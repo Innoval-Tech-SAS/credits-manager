@@ -70,6 +70,7 @@ class AsientoContableRepository extends BaseRepository
             ->select([
                 'comprobantes.fecha',
                 'comprobantes.consecutivo',
+                'comprobantes.ciclo_numeracion',
                 'tipos_comprobante.codigo as tipo',
                 'plan_cuentas.codigo as cuenta_codigo',
                 'plan_cuentas.nombre as cuenta_nombre',
@@ -140,6 +141,7 @@ class AsientoContableRepository extends BaseRepository
             ->select([
                 'comprobantes.fecha',
                 'comprobantes.consecutivo',
+                'comprobantes.ciclo_numeracion',
                 'tipos_comprobante.codigo as tipo',
                 'asientos_contables.descripcion',
                 'asientos_contables.debito',
@@ -196,6 +198,7 @@ class AsientoContableRepository extends BaseRepository
                 'plan_cuentas.naturaleza as cuenta_naturaleza',
                 'comprobantes.fecha',
                 'comprobantes.consecutivo',
+                'comprobantes.ciclo_numeracion',
                 'tipos_comprobante.codigo as tipo',
                 'asientos_contables.descripcion',
                 'asientos_contables.debito',

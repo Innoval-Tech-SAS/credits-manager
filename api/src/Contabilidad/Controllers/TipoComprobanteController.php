@@ -28,7 +28,10 @@ class TipoComprobanteController extends Controller
 
     public function show(TipoComprobante $tipoComprobante): JsonResponse
     {
-        return response()->json(['tipo' => $tipoComprobante]);
+        return response()->json(['tipo' => [
+            ...$tipoComprobante->toArray(),
+            'tiene_comprobantes_asociados' => $this->tipos->tieneComprobantesAsociados($tipoComprobante),
+        ]]);
     }
 
     public function store(CrearTipoComprobanteRequest $peticion): JsonResponse

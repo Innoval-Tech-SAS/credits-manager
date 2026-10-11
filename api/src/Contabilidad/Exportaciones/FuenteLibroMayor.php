@@ -6,6 +6,7 @@ use App\Contabilidad\Enums\NaturalezaCuenta;
 use App\Contabilidad\Repositories\AsientoContableRepository;
 use App\Contabilidad\Repositories\PlanCuentaRepository;
 use App\Contabilidad\Services\ReporteContableService;
+use App\Contabilidad\Support\NumeroComprobante;
 use App\Core\Dinero\Dinero;
 use App\Exportacion\Contracts\FuenteExportable;
 use App\Exportacion\Data\ColumnaExportable;
@@ -92,7 +93,7 @@ final class FuenteLibroMayor implements FuenteExportable
 
             yield [
                 'fecha' => $movimiento->fecha,
-                'comprobante' => "{$movimiento->tipo}-{$movimiento->consecutivo}",
+                'comprobante' => NumeroComprobante::formatear($movimiento->tipo, $movimiento->ciclo_numeracion, $movimiento->consecutivo),
                 'descripcion' => $movimiento->descripcion,
                 'tercero' => $movimiento->tercero,
                 'debito' => $movimiento->debito,

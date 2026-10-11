@@ -346,6 +346,12 @@ return [
         'tipo_comprobante' => [
             'tiene_comprobantes_asociados' => 'No se puede eliminar: ya tiene comprobantes asociados.',
             'en_uso_por_configuracion' => 'No se puede eliminar: está en uso por una regla de contabilización o una parametrización de gasto.',
+            'rango_agotado' => 'El rango de numeración de este tipo de comprobante está agotado. Amplía el consecutivo final o cambia a numeración manual.',
+            'consecutivo_requerido' => 'Este tipo de comprobante usa numeración manual: debes indicar el consecutivo.',
+            'consecutivo_fuera_de_rango' => 'El consecutivo debe estar dentro del rango configurado para este tipo de comprobante.',
+            'consecutivo_duplicado' => 'Ya existe un comprobante de este tipo con ese consecutivo en el ciclo actual.',
+            'consecutivo_inicial_bloqueado' => 'No se puede cambiar el consecutivo inicial: este tipo ya tiene comprobantes asociados.',
+            'rango_invalido' => 'El consecutivo final debe ser mayor o igual al consecutivo inicial y al consecutivo ya consumido.',
         ],
         'gasto' => [
             'tiene_cruces_registrados' => 'No se puede anular un gasto con pagos (cruces) registrados. Reversa primero los egresos asociados antes de anularlo.',

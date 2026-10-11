@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Eye, FileText, Pencil, Search, Trash2 } from 'lucide-react';
+import { Eye, FileText, Pencil, Search, Trash2, TriangleAlert } from 'lucide-react';
 
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
@@ -14,6 +14,7 @@ import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
 import { Pagination } from '@ui/table/components/pagination';
+import { Tooltip } from '@ui/tooltip/components/tooltip';
 import type { VoucherTypesListLocationState } from '../types/voucher-types-list-location-state';
 import type { ApiVoucherType } from '../types/api-voucher-type';
 
@@ -136,6 +137,11 @@ export const VoucherTypesPage: FC = () => {
                         render: (tipo) => (
                             <div className="flex items-center gap-3">
                                 <span>{tipo.activo ? 'Activo' : 'Inactivo'}</span>
+                                {tipo.proximo_a_agotarse && (
+                                    <Tooltip label="El rango de numeración está por agotarse">
+                                        <TriangleAlert aria-label="Próximo a agotarse" className="size-4 text-warning-500" />
+                                    </Tooltip>
+                                )}
                                 {canEdit && (
                                     <button
                                         type="button"
