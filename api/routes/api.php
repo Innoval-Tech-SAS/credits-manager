@@ -23,6 +23,7 @@ use App\Contabilidad\Controllers\ReporteContableController;
 use App\Contabilidad\Controllers\SolicitudReaperturaPeriodoController;
 use App\Contabilidad\Controllers\TipoComprobanteController;
 use App\Correo\Controllers\ConfiguracionCorreoController;
+use App\Correo\Controllers\PlantillaCorreoController;
 use App\Correo\Controllers\RecordatorioCorreoController;
 use App\Creditos\Controllers\CreditoController;
 use App\Dashboard\Controllers\DashboardController;
@@ -164,16 +165,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/cartera/reporte-empleador/pdf', [CarteraController::class, 'reporteEmpleadorPdf'])->middleware('permiso:cartera,imprimir_reporte_empleador');
     Route::post('/cartera/reporte-empleador/exportar', [CarteraController::class, 'exportarReporteEmpleador'])->middleware('permiso:cartera,exportar');
 
-    // Correo de cobranza: la configuración (credenciales) es solo de admin; los recordatorios los envía quien tiene cartera.
+    // Correo: la configuración (credenciales) y las plantillas son solo de admin; los envíos los dispara quien tiene el permiso del módulo dueño.
     Route::prefix('correo')->middleware('admin')->group(function () {
-        Route::get('/configuracion', [ConfiguracionCorreoController::class, 'show']);
-        Route::put('/configuracion', [ConfiguracionCorreoController::class, 'update']);
-        Route::post('/configuracion/prueba', [ConfiguracionCorreoController::class, 'prueba']);
-        Route::post('/vista-previa', [ConfiguracionCorreoController::class, 'vistaPrevia']);
+        Route::get('/configuracion/{tipo}', [ConfiguracionCorreoController::class, 'show']);
+        Route::put('/configuracion/{tipo}', [ConfiguracionCorreoController::class, 'update']);
+        Route::post('/configuracion/{tipo}/prueba', [ConfiguracionCorreoController::class, 'prueba']);
+        Route::get('/plantillas', [PlantillaCorreoController::class, 'index']);
+        Route::post('/plantillas', [PlantillaCorreoController::class, 'store']);
+        Route::put('/plantillas/{plantilla}', [PlantillaCorreoController::class, 'update']);
+        Route::delete('/plantillas/{plantilla}', [PlantillaCorreoController::class, 'destroy']);
+        Route::post('/plantillas/{plantilla}/predeterminada', [PlantillaCorreoController::class, 'marcarPredeterminada']);
+        Route::post('/plantillas/vista-previa', [PlantillaCorreoController::class, 'vistaPrevia']);
     });
     Route::get('/clientes/{cliente}/recordatorios-correo', [RecordatorioCorreoController::class, 'historial'])->middleware('permiso:clientes,ver');
     Route::post('/clientes/{cliente}/recordatorios-correo/vista-previa', [RecordatorioCorreoController::class, 'vistaPrevia'])->middleware('permiso:cartera,enviar_recordatorio');
     Route::post('/clientes/{cliente}/recordatorios-correo', [RecordatorioCorreoController::class, 'enviar'])->middleware('permiso:cartera,enviar_recordatorio');
+    Route::post('/clientes/{cliente}/recordatorios-correo/{envio}/reintentar', [RecordatorioCorreoController::class, 'reintentar'])->middleware('permiso:cartera,enviar_recordatorio');
 
     // Metas: la lectura admite al asesor solo con la meta consolidada activa (`acceso_metas`); el resto exige su permiso.
     Route::prefix('metas')->group(function () {
@@ -304,13 +311,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'update'])->middleware('permiso:facturacion,crear');
     Route::delete('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'destroy'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/documentos/{documento}/emitir', [DocumentoFacturacionController::class, 'emitir'])->middleware('permiso:facturacion,crear');
-    Route::post('/facturacion/documentos/{documento}/notas', [DocumentoFacturacionController::class, 'nota'])->middleware('permiso:facturacion,anular');
+    // El permiso depende del tipo de nota (en el body, no en la ruta): el Controller exige anular_nota_credito/anular_nota_debito.
+    Route::post('/facturacion/documentos/{documento}/notas', [DocumentoFacturacionController::class, 'nota']);
     Route::post('/facturacion/documentos/{documento}/anular', [DocumentoFacturacionController::class, 'anular'])->middleware('permiso:facturacion,anular');
     Route::post('/facturacion/documentos/{documento}/cobros', [CobroFacturacionController::class, 'store'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/cobros', [CobroFacturacionController::class, 'storeMultiple'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/cobros/{cobro}/reversar', [CobroFacturacionController::class, 'reversar'])->middleware('permiso:facturacion,anular');
     Route::get('/facturacion/cobros/{cobro}/recibo/pdf', [CobroFacturacionController::class, 'pdf'])->middleware('permiso:facturacion,imprimir');
     Route::get('/facturacion/documentos/{documento}/pdf', [DocumentoFacturacionController::class, 'pdf'])->middleware('permiso:facturacion,imprimir');
+    Route::post('/facturacion/documentos/{documento}/reenviar', [DocumentoFacturacionController::class, 'reenviar'])->middleware('permiso:facturacion,imprimir');
+    Route::get('/facturacion/documentos/{documento}/envios', [DocumentoFacturacionController::class, 'historialEnvios'])->middleware('permiso:facturacion,imprimir');
+    Route::post('/facturacion/documentos/{documento}/envios/{envio}/reintentar', [DocumentoFacturacionController::class, 'reintentarEnvio'])->middleware('permiso:facturacion,imprimir');
     Route::get('/facturacion/consecutivos', [ConsecutivoFacturacionController::class, 'index'])->middleware('permiso:facturacion,listar');
     Route::patch('/facturacion/consecutivos/{tipo}', [ConsecutivoFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');
     Route::get('/facturacion/configuracion', [ConfiguracionFacturacionController::class, 'show'])->middleware('permiso:facturacion,listar');

@@ -6,10 +6,12 @@ use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
 use App\Correo\Enums\CifradoCorreo;
 use App\Correo\Enums\DriverCorreo;
+use App\Correo\Enums\TipoCorreo;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 
 #[Fillable([
+    'tipo',
     'remitente',
     'nombre_remitente',
     'driver',
@@ -17,8 +19,6 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
     'puerto',
     'cifrado',
     'usuario',
-    'plantilla_asunto',
-    'plantilla_cuerpo',
     'actualizado_por',
 ])]
 #[Hidden(['clave'])]
@@ -31,6 +31,7 @@ class ConfiguracionCorreo extends BaseModel
     protected function casts(): array
     {
         return [
+            'tipo' => TipoCorreo::class,
             'driver' => DriverCorreo::class,
             'cifrado' => CifradoCorreo::class,
             'puerto' => 'integer',

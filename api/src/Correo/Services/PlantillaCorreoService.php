@@ -5,22 +5,24 @@ namespace App\Correo\Services;
 use App\Clientes\Models\Cliente;
 use App\Core\Dinero\Dinero;
 use App\Correo\Constants\CorreoConstants;
+use App\Correo\Enums\TipoCorreo;
 use App\Creditos\Models\Cuota;
+use App\Facturacion\Models\DocumentoFacturacion;
 use Carbon\Carbon;
 
 /**
- * Renderiza la plantilla de cobranza. El HTML lo escribe la empresa: las variables se escapan al sustituirlas
- * y el resultado pasa por `sanitizarHtml`. Es un filtro de etiquetas peligrosas, no un purificador completo;
- * la vista previa del cliente lo muestra en un iframe sin scripts.
+ * Renderiza una plantilla de correo (cobranza o facturación). El HTML lo escribe la empresa: las variables se
+ * escapan al sustituirlas y el resultado pasa por `sanitizarHtml`. Es un filtro de etiquetas peligrosas, no un
+ * purificador completo; la vista previa del cliente lo muestra en un iframe sin scripts.
  */
 class PlantillaCorreoService
 {
-    /** @return list<string> variables que no existen en la plantilla */
-    public static function variablesDesconocidas(string $texto): array
+    /** @return list<string> variables que no existen en la plantilla, para este tipo */
+    public static function variablesDesconocidas(string $texto, TipoCorreo $tipo): array
     {
         preg_match_all('/\{([a-z_]+)\}/', $texto, $coincidencias);
 
-        return array_values(array_diff(array_unique($coincidencias[1]), array_keys(CorreoConstants::VARIABLES)));
+        return array_values(array_diff(array_unique($coincidencias[1]), array_keys(CorreoConstants::variables($tipo))));
     }
 
     /** Texto de asunto: sin HTML, en una línea. */
@@ -59,6 +61,20 @@ class PlantillaCorreoService
         ];
     }
 
+    /** @return array<string, string> */
+    public function valoresDeFactura(string $nombreEmpresa, DocumentoFacturacion $documento, Dinero $valorTotal): array
+    {
+        return [
+            'cliente' => $documento->cliente->tercero->nombre,
+            'empresa' => $nombreEmpresa,
+            'tipo_documento' => $documento->tipo->etiqueta(),
+            'numero_documento' => (string) $documento->numero,
+            'valor_total' => $this->formatearPesos($valorTotal),
+            'fecha' => Carbon::parse($documento->fecha)->format('d/m/Y'),
+            'fecha_vencimiento' => $documento->fecha_vencimiento ? Carbon::parse($documento->fecha_vencimiento)->format('d/m/Y') : '',
+        ];
+    }
+
     /** Pesos con separador de miles y dos decimales, en formato colombiano: $ 1.234.567,00. Sin float. */
     public function formatearPesos(Dinero $valor): string
     {
@@ -78,7 +94,7 @@ class PlantillaCorreoService
     {
         $reemplazos = [];
 
-        foreach (array_keys(CorreoConstants::VARIABLES) as $variable) {
+        foreach (array_keys($valores) as $variable) {
             $valor = $valores[$variable] ?? '';
             $reemplazos['{'.$variable.'}'] = $escapar ? e($valor) : $valor;
         }

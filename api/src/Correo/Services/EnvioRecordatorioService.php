@@ -5,17 +5,21 @@ namespace App\Correo\Services;
 use App\Clientes\Models\Cliente;
 use App\Correo\Constants\CorreoConstants;
 use App\Correo\Enums\EstadoEnvioCorreo;
+use App\Correo\Enums\TipoCorreo;
 use App\Correo\Jobs\EnviarRecordatorioCobranzaJob;
 use App\Correo\Mail\CorreoCobranza;
 use App\Correo\Models\ConfiguracionCorreo;
 use App\Correo\Models\EnvioCorreo;
+use App\Correo\Models\PlantillaCorreo;
 use App\Correo\Repositories\ConfiguracionCorreoRepository;
 use App\Correo\Repositories\EnvioCorreoRepository;
+use App\Correo\Repositories\PlantillaCorreoRepository;
 use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Models\Cuota;
 use App\Creditos\Repositories\CuotaRepository;
 use App\Empresas\Repositories\EmpresaRepository;
 use App\Usuarios\Models\Usuario;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
@@ -28,7 +32,8 @@ class EnvioRecordatorioService
         protected CuotaRepository $cuotas,
         protected ConfiguracionCorreoRepository $configuraciones,
         protected EnvioCorreoRepository $envios,
-        protected PlantillaCorreoService $plantillas,
+        protected PlantillaCorreoRepository $plantillas,
+        protected PlantillaCorreoService $renderizador,
         protected FabricaMailerCobranza $fabrica,
         protected EmpresaRepository $empresas,
     ) {}
@@ -53,46 +58,42 @@ class EnvioRecordatorioService
         ];
     }
 
-    /** Vista previa de un cliente real, con la plantilla que llega (aún sin guardar). */
-    public function vistaPrevia(Usuario $usuario, Cliente $cliente, int $cuotaId, ?string $asunto, ?string $cuerpo): array
+    /** Vista previa con la plantilla elegida (o la predeterminada, si no se indica ninguna). */
+    public function vistaPrevia(Usuario $usuario, Cliente $cliente, int $cuotaId, ?int $plantillaId): array
     {
+        $empresaId = (int) $usuario->empresa_id;
         $cuota = $this->cuotaCobrable($cliente, $cuotaId);
-        $configuracion = $this->configuraciones->deEmpresa((int) $usuario->empresa_id);
-        $asunto ??= $configuracion?->plantilla_asunto;
-        $cuerpo ??= $configuracion?->plantilla_cuerpo;
+        $plantilla = $this->resolverPlantilla($empresaId, $plantillaId);
 
-        if ($asunto === null || $cuerpo === null) {
-            throw ValidationException::withMessages(['cuota_id' => __('validation.custom.correo.sin_configurar')]);
-        }
-
-        $valores = $this->plantillas->valoresDeCuota($this->nombreEmpresa($usuario), $cliente, $cuota);
+        $valores = $this->renderizador->valoresDeCuota($this->nombreEmpresa($usuario), $cliente, $cuota);
 
         return [
-            'asunto' => $this->plantillas->renderizarAsunto($asunto, $valores),
-            'cuerpo' => $this->plantillas->renderizarCuerpo($this->plantillas->sanitizarHtml($cuerpo), $valores),
+            'asunto' => $this->renderizador->renderizarAsunto($plantilla->asunto, $valores),
+            'cuerpo' => $this->renderizador->renderizarCuerpo($plantilla->cuerpo, $valores),
             'destinatario' => $cliente->tercero->correo,
         ];
     }
 
     /** Congela el mensaje renderizado en `envios_correo` y lo encola. El envío real lo hace el job. */
-    public function solicitar(Usuario $usuario, Cliente $cliente, int $cuotaId): EnvioCorreo
+    public function solicitar(Usuario $usuario, Cliente $cliente, int $cuotaId, ?int $plantillaId): EnvioCorreo
     {
         $empresaId = (int) $usuario->empresa_id;
-        $configuracion = $this->configuraciones->deEmpresa($empresaId);
+        $configuracion = $this->configuraciones->deEmpresaYTipo($empresaId, TipoCorreo::Cobranza);
         $cuota = $this->cuotaCobrable($cliente, $cuotaId);
+        $plantilla = $this->resolverPlantilla($empresaId, $plantillaId);
 
         $this->validarListo($configuracion, $cliente);
 
-        $valores = $this->plantillas->valoresDeCuota($this->nombreEmpresa($usuario), $cliente, $cuota);
+        $valores = $this->renderizador->valoresDeCuota($this->nombreEmpresa($usuario), $cliente, $cuota);
 
         $envio = $this->envios->registrar($empresaId, [
             'cliente_id' => $cliente->id,
             'cuota_id' => $cuota->id,
+            'plantilla_correo_id' => $plantilla->id,
             'enviado_por' => $usuario->id,
-            'plantilla' => CorreoConstants::PLANTILLA_RECORDATORIO,
             'destinatario' => $cliente->tercero->correo,
-            'asunto' => $this->plantillas->renderizarAsunto($configuracion->plantilla_asunto, $valores),
-            'cuerpo' => $this->plantillas->renderizarCuerpo($configuracion->plantilla_cuerpo, $valores),
+            'asunto' => $this->renderizador->renderizarAsunto($plantilla->asunto, $valores),
+            'cuerpo' => $this->renderizador->renderizarCuerpo($plantilla->cuerpo, $valores),
             'estado' => EstadoEnvioCorreo::EnCola,
         ]);
 
@@ -110,7 +111,7 @@ class EnvioRecordatorioService
             return;
         }
 
-        $configuracion = $this->configuraciones->deEmpresa($empresaId);
+        $configuracion = $this->configuraciones->deEmpresaYTipo($empresaId, TipoCorreo::Cobranza);
 
         try {
             if ($configuracion === null) {
@@ -154,6 +155,40 @@ class EnvioRecordatorioService
         $envio->save();
     }
 
+    /**
+     * Reintenta un envío fallido: revalida que la cuota siga sin pagar (si se pagó mientras tanto, el reintento no
+     * tiene sentido) y vuelve a encolar el mismo job. `empresa_id` explícito porque lo usa un contexto autenticado,
+     * pero el envío puede ser viejo: no asumir que sigue siendo vigente sin revisar.
+     */
+    public function reintentar(Usuario $usuario, Cliente $cliente, int $envioId): EnvioCorreo
+    {
+        $empresaId = (int) $usuario->empresa_id;
+
+        return DB::transaction(function () use ($empresaId, $cliente, $envioId) {
+            $envio = $this->envios->deEmpresa($envioId, $empresaId);
+
+            if ($envio === null || $envio->cliente_id !== $cliente->id) {
+                abort(404);
+            }
+
+            if ($envio->estado !== EstadoEnvioCorreo::Fallido) {
+                throw ValidationException::withMessages(['envio' => __('validation.custom.correo.reintento_no_aplica')]);
+            }
+
+            if ($envio->cuota_id !== null) {
+                $this->cuotaCobrable($cliente, $envio->cuota_id);
+            }
+
+            $envio->estado = EstadoEnvioCorreo::EnCola;
+            $envio->detalle_error = null;
+            $envio->save();
+
+            EnviarRecordatorioCobranzaJob::dispatch($envio->id, $empresaId);
+
+            return $envio;
+        });
+    }
+
     /** Sin cliente de otra empresa ni de otro asesor: la relación cliente→crédito→cuota pasa por los scopes. */
     private function cuotaCobrable(Cliente $cliente, int $cuotaId): Cuota
     {
@@ -168,6 +203,19 @@ class EnvioRecordatorioService
         }
 
         return $cuota;
+    }
+
+    private function resolverPlantilla(int $empresaId, ?int $plantillaId): PlantillaCorreo
+    {
+        $plantilla = $plantillaId !== null
+            ? $this->plantillas->deEmpresa($plantillaId, $empresaId)
+            : $this->plantillas->predeterminadaDeEmpresa($empresaId, TipoCorreo::Cobranza);
+
+        if ($plantilla === null) {
+            throw ValidationException::withMessages(['cuota_id' => __('validation.custom.correo.sin_plantilla')]);
+        }
+
+        return $plantilla;
     }
 
     private function validarListo(?ConfiguracionCorreo $configuracion, Cliente $cliente): void

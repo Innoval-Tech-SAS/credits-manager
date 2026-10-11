@@ -2,9 +2,11 @@
 
 namespace App\Correo\Requests;
 
+use App\Correo\Enums\TipoCorreo;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-/** La plantilla se toma de la configuración guardada: el envío no acepta texto libre. */
+/** Sin plantilla explícita, el envío usa la predeterminada de cobranza de la empresa. */
 class EnviarRecordatorioCorreoRequest extends FormRequest
 {
     public function authorize(): bool
@@ -16,6 +18,13 @@ class EnviarRecordatorioCorreoRequest extends FormRequest
     {
         return [
             'cuota_id' => ['required', 'integer', 'min:1'],
+            'plantilla_correo_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('plantillas_correo', 'id')
+                    ->where('empresa_id', $this->user()->empresa_id)
+                    ->where('tipo', TipoCorreo::Cobranza->value),
+            ],
         ];
     }
 }

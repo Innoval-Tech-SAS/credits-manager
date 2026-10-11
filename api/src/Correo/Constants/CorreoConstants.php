@@ -2,6 +2,8 @@
 
 namespace App\Correo\Constants;
 
+use App\Correo\Enums\TipoCorreo;
+
 class CorreoConstants
 {
     public const ENTIDAD_AUDITORIA = 'configuracion_correo';
@@ -13,18 +15,12 @@ class CorreoConstants
 
     public const TIMEOUT_JOB_SEGUNDOS = 120;
 
-    public const PLANTILLA_RECORDATORIO = 'recordatorio_cobranza';
-
     /** Tamaño máximo del HTML de la plantilla, en caracteres. */
     public const MAXIMO_CARACTERES_CUERPO = 100000;
 
-    /**
-     * Texto inicial de la plantilla. Solo se usa para llenar la primera configuración de una empresa:
-     * a partir de ahí el texto vive en `configuraciones_correo` y lo edita la empresa.
-     */
-    public const PLANTILLA_INICIAL_ASUNTO = 'Recordatorio de pago - {empresa}';
+    public const PLANTILLA_INICIAL_ASUNTO_COBRANZA = 'Recordatorio de pago - {empresa}';
 
-    public const PLANTILLA_INICIAL_CUERPO = <<<'HTML'
+    public const PLANTILLA_INICIAL_CUERPO_COBRANZA = <<<'HTML'
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -122,28 +118,77 @@ class CorreoConstants
 </html>
 HTML;
 
+    /** Mismo asunto/cuerpo que estaban fijos en código antes de este cambio: la primera plantilla de facturación los conserva. */
+    public const PLANTILLA_INICIAL_ASUNTO_FACTURACION = '{tipo_documento} {numero_documento}';
+
+    public const PLANTILLA_INICIAL_CUERPO_FACTURACION = <<<'HTML'
+<!DOCTYPE html>
+<html lang="es">
+<body style="margin:0; padding:32px 16px; background-color:#f3f5f8; font-family:Arial, Helvetica, sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr><td align="center">
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%; max-width:600px; background-color:#ffffff; border-radius:8px; border:1px solid #e3e8ef;">
+        <tr><td style="padding:32px 40px; font-size:15px; line-height:24px; color:#2d3748;">
+          <p style="margin:0 0 16px 0;">Adjuntamos el documento solicitado en formato PDF.</p>
+          <p style="margin:0; color:#8a94a6; font-size:12px;">Este es un mensaje automático, por favor no responda directamente a este correo.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
+HTML;
+
     /**
-     * Variables que la plantilla acepta. En el texto van entre llaves: {cliente}.
+     * Variables que cada tipo de plantilla acepta. En el texto van entre llaves: {cliente}.
      * `origen` es de dónde sale el dato, para que el selector de la pantalla lo muestre.
      */
-    public const VARIABLES = [
-        'cliente' => ['descripcion' => 'Nombre del cliente', 'origen' => 'terceros.nombre (vía clientes)'],
-        'empresa' => ['descripcion' => 'Nombre de la empresa', 'origen' => 'empresas.nombre_empresa'],
-        'credito' => ['descripcion' => 'Código del crédito', 'origen' => 'creditos.codigo'],
-        'cuota' => ['descripcion' => 'Número de la cuota', 'origen' => 'cuotas.numero_cuota'],
-        'valor' => ['descripcion' => 'Valor de la cuota, en pesos', 'origen' => 'cuotas.valor'],
-        'fecha_vencimiento' => ['descripcion' => 'Fecha de vencimiento de la cuota', 'origen' => 'cuotas.fecha_vencimiento'],
-    ];
+    public static function variables(TipoCorreo $tipo): array
+    {
+        return match ($tipo) {
+            TipoCorreo::Cobranza => [
+                'cliente' => ['descripcion' => 'Nombre del cliente', 'origen' => 'terceros.nombre (vía clientes)'],
+                'empresa' => ['descripcion' => 'Nombre de la empresa', 'origen' => 'empresas.nombre_empresa'],
+                'credito' => ['descripcion' => 'Código del crédito', 'origen' => 'creditos.codigo'],
+                'cuota' => ['descripcion' => 'Número de la cuota', 'origen' => 'cuotas.numero_cuota'],
+                'valor' => ['descripcion' => 'Valor de la cuota, en pesos', 'origen' => 'cuotas.valor'],
+                'fecha_vencimiento' => ['descripcion' => 'Fecha de vencimiento de la cuota', 'origen' => 'cuotas.fecha_vencimiento'],
+            ],
+            TipoCorreo::Facturacion => [
+                'cliente' => ['descripcion' => 'Nombre del cliente', 'origen' => 'terceros.nombre (vía clientes)'],
+                'empresa' => ['descripcion' => 'Nombre de la empresa', 'origen' => 'empresas.nombre_empresa'],
+                'tipo_documento' => ['descripcion' => 'Factura, nota crédito o nota débito', 'origen' => 'documentos_facturacion.tipo'],
+                'numero_documento' => ['descripcion' => 'Número del documento', 'origen' => 'documentos_facturacion.numero'],
+                'valor_total' => ['descripcion' => 'Valor total del documento, en pesos', 'origen' => 'lineas_documento_facturacion.valor (suma)'],
+                'fecha' => ['descripcion' => 'Fecha de emisión del documento', 'origen' => 'documentos_facturacion.fecha'],
+                'fecha_vencimiento' => ['descripcion' => 'Fecha de vencimiento (solo nota débito)', 'origen' => 'documentos_facturacion.fecha_vencimiento'],
+            ],
+        };
+    }
 
-    /** Datos de ejemplo para la vista previa cuando no hay un cliente elegido. */
-    public const EJEMPLO_VISTA_PREVIA = [
-        'cliente' => 'Juan Pérez',
-        'empresa' => 'Empresa de ejemplo',
-        'credito' => 'CR-0001',
-        'cuota' => '3',
-        'valor' => '$ 350.000,00',
-        'fecha_vencimiento' => '15/10/2026',
-    ];
+    /** Datos de ejemplo para la vista previa cuando no hay un cliente/documento elegido. */
+    public static function ejemploVistaPrevia(TipoCorreo $tipo): array
+    {
+        return match ($tipo) {
+            TipoCorreo::Cobranza => [
+                'cliente' => 'Juan Pérez',
+                'empresa' => 'Empresa de ejemplo',
+                'credito' => 'CR-0001',
+                'cuota' => '3',
+                'valor' => '$ 350.000,00',
+                'fecha_vencimiento' => '15/10/2026',
+            ],
+            TipoCorreo::Facturacion => [
+                'cliente' => 'Juan Pérez',
+                'empresa' => 'Empresa de ejemplo',
+                'tipo_documento' => 'Factura',
+                'numero_documento' => 'F 1',
+                'valor_total' => '$ 150.000,00',
+                'fecha' => '09/10/2026',
+                'fecha_vencimiento' => '25/10/2026',
+            ],
+        };
+    }
 
     public const MENSAJE_SMTP_FALLIDO = 'No se pudo conectar o autenticar con el servidor de correo. Revise la configuración.';
 

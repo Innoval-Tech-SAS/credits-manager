@@ -8,6 +8,7 @@ use App\Auditoria\Services\EmisorAuditoria;
 use App\Correo\Constants\CorreoConstants;
 use App\Correo\Enums\CifradoCorreo;
 use App\Correo\Enums\DriverCorreo;
+use App\Correo\Enums\TipoCorreo;
 use App\Correo\Mail\CorreoCobranza;
 use App\Correo\Models\ConfiguracionCorreo;
 use App\Correo\Repositories\ConfiguracionCorreoRepository;
@@ -22,32 +23,34 @@ class ConfiguracionCorreoService
 {
     public function __construct(
         protected ConfiguracionCorreoRepository $configuraciones,
-        protected PlantillaCorreoService $plantillas,
         protected FabricaMailerCobranza $fabrica,
         protected EmisorAuditoria $auditoria,
     ) {}
 
-    public function obtener(Usuario $usuario): array
+    public function obtener(Usuario $usuario, TipoCorreo $tipo): array
     {
-        return $this->representar($this->configuraciones->deEmpresa((int) $usuario->empresa_id));
+        return $this->representar($this->configuraciones->deEmpresaYTipo((int) $usuario->empresa_id, $tipo));
     }
 
     /** La clave solo se reemplaza si llega una nueva; omitida, se conserva la guardada. */
-    public function guardar(Usuario $usuario, array $datos): array
+    public function guardar(Usuario $usuario, TipoCorreo $tipo, array $datos): array
     {
         $empresaId = (int) $usuario->empresa_id;
-        $configuracion = $this->configuraciones->deEmpresa($empresaId);
+        $configuracion = $this->configuraciones->deEmpresaYTipo($empresaId, $tipo);
         $esNueva = $configuracion === null;
 
         if ($esNueva) {
             $configuracion = new ConfiguracionCorreo;
             $configuracion->empresa_id = $empresaId;
+            $configuracion->tipo = $tipo;
         }
 
         $anteriores = $esNueva ? [] : $this->auditoria->instantanea($configuracion);
         $clave = $datos['clave'] ?? null;
 
-        $datos['plantilla_cuerpo'] = $this->plantillas->sanitizarHtml($datos['plantilla_cuerpo']);
+        // La columna `cifrado` no es nullable en la base: el driver de prueba no lo necesita, pero algo hay que guardar.
+        $datos['cifrado'] ??= CifradoCorreo::Tls->value;
+
         $configuracion->fill(Arr::except($datos, ['clave']) + ['actualizado_por' => $usuario->id]);
 
         if (filled($clave)) {
@@ -61,19 +64,10 @@ class ConfiguracionCorreoService
         return $this->representar($configuracion);
     }
 
-    /** Vista previa con datos de ejemplo: no toca la base ni envía nada. */
-    public function vistaPrevia(string $asunto, string $cuerpo): array
-    {
-        return [
-            'asunto' => $this->plantillas->renderizarAsunto($asunto, CorreoConstants::EJEMPLO_VISTA_PREVIA),
-            'cuerpo' => $this->plantillas->renderizarCuerpo($this->plantillas->sanitizarHtml($cuerpo), CorreoConstants::EJEMPLO_VISTA_PREVIA),
-        ];
-    }
-
     /** Envío síncrono de prueba con la configuración guardada. Devuelve el resultado sin credenciales. */
-    public function enviarPrueba(Usuario $usuario, string $destinatario): array
+    public function enviarPrueba(Usuario $usuario, TipoCorreo $tipo, string $destinatario): array
     {
-        $configuracion = $this->configuraciones->deEmpresa((int) $usuario->empresa_id);
+        $configuracion = $this->configuraciones->deEmpresaYTipo((int) $usuario->empresa_id, $tipo);
 
         if ($configuracion === null) {
             throw ValidationException::withMessages(['destinatario' => __('validation.custom.correo.sin_configurar')]);
@@ -82,13 +76,13 @@ class ConfiguracionCorreoService
         try {
             $this->fabrica->paraConfiguracion($configuracion)->send(new CorreoCobranza(
                 asunto: 'Prueba de configuración de correo',
-                cuerpoHtml: '<p>Este es un correo de prueba de la configuración de cobranza.</p><p>Si lo recibe, el servidor de correo funciona.</p>',
+                cuerpoHtml: '<p>Este es un correo de prueba de la configuración de '.$tipo->value.'.</p><p>Si lo recibe, el servidor de correo funciona.</p>',
                 destinatario: $destinatario,
                 remitente: $configuracion->remitente,
                 nombreRemitente: $configuracion->nombre_remitente,
             ));
         } catch (Throwable $excepcion) {
-            Log::warning('Prueba de correo de cobranza fallida', ['empresa_id' => $configuracion->empresa_id, 'excepcion' => $excepcion::class]);
+            Log::warning('Prueba de correo fallida', ['empresa_id' => $configuracion->empresa_id, 'tipo' => $tipo->value, 'excepcion' => $excepcion::class]);
 
             return ['enviado' => false, 'mensaje' => $this->mensajeDeFallo($excepcion)];
         }
@@ -119,6 +113,7 @@ class ConfiguracionCorreoService
         }
 
         $descripcion = ($esNueva ? 'Configuración de correo creada' : 'Configuración de correo modificada')
+            .' ('.$configuracion->tipo->value.')'
             .($claveActualizada ? ' (clave actualizada)' : '');
 
         $this->auditoria->registrar(
@@ -145,14 +140,6 @@ class ConfiguracionCorreoService
             'puerto' => $configuracion?->puerto,
             'cifrado' => $configuracion?->cifrado->value ?? CifradoCorreo::Tls->value,
             'usuario' => $configuracion?->usuario,
-            'plantilla' => [
-                'asunto' => $configuracion?->plantilla_asunto ?? CorreoConstants::PLANTILLA_INICIAL_ASUNTO,
-                'cuerpo' => $configuracion?->plantilla_cuerpo ?? CorreoConstants::PLANTILLA_INICIAL_CUERPO,
-            ],
-            'variables' => collect(CorreoConstants::VARIABLES)
-                ->map(fn (array $variable, string $clave) => ['clave' => $clave, ...$variable])
-                ->values()
-                ->all(),
         ];
     }
 }

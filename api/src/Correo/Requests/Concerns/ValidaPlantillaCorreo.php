@@ -2,6 +2,7 @@
 
 namespace App\Correo\Requests\Concerns;
 
+use App\Correo\Enums\TipoCorreo;
 use App\Correo\Services\PlantillaCorreoService;
 use Illuminate\Validation\Validator;
 
@@ -11,14 +12,20 @@ trait ValidaPlantillaCorreo
     protected function validarVariablesDePlantilla(Validator $validador): void
     {
         $validador->after(function (Validator $validador) {
-            foreach (['plantilla_asunto', 'plantilla_cuerpo', 'asunto', 'cuerpo'] as $campo) {
+            $tipo = TipoCorreo::tryFrom((string) $this->input('tipo'));
+
+            if ($tipo === null) {
+                return;
+            }
+
+            foreach (['asunto', 'cuerpo'] as $campo) {
                 $texto = $this->input($campo);
 
                 if (! is_string($texto)) {
                     continue;
                 }
 
-                $desconocidas = PlantillaCorreoService::variablesDesconocidas($texto);
+                $desconocidas = PlantillaCorreoService::variablesDesconocidas($texto, $tipo);
 
                 if ($desconocidas !== []) {
                     $validador->errors()->add($campo, __('validation.custom.correo.variable_desconocida', [

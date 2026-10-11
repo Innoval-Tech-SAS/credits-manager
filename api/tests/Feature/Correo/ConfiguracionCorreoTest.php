@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Correo;
 
-use App\Correo\Constants\CorreoConstants;
 use App\Correo\Mail\CorreoCobranza;
 use App\Correo\Models\ConfiguracionCorreo;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -30,8 +29,6 @@ class ConfiguracionCorreoTest extends TestCase
             'cifrado' => 'tls',
             'usuario' => 'cobranza@example.com',
             'clave' => 'secreto-de-prueba',
-            'plantilla_asunto' => 'Recordatorio - {empresa}',
-            'plantilla_cuerpo' => '<p>Hola {cliente}, la cuota {cuota} por {valor} vence el {fecha_vencimiento}.</p>',
         ], $sobrescribir);
     }
 
@@ -39,7 +36,7 @@ class ConfiguracionCorreoTest extends TestCase
     {
         $admin = $this->actingAsAdmin();
 
-        $respuesta = $this->putJson('/api/v1/correo/configuracion', $this->datosValidos());
+        $respuesta = $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos());
 
         $respuesta->assertOk()
             ->assertJsonPath('configuracion.estado', 'configurada')
@@ -47,6 +44,7 @@ class ConfiguracionCorreoTest extends TestCase
 
         $this->assertDatabaseHas('configuraciones_correo', [
             'empresa_id' => $admin->empresa_id,
+            'tipo' => 'cobranza',
             'remitente' => 'cobranza@creditosdda.com',
             'driver' => 'smtp',
             'puerto' => 587,
@@ -61,11 +59,11 @@ class ConfiguracionCorreoTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos())
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())
             ->assertOk()
             ->assertDontSee('secreto-de-prueba');
 
-        $this->getJson('/api/v1/correo/configuracion')
+        $this->getJson('/api/v1/correo/configuracion/cobranza')
             ->assertOk()
             ->assertJsonPath('configuracion.clave_estado', 'configurada')
             ->assertDontSee('secreto-de-prueba');
@@ -75,74 +73,73 @@ class ConfiguracionCorreoTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->getJson('/api/v1/correo/configuracion')
+        $this->getJson('/api/v1/correo/configuracion/cobranza')
             ->assertOk()
             ->assertJsonPath('configuracion.estado', 'sin_configurar')
-            ->assertJsonPath('configuracion.clave_estado', 'sin_configurar')
-            ->assertJsonPath('configuracion.plantilla.asunto', 'Recordatorio de pago - {empresa}')
-            ->assertJsonPath('configuracion.plantilla.cuerpo', CorreoConstants::PLANTILLA_INICIAL_CUERPO)
-            ->assertJsonCount(6, 'configuracion.variables');
+            ->assertJsonPath('configuracion.clave_estado', 'sin_configurar');
+    }
+
+    public function test_cada_tipo_tiene_su_propia_configuracion(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertOk();
+
+        $this->getJson('/api/v1/correo/configuracion/facturacion')
+            ->assertOk()
+            ->assertJsonPath('configuracion.estado', 'sin_configurar');
+
+        $this->putJson('/api/v1/correo/configuracion/facturacion', $this->datosValidos(['remitente' => 'facturas@creditosdda.com']))->assertOk();
+
+        $this->assertDatabaseHas('configuraciones_correo', ['tipo' => 'cobranza', 'remitente' => 'cobranza@creditosdda.com']);
+        $this->assertDatabaseHas('configuraciones_correo', ['tipo' => 'facturacion', 'remitente' => 'facturas@creditosdda.com']);
     }
 
     public function test_guardar_sin_clave_conserva_la_clave_guardada(): void
     {
         $this->actingAsAdmin();
 
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos())->assertOk();
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos(['clave' => null, 'nombre_remitente' => 'Otro nombre']))->assertOk();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertOk();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos(['clave' => null, 'nombre_remitente' => 'Otro nombre']))->assertOk();
 
         $configuracion = ConfiguracionCorreo::query()->first();
         $this->assertSame('secreto-de-prueba', $configuracion->clave);
         $this->assertSame('Otro nombre', $configuracion->nombre_remitente);
     }
 
-    public function test_la_plantilla_html_se_guarda_sin_scripts_ni_atributos_peligrosos(): void
-    {
-        $this->actingAsAdmin();
-
-        $html = '<p>Hola {cliente}</p><script>alert(1)</script><a href="javascript:alert(1)" onclick="robar()">Pagar</a><iframe src="https://evil"></iframe>';
-
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos(['plantilla_cuerpo' => $html]))->assertOk();
-
-        $guardada = ConfiguracionCorreo::query()->first()->plantilla_cuerpo;
-        $this->assertStringContainsString('<p>Hola {cliente}</p>', $guardada);
-        $this->assertStringContainsString('Pagar</a>', $guardada);
-        $this->assertStringNotContainsString('<script', $guardada);
-        $this->assertStringNotContainsString('<iframe', $guardada);
-        $this->assertStringNotContainsString('onclick', $guardada);
-        $this->assertStringNotContainsString('javascript:', $guardada);
-    }
-
     public function test_422_si_faltan_campos_o_el_remitente_no_es_un_correo(): void
     {
         $this->actingAsAdmin();
 
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos(['remitente' => 'no-es-correo', 'host' => null, 'puerto' => null]))
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos(['remitente' => 'no-es-correo', 'host' => null, 'puerto' => null]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['remitente', 'host', 'puerto']);
     }
 
-    public function test_422_si_la_plantilla_usa_una_variable_que_no_existe(): void
+    public function test_el_driver_de_prueba_no_exige_host_ni_puerto_ni_cifrado(): void
     {
         $this->actingAsAdmin();
 
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos(['plantilla_cuerpo' => '<p>Hola {clente}</p>']))
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['plantilla_cuerpo']);
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos([
+            'driver' => 'registro',
+            'host' => null,
+            'puerto' => null,
+            'cifrado' => null,
+        ]))->assertOk();
     }
 
     public function test_401_sin_sesion(): void
     {
-        $this->getJson('/api/v1/correo/configuracion')->assertUnauthorized();
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos())->assertUnauthorized();
+        $this->getJson('/api/v1/correo/configuracion/cobranza')->assertUnauthorized();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertUnauthorized();
     }
 
     public function test_403_para_un_asesor(): void
     {
         $this->actingAsAsesor();
 
-        $this->getJson('/api/v1/correo/configuracion')->assertForbidden();
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos())->assertForbidden();
+        $this->getJson('/api/v1/correo/configuracion/cobranza')->assertForbidden();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertForbidden();
         $this->assertDatabaseCount('configuraciones_correo', 0);
     }
 
@@ -150,7 +147,7 @@ class ConfiguracionCorreoTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos())->assertOk();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertOk();
 
         $evento = $this->assertEventoAuditoria('crear', 'correo', 'configuracion_correo');
         $this->assertStringNotContainsString('secreto-de-prueba', json_encode($evento));
@@ -160,8 +157,8 @@ class ConfiguracionCorreoTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos())->assertOk();
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos(['clave' => 'clave-nueva-de-prueba']))->assertOk();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertOk();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos(['clave' => 'clave-nueva-de-prueba']))->assertOk();
 
         $eventos = $this->eventosDeAuditoria('modificar', 'correo');
         $this->assertCount(1, $eventos);
@@ -174,9 +171,9 @@ class ConfiguracionCorreoTest extends TestCase
     {
         $fake = $this->simulaCorreo();
         $this->actingAsAdmin();
-        $this->putJson('/api/v1/correo/configuracion', $this->datosValidos())->assertOk();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertOk();
 
-        $respuesta = $this->postJson('/api/v1/correo/configuracion/prueba', ['destinatario' => 'destino@example.com']);
+        $respuesta = $this->postJson('/api/v1/correo/configuracion/cobranza/prueba', ['destinatario' => 'destino@example.com']);
 
         $respuesta->assertOk()->assertJsonPath('enviado', true)->assertDontSee('secreto-de-prueba');
         $fake->assertSent(CorreoCobranza::class, fn (CorreoCobranza $correo) => $correo->destinatario === 'destino@example.com'
@@ -188,7 +185,7 @@ class ConfiguracionCorreoTest extends TestCase
         $this->simulaCorreo();
         $this->actingAsAdmin();
 
-        $this->postJson('/api/v1/correo/configuracion/prueba', ['destinatario' => 'destino@example.com'])
+        $this->postJson('/api/v1/correo/configuracion/cobranza/prueba', ['destinatario' => 'destino@example.com'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['destinatario']);
     }
@@ -197,35 +194,8 @@ class ConfiguracionCorreoTest extends TestCase
     {
         $this->actingAsAdmin();
 
-        $this->postJson('/api/v1/correo/configuracion/prueba', ['destinatario' => 'no-es-correo'])
+        $this->postJson('/api/v1/correo/configuracion/cobranza/prueba', ['destinatario' => 'no-es-correo'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['destinatario']);
-    }
-
-    public function test_vista_previa_renderiza_html_con_datos_de_ejemplo_sin_guardar_ni_enviar(): void
-    {
-        $fake = $this->simulaCorreo();
-        $this->actingAsAdmin();
-
-        $respuesta = $this->postJson('/api/v1/correo/vista-previa', [
-            'asunto' => 'Recordatorio - {empresa}',
-            'cuerpo' => '<p>Estimado {cliente}, cuota {cuota}: <strong>{valor}</strong></p><script>alert(1)</script>',
-        ]);
-
-        $respuesta->assertOk()
-            ->assertJsonPath('vista_previa.asunto', 'Recordatorio - Empresa de ejemplo')
-            ->assertJsonPath('vista_previa.cuerpo', '<p>Estimado Juan Pérez, cuota 3: <strong>$ 350.000,00</strong></p>');
-        $this->assertStringNotContainsString('<script', $respuesta->json('vista_previa.cuerpo'));
-        $this->assertDatabaseCount('configuraciones_correo', 0);
-        $fake->assertNothingSent();
-    }
-
-    public function test_422_en_la_vista_previa_con_variable_desconocida(): void
-    {
-        $this->actingAsAdmin();
-
-        $this->postJson('/api/v1/correo/vista-previa', ['asunto' => 'Hola', 'cuerpo' => '<p>{valr}</p>'])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['cuerpo']);
     }
 }

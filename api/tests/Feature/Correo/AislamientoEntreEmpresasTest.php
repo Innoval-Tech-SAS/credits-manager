@@ -25,11 +25,11 @@ class AislamientoEntreEmpresasTest extends TestCase
     public function test_la_configuracion_de_una_empresa_no_se_ve_en_otra(): void
     {
         $this->actingAsAdmin();
-        $this->configuracionDeCorreo(['remitente' => 'cobranza@empresa-a.com']);
+        $this->configuracionDeCorreo(overrides: ['remitente' => 'cobranza@empresa-a.com']);
 
         $this->actingAsAdmin();
 
-        $this->getJson('/api/v1/correo/configuracion')
+        $this->getJson('/api/v1/correo/configuracion/cobranza')
             ->assertOk()
             ->assertJsonPath('configuracion.estado', 'sin_configurar')
             ->assertDontSee('empresa-a.com');
@@ -57,6 +57,7 @@ class AislamientoEntreEmpresasTest extends TestCase
         $fake = $this->simulaCorreo();
         $adminA = $this->actingAsAdmin();
         $this->configuracionDeCorreo();
+        $this->plantillaDeCorreo();
         $cliente = $this->crearCliente(['correo' => 'juan@example.com']);
         $cuota = $this->crearCuota($this->crearCredito($cliente));
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo", ['cuota_id' => $cuota->id])->assertStatus(202);
