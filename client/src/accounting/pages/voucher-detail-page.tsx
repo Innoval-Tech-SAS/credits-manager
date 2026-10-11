@@ -117,16 +117,16 @@ export const VoucherDetailPage: FC = () => {
                                         <Button iconOnly variant="outline" startIcon={<Undo2 className="size-4" />} onClick={() => setModo('reversar')}>
                                             Reversar
                                         </Button>
-                                    )}
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         <div className="custom-scrollbar overflow-x-auto">
-                            <table className="w-full text-left text-sm">
+                            <table className="w-full min-w-240 text-left text-sm">
                                 <thead>
                                     <tr className="border-b border-gray-100 dark:border-gray-800">
-                                        {['Cuenta', 'Descripción', 'Débito', 'Crédito'].map((label) => (
+                                        {['Cuenta', 'Centro de costo', 'Doc. cruce', 'Vence', 'Descripción', 'Débito', 'Crédito'].map((label) => (
                                             <th key={label} className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
                                                 {label}
                                             </th>
@@ -139,6 +139,13 @@ export const VoucherDetailPage: FC = () => {
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                                                 {linea.cuenta ? `${linea.cuenta.codigo} - ${linea.cuenta.nombre}` : '—'}
                                             </td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                                                {linea.centro_costo ? `${linea.centro_costo.codigo} - ${linea.centro_costo.nombre}` : '—'}
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{linea.documento_cruce ?? '—'}</td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                                                {linea.fecha_vencimiento ? formatDateEs(linea.fecha_vencimiento) : '—'}
+                                            </td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{linea.descripcion ?? '—'}</td>
                                             <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                                                 {parseFloat(linea.debito) > 0 ? formatMoney(linea.debito) : ''}
@@ -149,7 +156,7 @@ export const VoucherDetailPage: FC = () => {
                                         </tr>
                                     ))}
                                     <tr>
-                                        <td colSpan={2} className="px-4 py-3 font-semibold text-gray-800 dark:text-white/90">
+                                        <td colSpan={5} className="px-4 py-3 font-semibold text-gray-800 dark:text-white/90">
                                             Total
                                         </td>
                                         <td className="px-4 py-3 font-semibold text-gray-800 dark:text-white/90">

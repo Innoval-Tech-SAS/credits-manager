@@ -29,6 +29,8 @@ class AsientoContableRepository extends BaseRepository
                 'cuenta_id' => $linea['cuenta_id'],
                 'tercero_id' => $linea['tercero_id'] ?? null,
                 'centro_costo_id' => $linea['centro_costo_id'] ?? null,
+                'documento_cruce' => $linea['documento_cruce'] ?? null,
+                'fecha_vencimiento' => $linea['fecha_vencimiento'] ?? null,
                 'debito' => self::centavos($linea['debito'] ?? 0),
                 'credito' => self::centavos($linea['credito'] ?? 0),
                 'descripcion' => $linea['descripcion'] ?? null,

@@ -259,9 +259,97 @@ class RevisionComprobanteTest extends TestCase
 
         $this->postJson(self::BASE, $payload)->assertStatus(422)->assertJsonValidationErrors('lineas');
 
-        $payload['documento_soporte'] = 'FE-4587';
+        $payload['lineas'][0]['documento_cruce'] = 'FE-4587';
 
         $this->postJson(self::BASE, $payload)->assertStatus(201);
+    }
+
+    public function test_un_asiento_manual_con_cuenta_que_exige_vencimiento_lo_exige(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->creador($empresa);
+        $cuentaCxp = $this->crearCuenta(['exige_vencimiento' => true]);
+        $cuentaBanco = $this->crearCuenta();
+        $payload = [
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Pago a proveedor',
+            'lineas' => [
+                ['cuenta_id' => $cuentaCxp->id, 'debito' => 80, 'credito' => 0],
+                ['cuenta_id' => $cuentaBanco->id, 'debito' => 0, 'credito' => 80],
+            ],
+        ];
+
+        $this->postJson(self::BASE, $payload)->assertStatus(422)->assertJsonValidationErrors('lineas');
+
+        $payload['lineas'][0]['fecha_vencimiento'] = '2026-02-15';
+
+        $this->postJson(self::BASE, $payload)->assertStatus(201);
+    }
+
+    public function test_el_documento_cruce_y_el_vencimiento_de_una_linea_se_guardan_y_el_reverso_los_conserva(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $creadorUsuario = $this->actingAsRolConPermisos(
+            'creador',
+            ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar', 'contabilidad.anular'],
+            $empresa,
+        );
+        $cuentaCxp = $this->crearCuenta();
+        $cuentaBanco = $this->crearCuenta();
+
+        $respuesta = $this->postJson(self::BASE, [
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Causación honorarios',
+            'lineas' => [
+                ['cuenta_id' => $cuentaCxp->id, 'debito' => 0, 'credito' => 80, 'documento_cruce' => 'FE-4587', 'fecha_vencimiento' => '2026-02-15'],
+                ['cuenta_id' => $cuentaBanco->id, 'debito' => 80, 'credito' => 0],
+            ],
+        ])->assertStatus(201);
+
+        $comprobanteId = $respuesta->json('comprobante.id');
+        $this->assertDatabaseHas('asientos_contables', [
+            'comprobante_id' => $comprobanteId,
+            'cuenta_id' => $cuentaCxp->id,
+            'documento_cruce' => 'FE-4587',
+            'fecha_vencimiento' => '2026-02-15',
+        ]);
+
+        $this->revisor($empresa);
+        $this->postJson(self::BASE."/{$comprobanteId}/revisar")->assertOk();
+        $this->postJson(self::BASE."/{$comprobanteId}/contabilizar")->assertOk();
+
+        $this->actingAs($creadorUsuario, 'sanctum');
+        $this->postJson(self::BASE."/{$comprobanteId}/reversar", ['motivo' => 'Corrección de prueba'])->assertStatus(201);
+
+        $this->assertDatabaseHas('asientos_contables', [
+            'cuenta_id' => $cuentaCxp->id,
+            'documento_cruce' => 'FE-4587',
+            'fecha_vencimiento' => '2026-02-15',
+            'debito' => 8000,
+        ]);
+    }
+
+    public function test_rechaza_un_tercero_de_linea_de_otra_empresa(): void
+    {
+        $empresaAjena = $this->crearEmpresaDePrueba();
+        $this->creador($empresaAjena);
+        $terceroAjeno = $this->crearTercero();
+
+        $this->creador($this->crearEmpresaDePrueba());
+
+        $payload = [
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Pago a proveedor',
+            'lineas' => [
+                ['cuenta_id' => $this->crearCuenta()->id, 'tercero_id' => $terceroAjeno->id, 'debito' => 80, 'credito' => 0],
+                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 0, 'credito' => 80],
+            ],
+        ];
+
+        $this->postJson(self::BASE, $payload)->assertStatus(422)->assertJsonValidationErrors('lineas.0.tercero_id');
     }
 
     public function test_sin_autenticar_no_puede_contabilizar(): void
