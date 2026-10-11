@@ -220,6 +220,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/contabilidad/tipos-comprobante', [TipoComprobanteController::class, 'index'])->middleware('permiso:configuracion_contable,listar');
     Route::post('/contabilidad/tipos-comprobante', [TipoComprobanteController::class, 'store'])->middleware('permiso:configuracion_contable,crear');
+    Route::get('/contabilidad/tipos-comprobante/{tipoComprobante}', [TipoComprobanteController::class, 'show'])->middleware('permiso:configuracion_contable,listar');
+    Route::patch('/contabilidad/tipos-comprobante/{tipoComprobante}', [TipoComprobanteController::class, 'update'])->middleware('permiso:configuracion_contable,editar');
+    Route::delete('/contabilidad/tipos-comprobante/{tipoComprobante}', [TipoComprobanteController::class, 'destroy'])->middleware('permiso:configuracion_contable,editar');
 
     Route::get('/contabilidad/centros-costo', [CentroCostoController::class, 'index'])->middleware('permiso:configuracion_contable,listar');
     Route::post('/contabilidad/centros-costo', [CentroCostoController::class, 'store'])->middleware('permiso:configuracion_contable,crear');

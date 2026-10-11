@@ -5,8 +5,9 @@ namespace App\Contabilidad\Models;
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['codigo', 'nombre', 'consecutivo_actual'])]
+#[Fillable(['codigo', 'nombre', 'activo', 'consecutivo_actual'])]
 class TipoComprobante extends BaseModel
 {
     use PerteneceAEmpresa;
@@ -16,7 +17,13 @@ class TipoComprobante extends BaseModel
     protected function casts(): array
     {
         return [
+            'activo' => 'boolean',
             'consecutivo_actual' => 'integer',
         ];
+    }
+
+    public function comprobantes(): HasMany
+    {
+        return $this->hasMany(Comprobante::class);
     }
 }

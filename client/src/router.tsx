@@ -11,6 +11,8 @@ import { CreateAccountPage } from './accounting/pages/create-account-page';
 import { CreateCostCenterPage } from './accounting/pages/create-cost-center-page';
 import { CreateVoucherPage } from './accounting/pages/create-voucher-page';
 import { CreateVoucherTypePage } from './accounting/pages/create-voucher-type-page';
+import { EditVoucherTypePage } from './accounting/pages/edit-voucher-type-page';
+import { VoucherTypeDetailPage } from './accounting/pages/voucher-type-detail-page';
 import { FinancialStatementsPage } from './accounting/pages/financial-statements-page';
 import { ImportsPage } from './imports/pages/imports-page';
 import { NewImportPage } from './imports/pages/new-import-page';
@@ -506,6 +508,22 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="configuracion_contable" accion="crear">
                                 <CreateVoucherTypePage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/tipos-comprobante/:id',
+                        element: (
+                            <RequireModulePermission modulo="configuracion_contable" accion="listar">
+                                <VoucherTypeDetailPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/tipos-comprobante/:id/editar',
+                        element: (
+                            <RequireModulePermission modulo="configuracion_contable" accion="editar">
+                                <EditVoucherTypePage />
                             </RequireModulePermission>
                         ),
                     },

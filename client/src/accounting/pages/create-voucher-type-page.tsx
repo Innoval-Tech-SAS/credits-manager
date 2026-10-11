@@ -7,7 +7,7 @@ import { VoucherTypeForm } from '../components/voucher-type-form';
 export const CreateVoucherTypePage: FC = () => {
     const navigate = useNavigate();
 
-    const handleCreated = () => {
+    const handleSaved = () => {
         navigate('/contabilidad/tipos-comprobante', { replace: true, state: { message: 'Tipo de comprobante creado correctamente.' } });
     };
 
@@ -16,7 +16,7 @@ export const CreateVoucherTypePage: FC = () => {
             <PageBreadcrumb pageTitle="Crear tipo de comprobante" />
 
             <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3">
-                <VoucherTypeForm onCreated={handleCreated} />
+                <VoucherTypeForm onSaved={handleSaved} />
             </div>
         </div>
     );
