@@ -288,7 +288,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/gastos/tipos-gasto', [TipoGastoController::class, 'index'])->middleware('permiso:gastos,listar');
     Route::post('/gastos/tipos-gasto', [TipoGastoController::class, 'store'])->middleware('permiso:gastos,parametrizar');
+    Route::get('/gastos/tipos-gasto/{tipoGasto}', [TipoGastoController::class, 'show'])->middleware('permiso:gastos,listar');
     Route::patch('/gastos/tipos-gasto/{tipoGasto}', [TipoGastoController::class, 'update'])->middleware('permiso:gastos,parametrizar');
+    Route::delete('/gastos/tipos-gasto/{tipoGasto}', [TipoGastoController::class, 'destroy'])->middleware('permiso:gastos,parametrizar');
 
     Route::get('/gastos/actividades-economicas', [ActividadEconomicaController::class, 'index'])->middleware('permiso:tributario,listar');
     Route::post('/gastos/actividades-economicas', [ActividadEconomicaController::class, 'store'])->middleware('permiso:tributario,parametrizar');

@@ -330,6 +330,8 @@ return [
         'tipo_gasto' => [
             'inactivo_o_no_existe' => 'El tipo de gasto no existe o está inactivo.',
             'requiere_tercero' => 'Este tipo de gasto requiere un tercero.',
+            'tiene_gastos_asociados' => 'No se puede eliminar: ya tiene gastos asociados.',
+            'en_uso_por_configuracion' => 'No se puede eliminar: está en uso por una parametrización de gasto.',
         ],
         'parametrizacion' => [
             'no_vigente' => 'Este tipo de gasto no tiene una parametrización vigente para la fecha indicada.',
