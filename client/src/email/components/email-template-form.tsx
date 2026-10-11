@@ -1,16 +1,17 @@
 import type { FC } from 'react';
 import { useRef, useState } from 'react';
-import { Eye } from 'lucide-react';
+import { useNavigate } from 'react-router';
+import { Eye, Save } from 'lucide-react';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
-import { Modal } from '@ui/modal/components/modal';
+import { Spinner } from '@ui/spinner/components/spinner';
 import { EMAIL_TEMPLATE_VARIABLES } from '../constants/email-template-variables';
 import { EmailPreviewModal } from './email-preview-modal';
 import { EmailVariablePicker } from './email-variable-picker';
-import type { EmailTemplateEditorModalProps } from '../props/email-template-editor-modal-props';
+import type { EmailTemplateFormProps } from '../props/email-template-form-props';
 import type { ApiEmailPreview } from '../types/api-email-preview';
 import type { ApiPlantillaCorreo } from '../types/api-plantilla-correo';
 
@@ -20,19 +21,14 @@ type CampoActivo = {
 };
 
 /** Crea o edita una plantilla de un tipo (nombre, asunto y cuerpo HTML). El tipo es fijo: no viaja en este formulario al editar. */
-export const EmailTemplateEditorModal: FC<EmailTemplateEditorModalProps> = ({ tipo, plantilla, onClose, onSaved }) => (
-    <Modal isOpen onClose={onClose} size="lg">
-        <FormularioPlantilla tipo={tipo} plantilla={plantilla} onClose={onClose} onSaved={onSaved} />
-    </Modal>
-);
-
-const FormularioPlantilla: FC<EmailTemplateEditorModalProps> = ({ tipo, plantilla, onClose, onSaved }) => {
+export const EmailTemplateForm: FC<EmailTemplateFormProps> = ({ tipo, templateId, initialData }) => {
+    const navigate = useNavigate();
     const { sendRequest, isLoading } = useSendRequest();
-    const esEdicion = plantilla !== null;
+    const isEditMode = templateId !== undefined;
 
-    const [nombre, setNombre] = useState(plantilla?.nombre ?? '');
-    const [asunto, setAsunto] = useState(plantilla?.asunto ?? '');
-    const [cuerpo, setCuerpo] = useState(plantilla?.cuerpo ?? '');
+    const [nombre, setNombre] = useState(initialData?.nombre ?? '');
+    const [asunto, setAsunto] = useState(initialData?.asunto ?? '');
+    const [cuerpo, setCuerpo] = useState(initialData?.cuerpo ?? '');
     const [error, setError] = useState<string | null>(null);
 
     const [preview, setPreview] = useState<ApiEmailPreview | null>(null);
@@ -87,8 +83,8 @@ const FormularioPlantilla: FC<EmailTemplateEditorModalProps> = ({ tipo, plantill
         setError(null);
 
         try {
-            if (esEdicion) {
-                await sendRequest<{ plantilla: ApiPlantillaCorreo }>(`/correo/plantillas/${plantilla.id}`, {
+            if (isEditMode) {
+                await sendRequest<{ plantilla: ApiPlantillaCorreo }>(`/correo/plantillas/${templateId}`, {
                     method: 'PUT',
                     body: { nombre, asunto, cuerpo },
                 });
@@ -99,7 +95,10 @@ const FormularioPlantilla: FC<EmailTemplateEditorModalProps> = ({ tipo, plantill
                 });
             }
 
-            onSaved();
+            navigate(`/plantillas-correo?tipo=${tipo}`, {
+                replace: true,
+                state: { message: isEditMode ? 'Plantilla actualizada correctamente.' : 'Plantilla creada correctamente.' },
+            });
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         }
@@ -109,13 +108,6 @@ const FormularioPlantilla: FC<EmailTemplateEditorModalProps> = ({ tipo, plantill
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="pr-10">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">{esEdicion ? 'Editar plantilla' : 'Nueva plantilla'}</h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    {tipo === 'cobranza' ? 'Plantilla de recordatorio de cobranza.' : 'Plantilla de facturación (factura, nota crédito o nota débito).'}
-                </p>
-            </div>
-
             {error && (
                 <div className="rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400">
                     {error}
@@ -172,14 +164,15 @@ const FormularioPlantilla: FC<EmailTemplateEditorModalProps> = ({ tipo, plantill
                     {isPreviewing ? 'Generando...' : 'Ver vista previa'}
                 </Button>
 
-                <div className="flex flex-col-reverse gap-3 sm:flex-row">
-                    <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
-                        Cancelar
-                    </Button>
-                    <Button type="button" disabled={isLoading || !formularioValido} onClick={() => void handleSubmit()}>
-                        {isLoading ? 'Guardando...' : 'Guardar plantilla'}
-                    </Button>
-                </div>
+                <Button
+                    type="button"
+                    disabled={isLoading || !formularioValido}
+                    startIcon={isLoading ? <Spinner size="sm" color="white" /> : undefined}
+                    endIcon={isLoading ? undefined : <Save className="size-4" />}
+                    onClick={() => void handleSubmit()}
+                >
+                    {isLoading ? 'Guardando…' : isEditMode ? 'Actualizar plantilla' : 'Crear plantilla'}
+                </Button>
             </div>
 
             {preview && <EmailPreviewModal preview={preview} onClose={() => setPreview(null)} />}

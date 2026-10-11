@@ -1,8 +1,8 @@
 import type { ApiPlantillaCorreo } from '../types/api-plantilla-correo';
 import type { EmailType } from '../types/email-type';
 
-export type EmailTemplateListProps = {
+export type EmailTemplateFormProps = {
     tipo: EmailType;
-    plantillas: ApiPlantillaCorreo[];
-    onChanged: () => void;
+    templateId?: number;
+    initialData?: ApiPlantillaCorreo;
 };
