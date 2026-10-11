@@ -5,15 +5,18 @@ import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
+import { ToggleSwitchInput } from '@ui/forms/components/toggle-switch-input';
 import { Spinner } from '@ui/spinner/components/spinner';
 import type { VoucherTypeFormProps } from '../props/voucher-type-form-props';
 import type { ApiVoucherType } from '../types/api-voucher-type';
 
-export const VoucherTypeForm: FC<VoucherTypeFormProps> = ({ onCreated }) => {
+export const VoucherTypeForm: FC<VoucherTypeFormProps> = ({ voucherTypeId, initialData, onSaved }) => {
     const { sendRequest } = useSendRequest();
+    const isEditMode = voucherTypeId !== undefined;
 
-    const [codigo, setCodigo] = useState('');
-    const [nombre, setNombre] = useState('');
+    const [codigo, setCodigo] = useState(initialData?.codigo ?? '');
+    const [nombre, setNombre] = useState(initialData?.nombre ?? '');
+    const [activo, setActivo] = useState(initialData?.activo ?? true);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,14 +26,22 @@ export const VoucherTypeForm: FC<VoucherTypeFormProps> = ({ onCreated }) => {
         setIsSubmitting(true);
 
         try {
-            const respuesta = await sendRequest<{ tipo: ApiVoucherType }>('/contabilidad/tipos-comprobante', {
-                method: 'POST',
-                body: { codigo, nombre },
-            });
+            const respuesta = isEditMode
+                ? await sendRequest<{ tipo: ApiVoucherType }>(`/contabilidad/tipos-comprobante/${voucherTypeId}`, {
+                      method: 'PATCH',
+                      body: { codigo, nombre, activo },
+                  })
+                : await sendRequest<{ tipo: ApiVoucherType }>('/contabilidad/tipos-comprobante', {
+                      method: 'POST',
+                      body: { codigo, nombre },
+                  });
 
-            onCreated(respuesta.tipo);
-            setCodigo('');
-            setNombre('');
+            onSaved(respuesta.tipo);
+
+            if (!isEditMode) {
+                setCodigo('');
+                setNombre('');
+            }
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         } finally {
@@ -66,9 +77,15 @@ export const VoucherTypeForm: FC<VoucherTypeFormProps> = ({ onCreated }) => {
                     </div>
                 </div>
 
+                {isEditMode && (
+                    <div className="flex flex-wrap gap-8">
+                        <ToggleSwitchInput id="activo" label="Activo" checked={activo} onChange={setActivo} />
+                    </div>
+                )}
+
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                     <Button type="submit" disabled={isSubmitting} startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}>
-                        {isSubmitting ? 'Creando…' : 'Crear tipo de comprobante'}
+                        {isSubmitting ? 'Guardando…' : isEditMode ? 'Actualizar tipo de comprobante' : 'Crear tipo de comprobante'}
                     </Button>
                 </div>
             </div>
