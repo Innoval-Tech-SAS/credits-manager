@@ -11,6 +11,7 @@ use App\Facturacion\Requests\CrearBorradorFacturaRequest;
 use App\Facturacion\Requests\EmitirNotaRequest;
 use App\Facturacion\Requests\ListarDocumentosFacturacionRequest;
 use App\Facturacion\Requests\MotivoAccionFacturacionRequest;
+use App\Facturacion\Services\AccesoDocumentosFacturacion;
 use App\Facturacion\Services\DocumentoFacturacionService;
 use App\Facturacion\Services\EnvioFacturacionService;
 use App\Http\Controllers\Controller;
@@ -23,12 +24,13 @@ class DocumentoFacturacionController extends Controller
     public function __construct(
         protected DocumentoFacturacionService $documentos,
         protected EnvioFacturacionService $envios,
+        protected AccesoDocumentosFacturacion $acceso,
     ) {}
 
     public function index(ListarDocumentosFacturacionRequest $peticion): JsonResponse
     {
         $documentos = $this->documentos->listar(
-            $peticion->validated('tipo') ? TipoDocumentoFacturacion::from($peticion->validated('tipo')) : null,
+            $this->acceso->tiposVisibles($peticion->user(), $peticion->validated('tipo') ? TipoDocumentoFacturacion::from($peticion->validated('tipo')) : null),
             $peticion->validated('estado') ? EstadoDocumentoFacturacion::from($peticion->validated('estado')) : null,
             $peticion->integer('cliente_id') ?: null,
             $peticion->boolean('con_saldo'),
@@ -57,8 +59,10 @@ class DocumentoFacturacionController extends Controller
         return response()->json(['documento' => $documento], 201);
     }
 
-    public function show(DocumentoFacturacion $documento): JsonResponse
+    public function show(Request $peticion, DocumentoFacturacion $documento): JsonResponse
     {
+        $this->acceso->exigirVer($peticion->user(), $documento);
+
         return response()->json($this->documentos->detalle($documento));
     }
 
@@ -114,6 +118,8 @@ class DocumentoFacturacionController extends Controller
 
     public function pdf(Request $peticion, DocumentoFacturacion $documento): Response
     {
+        $this->acceso->exigirVer($peticion->user(), $documento);
+
         $pdf = $this->documentos->generarPdf($documento, $peticion->user());
 
         return response($pdf->contenido, 200, [
@@ -124,18 +130,24 @@ class DocumentoFacturacionController extends Controller
 
     public function reenviar(Request $peticion, DocumentoFacturacion $documento): JsonResponse
     {
+        $this->acceso->exigirVer($peticion->user(), $documento);
+
         $envio = $this->envios->solicitar($peticion->user(), $documento);
 
         return response()->json(['envio' => $this->envios->representar($envio)], 202);
     }
 
-    public function historialEnvios(DocumentoFacturacion $documento): JsonResponse
+    public function historialEnvios(Request $peticion, DocumentoFacturacion $documento): JsonResponse
     {
+        $this->acceso->exigirVer($peticion->user(), $documento);
+
         return response()->json($this->envios->historial($documento));
     }
 
     public function reintentarEnvio(Request $peticion, DocumentoFacturacion $documento, int $envio): JsonResponse
     {
+        $this->acceso->exigirVer($peticion->user(), $documento);
+
         $reintentado = $this->envios->reintentar($peticion->user(), $documento, $envio);
 
         return response()->json(['envio' => $this->envios->representar($reintentado)], 202);

@@ -16,6 +16,7 @@ import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
 import { Pagination } from '@ui/table/components/pagination';
 import { buildUserTableColumns } from '../utils/build-user-table-columns';
+import { isCompanyAdmin } from '../utils/is-company-admin';
 import type { ApiUserListItem } from '../types/api-user-list-item';
 import type { UsersListLocationState } from '../types/users-list-location-state';
 
@@ -27,7 +28,7 @@ export const UsersListPage: FC = () => {
     const canCreate = usePermission('usuarios', 'crear');
     const canEdit = usePermission('usuarios', 'editar');
     const canDelete = usePermission('usuarios', 'eliminar');
-    const canChangePassword = currentUser?.role === 'admin';
+    const canChangePassword = isCompanyAdmin(currentUser);
 
     const [userToDelete, setUserToDelete] = useState<ApiUserListItem | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -77,6 +78,7 @@ export const UsersListPage: FC = () => {
         canEdit,
         canDelete,
         canChangePassword,
+        canManageAdmins: isCompanyAdmin(currentUser),
         onEdit: handleEdit,
         onDelete: setUserToDelete,
         onChangePassword: setUserToChangePassword,

@@ -7,7 +7,6 @@ import { PermissionExportButton } from '../../shared/components/permission-expor
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
-import { useAuth } from '../../auth/hooks/use-auth';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
@@ -24,12 +23,11 @@ import type { ClientsListLocationState } from '../types/clients-list-location-st
 export const ClientsListPage: FC = () => {
     const navigate = useNavigate();
     const { sendRequest } = useSendRequest();
-    const { user } = useAuth();
 
     const canCreate = usePermission('clientes', 'crear');
     const canView = usePermission('clientes', 'ver');
     const canEdit = usePermission('clientes', 'editar');
-    const canDelete = user?.role === 'admin';
+    const canDelete = usePermission('clientes', 'eliminar');
 
     const [clientToDelete, setClientToDelete] = useState<ApiClient | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);

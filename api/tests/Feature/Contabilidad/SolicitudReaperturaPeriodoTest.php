@@ -32,7 +32,7 @@ class SolicitudReaperturaPeriodoTest extends TestCase
 
         $this->empresa = $this->crearEmpresaDePrueba();
         $this->admin = $this->actingAsAdmin($this->empresa);
-        $this->contador = $this->actingAsRolConPermisos('contador', ['configuracion_contable.listar', 'configuracion_contable.cerrar_periodo'], $this->empresa);
+        $this->contador = $this->actingAsRolConPermisos('contador', ['configuracion_contable.listar_periodos', 'configuracion_contable.cerrar_periodo'], $this->empresa);
     }
 
     private function periodoCerrado(int $mes = 1): PeriodoContable
@@ -209,7 +209,7 @@ class SolicitudReaperturaPeriodoTest extends TestCase
     {
         $this->solicitar($this->periodoCerrado(1), 'Del contador uno');
 
-        $otroContador = $this->actingAsRolConPermisos('contador2', ['configuracion_contable.listar', 'configuracion_contable.cerrar_periodo'], $this->empresa);
+        $otroContador = $this->actingAsRolConPermisos('contador2', ['configuracion_contable.listar_periodos', 'configuracion_contable.cerrar_periodo'], $this->empresa);
         $this->solicitar($this->periodoCerrado(2), 'Del contador dos');
 
         $this->actingAs($this->admin, 'sanctum');

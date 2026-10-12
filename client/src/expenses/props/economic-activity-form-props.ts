@@ -1,5 +1,7 @@
 import type { ApiEconomicActivity } from '../types/api-economic-activity';
 
 export type EconomicActivityFormProps = {
-    onCreated: (actividad: ApiEconomicActivity) => void;
+    activityId?: number;
+    initialData?: ApiEconomicActivity;
+    onSaved: (actividad: ApiEconomicActivity) => void;
 };

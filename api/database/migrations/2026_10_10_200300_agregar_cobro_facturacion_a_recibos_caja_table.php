@@ -50,7 +50,7 @@ return new class extends Migration
         }
 
         DB::statement(
-            "ALTER TABLE recibos_caja ADD CONSTRAINT recibos_caja_origen_check CHECK (".
+            'ALTER TABLE recibos_caja ADD CONSTRAINT recibos_caja_origen_check CHECK ('.
             "(origen_tipo = 'pago' AND pago_id IS NOT NULL AND cobro_facturacion_id IS NULL) ".
             "OR (origen_tipo = 'cobro_facturacion' AND cobro_facturacion_id IS NOT NULL AND pago_id IS NULL)".
             ')',

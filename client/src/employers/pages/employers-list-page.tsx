@@ -6,7 +6,6 @@ import { Briefcase, Search } from 'lucide-react';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
-import { useAuth } from '../../auth/hooks/use-auth';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
@@ -21,11 +20,10 @@ import type { EmployersListLocationState } from '../types/employers-list-locatio
 export const EmployersListPage: FC = () => {
     const navigate = useNavigate();
     const { sendRequest } = useSendRequest();
-    const { user } = useAuth();
 
-    const canCreate = usePermission('clientes', 'crear');
-    const canEdit = usePermission('clientes', 'editar');
-    const canDelete = user?.role === 'admin';
+    const canCreate = usePermission('empleadores', 'crear');
+    const canEdit = usePermission('empleadores', 'editar');
+    const canDelete = usePermission('empleadores', 'eliminar');
 
     const [employerToDelete, setEmployerToDelete] = useState<ApiEmployer | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);

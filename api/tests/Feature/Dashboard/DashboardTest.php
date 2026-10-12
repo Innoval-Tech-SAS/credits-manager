@@ -228,6 +228,33 @@ class DashboardTest extends TestCase
             ->assertJsonPath('metricas.gastos', null);
     }
 
+    public function test_sin_permisos_de_cartera_clientes_ni_creditos_no_recibe_conteos_ni_cuotas_del_dia(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->datosDeFebrero($empresa->id);
+        $this->actingAsRolConPermisos('contable', ['gastos.listar_gastos', 'contabilidad.listar_comprobantes'], $empresa);
+
+        $this->getJson(self::RUTA.'?periodo=2026-02')
+            ->assertOk()
+            ->assertJsonPath('metricas.clientes_activos', null)
+            ->assertJsonPath('metricas.creditos_activos', null)
+            ->assertJsonPath('pagos_hoy', null)
+            ->assertJsonPath('metricas.gastos.valor', '30.00');
+    }
+
+    public function test_cada_bloque_del_dashboard_depende_solo_del_permiso_de_su_modulo(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->datosDeFebrero($empresa->id);
+        $this->actingAsRolConPermisos('consulta', ['clientes.listar'], $empresa);
+
+        $respuesta = $this->getJson(self::RUTA.'?periodo=2026-02')->assertOk();
+
+        $this->assertSame(1, $respuesta->json('metricas.clientes_activos'));
+        $this->assertNull($respuesta->json('metricas.creditos_activos'));
+        $this->assertNull($respuesta->json('pagos_hoy'));
+    }
+
     /**
      * Datos de un caso conocido, creados como la empresa dada. Cifras (centavos):
      * - Colocación: 50.000 en febrero y 20.000 en enero.

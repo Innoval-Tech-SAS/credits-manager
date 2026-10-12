@@ -106,6 +106,7 @@ final class FuenteAuxiliarContable implements FuenteExportable
 
     public function autorizadoPara(Usuario $usuario): bool
     {
-        return $usuario->empresa_id !== null && $usuario->tienePermiso('informes_contables', 'exportar');
+        return $usuario->empresa_id !== null && $usuario->tienePermiso('informes_contables', 'exportar')
+            && $usuario->tienePermiso('informes_contables', 'listar_auxiliares');
     }
 }

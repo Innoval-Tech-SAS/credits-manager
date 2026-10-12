@@ -2,6 +2,7 @@ import type { FC, SubmitEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { useAuth } from '../hooks/use-auth';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
@@ -17,6 +18,8 @@ import type { ApiPermisoCatalogItem } from '../types/api-permiso';
 import type { ApiRoleWithPermisos } from '../types/api-role';
 import type { PaginatedResponse } from '../../shared/types/paginated-response';
 import { groupPermisosByModulo } from '../utils/group-permisos-by-modulo';
+import { hasPermission } from '../utils/has-permission';
+import { isCompanyAdmin } from '../utils/is-company-admin';
 
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
@@ -28,6 +31,7 @@ function buildBaseline(rol: ApiRoleWithPermisos | undefined, permisos: ApiPermis
 export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => {
     const navigate = useNavigate();
     const { sendRequest } = useSendRequest();
+    const { user: currentUser } = useAuth();
     const { data: rolesData } = useResource<PaginatedResponse<ApiRoleWithPermisos>>('/roles?per_page=100');
     const { data: permisosData } = useResource<{ permisos: ApiPermisoCatalogItem[] }>('/permisos');
     const roles = rolesData?.data ?? [];
@@ -83,7 +87,13 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
         setOverrides((current) => ({ ...current, [permisoId]: isChecked }));
     };
 
-    const roleOptions = roles.map((rol) => ({ value: String(rol.id), label: capitalize(rol.nombre) }));
+    // Espejo de la regla del backend: quien no es admin no concede, por rol nuevo o excepción, lo que él no tiene.
+    const canGrant = (permiso: ApiPermisoCatalogItem) => hasPermission(currentUser, permiso.modulo, permiso.accion);
+    const isAssignableRole = (rol: ApiRoleWithPermisos) =>
+        isCompanyAdmin(currentUser) || rol.id === initialData?.rol?.id || (rol.nombre !== 'admin' && rol.permisos.every(canGrant));
+    const currentBaseline = buildBaseline(roles.find((rol) => rol.id === roleId), permisos);
+
+    const roleOptions = roles.filter(isAssignableRole).map((rol) => ({ value: String(rol.id), label: capitalize(rol.nombre) }));
 
     const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -282,6 +292,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                                                 id={`permiso-${permiso.id}`}
                                                 label={permiso.accion}
                                                 checked={overrides[permiso.id] ?? false}
+                                                disabled={!canGrant(permiso) && !overrides[permiso.id] && !currentBaseline[permiso.id]}
                                                 onChange={(isChecked) => togglePermiso(permiso.id, isChecked)}
                                             />
                                         ))}

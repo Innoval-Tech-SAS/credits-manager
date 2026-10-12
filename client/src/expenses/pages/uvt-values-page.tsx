@@ -19,7 +19,9 @@ export const UvtValuesPage: FC = () => {
     const navigate = useNavigate();
     const { sendRequest, isLoading } = useSendRequest();
 
-    const canManage = usePermission('gastos', 'parametrizar');
+    const canCreate = usePermission('tributario', 'crear_valores_uvt');
+    const canEdit = usePermission('tributario', 'editar_valores_uvt');
+    const canDelete = usePermission('tributario', 'eliminar_valores_uvt');
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<UvtValuesListLocationState>();
     const { data, isLoading: isLoadingValores, refetch } = useResource<{ valores_uvt: ApiUvtValue[] }>('/gastos/valores-uvt');
     const valoresUvt = data?.valores_uvt ?? [];
@@ -52,7 +54,7 @@ export const UvtValuesPage: FC = () => {
             onDismissError={() => setError(null)}
             countLabel={`${valoresUvt.length} ${valoresUvt.length === 1 ? 'año registrado' : 'años registrados'}`}
             toolbar={
-                canManage && (
+                canCreate && (
                     <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/valores-uvt/crear')}>
                         Guardar valor UVT
                     </Button>
@@ -75,24 +77,28 @@ export const UvtValuesPage: FC = () => {
                 columns={[
                     { key: 'anio', label: 'Año' },
                     { key: 'valor', label: 'Valor UVT' },
-                    ...(canManage
+                    ...(canEdit || canDelete
                         ? [
                               {
                                   key: 'acciones',
                                   label: 'Acciones',
                                   render: (valorUvt: ApiUvtValue) => (
                                       <div className="flex items-center gap-3">
-                                          <ActionButton
-                                              icon={<Pencil className="size-5" />}
-                                              label="Editar"
-                                              onClick={() => navigate(`/gastos/valores-uvt/${valorUvt.id}/editar`)}
-                                          />
-                                          <ActionButton
-                                              icon={<Trash2 className="size-5" />}
-                                              label="Eliminar"
-                                              variant="danger"
-                                              onClick={() => setPorEliminar(valorUvt)}
-                                          />
+                                          {canEdit && (
+                                              <ActionButton
+                                                  icon={<Pencil className="size-5" />}
+                                                  label="Editar"
+                                                  onClick={() => navigate(`/gastos/valores-uvt/${valorUvt.id}/editar`)}
+                                              />
+                                          )}
+                                          {canDelete && (
+                                              <ActionButton
+                                                  icon={<Trash2 className="size-5" />}
+                                                  label="Eliminar"
+                                                  variant="danger"
+                                                  onClick={() => setPorEliminar(valorUvt)}
+                                              />
+                                          )}
                                       </div>
                                   ),
                               },

@@ -1,5 +1,6 @@
 import type { User } from '../types/user';
 import { hasPermission } from './has-permission';
+import { isCompanyAdmin } from './is-company-admin';
 
 /**
  * Regla de acceso a la bitácora (idéntica a la del backend): superadmin, administrador de empresa o
@@ -10,5 +11,5 @@ export function canAccessAudit(user: User | null, action: 'listar' | 'exportar')
         return false;
     }
 
-    return user.isSuperAdmin || user.role === 'admin' || hasPermission(user, 'auditoria', action);
+    return user.isSuperAdmin || isCompanyAdmin(user) || hasPermission(user, 'auditoria', action);
 }

@@ -39,12 +39,14 @@ class EliminarEmpleadorTest extends TestCase
         $this->assertDatabaseHas('empleadores', ['id' => $empleador->id, 'borrado_en' => null]);
     }
 
-    public function test_un_usuario_con_permiso_de_editar_clientes_no_puede_eliminar_empleadores(): void
+    public function test_un_usuario_con_permiso_de_editar_clientes_o_empleadores_no_puede_eliminarlos(): void
     {
         $empresa = $this->crearEmpresaDePrueba();
         $rol = Rol::create(['empresa_id' => $empresa->id, 'nombre' => 'asesor_test']);
-        $permiso = Permiso::firstOrCreate(['modulo' => 'clientes', 'accion' => 'editar']);
-        $rol->permisos()->attach($permiso->id);
+        $rol->permisos()->attach([
+            Permiso::firstOrCreate(['modulo' => 'clientes', 'accion' => 'editar'])->id,
+            Permiso::firstOrCreate(['modulo' => 'empleadores', 'accion' => 'editar'])->id,
+        ]);
         $usuario = Usuario::create([
             'empresa_id' => $empresa->id,
             'nombre' => 'Asesor de prueba',

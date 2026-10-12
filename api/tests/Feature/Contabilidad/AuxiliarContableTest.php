@@ -32,7 +32,7 @@ class AuxiliarContableTest extends TestCase
     /** Dos comprobantes contabilizados: uno en enero (saldo inicial) y uno en febrero (movimiento del rango). */
     private function sembrarMovimientos(Empresa $empresa): array
     {
-        $this->actingAsRolConPermisos('contador_siembra', ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar'], $empresa);
+        $this->actingAsRolConPermisos('contador_siembra', ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar_comprobantes'], $empresa);
         $tipo = $this->crearTipoComprobante();
         $this->caja = $this->crearCuenta(['codigo' => '110505', 'nombre' => 'Caja general']);
         $this->ingresos = $this->crearCuenta(['codigo' => '413505', 'nombre' => 'Intereses', 'naturaleza' => 'credito', 'tipo' => 'ingreso']);
@@ -77,7 +77,7 @@ class AuxiliarContableTest extends TestCase
     {
         $empresa = $this->crearEmpresaDePrueba();
         $this->sembrarMovimientos($empresa);
-        $this->actingAsRolConPermisos('auxiliar', ['informes_contables.listar'], $empresa);
+        $this->actingAsRolConPermisos('auxiliar', ['informes_contables.listar_auxiliares'], $empresa);
 
         $respuesta = $this->getJson(self::BASE.'?desde=2026-02-01&hasta=2026-02-28&cuenta_id='.$this->caja->id)
             ->assertOk();
@@ -96,7 +96,7 @@ class AuxiliarContableTest extends TestCase
     {
         $empresa = $this->crearEmpresaDePrueba();
         [, , $tercero] = $this->sembrarMovimientos($empresa);
-        $this->actingAsRolConPermisos('auxiliar', ['informes_contables.listar'], $empresa);
+        $this->actingAsRolConPermisos('auxiliar', ['informes_contables.listar_auxiliares'], $empresa);
 
         $respuesta = $this->getJson(self::BASE.'?desde=2026-01-01&hasta=2026-12-31&tercero_id='.$tercero->id)
             ->assertOk();
@@ -112,7 +112,7 @@ class AuxiliarContableTest extends TestCase
     {
         $empresa = $this->crearEmpresaDePrueba();
         $this->sembrarMovimientos($empresa);
-        $this->actingAsRolConPermisos('auxiliar', ['informes_contables.listar'], $empresa);
+        $this->actingAsRolConPermisos('auxiliar', ['informes_contables.listar_auxiliares'], $empresa);
 
         $caja = $this->getJson(self::BASE.'?desde=2026-01-01&hasta=2026-12-31&cuenta_id='.$this->caja->id)->assertOk();
         $ingresos = $this->getJson(self::BASE.'?desde=2026-01-01&hasta=2026-12-31&cuenta_id='.$this->ingresos->id)->assertOk();
@@ -128,7 +128,7 @@ class AuxiliarContableTest extends TestCase
         $empresa = $this->crearEmpresaDePrueba();
         $this->sembrarMovimientos($empresa);
         $cuentaVacia = $this->crearCuenta(['codigo' => '999905', 'nombre' => 'Sin movimiento']);
-        $this->actingAsRolConPermisos('auxiliar', ['informes_contables.listar'], $empresa);
+        $this->actingAsRolConPermisos('auxiliar', ['informes_contables.listar_auxiliares'], $empresa);
 
         $this->getJson(self::BASE.'?desde=2026-01-01&hasta=2026-12-31&cuenta_id='.$cuentaVacia->id)
             ->assertOk()
@@ -141,7 +141,7 @@ class AuxiliarContableTest extends TestCase
         $empresa = $this->crearEmpresaDePrueba();
         $otra = $this->crearEmpresaDePrueba();
         $this->sembrarMovimientos($otra);
-        $this->actingAsRolConPermisos('auxiliar', ['informes_contables.listar'], $empresa);
+        $this->actingAsRolConPermisos('auxiliar', ['informes_contables.listar_auxiliares'], $empresa);
 
         $this->getJson(self::BASE.'?desde=2026-01-01&hasta=2026-12-31&cuenta_id='.$this->caja->id)
             ->assertStatus(422)
@@ -154,7 +154,7 @@ class AuxiliarContableTest extends TestCase
         Queue::fake();
         $empresa = $this->crearEmpresaDePrueba();
         $this->sembrarMovimientos($empresa);
-        $this->actingAsRolConPermisos('exportador', ['informes_contables.listar', 'informes_contables.exportar'], $empresa);
+        $this->actingAsRolConPermisos('exportador', ['informes_contables.listar_auxiliares', 'informes_contables.exportar'], $empresa);
 
         $this->postJson(self::BASE.'/exportar', [
             'cuenta_id' => $this->caja->id,
@@ -170,7 +170,7 @@ class AuxiliarContableTest extends TestCase
     {
         $empresa = $this->crearEmpresaDePrueba();
         $this->sembrarMovimientos($empresa);
-        $this->actingAsRolConPermisos('solo_lectura', ['informes_contables.listar'], $empresa);
+        $this->actingAsRolConPermisos('solo_lectura', ['informes_contables.listar_auxiliares'], $empresa);
 
         $this->postJson(self::BASE.'/exportar', [
             'cuenta_id' => $this->caja->id,
@@ -184,7 +184,7 @@ class AuxiliarContableTest extends TestCase
     {
         $empresa = $this->crearEmpresaDePrueba();
         [, , $tercero] = $this->sembrarMovimientos($empresa);
-        $this->actingAsRolConPermisos('imprime', ['informes_contables.listar', 'informes_contables.imprimir'], $empresa);
+        $this->actingAsRolConPermisos('imprime', ['informes_contables.listar_auxiliares', 'informes_contables.imprimir'], $empresa);
 
         $respuesta = $this->get(self::BASE.'/pdf?desde=2026-01-01&hasta=2026-12-31&tercero_id='.$tercero->id)
             ->assertOk()
@@ -197,7 +197,7 @@ class AuxiliarContableTest extends TestCase
     {
         $empresa = $this->crearEmpresaDePrueba();
         $this->sembrarMovimientos($empresa);
-        $this->actingAsRolConPermisos('sin_imprimir', ['informes_contables.listar', 'informes_contables.exportar'], $empresa);
+        $this->actingAsRolConPermisos('sin_imprimir', ['informes_contables.listar_auxiliares', 'informes_contables.exportar'], $empresa);
 
         $this->get(self::BASE.'/pdf?desde=2026-01-01&hasta=2026-12-31&cuenta_id='.$this->caja->id)->assertStatus(403);
     }

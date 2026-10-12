@@ -19,7 +19,7 @@ class EditarActividadEconomicaRequest extends FormRequest
                 'sometimes', 'string', 'max:20',
                 Rule::unique('actividades_economicas', 'codigo')
                     ->where('empresa_id', $this->user()->empresa_id)
-                    ->ignore($this->route('actividad_economica')),
+                    ->ignore($this->route('actividadEconomica')),
             ],
             'nombre' => ['sometimes', 'string', 'max:150'],
             'activo' => ['sometimes', 'boolean'],

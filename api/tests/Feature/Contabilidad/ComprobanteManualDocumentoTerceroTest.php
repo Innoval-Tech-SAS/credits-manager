@@ -31,7 +31,7 @@ class ComprobanteManualDocumentoTerceroTest extends TestCase
     {
         return $this->actingAsRolConPermisos(
             'creador',
-            ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar', 'contabilidad.anular'],
+            ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar_comprobantes', 'contabilidad.anular'],
             $empresa,
         );
     }
@@ -40,7 +40,7 @@ class ComprobanteManualDocumentoTerceroTest extends TestCase
     {
         $usuario = $this->revisores[$empresa->id] ??= $this->actingAsRolConPermisos(
             'revisor',
-            ['contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar'],
+            ['contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar_comprobantes'],
             $empresa,
         );
 

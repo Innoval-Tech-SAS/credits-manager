@@ -22,8 +22,9 @@ export const VoucherTypesPage: FC = () => {
     const navigate = useNavigate();
     const { sendRequest, isLoading: isMutating } = useSendRequest();
 
-    const canCreate = usePermission('configuracion_contable', 'crear');
-    const canEdit = usePermission('configuracion_contable', 'editar');
+    const canCreate = usePermission('configuracion_contable', 'crear_tipos_comprobante');
+    const canEdit = usePermission('configuracion_contable', 'editar_tipos_comprobante');
+    const canDelete = usePermission('configuracion_contable', 'eliminar_tipos_comprobante');
 
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<VoucherTypesListLocationState>();
 
@@ -165,19 +166,19 @@ export const VoucherTypesPage: FC = () => {
                                     onClick={() => navigate(`/contabilidad/tipos-comprobante/${tipo.id}`)}
                                 />
                                 {canEdit && (
-                                    <>
-                                        <ActionButton
-                                            icon={<Pencil className="size-5" />}
-                                            label="Editar"
-                                            onClick={() => navigate(`/contabilidad/tipos-comprobante/${tipo.id}/editar`)}
-                                        />
-                                        <ActionButton
-                                            icon={<Trash2 className="size-5" />}
-                                            label="Eliminar"
-                                            variant="danger"
-                                            onClick={() => setTipoAEliminar(tipo)}
-                                        />
-                                    </>
+                                    <ActionButton
+                                        icon={<Pencil className="size-5" />}
+                                        label="Editar"
+                                        onClick={() => navigate(`/contabilidad/tipos-comprobante/${tipo.id}/editar`)}
+                                    />
+                                )}
+                                {canDelete && (
+                                    <ActionButton
+                                        icon={<Trash2 className="size-5" />}
+                                        label="Eliminar"
+                                        variant="danger"
+                                        onClick={() => setTipoAEliminar(tipo)}
+                                    />
                                 )}
                             </div>
                         ),

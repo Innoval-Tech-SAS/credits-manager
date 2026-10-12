@@ -11,8 +11,9 @@ use App\Usuarios\Models\Usuario;
 use Carbon\CarbonImmutable;
 
 /**
- * Sin tabla propia. Arma el dashboard con los agregados de `DashboardRepository`. Cada bloque (colocación, recaudo,
- * gastos, cartera) solo se consulta si el usuario tiene el permiso de su módulo; el resto no llega a la base.
+ * Sin tabla propia. Arma el dashboard con los agregados de `DashboardRepository`. Cada bloque solo se consulta si el
+ * usuario tiene el permiso de lectura de su módulo (créditos activos con `creditos`, clientes activos con `clientes`,
+ * cuotas del día con `cartera`, gastos con `gastos.listar_gastos`); el resto no llega a la base y sale en `null`.
  *
  * La ventana histórica son 13 meses: los 12 que se muestran más el año anterior del mes elegido, que sirve de
  * comparación interanual sin una segunda consulta.
@@ -38,7 +39,8 @@ class DashboardService
         $verColocacion = $this->puede($usuario, 'creditos');
         $verRecaudo = $this->puede($usuario, 'pagos');
         $verCartera = $this->puede($usuario, 'cartera');
-        $verGastos = $this->puede($usuario, 'gastos');
+        $verGastos = $this->puede($usuario, 'gastos', 'listar_gastos');
+        $verClientes = $this->puede($usuario, 'clientes');
 
         $colocacion = $verColocacion ? $this->dashboard->colocacionPorMes($empresaId, $asesorId, $clienteId, $estado, $desde, $hasta) : null;
         $recaudo = $verRecaudo ? $this->dashboard->recaudoPorMes($empresaId, $asesorId, $clienteId, $estado, $desde, $hasta) : null;
@@ -57,8 +59,8 @@ class DashboardService
                 'gastos' => $gastos !== null ? $this->serie($gastos, $meses) : null,
             ],
             'metricas' => [
-                'clientes_activos' => $this->dashboard->contarClientesActivos($empresaId, $asesorId),
-                'creditos_activos' => $this->dashboard->contarCreditosActivos($empresaId, $asesorId, $clienteId, $estado),
+                'clientes_activos' => $verClientes ? $this->dashboard->contarClientesActivos($empresaId, $asesorId) : null,
+                'creditos_activos' => $verColocacion ? $this->dashboard->contarCreditosActivos($empresaId, $asesorId, $clienteId, $estado) : null,
                 'colocacion' => $colocacion !== null ? [
                     ...$this->bloque($this->centavosDe($colocacion), $meses),
                     'cantidad' => $colocacion[$meses[12]]['cantidad'] ?? 0,
@@ -67,14 +69,14 @@ class DashboardService
                 'gastos' => $gastos !== null ? $this->bloque($gastos, $meses) : null,
                 'cartera' => $verCartera ? $this->cartera($empresaId, $asesorId, $clienteId, $estado, $hoy) : null,
             ],
-            'pagos_hoy' => $this->mapearPagosDelDia($this->dashboard->pagosDelDia($empresaId, $asesorId, $clienteId, $estado, $hoy)),
+            'pagos_hoy' => $verCartera ? $this->mapearPagosDelDia($this->dashboard->pagosDelDia($empresaId, $asesorId, $clienteId, $estado, $hoy)) : null,
         ];
     }
 
     /** El superadmin, que no tiene rol, ve todos los bloques de la empresa que eligió. */
-    private function puede(Usuario $usuario, string $modulo): bool
+    private function puede(Usuario $usuario, string $modulo, string $accion = 'listar'): bool
     {
-        return $usuario->es_superadmin || $usuario->tienePermiso($modulo, 'listar');
+        return $usuario->es_superadmin || $usuario->tienePermiso($modulo, $accion);
     }
 
     /** 13 meses `YYYY-MM` terminando en el período elegido. */

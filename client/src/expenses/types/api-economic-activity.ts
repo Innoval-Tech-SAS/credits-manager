@@ -1,4 +1,4 @@
-/** Raw shape of a row returned by `GET /gastos/actividades-economicas` and `POST /gastos/actividades-economicas`. */
+/** Raw shape of a row returned by `GET /gastos/actividades-economicas`, `POST /gastos/actividades-economicas` and `PATCH /gastos/actividades-economicas/{id}`. */
 export type ApiEconomicActivity = {
     id: number;
     codigo: string;

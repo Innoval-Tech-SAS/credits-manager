@@ -80,9 +80,9 @@ class ConsecutivosFacturacionTest extends TestCase
 
     public function test_sin_permiso_de_configurar_recibe_403(): void
     {
-        $this->actingAsRolConPermisos('contable', ['facturacion.listar']);
+        $this->actingAsRolConPermisos('contable', ['facturacion.listar_facturas', 'facturacion.crear']);
 
-        $this->getJson(self::CONSECUTIVOS)->assertOk();
+        $this->getJson(self::CONSECUTIVOS)->assertStatus(403);
         $this->patchJson(self::CONSECUTIVOS.'/factura', ['prefijo' => 'X'])->assertStatus(403);
     }
 

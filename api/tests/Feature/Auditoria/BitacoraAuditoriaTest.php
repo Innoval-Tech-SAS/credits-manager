@@ -65,7 +65,7 @@ class BitacoraAuditoriaTest extends TestCase
 
     public function test_rol_auditoria_sin_el_permiso_recibe_403(): void
     {
-        $this->actingAsRolConPermisos('auditoria', ['contabilidad.listar']);
+        $this->actingAsRolConPermisos('auditoria', ['contabilidad.listar_comprobantes']);
 
         $this->getJson(self::URL)->assertStatus(403);
     }

@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router';
 
 import { useAuth } from '../../auth/hooks/use-auth';
 import { hasPermission } from '../../auth/utils/has-permission';
+import { isCompanyAdmin } from '../../auth/utils/is-company-admin';
 import { useCompany } from '../../company/hooks/use-company';
 import { API_ROOT } from '../../shared/constants/api';
 import { ChevronDown } from 'lucide-react';
@@ -23,7 +24,7 @@ export const AppSidebar: FC = () => {
     const isShown = isExpanded || isHovered || isMobileOpen;
 
     const canSee = (entry: NavItem | NavSubItem) => {
-        if (entry.adminOnly && user?.role !== 'admin') {
+        if (entry.adminOnly && !isCompanyAdmin(user)) {
             return false;
         }
 

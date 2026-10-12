@@ -16,6 +16,7 @@ export const NotasDebitoListPage: FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const canCreate = usePermission('facturacion', 'crear');
+    const canRegisterPayment = usePermission('facturacion', 'registrar_cobro');
     const puedeConfigurar = usePermission('facturacion', 'configurar');
 
     const { items, isLoading, page, setPage, totalPages, totalItems } = usePaginatedResource<ApiInvoice>('/facturacion/documentos', { tipo: 'nota_debito' });
@@ -34,7 +35,7 @@ export const NotasDebitoListPage: FC = () => {
                             Consecutivos
                         </Button>
                     )}
-                    {canCreate && (
+                    {canRegisterPayment && (
                         <Button variant="outline" collapseBelow="md" startIcon={<HandCoins className="size-4" />} onClick={() => navigate('/facturacion/cobros/crear')}>
                             Cobro múltiple
                         </Button>

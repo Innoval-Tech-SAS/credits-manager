@@ -30,7 +30,7 @@ class PermisosImpresionTest extends TestCase
         return [
             'estado_cuenta' => ['estado_cuenta', 'creditos.listar', 'creditos.imprimir_estado_cuenta'],
             'recibo' => ['recibo', 'pagos.listar', 'pagos.imprimir_recibo'],
-            'comprobante' => ['comprobante', 'contabilidad.listar', 'contabilidad.imprimir_comprobante'],
+            'comprobante' => ['comprobante', 'contabilidad.listar_comprobantes', 'contabilidad.imprimir_comprobante'],
             'reporte_empleador' => ['reporte_empleador', 'cartera.exportar', 'cartera.imprimir_reporte_empleador'],
         ];
     }

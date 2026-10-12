@@ -24,7 +24,7 @@ class InformesContablesPdfTest extends TestCase
 
     private function sembrar(Empresa $empresa): int
     {
-        $this->actingAsRolConPermisos('contador', ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar'], $empresa);
+        $this->actingAsRolConPermisos('contador', ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar_comprobantes'], $empresa);
         $tipo = $this->crearTipoComprobante();
         $caja = $this->crearCuenta(['codigo' => '110505', 'nombre' => 'Caja general']);
         $ingresos = $this->crearCuenta(['codigo' => '413505', 'nombre' => 'Intereses', 'naturaleza' => 'credito', 'tipo' => 'ingreso']);
@@ -40,7 +40,8 @@ class InformesContablesPdfTest extends TestCase
     private function informes(Empresa $empresa): void
     {
         $this->actingAsRolConPermisos('lector', [
-            'informes_contables.listar', 'informes_contables.imprimir', 'informes_contables.exportar',
+            'informes_contables.listar_libro_diario', 'informes_contables.listar_libro_mayor', 'informes_contables.listar_balance_prueba', 'informes_contables.listar_estados_financieros',
+            'informes_contables.imprimir', 'informes_contables.exportar',
         ], $empresa);
     }
 
@@ -55,7 +56,7 @@ class InformesContablesPdfTest extends TestCase
     {
         $empresa = $this->crearEmpresaDePrueba();
         $this->sembrar($empresa);
-        $this->actingAsRolConPermisos('solo_listar', ['informes_contables.listar', 'informes_contables.exportar'], $empresa);
+        $this->actingAsRolConPermisos('solo_listar', ['informes_contables.listar_libro_diario', 'informes_contables.listar_libro_mayor', 'informes_contables.listar_balance_prueba', 'informes_contables.listar_estados_financieros', 'informes_contables.exportar'], $empresa);
 
         $this->get(self::BASE.'/balance-prueba/pdf?hasta=2026-12-31')->assertStatus(403);
         $this->get(self::BASE.'/libro-diario/pdf?desde=2026-01-01&hasta=2026-12-31')->assertStatus(403);

@@ -19,7 +19,9 @@ export const ExpenseTypesPage: FC = () => {
     const navigate = useNavigate();
     const { sendRequest, isLoading: isMutating } = useSendRequest();
 
-    const canEdit = usePermission('gastos', 'parametrizar');
+    const canCreate = usePermission('gastos', 'crear_tipos_gasto');
+    const canEdit = usePermission('gastos', 'editar_tipos_gasto');
+    const canDelete = usePermission('gastos', 'eliminar_tipos_gasto');
 
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<ExpenseTypesListLocationState>();
     const { data, isLoading, refetch } = useResource<{ tipos_gasto: ApiExpenseType[] }>('/gastos/tipos-gasto');
@@ -73,7 +75,7 @@ export const ExpenseTypesPage: FC = () => {
             onDismissError={() => setError(null)}
             countLabel={`${tiposGasto.length} ${tiposGasto.length === 1 ? 'tipo registrado' : 'tipos registrados'}`}
             toolbar={
-                canEdit && (
+                canCreate && (
                     <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/tipos-gasto/crear')}>
                         Crear tipo de gasto
                     </Button>
@@ -144,19 +146,19 @@ export const ExpenseTypesPage: FC = () => {
                                     onClick={() => navigate(`/gastos/tipos-gasto/${tipo.id}`)}
                                 />
                                 {canEdit && (
-                                    <>
-                                        <ActionButton
-                                            icon={<Pencil className="size-5" />}
-                                            label="Editar"
-                                            onClick={() => navigate(`/gastos/tipos-gasto/${tipo.id}/editar`)}
-                                        />
-                                        <ActionButton
-                                            icon={<Trash2 className="size-5" />}
-                                            label="Eliminar"
-                                            variant="danger"
-                                            onClick={() => setTipoAEliminar(tipo)}
-                                        />
-                                    </>
+                                    <ActionButton
+                                        icon={<Pencil className="size-5" />}
+                                        label="Editar"
+                                        onClick={() => navigate(`/gastos/tipos-gasto/${tipo.id}/editar`)}
+                                    />
+                                )}
+                                {canDelete && (
+                                    <ActionButton
+                                        icon={<Trash2 className="size-5" />}
+                                        label="Eliminar"
+                                        variant="danger"
+                                        onClick={() => setTipoAEliminar(tipo)}
+                                    />
                                 )}
                             </div>
                         ),

@@ -41,7 +41,7 @@ class ComprobantePdfTest extends TestCase
         ], $extra))->assertCreated()->json('comprobante.id');
 
         $this->actingAsRolConPermisos('revisor', [
-            'contabilidad.listar', 'contabilidad.revisar', 'contabilidad.contabilizar',
+            'contabilidad.listar_comprobantes', 'contabilidad.revisar', 'contabilidad.contabilizar',
             'contabilidad.imprimir_comprobante', 'contabilidad.anular',
         ], Empresa::query()->findOrFail($admin->empresa_id));
 

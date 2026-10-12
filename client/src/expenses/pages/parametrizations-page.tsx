@@ -19,7 +19,7 @@ import type { ApiParametrization } from '../types/api-parametrization';
 export const ParametrizationsPage: FC = () => {
     const navigate = useNavigate();
 
-    const canCreate = usePermission('gastos', 'parametrizar');
+    const canCreate = usePermission('gastos', 'crear_parametrizaciones');
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<ParametrizationsListLocationState>();
     const [tipoGastoId, setTipoGastoId] = useState('');
 

@@ -9,7 +9,28 @@ const mocks = vi.hoisted(() => ({
     sendRequest: vi.fn(),
     download: vi.fn(),
     resource: { data: null as unknown },
+    permisos: new Set<string>(),
 }));
+
+/** Usuario sin rol admin: cada permiso de la lista es una fila de `permissions`. */
+vi.mock('../../auth/hooks/use-auth', () => ({
+    useAuth: () => ({
+        user: {
+            id: 1,
+            name: 'Importador',
+            username: 'importador',
+            role: 'importador',
+            isSuperAdmin: false,
+            permissions: [...mocks.permisos].map((clave) => {
+                const [modulo, accion] = clave.split('.');
+
+                return { modulo, accion };
+            }),
+        },
+    }),
+}));
+
+const PERMISOS_COMPLETOS = ['clientes.crear', 'creditos.crear', 'empleadores.crear', 'contabilidad.crear_manual'];
 
 vi.mock('../../shared/hooks/use-send-request', () => ({
     useSendRequest: () => ({ sendRequest: mocks.sendRequest }),
@@ -88,6 +109,26 @@ describe('NewImportPage', () => {
         mocks.sendRequest.mockReset();
         mocks.download.mockReset();
         mocks.resource.data = null;
+        mocks.permisos = new Set(PERMISOS_COMPLETOS);
+    });
+
+    it('solo ofrece las hojas que el usuario puede importar', () => {
+        mocks.permisos = new Set(['clientes.crear']);
+        renderPagina('/importaciones/nueva');
+
+        const opciones = Array.from(screen.getByRole('combobox').querySelectorAll('option')).map((opcion) => opcion.value).filter(Boolean);
+        expect(opciones).toEqual(['clientes']);
+    });
+
+    it('sin empleadores.crear ni contabilidad.crear_manual no ofrece crear empleadores ni generar asientos', async () => {
+        mocks.permisos = new Set(['clientes.crear', 'creditos.crear']);
+        renderPagina('/importaciones/nueva?tipo=creditos');
+
+        await waitFor(() => expect(botonValidar().disabled).toBe(false));
+        expect(screen.queryByLabelText('Generar asientos contables')).toBeNull();
+
+        renderPagina('/importaciones/nueva?tipo=clientes');
+        expect(screen.queryByLabelText('Crear empleadores no encontrados')).toBeNull();
     });
 
     it('envía los booleanos como 1 o 0 para que la validación del backend los acepte', async () => {

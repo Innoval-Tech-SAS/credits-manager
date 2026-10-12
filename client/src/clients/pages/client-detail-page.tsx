@@ -4,7 +4,6 @@ import { useNavigate, useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
-import { useAuth } from '../../auth/hooks/use-auth';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
@@ -28,8 +27,7 @@ export const ClientDetailPage: FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const canEdit = usePermission('clientes', 'editar');
-    const { user } = useAuth();
-    const isAdmin = user?.role === 'admin';
+    const canReassignAdvisor = usePermission('clientes', 'reasignar_asesor');
 
     const { data: resumen, error, refetch } = useResource<ApiClientSummary>(`/clientes/${id}/resumen`);
     const canSendReminder = usePermission('cartera', 'enviar_recordatorio');
@@ -128,7 +126,7 @@ export const ClientDetailPage: FC = () => {
                 <ClientInfoCard cliente={cliente} canEdit={canEdit} onEdit={() => navigate(`/clientes/${cliente.id}/editar`)} />
             </div>
 
-            {isAdmin && <ClientAdvisorHistoryCard clientId={cliente.id} currentAdvisorId={cliente.asesor_id} onReassigned={refetch} />}
+            {canReassignAdvisor && <ClientAdvisorHistoryCard clientId={cliente.id} currentAdvisorId={cliente.asesor_id} onReassigned={refetch} />}
 
             <ClientEmploymentHistoryTable historial={historialEmpleadores} />
 

@@ -9,6 +9,7 @@ use App\Contabilidad\Requests\ExportarEstadosFinancierosRequest;
 use App\Contabilidad\Requests\ExportarLibroDiarioRequest;
 use App\Contabilidad\Requests\ExportarLibroMayorRequest;
 use App\Contabilidad\Requests\ImprimirLibroMayorRequest;
+use App\Contabilidad\Services\AccesoLibroMayor;
 use App\Contabilidad\Services\ConciliacionAperturaService;
 use App\Contabilidad\Services\InformeContablePdfService;
 use App\Contabilidad\Services\ReporteContableService;
@@ -25,6 +26,7 @@ class ReporteContableController extends Controller
         protected ReporteContableService $reportes,
         protected InformeContablePdfService $informesPdf,
         protected ConciliacionAperturaService $conciliacion,
+        protected AccesoLibroMayor $accesoLibroMayor,
     ) {}
 
     public function libroDiario(Request $peticion): JsonResponse
@@ -38,6 +40,8 @@ class ReporteContableController extends Controller
 
     public function libroMayor(Request $peticion): JsonResponse
     {
+        $this->accesoLibroMayor->exigir($peticion->user(), $peticion->integer('cuenta_id'));
+
         return response()->json($this->reportes->libroMayor(
             (int) $peticion->user()->empresa_id,
             $peticion->integer('cuenta_id'),
@@ -83,6 +87,8 @@ class ReporteContableController extends Controller
 
     public function pdfLibroMayor(ImprimirLibroMayorRequest $peticion): Response
     {
+        $this->accesoLibroMayor->exigir($peticion->user(), $peticion->integer('cuenta_id'));
+
         return $this->pdf($this->informesPdf->libroMayor(
             $peticion->integer('cuenta_id'),
             $peticion->validated('desde'),
@@ -109,6 +115,8 @@ class ReporteContableController extends Controller
 
     public function exportarLibroMayor(ExportarLibroMayorRequest $peticion): JsonResponse
     {
+        $this->accesoLibroMayor->exigir($peticion->user(), $peticion->integer('cuenta_id'));
+
         $exportacion = $this->reportes->solicitarExportacionLibroMayor(
             $peticion->user(),
             $peticion->integer('cuenta_id'),

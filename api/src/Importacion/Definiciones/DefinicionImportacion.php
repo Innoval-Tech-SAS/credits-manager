@@ -90,7 +90,7 @@ final class DefinicionImportacion
                 'hoja' => 'Saldos_Contables_Iniciales',
                 'orden' => 5,
                 'nota' => 'Hoja opcional. La cuenta PUC debe existir en el plan de cuentas.',
-                'permiso' => ['configuracion_contable', 'crear'],
+                'permiso' => ['configuracion_contable', 'crear_plan_cuentas'],
                 'columnas' => [
                     self::c('fecha_corte', 'Fecha de corte', true, 'fecha'),
                     self::c('cuenta', 'Cuenta PUC', true, 'texto'),
@@ -119,7 +119,7 @@ final class DefinicionImportacion
                 'hoja' => 'Plan de cuentas (formato anterior)',
                 'orden' => 6,
                 'nota' => 'Formato de migración anterior, se mantiene para cargas existentes.',
-                'permiso' => ['configuracion_contable', 'crear'],
+                'permiso' => ['configuracion_contable', 'crear_plan_cuentas'],
                 'columnas' => [
                     self::c('codigo', 'codigo', true, 'texto'),
                     self::c('nombre', 'nombre', true, 'texto'),
@@ -153,7 +153,7 @@ final class DefinicionImportacion
                 'hoja' => 'Actividades_Economicas',
                 'orden' => 9,
                 'nota' => 'Si el código CIIU ya existe para la empresa, se actualiza el nombre; si no, se crea una actividad nueva.',
-                'permiso' => ['tributario', 'parametrizar'],
+                'permiso' => ['tributario', 'crear_actividades_economicas'],
                 'columnas' => [
                     self::c('codigo', 'Código CIIU', true, 'texto'),
                     self::c('nombre', 'Actividad económica', true, 'texto'),
@@ -163,7 +163,7 @@ final class DefinicionImportacion
                 'hoja' => 'Valores_UVT',
                 'orden' => 10,
                 'nota' => 'Un valor por año. Si el año ya existe, se reemplaza.',
-                'permiso' => ['tributario', 'parametrizar'],
+                'permiso' => ['tributario', 'crear_valores_uvt'],
                 'columnas' => [
                     self::c('anio', 'Año', true, 'entero'),
                     self::c('valor', 'Valor UVT', true, 'monto'),
@@ -173,7 +173,7 @@ final class DefinicionImportacion
                 'hoja' => 'Tarifas_ReteICA',
                 'orden' => 11,
                 'nota' => 'Requiere que el municipio (código DANE) y la actividad económica (código CIIU) ya existan. Abre una nueva vigencia desde la fecha indicada; si había una vigencia abierta para ese municipio y esa actividad, se cierra el día anterior.',
-                'permiso' => ['tributario', 'parametrizar'],
+                'permiso' => ['tributario', 'crear_tarifas_reteica'],
                 'columnas' => [
                     self::c('municipio', 'Código DANE del municipio', true, 'texto'),
                     self::c('actividad_economica', 'Código CIIU de la actividad', true, 'texto'),

@@ -5,15 +5,18 @@ import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
+import { ToggleSwitchInput } from '@ui/forms/components/toggle-switch-input';
 import { Spinner } from '@ui/spinner/components/spinner';
 import type { EconomicActivityFormProps } from '../props/economic-activity-form-props';
 import type { ApiEconomicActivity } from '../types/api-economic-activity';
 
-export const EconomicActivityForm: FC<EconomicActivityFormProps> = ({ onCreated }) => {
+export const EconomicActivityForm: FC<EconomicActivityFormProps> = ({ activityId, initialData, onSaved }) => {
     const { sendRequest } = useSendRequest();
+    const isEditMode = activityId !== undefined;
 
-    const [codigo, setCodigo] = useState('');
-    const [nombre, setNombre] = useState('');
+    const [codigo, setCodigo] = useState(initialData?.codigo ?? '');
+    const [nombre, setNombre] = useState(initialData?.nombre ?? '');
+    const [activo, setActivo] = useState(initialData?.activo ?? true);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -23,14 +26,17 @@ export const EconomicActivityForm: FC<EconomicActivityFormProps> = ({ onCreated 
         setIsSubmitting(true);
 
         try {
-            const respuesta = await sendRequest<{ actividad_economica: ApiEconomicActivity }>('/gastos/actividades-economicas', {
-                method: 'POST',
-                body: { codigo, nombre },
-            });
+            const respuesta = isEditMode
+                ? await sendRequest<{ actividad_economica: ApiEconomicActivity }>(`/gastos/actividades-economicas/${activityId}`, {
+                      method: 'PATCH',
+                      body: { codigo, nombre, activo },
+                  })
+                : await sendRequest<{ actividad_economica: ApiEconomicActivity }>('/gastos/actividades-economicas', {
+                      method: 'POST',
+                      body: { codigo, nombre },
+                  });
 
-            onCreated(respuesta.actividad_economica);
-            setCodigo('');
-            setNombre('');
+            onSaved(respuesta.actividad_economica);
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         } finally {
@@ -59,9 +65,24 @@ export const EconomicActivityForm: FC<EconomicActivityFormProps> = ({ onCreated 
                     </div>
                 </div>
 
+                {isEditMode && (
+                    <div>
+                        <Label>Estado</Label>
+                        <div className="flex h-11 items-center">
+                            <ToggleSwitchInput id="activo" label={activo ? 'Activa' : 'Inactiva'} checked={activo} onChange={setActivo} />
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                     <Button type="submit" disabled={isSubmitting} startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}>
-                        {isSubmitting ? 'Creando…' : 'Crear actividad económica'}
+                        {isSubmitting
+                            ? isEditMode
+                                ? 'Actualizando…'
+                                : 'Creando…'
+                            : isEditMode
+                              ? 'Actualizar actividad económica'
+                              : 'Crear actividad económica'}
                     </Button>
                 </div>
             </div>
