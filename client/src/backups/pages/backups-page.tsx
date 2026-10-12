@@ -11,10 +11,10 @@ export const BackupsPage: FC = () => {
     const { user } = useAuth();
 
     return (
-        <>
+        <div className="flex min-h-full flex-col pb-6">
             <PageBreadcrumb pageTitle="Respaldos" />
 
-            <div className="flex flex-col gap-4 md:gap-6">
+            <div className="flex flex-1 flex-col gap-4 md:gap-6">
                 {user?.isSuperAdmin && (
                     <BackupDownloadCard
                         title="Base de datos completa"
@@ -41,6 +41,6 @@ export const BackupsPage: FC = () => {
                     <Alert variant="danger" title="Sin acceso" message="Solo el administrador de la empresa o el superadmin pueden descargar respaldos." />
                 )}
             </div>
-        </>
+        </div>
     );
 };

@@ -11,7 +11,7 @@ export const BackupDownloadCard: FC<BackupDownloadCardProps> = ({ title, descrip
     const { download, isDownloading, error } = useDownloadFile();
 
     return (
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
+        <section className="flex flex-1 flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
             <div className="flex items-start gap-3">
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400">
                     {icon}
