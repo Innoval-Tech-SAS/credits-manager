@@ -114,7 +114,7 @@ class ReporteEmpleadorExportarTest extends TestCase
     public function test_exportar_da_el_excel_pero_no_el_pdf(): void
     {
         $empleador = $this->empleadorConCuotas();
-        $this->actingAsRolConPermisos('cartera', ['cartera.exportar'], Empresa::find($empleador->empresa_id));
+        $this->actingAsRolConPermisos('cartera', ['cartera.exportar_reporte_empleador'], Empresa::find($empleador->empresa_id));
 
         $this->postJson(self::EXPORTAR, ['empleador_id' => $empleador->id, 'formato' => 'xlsx'])->assertStatus(202);
         $this->getJson(self::PDF.'?empleador_id='.$empleador->id)->assertStatus(403);

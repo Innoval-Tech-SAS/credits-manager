@@ -31,6 +31,7 @@ export const TrialBalancePage: FC = () => {
                 <div className="mt-6">
                     <ReportExportButton
                         endpoint="/contabilidad/balance-prueba/exportar"
+                        exportPermissions={['informes_contables.exportar_balance_prueba']}
                         pdfEndpoint="/contabilidad/balance-prueba/pdf"
                         pdfFilename="balance-de-prueba.pdf"
                         filters={{ hasta }}

@@ -6,6 +6,7 @@ use App\Cartera\Data\ReporteEmpleador;
 use App\Exportacion\Contracts\FuenteExportable;
 use App\Exportacion\Data\ColumnaExportable;
 use App\Exportacion\Enums\TipoColumna;
+use App\Exportacion\Services\AccesoExportaciones;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Support\Str;
 
@@ -92,6 +93,6 @@ final class FuenteReporteEmpleador implements FuenteExportable
 
     public function autorizadoPara(Usuario $usuario): bool
     {
-        return $usuario->tienePermiso('cartera', 'exportar');
+        return app(AccesoExportaciones::class)->puede($usuario, $this->reporte());
     }
 }

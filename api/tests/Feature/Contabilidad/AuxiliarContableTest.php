@@ -154,7 +154,7 @@ class AuxiliarContableTest extends TestCase
         Queue::fake();
         $empresa = $this->crearEmpresaDePrueba();
         $this->sembrarMovimientos($empresa);
-        $this->actingAsRolConPermisos('exportador', ['informes_contables.listar_auxiliares', 'informes_contables.exportar'], $empresa);
+        $this->actingAsRolConPermisos('exportador', ['informes_contables.listar_auxiliares', 'informes_contables.exportar_auxiliares'], $empresa);
 
         $this->postJson(self::BASE.'/exportar', [
             'cuenta_id' => $this->caja->id,
@@ -197,7 +197,7 @@ class AuxiliarContableTest extends TestCase
     {
         $empresa = $this->crearEmpresaDePrueba();
         $this->sembrarMovimientos($empresa);
-        $this->actingAsRolConPermisos('sin_imprimir', ['informes_contables.listar_auxiliares', 'informes_contables.exportar'], $empresa);
+        $this->actingAsRolConPermisos('sin_imprimir', ['informes_contables.listar_auxiliares', 'informes_contables.exportar_auxiliares'], $empresa);
 
         $this->get(self::BASE.'/pdf?desde=2026-01-01&hasta=2026-12-31&cuenta_id='.$this->caja->id)->assertStatus(403);
     }

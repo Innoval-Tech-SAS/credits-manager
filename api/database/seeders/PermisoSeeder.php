@@ -17,12 +17,15 @@ class PermisoSeeder extends Seeder
 {
     public const CATALOGO = [
         'usuarios' => ['listar', 'crear', 'editar', 'eliminar'],
-        'clientes' => ['listar', 'ver', 'crear', 'editar', 'eliminar', 'exportar', 'reasignar_asesor'],
+        'clientes' => ['listar', 'ver', 'crear', 'editar', 'eliminar', 'exportar_listado', 'reasignar_asesor'],
         'empleadores' => ['listar', 'ver', 'crear', 'editar', 'eliminar'],
-        'creditos' => ['listar', 'crear', 'editar', 'aprobar', 'desembolsar', 'cancelar', 'eliminar', 'exportar', 'imprimir_estado_cuenta'],
-        'pagos' => ['listar', 'crear', 'imprimir_recibo', 'exportar', 'reversar'],
+        'creditos' => [
+            'listar', 'crear', 'editar', 'aprobar', 'desembolsar', 'cancelar', 'eliminar', 'exportar_listado', 'exportar_estado_cuenta',
+            'imprimir_estado_cuenta',
+        ],
+        'pagos' => ['listar', 'crear', 'imprimir_recibo', 'exportar_listado', 'reversar'],
         'recibos' => ['listar'],
-        'cartera' => ['listar', 'exportar', 'imprimir_reporte_empleador', 'enviar_recordatorio'],
+        'cartera' => ['listar', 'exportar_listado', 'exportar_reporte_empleador', 'imprimir_reporte_empleador', 'enviar_recordatorio'],
         'calendario' => ['listar'],
         'terceros' => ['listar', 'crear', 'editar'],
         'contabilidad' => [
@@ -37,7 +40,9 @@ class PermisoSeeder extends Seeder
         ],
         'informes_contables' => [
             'listar_libro_diario', 'listar_libro_mayor', 'listar_caja_bancos', 'listar_balance_prueba',
-            'listar_estados_financieros', 'listar_auxiliares', 'listar_conciliacion_apertura', 'exportar', 'imprimir',
+            'listar_estados_financieros', 'listar_auxiliares', 'listar_conciliacion_apertura',
+            'exportar_libro_diario', 'exportar_libro_mayor', 'exportar_caja_bancos', 'exportar_balance_prueba',
+            'exportar_estados_financieros', 'exportar_auxiliares', 'imprimir',
         ],
         'tributario' => [
             'listar_tarifas_reteica', 'crear_tarifas_reteica',
@@ -45,14 +50,14 @@ class PermisoSeeder extends Seeder
             'listar_valores_uvt', 'crear_valores_uvt', 'editar_valores_uvt', 'eliminar_valores_uvt',
         ],
         'gastos' => [
-            'listar_gastos', 'crear', 'anular', 'exportar', 'listar_gastos_centro_costo',
+            'listar_gastos', 'crear', 'anular', 'exportar_gastos', 'listar_gastos_centro_costo', 'exportar_gastos_centro_costo',
             'listar_tipos_gasto', 'crear_tipos_gasto', 'editar_tipos_gasto', 'eliminar_tipos_gasto',
             'listar_parametrizaciones', 'crear_parametrizaciones',
         ],
         'egresos' => ['listar', 'crear', 'reversar'],
         'anticipos' => ['listar', 'crear'],
         'conciliacion' => ['listar', 'configurar', 'cargar_extracto', 'conciliar', 'cerrar', 'reabrir', 'exportar'],
-        'auditoria' => ['listar', 'exportar'],
+        'auditoria' => ['listar', 'exportar_bitacora'],
         'facturacion' => [
             'listar_facturas', 'listar_notas_credito', 'listar_notas_debito', 'crear', 'anular', 'anular_nota_credito',
             'anular_nota_debito', 'imprimir', 'configurar', 'modificar_valores_sugeridos', 'registrar_cobro', 'reversar_cobro',

@@ -140,7 +140,7 @@ export const ClientsListPage: FC = () => {
                     </div>
 
                     <PermissionExportButton
-                        modulo="clientes"
+                        permiso="clientes.exportar_listado"
                         endpoint="/clientes/exportar"
                         filters={{ search, estado, estado_credito: estadoCredito }}
                         onRequested={() => {

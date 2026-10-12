@@ -116,7 +116,7 @@ class ExportarCreditosTest extends TestCase
         $empresa = Empresa::find($admin->empresa_id);
         $this->crearCredito($this->crearCliente(['nombre' => 'Cliente del admin']));
 
-        $this->actingAsRolConPermisos('asesor', ['creditos.exportar'], $empresa);
+        $this->actingAsRolConPermisos('asesor', ['creditos.exportar_listado'], $empresa);
         $this->crearCredito($this->crearCliente(['nombre' => 'Cliente del asesor']));
 
         $respuesta = $this->postJson(self::EXPORTAR, ['formato' => 'xlsx'])->assertStatus(202);

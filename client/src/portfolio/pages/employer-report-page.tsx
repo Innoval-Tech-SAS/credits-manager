@@ -18,7 +18,7 @@ export const EmployerReportPage: FC = () => {
     const [empleadorId, setEmpleadorId] = useState<number | null>(null);
     const [exportMessage, setExportMessage] = useState<string | null>(null);
     const [exportError, setExportError] = useState<string | null>(null);
-    const canExport = usePermission('cartera', 'exportar');
+    const canExport = usePermission('cartera', 'exportar_reporte_empleador');
     const canPrint = usePermission('cartera', 'imprimir_reporte_empleador');
 
     const params = new URLSearchParams();

@@ -23,7 +23,7 @@ import { AuditFilters } from './audit-filters';
 export const AuditLogView: FC<AuditLogViewProps> = ({ companies }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const canExport = canAccessAudit(user, 'exportar');
+    const canExport = canAccessAudit(user, 'exportar_bitacora');
 
     const [draftFilters, setDraftFilters] = useState<AuditFiltersState>(EMPTY_AUDIT_FILTERS);
     const [resetToken, setResetToken] = useState(0);

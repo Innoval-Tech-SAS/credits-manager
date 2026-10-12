@@ -65,7 +65,7 @@ No se registran a propósito: lecturas y reportes (salvo su exportación), el ma
 
 ## Visibilidad (se aplica en el backend)
 
-`BitacoraAuditoriaRepository::consultaVisible` es la **única** consulta de lectura (listado y exportación). Admin y rol `auditoria`: solo su empresa. Superadmin: todas, con filtro `empresa_id` (ignorado para el resto). Acceso: superadmin, admin o permiso `auditoria.listar|exportar` (`AccesoAuditoria`).
+`BitacoraAuditoriaRepository::consultaVisible` es la **única** consulta de lectura (listado y exportación). Admin y rol `auditoria`: solo su empresa. Superadmin: todas, con filtro `empresa_id` (ignorado para el resto). Acceso: superadmin, admin o permiso `auditoria.listar` (`AccesoAuditoria`); exportar exige `auditoria.exportar_bitacora` o ser superadmin (`AccesoExportaciones`).
 
 ## Operación
 

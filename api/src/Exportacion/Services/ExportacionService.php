@@ -36,6 +36,7 @@ class ExportacionService
         protected ExportacionRepository $exportaciones,
         protected EmisorAuditoria $auditoria,
         protected NotificacionService $notificaciones,
+        protected AccesoExportaciones $acceso,
     ) {}
 
     public function solicitar(FuenteExportable $fuente, FormatoExportacion $formato, Usuario $solicitante): Exportacion
@@ -152,10 +153,14 @@ class ExportacionService
         return $this->exportaciones->paginarDelUsuario($usuario->id, max(1, min(100, $porPagina)), max(1, $pagina));
     }
 
-    /** Solo el solicitante descarga su archivo; cualquier otro recibe 404. La descarga también queda auditada. */
+    /**
+     * Solo el solicitante descarga su archivo; cualquier otro recibe 404. Además debe conservar el permiso del reporte:
+     * si se lo quitaron después de pedirlo, el archivo ya no se entrega (403). La descarga también queda auditada.
+     */
     public function descargar(int $id, Usuario $usuario): StreamedResponse
     {
         $exportacion = $this->exportaciones->buscarDelUsuarioOFallar($id, $usuario->id);
+        $this->acceso->exigir($usuario, $exportacion->reporte);
         $disco = Storage::disk(ExportacionConstants::DISCO);
 
         if ($exportacion->estado !== EstadoExportacion::Completada || ! $exportacion->ruta_archivo || ! $disco->exists($exportacion->ruta_archivo)) {

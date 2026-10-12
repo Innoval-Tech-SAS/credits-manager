@@ -6,6 +6,7 @@ use App\Core\Dinero\Dinero;
 use App\Exportacion\Contracts\FuenteExportable;
 use App\Exportacion\Data\ColumnaExportable;
 use App\Exportacion\Enums\TipoColumna;
+use App\Exportacion\Services\AccesoExportaciones;
 use App\Pagos\Repositories\PagoRepository;
 use App\Usuarios\Models\Usuario;
 
@@ -120,6 +121,6 @@ final class FuentePagos implements FuenteExportable
 
     public function autorizadoPara(Usuario $usuario): bool
     {
-        return $usuario->empresa_id !== null && $usuario->tienePermiso('pagos', 'exportar');
+        return $usuario->empresa_id !== null && app(AccesoExportaciones::class)->puede($usuario, $this->reporte());
     }
 }

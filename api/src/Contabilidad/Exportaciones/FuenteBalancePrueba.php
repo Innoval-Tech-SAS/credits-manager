@@ -7,6 +7,7 @@ use App\Core\Dinero\Dinero;
 use App\Exportacion\Contracts\FuenteExportable;
 use App\Exportacion\Data\ColumnaExportable;
 use App\Exportacion\Enums\TipoColumna;
+use App\Exportacion\Services\AccesoExportaciones;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Support\Collection;
 
@@ -78,7 +79,7 @@ final class FuenteBalancePrueba implements FuenteExportable
 
     public function autorizadoPara(Usuario $usuario): bool
     {
-        return $usuario->empresa_id !== null && $usuario->tienePermiso('informes_contables', 'exportar')
+        return $usuario->empresa_id !== null && app(AccesoExportaciones::class)->puede($usuario, $this->reporte())
             && $usuario->tienePermiso('informes_contables', 'listar_balance_prueba');
     }
 

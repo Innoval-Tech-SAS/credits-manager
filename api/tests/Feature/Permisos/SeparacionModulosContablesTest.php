@@ -321,10 +321,10 @@ class SeparacionModulosContablesTest extends TestCase
         $this->prepararEmpresa();
         $cuerpo = ['desde' => '2026-01-01', 'hasta' => '2026-01-31', 'formato' => 'xlsx'];
 
-        $this->usuarioCon(['informes_contables.exportar', 'informes_contables.listar_balance_prueba']);
+        $this->usuarioCon(['informes_contables.exportar_libro_diario', 'informes_contables.listar_balance_prueba']);
         $this->postJson('/api/v1/contabilidad/libro-diario/exportar', $cuerpo)->assertForbidden();
 
-        $this->usuarioCon(['informes_contables.exportar', 'informes_contables.listar_libro_diario']);
+        $this->usuarioCon(['informes_contables.exportar_libro_diario', 'informes_contables.listar_libro_diario']);
         $this->postJson('/api/v1/contabilidad/libro-diario/exportar', [
             'desde' => '2026-01-01',
             'hasta' => '2026-01-31',

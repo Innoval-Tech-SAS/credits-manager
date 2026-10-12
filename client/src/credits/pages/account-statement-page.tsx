@@ -68,7 +68,7 @@ export const AccountStatementPage: FC = () => {
                     </>
                 )}
                 <PermissionExportButton
-                    modulo="creditos"
+                    permiso="creditos.exportar_estado_cuenta"
                     endpoint={`/creditos/${id}/estado-cuenta/exportar`}
                     filters={{}}
                     onRequested={() => {

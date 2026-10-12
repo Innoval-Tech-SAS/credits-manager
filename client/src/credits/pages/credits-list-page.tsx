@@ -85,7 +85,7 @@ export const CreditsListPage: FC = () => {
                     </div>
 
                     <PermissionExportButton
-                        modulo="creditos"
+                        permiso="creditos.exportar_listado"
                         endpoint="/creditos/exportar"
                         filters={{ search }}
                         onRequested={() => {

@@ -32,7 +32,7 @@ class ReporteGastosCentroCostoTest extends TestCase
     /** Un gestor de gastos de la empresa, con la parametrización de un tipo de honorarios lista para causar. */
     private function prepararEmpresa(Empresa $empresa): TipoGasto
     {
-        $this->actingAsRolConPermisos('gestor', ['gastos.listar_gastos', 'gastos.listar_gastos_centro_costo', 'gastos.crear', 'gastos.anular', 'gastos.exportar'], $empresa);
+        $this->actingAsRolConPermisos('gestor', ['gastos.listar_gastos', 'gastos.listar_gastos_centro_costo', 'gastos.crear', 'gastos.anular', 'gastos.exportar_gastos_centro_costo'], $empresa);
         ValorUvt::query()->firstOrCreate(['anio' => 2026], ['valor' => 47065]);
         $tipo = $this->crearTipoGasto(['requiere_tercero' => false, 'aplica_iva' => false]);
         $this->crearParametrizacion($tipo, ['tarifa_iva' => 0, 'aplica_retefuente' => false, 'aplica_reteica' => false, 'aplica_reteiva' => false]);

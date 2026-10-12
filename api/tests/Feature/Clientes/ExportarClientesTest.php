@@ -137,7 +137,7 @@ class ExportarClientesTest extends TestCase
         $admin = $this->actingAsAdmin();
         $this->crearCliente(['nombre' => 'Cliente del admin']);
 
-        $this->actingAsRolConPermisos('asesor', ['clientes.exportar'], Empresa::find($admin->empresa_id));
+        $this->actingAsRolConPermisos('asesor', ['clientes.exportar_listado'], Empresa::find($admin->empresa_id));
         $this->crearCliente(['nombre' => 'Cliente del asesor']);
 
         $respuesta = $this->postJson(self::EXPORTAR, ['formato' => 'xlsx'])->assertStatus(202);

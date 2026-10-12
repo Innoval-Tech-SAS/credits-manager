@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Empresas;
 
+use App\Exportacion\Constants\ExportacionConstants;
+use App\Usuarios\Models\Permiso;
 use App\Usuarios\Models\Rol;
 use Database\Seeders\PermisoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,16 +35,37 @@ class PermisosExportarReportesTest extends TestCase
             ->map(fn ($permiso) => "{$permiso->modulo}.{$permiso->accion}")->all();
     }
 
-    public function test_el_catalogo_incluye_los_tres_permisos_de_exportar(): void
+    /** @return list<string> claves "modulo.exportar_*" por reporte de estos módulos que tiene el rol */
+    private function exportarPorReporteDelRol(int $empresaId, string $rol): array
+    {
+        return DB::table('rol_permiso')
+            ->join('roles', 'roles.id', '=', 'rol_permiso.rol_id')
+            ->join('permisos', 'permisos.id', '=', 'rol_permiso.permiso_id')
+            ->where('roles.empresa_id', $empresaId)
+            ->where('roles.nombre', $rol)
+            ->where('permisos.accion', 'like', 'exportar_%')
+            ->whereNull('permisos.borrado_en')
+            ->whereIn('permisos.modulo', self::PERMISOS)
+            ->orderBy('permisos.modulo')
+            ->orderBy('permisos.accion')
+            ->get(['permisos.modulo', 'permisos.accion'])
+            ->map(fn ($permiso) => "{$permiso->modulo}.{$permiso->accion}")->all();
+    }
+
+    public function test_el_catalogo_tiene_un_permiso_por_reporte_y_ningun_exportar_generico(): void
     {
         $this->seed(PermisoSeeder::class);
 
-        foreach (['cartera', 'creditos', 'informes_contables'] as $modulo) {
-            $this->assertDatabaseHas('permisos', ['modulo' => $modulo, 'accion' => 'exportar']);
+        foreach (collect(ExportacionConstants::PERMISOS_POR_REPORTE)->flatten()->unique() as $clave) {
+            [$modulo, $accion] = explode('.', $clave);
+            $this->assertDatabaseHas('permisos', ['modulo' => $modulo, 'accion' => $accion, 'borrado_en' => null]);
         }
+
+        $modulos = collect(ExportacionConstants::PERMISOS_POR_REPORTE)->flatten()->map(fn (string $clave) => explode('.', $clave)[0])->unique()->all();
+        $this->assertSame(0, Permiso::query()->where('accion', 'exportar')->whereIn('modulo', $modulos)->count(), 'Ningún exportar genérico de estos reportes queda vigente.');
     }
 
-    public function test_una_empresa_nueva_asigna_exportar_solo_a_admin_contable_y_auditoria(): void
+    public function test_una_empresa_nueva_asigna_las_exportaciones_solo_a_admin_contable_y_auditoria(): void
     {
         $this->seed(PermisoSeeder::class);
         $this->actingAsSuperAdmin();
@@ -52,13 +75,19 @@ class PermisosExportarReportesTest extends TestCase
             'correo' => 'exportadora@example.com', 'admin_nombre' => 'Admin', 'admin_usuario' => 'admin_exportador', 'admin_password' => 'Clave123!',
         ])->assertCreated()->json('empresa.id');
 
-        // El admin recibe todo el catálogo vigente: `contabilidad.exportar` (de la migración de 2026-09-21) ya está retirado.
-        $this->assertSame(['cartera.exportar', 'creditos.exportar', 'informes_contables.exportar'], $this->exportarDelRol($empresaId, 'admin'));
-        $this->assertSame(['cartera.exportar', 'informes_contables.exportar'], $this->exportarDelRol($empresaId, 'contable'));
-        $this->assertSame(['cartera.exportar', 'informes_contables.exportar'], $this->exportarDelRol($empresaId, 'auditoria'));
+        $informes = [
+            'informes_contables.exportar_auxiliares', 'informes_contables.exportar_balance_prueba', 'informes_contables.exportar_caja_bancos',
+            'informes_contables.exportar_estados_financieros', 'informes_contables.exportar_libro_diario', 'informes_contables.exportar_libro_mayor',
+        ];
+        $cartera = ['cartera.exportar_listado', 'cartera.exportar_reporte_empleador'];
+        $creditos = ['creditos.exportar_estado_cuenta', 'creditos.exportar_listado'];
+
+        $this->assertSame([...$cartera, ...$creditos, ...$informes], $this->exportarPorReporteDelRol($empresaId, 'admin'));
+        $this->assertSame([...$cartera, ...$informes], $this->exportarPorReporteDelRol($empresaId, 'contable'));
+        $this->assertSame([...$cartera, ...$informes], $this->exportarPorReporteDelRol($empresaId, 'auditoria'));
 
         foreach (['asesor', 'cartera', 'consulta'] as $rol) {
-            $this->assertSame([], $this->exportarDelRol($empresaId, $rol), "El rol {$rol} no debe exportar.");
+            $this->assertSame([], $this->exportarPorReporteDelRol($empresaId, $rol), "El rol {$rol} no debe exportar estos reportes.");
         }
     }
 

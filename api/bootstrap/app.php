@@ -5,6 +5,7 @@ use App\Auth\Middleware\EsSuperAdmin;
 use App\Auth\Middleware\TieneAlgunPermiso;
 use App\Auth\Middleware\TienePermiso;
 use App\Auth\Middleware\TienePermisoOSuperAdmin;
+use App\Exportacion\Middleware\PuedeExportar;
 use App\Metas\Middleware\AccesoMetas;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'algun_permiso' => TieneAlgunPermiso::class,
             'permiso_o_superadmin' => TienePermisoOSuperAdmin::class,
             'acceso_metas' => AccesoMetas::class,
+            'exportacion' => PuedeExportar::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
