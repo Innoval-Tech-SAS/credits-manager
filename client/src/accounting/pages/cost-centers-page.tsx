@@ -21,8 +21,9 @@ export const CostCentersPage: FC = () => {
     const navigate = useNavigate();
     const { sendRequest, isLoading: isMutating } = useSendRequest();
 
-    const canCreate = usePermission('configuracion_contable', 'crear');
-    const canEdit = usePermission('configuracion_contable', 'editar');
+    const canCreate = usePermission('configuracion_contable', 'crear_centros_costo');
+    const canEdit = usePermission('configuracion_contable', 'editar_centros_costo');
+    const canDelete = usePermission('configuracion_contable', 'eliminar_centros_costo');
 
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<CostCentersListLocationState>();
 
@@ -158,19 +159,19 @@ export const CostCentersPage: FC = () => {
                                     onClick={() => navigate(`/contabilidad/centros-costo/${centro.id}`)}
                                 />
                                 {canEdit && (
-                                    <>
-                                        <ActionButton
-                                            icon={<Pencil className="size-5" />}
-                                            label="Editar"
-                                            onClick={() => navigate(`/contabilidad/centros-costo/${centro.id}/editar`)}
-                                        />
-                                        <ActionButton
-                                            icon={<Trash2 className="size-5" />}
-                                            label="Eliminar"
-                                            variant="danger"
-                                            onClick={() => setCentroAEliminar(centro)}
-                                        />
-                                    </>
+                                    <ActionButton
+                                        icon={<Pencil className="size-5" />}
+                                        label="Editar"
+                                        onClick={() => navigate(`/contabilidad/centros-costo/${centro.id}/editar`)}
+                                    />
+                                )}
+                                {canDelete && (
+                                    <ActionButton
+                                        icon={<Trash2 className="size-5" />}
+                                        label="Eliminar"
+                                        variant="danger"
+                                        onClick={() => setCentroAEliminar(centro)}
+                                    />
                                 )}
                             </div>
                         ),

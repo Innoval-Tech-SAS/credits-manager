@@ -49,12 +49,12 @@ export type ApiDashboardSummary = {
         gastos: string[] | null;
     };
     metricas: {
-        clientes_activos: number;
-        creditos_activos: number;
+        clientes_activos: number | null;
+        creditos_activos: number | null;
         colocacion: ApiDashboardColocacion | null;
         recaudo: ApiDashboardMonetario | null;
         gastos: ApiDashboardMonetario | null;
         cartera: ApiDashboardCartera | null;
     };
-    pagos_hoy: ApiDashboardPagoHoy[];
+    pagos_hoy: ApiDashboardPagoHoy[] | null;
 };

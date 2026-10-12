@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 
+import { usePermission } from '../../auth/hooks/use-permission';
 import { useTypeahead } from '../../shared/hooks/use-typeahead';
 import { Dropdown } from '@ui/dropdown/components/dropdown';
 import { DropdownItem } from '@ui/dropdown/components/dropdown-item';
@@ -10,6 +11,8 @@ import type { ApiEmployer } from '../types/api-employer';
 
 export const EmployerSelector: FC<EmployerSelectorProps> = ({ id, selected, onSelect }) => {
     const { query, setQuery, isOpen, setIsOpen, results, isLoading, reset } = useTypeahead<ApiEmployer>('/empleadores');
+    const canList = usePermission('empleadores', 'listar');
+    const canCreate = usePermission('empleadores', 'crear');
 
     const handleSelect = (empleador: ApiEmployer) => {
         onSelect(empleador);
@@ -24,10 +27,11 @@ export const EmployerSelector: FC<EmployerSelectorProps> = ({ id, selected, onSe
         <div className="relative">
             <Input
                 id={id}
-                placeholder="Busca un empleador…"
+                placeholder={canList ? 'Busca un empleador…' : 'Sin permiso para consultar empleadores'}
                 startIcon={<Search className="size-4" />}
                 value={displayValue}
-                onFocus={() => setIsOpen(true)}
+                disabled={!canList}
+                onFocus={() => setIsOpen(canList)}
                 onChange={(event) => setQuery(event.target.value)}
             />
 
@@ -45,13 +49,15 @@ export const EmployerSelector: FC<EmployerSelectorProps> = ({ id, selected, onSe
                         </DropdownItem>
                     ))}
 
-                <DropdownItem
-                    tag="link"
-                    to="/empleadores/crear"
-                    className="border-t border-gray-100 font-medium text-brand-600 dark:border-gray-800 dark:text-brand-400"
-                >
-                    + Crear empleador
-                </DropdownItem>
+                {canCreate && (
+                    <DropdownItem
+                        tag="link"
+                        to="/empleadores/crear"
+                        className="border-t border-gray-100 font-medium text-brand-600 dark:border-gray-800 dark:text-brand-400"
+                    >
+                        + Crear empleador
+                    </DropdownItem>
+                )}
             </Dropdown>
         </div>
     );

@@ -32,7 +32,7 @@ class ReporteGastosCentroCostoTest extends TestCase
     /** Un gestor de gastos de la empresa, con la parametrización de un tipo de honorarios lista para causar. */
     private function prepararEmpresa(Empresa $empresa): TipoGasto
     {
-        $this->actingAsRolConPermisos('gestor', ['gastos.listar', 'gastos.crear', 'gastos.anular', 'gastos.exportar'], $empresa);
+        $this->actingAsRolConPermisos('gestor', ['gastos.listar_gastos', 'gastos.listar_gastos_centro_costo', 'gastos.crear', 'gastos.anular', 'gastos.exportar'], $empresa);
         ValorUvt::query()->firstOrCreate(['anio' => 2026], ['valor' => 47065]);
         $tipo = $this->crearTipoGasto(['requiere_tercero' => false, 'aplica_iva' => false]);
         $this->crearParametrizacion($tipo, ['tarifa_iva' => 0, 'aplica_retefuente' => false, 'aplica_reteica' => false, 'aplica_reteiva' => false]);
@@ -180,7 +180,7 @@ class ReporteGastosCentroCostoTest extends TestCase
     public function test_exportar_sin_permiso_de_exportacion_responde_403(): void
     {
         $empresa = $this->crearEmpresaDePrueba();
-        $this->actingAsRolConPermisos('solo_listar_gastos', ['gastos.listar'], $empresa);
+        $this->actingAsRolConPermisos('solo_listar_gastos', ['gastos.listar_gastos_centro_costo'], $empresa);
 
         $this->postJson(self::REPORTE.'/exportar', ['desde' => '2026-03', 'hasta' => '2026-04', 'formato' => 'csv'])
             ->assertStatus(403);

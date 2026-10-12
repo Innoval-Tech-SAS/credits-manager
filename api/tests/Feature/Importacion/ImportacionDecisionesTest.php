@@ -120,7 +120,7 @@ class ImportacionDecisionesTest extends TestCase
         $this->assertDatabaseCount('importaciones', 0);
     }
 
-    public function test_la_decision_de_crear_empleadores_responde_403_si_el_usuario_perdio_clientes_crear(): void
+    public function test_la_decision_de_crear_empleadores_responde_403_si_el_usuario_perdio_empleadores_crear(): void
     {
         $admin = $this->actingAsAdmin();
         $id = $this->subirArchivo('clientes', self::ENCABEZADO."1001;Ana Pérez;;;Empresa Nueva;;;;;\n");
@@ -128,7 +128,21 @@ class ImportacionDecisionesTest extends TestCase
 
         $asesor = $this->asesorDeLaEmpresa($admin);
         $this->otorgarPorRol($asesor, 'clientes', 'crear');
-        $this->excepcion($asesor, 'clientes', 'crear', false);
+        $this->otorgarPorRol($asesor, 'empleadores', 'crear');
+        $this->excepcion($asesor, 'empleadores', 'crear', false);
+
+        $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['crear_empleadores' => true])->assertForbidden();
+        $this->assertDatabaseCount('empleadores', 0);
+    }
+
+    public function test_crear_clientes_no_basta_para_que_la_importacion_cree_empleadores(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $id = $this->subirArchivo('clientes', self::ENCABEZADO."1001;Ana Pérez;;;Empresa Nueva;;;;;\n");
+        $this->ejecutarValidacion($id);
+
+        $asesor = $this->asesorDeLaEmpresa($admin);
+        $this->otorgarPorRol($asesor, 'clientes', 'crear');
 
         $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['crear_empleadores' => true])->assertForbidden();
         $this->assertDatabaseCount('empleadores', 0);

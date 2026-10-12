@@ -83,8 +83,13 @@ export const DashboardMetricCards: FC<DashboardMetricCardsProps> = ({ metricas }
         tarjetas.push(<StatCard key="gastos" label="Gastos del mes" value={formatMoney(gastos.valor)} icon={Receipt} cambio={buildCambioStatCard(gastos, true)} />);
     }
 
-    tarjetas.push(<StatCard key="clientes" label="Clientes activos" value={String(metricas.clientes_activos)} icon={Users} />);
-    tarjetas.push(<StatCard key="creditos" label="Créditos activos" value={String(metricas.creditos_activos)} icon={CreditCard} />);
+    if (metricas.clientes_activos !== null) {
+        tarjetas.push(<StatCard key="clientes" label="Clientes activos" value={String(metricas.clientes_activos)} icon={Users} />);
+    }
+
+    if (metricas.creditos_activos !== null) {
+        tarjetas.push(<StatCard key="creditos" label="Créditos activos" value={String(metricas.creditos_activos)} icon={CreditCard} />);
+    }
 
     if (cartera) {
         tarjetas.push(<StatCard key="al-dia" label="Cartera al día" value={formatMoney(cartera.al_dia)} icon={CircleCheck} accent="success" />);

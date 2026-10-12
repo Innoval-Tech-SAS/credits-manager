@@ -10,7 +10,7 @@ import type { ClientAdvisorHistoryCardProps } from '../props/client-advisor-hist
 import type { ApiAdvisorHistory } from '../types/api-advisor-history';
 import { ReassignAdvisorModal } from './reassign-advisor-modal';
 
-/** Solo la ve el administrador de la empresa: el historial de asesores no se muestra a los demás roles. */
+/** Solo la ve quien tiene `clientes.reasignar_asesor`: el historial de asesores no se muestra a los demás roles. */
 export const ClientAdvisorHistoryCard: FC<ClientAdvisorHistoryCardProps> = ({ clientId, currentAdvisorId, onReassigned }) => {
     const { data, error, refetch } = useResource<{ historial: ApiAdvisorHistory[] }>(`/clientes/${clientId}/asesor-historial`);
     const [isReassigning, setIsReassigning] = useState(false);

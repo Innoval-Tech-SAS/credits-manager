@@ -19,21 +19,22 @@ class DocumentoFacturacionRepository extends BaseRepository
         parent::__construct($documento);
     }
 
-    public function paginar(?TipoDocumentoFacturacion $tipo, ?EstadoDocumentoFacturacion $estado, ?int $clienteId, int $porPagina, int $pagina): LengthAwarePaginator
+    /** @param list<TipoDocumentoFacturacion> $tipos */
+    public function paginar(array $tipos, ?EstadoDocumentoFacturacion $estado, ?int $clienteId, int $porPagina, int $pagina): LengthAwarePaginator
     {
         $consulta = $this->consulta()
             ->with(['cliente.tercero', 'origen:id,numero,tipo'])
             ->orderByDesc('creado_en');
 
-        $this->filtrar($consulta, $tipo, $estado, $clienteId);
+        $this->filtrar($consulta, $tipos, $estado, $clienteId);
 
         return $consulta->paginate(perPage: $porPagina, page: $pagina);
     }
 
-    private function filtrar(Builder $consulta, ?TipoDocumentoFacturacion $tipo, ?EstadoDocumentoFacturacion $estado, ?int $clienteId): Builder
+    private function filtrar(Builder $consulta, array $tipos, ?EstadoDocumentoFacturacion $estado, ?int $clienteId): Builder
     {
         return $consulta
-            ->when($tipo, fn (Builder $q) => $q->where('tipo', $tipo))
+            ->whereIn('tipo', array_map(fn (TipoDocumentoFacturacion $tipo) => $tipo->value, $tipos))
             ->when($estado, fn (Builder $q) => $q->where('estado', $estado))
             ->when($clienteId, fn (Builder $q) => $q->where('cliente_id', $clienteId));
     }

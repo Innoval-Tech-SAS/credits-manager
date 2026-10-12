@@ -15,7 +15,7 @@ import type { ApiReteicaTariff } from '../types/api-reteica-tariff';
 export const ReteicaTariffsPage: FC = () => {
     const navigate = useNavigate();
 
-    const canCreate = usePermission('gastos', 'parametrizar');
+    const canCreate = usePermission('tributario', 'crear_tarifas_reteica');
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<ReteicaTariffsListLocationState>();
     const { data, isLoading } = useResource<{ tarifas: ApiReteicaTariff[] }>('/gastos/tarifas-reteica');
     const tarifas = data?.tarifas ?? [];

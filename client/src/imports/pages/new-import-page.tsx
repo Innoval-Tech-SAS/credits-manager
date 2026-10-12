@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { Download, FileText, Upload } from 'lucide-react';
 
+import { useAuth } from '../../auth/hooks/use-auth';
+import { usePermission } from '../../auth/hooks/use-permission';
+import { hasAnyPermission } from '../../auth/utils/has-any-permission';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
@@ -19,6 +22,7 @@ import { CsvExampleCard } from '../components/csv-example-card';
 import { ImportSteps } from '../components/import-steps';
 import {
     IMPORT_TYPE_OPTIONS,
+    IMPORT_TYPE_PERMISSIONS,
     IMPORT_TYPES,
     IMPORT_TYPES_WITH_ACCOUNTING,
     IMPORT_TYPES_WITH_EMPLOYER_CHECK,
@@ -149,6 +153,10 @@ export const NewImportPage: FC = () => {
     const [searchParams] = useSearchParams();
     const { sendRequest } = useSendRequest();
     const { download: descargarGuia, isDownloading } = useDownloadFile();
+    const puedeCrearEmpleadores = usePermission('empleadores', 'crear');
+    const puedeContabilizar = usePermission('contabilidad', 'crear_manual');
+    const { user } = useAuth();
+    const opcionesTipo = IMPORT_TYPE_OPTIONS.filter((opcion) => hasAnyPermission(user, [IMPORT_TYPE_PERMISSIONS[opcion.value]]));
 
     const tipoInicial = searchParams.get('tipo') ?? '';
     const [tipo, setTipo] = useState<ImportType | ''>(esTipoImportable(tipoInicial) ? tipoInicial : '');
@@ -227,7 +235,7 @@ export const NewImportPage: FC = () => {
                     <div>
                         <Label htmlFor="tipo-importacion">Hoja a importar</Label>
                         <Select
-                            options={IMPORT_TYPE_OPTIONS}
+                            options={opcionesTipo}
                             placeholder="Elige una hoja"
                             defaultValue={tipo}
                             onChange={handleTipoChange}
@@ -275,7 +283,7 @@ export const NewImportPage: FC = () => {
                     </div>
 
                     <div className="flex flex-col gap-4">
-                        {tipo !== '' && IMPORT_TYPES_WITH_EMPLOYER_CHECK.includes(tipo) && (
+                        {tipo !== '' && puedeCrearEmpleadores && IMPORT_TYPES_WITH_EMPLOYER_CHECK.includes(tipo) && (
                             <Checkbox
                                 id="crear-empleadores"
                                 label="Crear empleadores no encontrados"
@@ -284,7 +292,7 @@ export const NewImportPage: FC = () => {
                             />
                         )}
 
-                        {tipo !== '' && IMPORT_TYPES_WITH_ACCOUNTING.includes(tipo) && (
+                        {tipo !== '' && puedeContabilizar && IMPORT_TYPES_WITH_ACCOUNTING.includes(tipo) && (
                             <Checkbox id="generar-asiento" label="Generar asientos contables" checked={generarAsiento} onChange={setGenerarAsiento} />
                         )}
 

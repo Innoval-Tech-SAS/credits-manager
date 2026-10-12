@@ -43,6 +43,21 @@ export const IMPORT_TYPE_OPTIONS = [
     { value: 'tarifas_reteica', label: 'Tarifas ReteICA' },
 ] satisfies { value: ImportType; label: string }[];
 
+/** Permiso "modulo.accion" que exige cada hoja (espejo de `DefinicionImportacion` en el backend). */
+export const IMPORT_TYPE_PERMISSIONS: Record<ImportType, string> = {
+    clientes: 'clientes.crear',
+    creditos: 'creditos.crear',
+    plan_cuotas: 'creditos.crear',
+    pagos: 'pagos.crear',
+    saldos_iniciales: 'configuracion_contable.crear_plan_cuentas',
+    plan_cuentas: 'configuracion_contable.crear_plan_cuentas',
+    terceros: 'terceros.crear',
+    gastos: 'gastos.crear',
+    actividades_economicas: 'tributario.crear_actividades_economicas',
+    valores_uvt: 'tributario.crear_valores_uvt',
+    tarifas_reteica: 'tributario.crear_tarifas_reteica',
+};
+
 export const IMPORT_TYPES_WITH_EMPLOYER_CHECK: ImportType[] = ['clientes'];
 
 export const IMPORT_TYPES_WITH_ACCOUNTING: ImportType[] = ['creditos', 'pagos'];

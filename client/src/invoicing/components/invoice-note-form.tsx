@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 
+import { usePermission } from '../../auth/hooks/use-permission';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { DatePicker } from '@ui/forms/components/date-picker';
@@ -34,7 +35,11 @@ type FormularioNotaProps = Omit<InvoiceNoteFormProps, 'isOpen'>;
 const FormularioNota: FC<FormularioNotaProps> = ({ documento, onClose, onEmitida, onError }) => {
     const { sendRequest, isLoading } = useSendRequest();
 
-    const tiposPermitidos: NoteKind[] = documento.tipo === 'factura' ? ['nota_credito', 'nota_debito'] : ['nota_debito'];
+    const puedeNotaCredito = usePermission('facturacion', 'anular_nota_credito');
+    const puedeNotaDebito = usePermission('facturacion', 'anular_nota_debito');
+
+    const tiposDelDocumento: NoteKind[] = documento.tipo === 'factura' ? ['nota_credito', 'nota_debito'] : ['nota_debito'];
+    const tiposPermitidos = tiposDelDocumento.filter((tipoNota) => (tipoNota === 'nota_credito' ? puedeNotaCredito : puedeNotaDebito));
     const [tipo, setTipo] = useState<NoteKind>(tiposPermitidos[0]);
     const [motivoCodigo, setMotivoCodigo] = useState<ApiInvoiceNoteCreditReason | ApiInvoiceNoteDebitReason>(
         tiposPermitidos[0] === 'nota_credito' ? NOTE_CREDIT_REASON_OPTIONS[0].value : NOTE_DEBIT_REASON_OPTIONS[0].value,
@@ -91,10 +96,10 @@ const FormularioNota: FC<FormularioNotaProps> = ({ documento, onClose, onEmitida
                 <div className="max-w-xs">
                     <Label htmlFor="tipo-nota">Tipo de nota</Label>
                     <Select
-                        options={[
-                            { value: 'nota_credito', label: 'Nota crédito' },
-                            { value: 'nota_debito', label: 'Nota débito' },
-                        ]}
+                        options={tiposPermitidos.map((tipoNota) => ({
+                            value: tipoNota,
+                            label: tipoNota === 'nota_credito' ? 'Nota crédito' : 'Nota débito',
+                        }))}
                         defaultValue={tipo}
                         onChange={(valor) => cambiarTipo(valor as NoteKind)}
                     />

@@ -8,6 +8,7 @@ export function buildUserTableColumns({
     canEdit,
     canDelete,
     canChangePassword,
+    canManageAdmins,
     onEdit,
     onDelete,
     onChangePassword,
@@ -59,22 +60,26 @@ export function buildUserTableColumns({
         columns.push({
             key: 'acciones',
             label: 'Acción',
-            render: (row) => (
-                <div className="flex w-full items-center gap-2">
-                    {canDelete && (
-                        <ActionButton icon={<Trash2 className="size-5" />} label="Eliminar" variant="danger" onClick={() => onDelete(row)} />
-                    )}
-                    {canEdit && <ActionButton icon={<Pencil className="size-5" />} label="Editar" onClick={() => onEdit(row)} />}
-                    {canChangePassword && (
-                        <ActionButton
-                            icon={<KeyRound className="size-5" />}
-                            label="Cambiar contraseña"
-                            variant="warning"
-                            onClick={() => onChangePassword(row)}
-                        />
-                    )}
-                </div>
-            ),
+            render: (row) => {
+                const isManageable = canManageAdmins || row.rol?.nombre !== 'admin';
+
+                return (
+                    <div className="flex w-full items-center gap-2">
+                        {canDelete && isManageable && (
+                            <ActionButton icon={<Trash2 className="size-5" />} label="Eliminar" variant="danger" onClick={() => onDelete(row)} />
+                        )}
+                        {canEdit && isManageable && <ActionButton icon={<Pencil className="size-5" />} label="Editar" onClick={() => onEdit(row)} />}
+                        {canChangePassword && (
+                            <ActionButton
+                                icon={<KeyRound className="size-5" />}
+                                label="Cambiar contraseña"
+                                variant="warning"
+                                onClick={() => onChangePassword(row)}
+                            />
+                        )}
+                    </div>
+                );
+            },
         });
     }
 

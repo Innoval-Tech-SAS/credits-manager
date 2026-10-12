@@ -24,7 +24,7 @@ class ConciliacionAperturaTest extends TestCase
     /** Carga los saldos iniciales de caja (débito) y de capital (crédito), como lo hace la importación de saldos. */
     private function cargarSaldos(Empresa $empresa, int $monto): array
     {
-        $this->actingAsRolConPermisos('carga_saldos', ['configuracion_contable.crear', 'contabilidad.crear_manual'], $empresa);
+        $this->actingAsRolConPermisos('carga_saldos', ['configuracion_contable.crear_plan_cuentas', 'contabilidad.crear_manual'], $empresa);
         $caja = $this->crearCuenta(['codigo' => '110505', 'nombre' => 'Caja general']);
         $capital = $this->crearCuenta(['codigo' => '310505', 'nombre' => 'Capital social', 'naturaleza' => 'credito', 'tipo' => 'patrimonio']);
 
@@ -36,7 +36,7 @@ class ConciliacionAperturaTest extends TestCase
 
     private function lector(Empresa $empresa): void
     {
-        $this->actingAsRolConPermisos('auditor_apertura', ['informes_contables.listar'], $empresa);
+        $this->actingAsRolConPermisos('auditor_apertura', ['informes_contables.listar_conciliacion_apertura'], $empresa);
     }
 
     public function test_sin_autenticar_no_concilia(): void

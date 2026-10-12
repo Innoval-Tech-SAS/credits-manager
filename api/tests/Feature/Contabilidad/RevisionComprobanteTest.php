@@ -43,12 +43,12 @@ class RevisionComprobanteTest extends TestCase
 
     private function creador(Empresa $empresa): Usuario
     {
-        return $this->actingAsRolConPermisos('creador', ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar', 'contabilidad.anular'], $empresa);
+        return $this->actingAsRolConPermisos('creador', ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar_comprobantes', 'contabilidad.anular'], $empresa);
     }
 
     private function revisor(Empresa $empresa): Usuario
     {
-        return $this->actingAsRolConPermisos('revisor', ['contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar', 'informes_contables.listar'], $empresa);
+        return $this->actingAsRolConPermisos('revisor', ['contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar_comprobantes', 'informes_contables.listar_balance_prueba'], $empresa);
     }
 
     public function test_sin_autenticar_no_puede_revisar(): void
@@ -62,7 +62,7 @@ class RevisionComprobanteTest extends TestCase
         $this->creador($empresa);
         $id = $this->crearBorrador();
 
-        $this->actingAsRolConPermisos('solo_consulta', ['contabilidad.listar'], $empresa);
+        $this->actingAsRolConPermisos('solo_consulta', ['contabilidad.listar_comprobantes'], $empresa);
 
         $this->postJson(self::BASE."/{$id}/revisar")->assertStatus(403);
         $this->assertDatabaseHas('comprobantes', ['id' => $id, 'estado' => 'borrador']);
@@ -292,7 +292,7 @@ class RevisionComprobanteTest extends TestCase
         $empresa = $this->crearEmpresaDePrueba();
         $creadorUsuario = $this->actingAsRolConPermisos(
             'creador',
-            ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar', 'contabilidad.anular'],
+            ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar_comprobantes', 'contabilidad.anular'],
             $empresa,
         );
         $cuentaCxp = $this->crearCuenta();

@@ -7,6 +7,7 @@ use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Usuarios\Constants\UsuarioConstants;
 use App\Usuarios\Models\Usuario;
+use App\Usuarios\Repositories\PermisoRepository;
 use App\Usuarios\Repositories\RolRepository;
 use App\Usuarios\Repositories\UsuarioRepository;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -19,6 +20,7 @@ class UsuarioService
     public function __construct(
         protected UsuarioRepository $usuarios,
         protected RolRepository $roles,
+        protected PermisoRepository $permisos,
         protected EmisorAuditoria $auditoria,
     ) {}
 
@@ -38,6 +40,8 @@ class UsuarioService
 
     public function crearUsuario(array $datos): Usuario
     {
+        $this->impedirEscaladaDePrivilegios(null, (int) $datos['rol_id'], $this->mapaPermisosExtra($datos));
+
         return DB::transaction(function () use ($datos) {
             $usuario = $this->usuarios->crear([
                 'nombre' => $datos['nombre'],
@@ -58,6 +62,7 @@ class UsuarioService
 
     public function editarUsuario(Usuario $usuario, array $datos): Usuario
     {
+        $this->impedirEscaladaDePrivilegios($usuario, (int) $datos['rol_id'], $this->mapaPermisosExtra($datos));
         $this->impedirAutoBloqueoDeAdmin($usuario, $datos['rol_id'], $datos['activo']);
 
         return DB::transaction(function () use ($usuario, $datos) {
@@ -135,6 +140,7 @@ class UsuarioService
 
     public function eliminarUsuario(Usuario $usuario): bool
     {
+        $this->impedirEscaladaDePrivilegios($usuario, $usuario->rol_id, []);
         $this->impedirAutoBloqueoDeAdmin($usuario, $usuario->rol_id, false);
 
         return DB::transaction(function () use ($usuario) {
@@ -146,6 +152,42 @@ class UsuarioService
 
             return $eliminado;
         });
+    }
+
+    /**
+     * Los roles son de solo admin, pero `usuarios.crear`/`usuarios.editar` asignan rol y excepciones: sin este freno,
+     * quien tiene esos permisos se daría a sí mismo (o a un cómplice) el rol admin o cualquier permiso. Un usuario que
+     * no es admin no puede tocar a un admin ni conceder, por rol nuevo o excepción nueva, un permiso que él no tiene.
+     * Lo que el usuario objetivo ya tenía no se revalida: editar su nombre no exige tener todos sus permisos.
+     *
+     * @param  array<int, array{concedido: bool}>  $permisosExtra  permiso_id => concedido
+     */
+    private function impedirEscaladaDePrivilegios(?Usuario $objetivo, int $rolId, array $permisosExtra): void
+    {
+        $actor = Auth::user();
+
+        if ($actor === null || $this->roles->esRolAdmin($actor->rol_id)) {
+            return;
+        }
+
+        $tocaAdmin = $this->roles->esRolAdmin($rolId) || ($objetivo !== null && $this->roles->esRolAdmin($objetivo->rol_id));
+
+        $permisosQueSuma = $objetivo !== null && (int) $objetivo->rol_id === $rolId
+            ? collect()
+            : $this->roles->buscarPorIdOFallar($rolId)->permisos;
+
+        $yaConcedidos = $objetivo?->permisosExtra()->wherePivot('concedido', true)->pluck('permisos.id')->map(fn ($id) => (int) $id)->all() ?? [];
+        $extrasNuevos = collect($permisosExtra)
+            ->filter(fn (array $excepcion, int|string $permisoId) => $excepcion['concedido'] && ! in_array((int) $permisoId, $yaConcedidos, true))
+            ->keys();
+
+        $permisosQueSuma = $permisosQueSuma->merge($this->permisos->consulta()->whereKey($extrasNuevos)->get());
+
+        $concedeLoQueNoTiene = $permisosQueSuma->contains(fn ($permiso) => ! $actor->tienePermiso($permiso->modulo, $permiso->accion));
+
+        if ($tocaAdmin || $concedeLoQueNoTiene) {
+            abort(403, 'No puedes conceder permisos que no tienes ni modificar a un administrador.');
+        }
     }
 
     /**

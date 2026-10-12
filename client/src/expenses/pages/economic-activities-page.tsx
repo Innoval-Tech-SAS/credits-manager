@@ -14,7 +14,7 @@ import type { ApiEconomicActivity } from '../types/api-economic-activity';
 export const EconomicActivitiesPage: FC = () => {
     const navigate = useNavigate();
 
-    const canCreate = usePermission('gastos', 'parametrizar');
+    const canCreate = usePermission('tributario', 'crear_actividades_economicas');
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<EconomicActivitiesListLocationState>();
     const { data, isLoading } = useResource<{ actividades_economicas: ApiEconomicActivity[] }>('/gastos/actividades-economicas');
     const actividades = data?.actividades_economicas ?? [];

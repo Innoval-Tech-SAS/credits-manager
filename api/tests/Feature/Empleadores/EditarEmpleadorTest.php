@@ -16,11 +16,11 @@ class EditarEmpleadorTest extends TestCase
     use CreatesCreditFixtures;
     use RefreshDatabase;
 
-    private function actingAsUsuarioConPermisoClientesEditar(): Usuario
+    private function actingAsUsuarioConPermisoEmpleadoresEditar(): Usuario
     {
         $empresa = $this->crearEmpresaDePrueba();
         $rol = Rol::create(['empresa_id' => $empresa->id, 'nombre' => 'asesor_test']);
-        $permiso = Permiso::firstOrCreate(['modulo' => 'clientes', 'accion' => 'editar']);
+        $permiso = Permiso::firstOrCreate(['modulo' => 'empleadores', 'accion' => 'editar']);
         $rol->permisos()->attach($permiso->id);
 
         $usuario = Usuario::create([
@@ -63,9 +63,9 @@ class EditarEmpleadorTest extends TestCase
         $respuesta->assertStatus(422)->assertJsonValidationErrors('nombre');
     }
 
-    public function test_un_usuario_con_permiso_de_editar_clientes_puede_editar_empleadores(): void
+    public function test_un_usuario_con_permiso_de_editar_empleadores_puede_editarlos(): void
     {
-        $this->actingAsUsuarioConPermisoClientesEditar();
+        $this->actingAsUsuarioConPermisoEmpleadoresEditar();
         $empleador = $this->crearEmpleador();
 
         $respuesta = $this->patchJson("/api/v1/empleadores/{$empleador->id}", ['nombre' => 'Editado por asesor']);

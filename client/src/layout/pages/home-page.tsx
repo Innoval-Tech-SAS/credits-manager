@@ -71,15 +71,19 @@ export const HomePage: FC = () => {
             <>
                 <DashboardMetricCards metricas={resumen.metricas} />
 
-                <div className="mb-6 grid grid-cols-1 gap-4 md:gap-6 xl:grid-cols-12">
-                    <div className="xl:col-span-7">
-                        <PagosDelDiaCard pagos={resumen.pagos_hoy} puedeRegistrarPago={puedeRegistrarPago} />
-                    </div>
+                {(resumen.pagos_hoy || resumen.metricas.cartera) && (
+                    <div className="mb-6 grid grid-cols-1 gap-4 md:gap-6 xl:grid-cols-12">
+                        {resumen.pagos_hoy && (
+                            <div className="xl:col-span-7">
+                                <PagosDelDiaCard pagos={resumen.pagos_hoy} puedeRegistrarPago={puedeRegistrarPago} />
+                            </div>
+                        )}
 
-                    <div className="xl:col-span-5">
-                        {resumen.metricas.cartera && <DashboardCarteraCard cartera={resumen.metricas.cartera} />}
+                        <div className="xl:col-span-5">
+                            {resumen.metricas.cartera && <DashboardCarteraCard cartera={resumen.metricas.cartera} />}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {!esSuperAdmin && <GoalsDashboardSection />}
 

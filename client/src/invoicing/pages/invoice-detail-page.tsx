@@ -39,6 +39,10 @@ export const InvoiceDetailPage: FC = () => {
 
     const puedeCrear = usePermission('facturacion', 'crear');
     const puedeAnular = usePermission('facturacion', 'anular');
+    const puedeNotaCredito = usePermission('facturacion', 'anular_nota_credito');
+    const puedeNotaDebito = usePermission('facturacion', 'anular_nota_debito');
+    const puedeRegistrarCobro = usePermission('facturacion', 'registrar_cobro');
+    const puedeReversarCobro = usePermission('facturacion', 'reversar_cobro');
     const puedeImprimir = usePermission('facturacion', 'imprimir');
 
     const { data, error, refetch } = useResource<ApiInvoiceDetail>(`/facturacion/documentos/${id}`);
@@ -80,8 +84,9 @@ export const InvoiceDetailPage: FC = () => {
     const esFactura = documento.tipo === 'factura';
     const situacion = totales.situacion;
     const tituloDocumento = documento.numero ?? `${ETIQUETA_TIPO[documento.tipo]} en borrador`;
-    const puedeCobrar = esFactura && !esBorrador && puedeCrear && (situacion === 'emitida' || situacion === 'parcialmente_pagada');
+    const puedeCobrar = esFactura && !esBorrador && puedeRegistrarCobro && (situacion === 'emitida' || situacion === 'parcialmente_pagada');
     const puedeAnularFactura = esFactura && !esBorrador && puedeAnular && situacion !== 'anulada';
+    const puedeEmitirNota = (esFactura && puedeNotaCredito) || puedeNotaDebito;
     // Con impuestos en cero (el caso de hoy) basta el total: no se les da más protagonismo visual del que ya tienen.
     const hayImpuestos = parseFloat(totales.total_iva ?? '0') > 0 || parseFloat(totales.total_retencion ?? '0') > 0;
 
@@ -230,7 +235,7 @@ export const InvoiceDetailPage: FC = () => {
                                 Reenviar por correo
                             </Button>
                         )}
-                        {!esBorrador && puedeAnular && (
+                        {!esBorrador && puedeEmitirNota && (
                             <Button variant="outline" iconOnly startIcon={<FileText className="size-4" />} onClick={() => setNotaAbierta(true)}>
                                 Emitir nota
                             </Button>
@@ -335,7 +340,7 @@ export const InvoiceDetailPage: FC = () => {
                     </div>
                     <InvoicePaymentsTable
                         cobros={cobros}
-                        puedeReversar={puedeAnular}
+                        puedeReversar={puedeReversarCobro}
                         onReversar={(cobro) => setAccionConMotivo({ tipo: 'reversar', cobro })}
                         onVerRecibo={
                             puedeImprimir
@@ -346,7 +351,7 @@ export const InvoiceDetailPage: FC = () => {
                 </div>
             )}
 
-            {!esBorrador && puedeAnular && (
+            {!esBorrador && puedeEmitirNota && (
                 <InvoiceNoteForm
                     isOpen={notaAbierta}
                     documento={documento}
