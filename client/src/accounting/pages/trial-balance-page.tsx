@@ -23,12 +23,12 @@ export const TrialBalancePage: FC = () => {
             <PageBreadcrumb pageTitle="Balance de prueba" />
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-                <div className="max-w-xs">
-                    <Label htmlFor="hasta">Corte al</Label>
-                    <DatePicker id="hasta" value={hasta} onChange={setHasta} />
-                </div>
+                <div className="flex flex-wrap items-end gap-6">
+                    <div className="max-w-xs flex-1">
+                        <Label htmlFor="hasta">Corte al</Label>
+                        <DatePicker id="hasta" value={hasta} onChange={setHasta} />
+                    </div>
 
-                <div className="mt-6">
                     <ReportExportButton
                         endpoint="/contabilidad/balance-prueba/exportar"
                         exportPermissions={['informes_contables.exportar_balance_prueba']}

@@ -35,7 +35,7 @@ export const LedgerPage: FC<LedgerPageProps> = ({ modo = 'mayor' }) => {
     const [hasta, setHasta] = useState(() => new Date().toISOString().slice(0, 10));
 
     const { data, isLoading } = useResource<ApiLedger>(
-        cuentaId ? `/contabilidad/libro-mayor?cuenta_id=${cuentaId}&desde=${desde}&hasta=${hasta}` : '',
+        cuentaId ? `/contabilidad/libro-mayor?cuenta_id=${cuentaId}&desde=${desde}&hasta=${hasta}` : null,
     );
 
     // Mismo criterio que el export: una cuenta débito sube con el débito, una crédito sube con el crédito.
@@ -54,10 +54,11 @@ export const LedgerPage: FC<LedgerPageProps> = ({ modo = 'mayor' }) => {
             <PageBreadcrumb pageTitle={modo === 'cajaBancos' ? 'Caja y bancos' : 'Libro mayor / auxiliares'} />
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:grid-cols-4">
                     <div>
                         <Label htmlFor="cuenta">Cuenta</Label>
                         <Select
+                            id="cuenta"
                             options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
                             placeholder="Seleccione..."
                             defaultValue={cuentaId}
@@ -72,17 +73,16 @@ export const LedgerPage: FC<LedgerPageProps> = ({ modo = 'mayor' }) => {
                         <Label htmlFor="hasta">Hasta</Label>
                         <DatePicker id="hasta" value={hasta} onChange={setHasta} />
                     </div>
-                </div>
-
-                <div className="mt-6">
-                    <ReportExportButton
-                        endpoint="/contabilidad/libro-mayor/exportar"
-                        exportPermissions={exportPermissions}
-                        pdfEndpoint="/contabilidad/libro-mayor/pdf"
-                        pdfFilename="libro-mayor.pdf"
-                        filters={{ cuenta_id: cuentaId, desde, hasta }}
-                        disabled={!cuentaId}
-                    />
+                    <div className="flex items-end">
+                        <ReportExportButton
+                            endpoint="/contabilidad/libro-mayor/exportar"
+                            exportPermissions={exportPermissions}
+                            pdfEndpoint="/contabilidad/libro-mayor/pdf"
+                            pdfFilename="libro-mayor.pdf"
+                            filters={{ cuenta_id: cuentaId, desde, hasta }}
+                            disabled={!cuentaId}
+                        />
+                    </div>
                 </div>
             </div>
 

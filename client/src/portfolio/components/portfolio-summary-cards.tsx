@@ -6,14 +6,19 @@ import { DonutChart } from '@ui/charts/components/donut-chart';
 import { AGING_BUCKETS } from '../constants/aging-buckets';
 import type { PortfolioSummaryCardsProps } from '../props/portfolio-summary-cards-props';
 
-export const PortfolioSummaryCards: FC<PortfolioSummaryCardsProps> = ({ totales, envejecimientoMora }) => {
+export const PortfolioSummaryCards: FC<PortfolioSummaryCardsProps> = ({ totales, envejecimientoMora, accion }) => {
     const carteraTotal = Number(totales.al_dia.saldo) + Number(totales.en_mora.saldo);
 
     return (
         <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">Distribución de cartera</h2>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Saldo pendiente por estado de mora.</p>
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">Distribución de cartera</h2>
+                        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Saldo pendiente por estado de mora.</p>
+                    </div>
+                    {accion}
+                </div>
 
                 <DonutChart
                     series={[Number(totales.al_dia.saldo), Number(totales.en_mora.saldo)]}

@@ -41,8 +41,17 @@ export const PortfolioPage: FC = () => {
         <div className="flex min-h-full flex-col pb-6">
             <PageBreadcrumb pageTitle="Cartera" />
 
-            <div className="flex flex-col gap-4">
-                <div className="flex justify-end">
+            {(exportMessage || exportError) && (
+                <div className="mb-4 flex flex-col gap-4">
+                    {exportMessage && <Alert variant="success" title="Listo" message={exportMessage} onDismiss={() => setExportMessage(null)} />}
+                    {exportError && <Alert variant="danger" title="No se pudo exportar" message={exportError} onDismiss={() => setExportError(null)} />}
+                </div>
+            )}
+
+            <PortfolioSummaryCards
+                totales={totales}
+                envejecimientoMora={envejecimientoMora}
+                accion={
                     <PermissionExportButton
                         permiso="cartera.exportar_listado"
                         endpoint="/cartera/exportar"
@@ -56,13 +65,8 @@ export const PortfolioPage: FC = () => {
                             setExportError(message);
                         }}
                     />
-                </div>
-
-                {exportMessage && <Alert variant="success" title="Listo" message={exportMessage} onDismiss={() => setExportMessage(null)} />}
-                {exportError && <Alert variant="danger" title="No se pudo exportar" message={exportError} onDismiss={() => setExportError(null)} />}
-            </div>
-
-            <PortfolioSummaryCards totales={totales} envejecimientoMora={envejecimientoMora} />
+                }
+            />
 
             <PortfolioOverdueTable
                 entradas={enMora}
