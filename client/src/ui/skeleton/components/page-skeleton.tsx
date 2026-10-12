@@ -1,29 +1,38 @@
 import type { FC } from 'react';
+import { useLocation } from 'react-router';
 
-import { SkeletonBar } from './skeleton-bar';
+import { resolvePageSkeletonVariant } from '../utils/resolve-page-skeleton-variant';
+import { CalendarPageSkeleton } from './calendar-page-skeleton';
+import { DashboardPageSkeleton } from './dashboard-page-skeleton';
+import { DetailPageSkeleton } from './detail-page-skeleton';
+import { FormPageSkeleton } from './form-page-skeleton';
+import { ListPageSkeleton } from './list-page-skeleton';
+import { ReportPageSkeleton } from './report-page-skeleton';
+import { SkeletonStatus } from './skeleton-status';
+import { SummaryPageSkeleton } from './summary-page-skeleton';
 
-const FILAS = 6;
+const SILUETAS = {
+    dashboard: DashboardPageSkeleton,
+    list: ListPageSkeleton,
+    form: FormPageSkeleton,
+    detail: DetailPageSkeleton,
+    report: ReportPageSkeleton,
+    summary: SummaryPageSkeleton,
+    calendar: CalendarPageSkeleton,
+} as const;
 
-/** Lo que se ve mientras llega el código de una página: la silueta de la tarjeta de un listado (contador, acciones y filas). */
-export const PageSkeleton: FC = () => (
-    <div role="status" aria-busy="true" className="flex flex-col pb-6">
-        <span className="sr-only">Cargando…</span>
+/**
+ * Silueta del tipo de pantalla de la ruta actual (listado, formulario, detalle, informe, resumen, calendario o inicio).
+ * La usa el layout mientras llega el código de una página y las páginas mientras llegan sus datos, para que la silueta
+ * no cambie entre una espera y la otra.
+ */
+export const PageSkeleton: FC = () => {
+    const { pathname } = useLocation();
+    const Silueta = SILUETAS[resolvePageSkeletonVariant(pathname)];
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-            <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <SkeletonBar className="h-4 w-32" />
-                <div className="flex flex-col gap-3 sm:flex-row">
-                    <SkeletonBar className="h-11 w-full sm:w-72" />
-                    <SkeletonBar className="h-11 w-full sm:w-36" />
-                </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-                <SkeletonBar className="h-10 w-full" />
-                {Array.from({ length: FILAS }, (_, indice) => (
-                    <SkeletonBar key={indice} className="h-8 w-full" />
-                ))}
-            </div>
-        </div>
-    </div>
-);
+    return (
+        <SkeletonStatus className="flex min-h-full flex-col pb-6">
+            <Silueta />
+        </SkeletonStatus>
+    );
+};
