@@ -56,7 +56,7 @@ class PermisoSeeder extends Seeder
         ],
         'egresos' => ['listar', 'crear', 'reversar'],
         'anticipos' => ['listar', 'crear'],
-        'conciliacion' => ['listar', 'configurar', 'cargar_extracto', 'conciliar', 'cerrar', 'reabrir', 'exportar'],
+        'conciliacion' => ['listar', 'configurar', 'cargar_extracto', 'conciliar', 'cerrar', 'reabrir'],
         'auditoria' => ['listar', 'exportar_bitacora'],
         'facturacion' => [
             'listar_facturas', 'listar_notas_credito', 'listar_notas_debito', 'crear', 'emitir', 'anular', 'anular_nota_credito',

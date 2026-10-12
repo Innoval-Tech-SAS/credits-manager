@@ -6,6 +6,7 @@ use App\Empresas\Models\Empresa;
 use App\Terceros\Models\Tercero;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesAuditoriaFixtures;
 use Tests\Concerns\CreatesContabilidadFixtures;
@@ -14,6 +15,7 @@ use Tests\TestCase;
 /**
  * Los anticipos se consultan con `anticipos.listar` (o el lado que cruzan, o `anticipos.crear`), y `anticipos.crear`
  * ya no abre las cuentas por pagar y por cobrar completas: solo los documentos del tercero que va a cruzar.
+ * `conciliacion.exportar` queda retirado porque no controlaba nada.
  */
 class PermisosConsultaAnticiposTest extends TestCase
 {
@@ -88,5 +90,26 @@ class PermisosConsultaAnticiposTest extends TestCase
 
         $this->getJson(self::CARTERA."?naturaleza=por_pagar&tercero_id={$ajeno->id}")->assertUnprocessable()->assertJsonValidationErrors('tercero_id');
         $this->getJson("/api/v1/terceros/{$ajeno->id}/documentos-pendientes?naturaleza=por_pagar")->assertNotFound();
+    }
+
+    public function test_conciliacion_exportar_queda_retirado_y_revertir_lo_devuelve(): void
+    {
+        $migracion = require database_path('migrations/2026_10_12_160000_retirar_permiso_exportar_conciliacion.php');
+        $migracion->down();
+        $this->prepararEmpresa();
+        $usuario = $this->actuarCon(['conciliacion.listar', 'conciliacion.exportar']);
+        $this->assertTrue($usuario->tienePermiso('conciliacion', 'exportar'));
+
+        $migracion->up();
+        $migracion->up();
+
+        $this->assertFalse($usuario->fresh()->tienePermiso('conciliacion', 'exportar'));
+        $this->assertTrue($usuario->fresh()->tienePermiso('conciliacion', 'listar'));
+        $this->assertSame(1, DB::table('permisos')->where(['modulo' => 'conciliacion', 'accion' => 'exportar'])->count());
+        $this->assertSame(2, DB::table('rol_permiso')->where('rol_id', $usuario->rol_id)->count(), 'La asignación se conserva.');
+
+        $migracion->down();
+
+        $this->assertTrue($usuario->fresh()->tienePermiso('conciliacion', 'exportar'));
     }
 }
