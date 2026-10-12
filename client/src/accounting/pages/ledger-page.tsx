@@ -9,7 +9,8 @@ import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { DatePicker } from '@ui/forms/components/date-picker';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { SkeletonStatus } from '@ui/skeleton/components/skeleton-status';
+import { TableSkeleton } from '@ui/skeleton/components/table-skeleton';
 import type { ApiAccount } from '../types/api-account';
 import type { ApiLedger, ApiLedgerMovement } from '../types/api-ledger';
 import type { LedgerPageProps } from '../props/ledger-page-props';
@@ -89,9 +90,9 @@ export const LedgerPage: FC<LedgerPageProps> = ({ modo = 'mayor' }) => {
             {cuentaId && (
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                     {isLoading && (
-                        <div className="flex justify-center py-6">
-                            <Spinner size="lg" />
-                        </div>
+                        <SkeletonStatus>
+                            <TableSkeleton columns={7} />
+                        </SkeletonStatus>
                     )}
 
                     {data && (

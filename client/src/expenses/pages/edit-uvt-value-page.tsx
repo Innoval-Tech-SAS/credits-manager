@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { UvtValueForm } from '../components/uvt-value-form';
 import type { ApiUvtValue } from '../types/api-uvt-value';
 
@@ -30,9 +30,7 @@ export const EditUvtValuePage: FC = () => {
                 )}
 
                 {!error && !valorUvt && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 )}
 
                 {valorUvt && <UvtValueForm valorUvtId={valorUvt.id} initialData={valorUvt} onSaved={handleSaved} />}

@@ -9,7 +9,7 @@ import type { ApiCreditDetail } from '../../credits/types/api-credit-detail';
 import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { PaymentHistoryTable } from '../components/payment-history-table';
 import { CircleDollarSign, Eye, HandCoins } from 'lucide-react';
 
@@ -30,11 +30,7 @@ export const CreditPaymentsPage: FC = () => {
     }
 
     if (!detalle) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const { credito, saldo, cartera, pagos } = detalle;

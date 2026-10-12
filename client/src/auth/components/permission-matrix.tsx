@@ -4,7 +4,8 @@ import { ChevronsDownUp, ChevronsUpDown, Search } from 'lucide-react';
 
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { SkeletonBar } from '@ui/skeleton/components/skeleton-bar';
+import { SkeletonStatus } from '@ui/skeleton/components/skeleton-status';
 import { PermissionModuleCard } from './permission-module-card';
 import type { PermissionMatrixProps } from '../props/permission-matrix-props';
 import { groupPermissionsByMenu } from '../utils/group-permissions-by-menu';
@@ -73,9 +74,22 @@ export const PermissionMatrix: FC<PermissionMatrixProps> = ({ permisos, isChecke
             {summary}
 
             {isLoading ? (
-                <div className="flex justify-center py-8">
-                    <Spinner />
-                </div>
+                <SkeletonStatus className="space-y-6">
+                    {Array.from({ length: 2 }, (_, grupo) => (
+                        <div key={grupo} className="space-y-3">
+                            <SkeletonBar className="h-3 w-32" />
+                            {Array.from({ length: 3 }, (_, modulo) => (
+                                <div key={modulo} className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+                                    <div className="flex items-center gap-3">
+                                        <SkeletonBar className="size-5 rounded-md" />
+                                        <SkeletonBar className="h-4 w-36" />
+                                    </div>
+                                    <SkeletonBar className="h-4 w-16" />
+                                </div>
+                            ))}
+                        </div>
+                    ))}
+                </SkeletonStatus>
             ) : (
                 <div className="space-y-6">
                     {grupos.map((grupo) => {

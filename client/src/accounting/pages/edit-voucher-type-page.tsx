@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { VoucherTypeForm } from '../components/voucher-type-form';
 import type { ApiVoucherType } from '../types/api-voucher-type';
 
@@ -30,9 +30,7 @@ export const EditVoucherTypePage: FC = () => {
                 )}
 
                 {isLoading && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 )}
 
                 {tipo && <VoucherTypeForm voucherTypeId={tipo.id} initialData={tipo} onSaved={handleSaved} />}

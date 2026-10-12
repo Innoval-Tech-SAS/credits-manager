@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { EmailTemplateForm } from '../components/email-template-form';
 import type { ApiPlantillaCorreo } from '../types/api-plantilla-correo';
 import type { EmailType } from '../types/email-type';
@@ -26,9 +26,7 @@ export const EditEmailTemplatePage: FC = () => {
                 )}
 
                 {!error && !plantilla && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 )}
 
                 {plantilla && <EmailTemplateForm tipo={tipo as EmailType} templateId={plantilla.id} initialData={plantilla} />}

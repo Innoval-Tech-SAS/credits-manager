@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { EditCreditForm } from '../components/edit-credit-form';
 import type { ApiCreditDetail } from '../types/api-credit-detail';
 
@@ -24,9 +24,7 @@ export const EditCreditPage: FC = () => {
                         {error}
                     </div>
                 ) : !credito ? (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 ) : !esEditable ? (
                     <div className="rounded-lg border border-warning-500 bg-warning-50 px-4 py-3 text-sm text-warning-600 dark:border-warning-800 dark:bg-warning-500/10 dark:text-orange-400">
                         Solo se pueden modificar las condiciones de un crédito solicitado o aprobado. Después del desembolso, la corrección se hace

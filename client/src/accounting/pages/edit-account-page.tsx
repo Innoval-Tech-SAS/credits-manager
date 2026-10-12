@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { AccountForm } from '../components/account-form';
 import type { ApiAccount } from '../types/api-account';
 
@@ -32,9 +32,7 @@ export const EditAccountPage: FC = () => {
                 )}
 
                 {isLoading && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 )}
 
                 {data && !cuenta && <p className="text-sm text-gray-500 dark:text-gray-400">La cuenta no existe.</p>}

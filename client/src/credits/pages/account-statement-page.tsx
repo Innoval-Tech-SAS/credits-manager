@@ -11,7 +11,7 @@ import { useCompany } from '../../company/hooks/use-company';
 import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { AccountStatementHeader } from '../components/account-statement-header';
 import { AccountStatementInstallmentsTable } from '../components/account-statement-installments-table';
 import { AccountStatementPaymentsTable } from '../components/account-statement-payments-table';
@@ -37,11 +37,7 @@ export const AccountStatementPage: FC = () => {
     }
 
     if (!estadoCuenta) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const { credito, saldo, refinanciacion, pagos, resumen_cuotas: resumenCuotas } = estadoCuenta;

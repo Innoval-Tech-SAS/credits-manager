@@ -6,7 +6,7 @@ import { useResource } from '../../shared/hooks/use-resource';
 import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { GoalSettingsForm } from '../components/goal-settings-form';
 import type { ApiGoalSettings } from '../types/api-goal-settings';
 
@@ -38,9 +38,7 @@ export const GoalSettingsPage: FC = () => {
 
             <section className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 md:p-6">
                 {!data ? (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 ) : (
                     <GoalSettingsForm configuracion={data.parametros} onSaved={() => setGuardado(true)} />
                 )}

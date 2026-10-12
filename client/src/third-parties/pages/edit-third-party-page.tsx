@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { ThirdPartyForm } from '../components/third-party-form';
 import type { ApiThirdParty } from '../types/api-third-party';
 
@@ -25,9 +25,7 @@ export const EditThirdPartyPage: FC = () => {
                 )}
 
                 {!error && !tercero && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 )}
 
                 {tercero && <ThirdPartyForm thirdPartyId={tercero.id} initialData={tercero} />}

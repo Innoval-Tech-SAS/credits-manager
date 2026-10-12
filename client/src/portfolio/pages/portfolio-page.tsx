@@ -6,7 +6,7 @@ import { PermissionExportButton } from '../../shared/components/permission-expor
 import { useResource } from '../../shared/hooks/use-resource';
 import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { PortfolioCurrentTable } from '../components/portfolio-current-table';
 import { PortfolioOverdueTable } from '../components/portfolio-overdue-table';
 import { PortfolioSummaryCards } from '../components/portfolio-summary-cards';
@@ -28,11 +28,7 @@ export const PortfolioPage: FC = () => {
     }
 
     if (!resumen) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const { al_dia: alDia, en_mora: enMora, totales, envejecimiento_mora: envejecimientoMora } = resumen;

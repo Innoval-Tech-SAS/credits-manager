@@ -14,7 +14,8 @@ import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { DatePicker } from '@ui/forms/components/date-picker';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { SkeletonStatus } from '@ui/skeleton/components/skeleton-status';
+import { TableSkeleton } from '@ui/skeleton/components/table-skeleton';
 
 type Modo = 'cuenta' | 'tercero';
 
@@ -111,9 +112,9 @@ export const AuxiliariesPage: FC = () => {
             {!endpoint && <Alert variant="info" title="Elige un filtro" message="Selecciona una cuenta o un tercero para ver su auxiliar." />}
             {error && <Alert variant="danger" title="No se pudo consultar" message={error} />}
             {isLoading && (
-                <div className="flex justify-center py-12">
-                    <Spinner size="lg" />
-                </div>
+                <SkeletonStatus className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+                    <TableSkeleton columns={6} rows={6} />
+                </SkeletonStatus>
             )}
 
             {endpoint && !isLoading && grupos.length === 0 && !error && (

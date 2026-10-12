@@ -10,7 +10,7 @@ import { formatMoney } from '../../shared/utils/format-money';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { DetailSkeletonBody } from '@ui/skeleton/components/detail-skeleton-body';
 import { DataTable } from '@ui/table/components/data-table';
 import type { ApiExpense } from '../types/api-expense';
 
@@ -64,9 +64,7 @@ export const ExpenseDetailPage: FC = () => {
                 )}
 
                 {isLoading && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <DetailSkeletonBody />
                 )}
 
                 {gasto && (

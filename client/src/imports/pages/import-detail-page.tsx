@@ -11,6 +11,7 @@ import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { ImportDecisionModals } from '../components/import-decision-modals';
 import { ImportErrorsTable } from '../components/import-errors-table';
@@ -63,11 +64,7 @@ export const ImportDetailPage: FC = () => {
     }, [estado]);
 
     if (!data) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const { importacion, decisiones } = data;

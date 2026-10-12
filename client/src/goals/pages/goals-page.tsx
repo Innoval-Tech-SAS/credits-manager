@@ -11,7 +11,7 @@ import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { SkeletonStatus } from '@ui/skeleton/components/skeleton-status';
 import type { ApiAdvisor } from '../../clients/types/api-advisor';
 import { GoalAdvisorsTable } from '../components/goal-advisors-table';
 import { GoalAlertsList } from '../components/goal-alerts-list';
@@ -19,6 +19,7 @@ import { GoalClosingsTable } from '../components/goal-closings-table';
 import { GoalCreateForm } from '../components/goal-create-form';
 import { GoalDistributionForm } from '../components/goal-distribution-form';
 import { GoalProgressCard } from '../components/goal-progress-card';
+import { GoalProgressCardSkeleton } from '../components/goal-progress-card-skeleton';
 import { GoalRecalcForm } from '../components/goal-recalc-form';
 import { GOAL_TYPE_LABELS } from '../constants/goal-status';
 import type { ApiGoalAlert } from '../types/api-goal-alert';
@@ -99,9 +100,10 @@ export const GoalsPage: FC = () => {
             {mensaje && <Alert variant="danger" title="No se pudo completar la acción" message={mensaje} onDismiss={() => setMensaje(null)} />}
 
             {!resumen ? (
-                <div className="flex justify-center py-12">
-                    <Spinner size="lg" />
-                </div>
+                <SkeletonStatus className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+                    <GoalProgressCardSkeleton />
+                    <GoalProgressCardSkeleton />
+                </SkeletonStatus>
             ) : (
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">

@@ -11,7 +11,7 @@ import { formatMoney } from '../../shared/utils/format-money';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { DetailSkeletonBody } from '@ui/skeleton/components/detail-skeleton-body';
 import { ReverseVoucherModal } from '../components/reverse-voucher-modal';
 import type { ApiVoucher } from '../types/api-voucher';
 import { VOUCHER_STATUS_BADGE_CLASSES } from '../constants/voucher-status-badge-classes';
@@ -58,9 +58,7 @@ export const VoucherDetailPage: FC = () => {
                 )}
 
                 {isLoading && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <DetailSkeletonBody />
                 )}
 
                 {comprobante && (

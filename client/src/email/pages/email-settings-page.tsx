@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { EmailSettingsForm } from '../components/email-settings-form';
 import { EmailTypeTabs } from '../components/email-type-tabs';
 import type { ApiEmailSettings } from '../types/api-email-settings';
@@ -52,9 +52,7 @@ export const EmailSettingsPage: FC = () => {
                 )}
 
                 {!data && !error && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 )}
 
                 {data && <EmailSettingsForm tipo={tipo} settings={data.configuracion} onSaved={refetch} />}

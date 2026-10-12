@@ -9,7 +9,7 @@ import { useState } from 'react';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { CalendarInstallmentModal } from '../components/calendar-installment-modal';
 import { LEGEND_ITEMS } from '../constants/legend-items';
 import { buildCalendarEvents } from '../utils/build-calendar-events';
@@ -72,11 +72,7 @@ export const CalendarPage: FC = () => {
     }
 
     if (!agendaVisible) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const events = buildCalendarEvents(agendaVisible);

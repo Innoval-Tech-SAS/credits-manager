@@ -17,6 +17,8 @@ import { DatePicker } from '@ui/forms/components/date-picker';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
+import { SkeletonBar } from '@ui/skeleton/components/skeleton-bar';
+import { SkeletonStatus } from '@ui/skeleton/components/skeleton-status';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { PAYMENT_METHOD_OPTIONS } from '../constants/payment-methods';
 import type { ApiInvoice, ApiInvoicePaymentMethod } from '../types/api-invoice';
@@ -157,9 +159,11 @@ export const CreateMultiplePaymentPage: FC = () => {
                     <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">Facturas pendientes</h3>
 
                     {isLoadingPendientes && (
-                        <div className="flex justify-center py-6">
-                            <Spinner size="lg" />
-                        </div>
+                        <SkeletonStatus className="flex flex-col gap-4">
+                            {Array.from({ length: 3 }, (_, indice) => (
+                                <SkeletonBar key={indice} className="h-20 w-full rounded-xl" />
+                            ))}
+                        </SkeletonStatus>
                     )}
 
                     {!isLoadingPendientes && pendientes.length === 0 && (

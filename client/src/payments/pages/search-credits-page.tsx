@@ -10,7 +10,8 @@ import type { ApiClient } from '../../clients/types/api-client';
 import type { ApiCredit } from '../../credits/types/api-credit';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Label } from '@ui/forms/components/label';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { SkeletonBar } from '@ui/skeleton/components/skeleton-bar';
+import { SkeletonStatus } from '@ui/skeleton/components/skeleton-status';
 import { ActiveCreditCard } from '../components/active-credit-card';
 
 export const SearchCreditsPage: FC = () => {
@@ -44,9 +45,20 @@ export const SearchCreditsPage: FC = () => {
                     <ClientInfoCard cliente={cliente} canEdit={false} onEdit={() => {}} />
 
                     {isLoading && (
-                        <div className="flex items-center justify-center rounded-2xl border border-gray-200 p-8 dark:border-gray-800">
-                            <Spinner size="lg" />
-                        </div>
+                        <SkeletonStatus className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+                            <div className="mb-5 flex items-center justify-between gap-3">
+                                <SkeletonBar className="h-5 w-40" />
+                                <SkeletonBar className="h-6 w-20 rounded-full" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-4 md:grid-cols-4">
+                                {Array.from({ length: 4 }, (_, indice) => (
+                                    <div key={indice} className="flex flex-col gap-2">
+                                        <SkeletonBar className="h-3 w-20" />
+                                        <SkeletonBar className="h-4 w-28" />
+                                    </div>
+                                ))}
+                            </div>
+                        </SkeletonStatus>
                     )}
 
                     {!isLoading && creditosActivos.length === 0 && (

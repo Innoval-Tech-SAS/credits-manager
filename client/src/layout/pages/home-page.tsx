@@ -8,7 +8,7 @@ import type { PaginatedResponse } from '../../shared/types/paginated-response';
 import type { ApiCompany } from '../../company/types/api-company';
 import { periodoActual } from '../../goals/utils/periodo-meta';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { DashboardSkeletonBody } from '@ui/skeleton/components/dashboard-skeleton-body';
 import { GoalsDashboardSection } from '../../goals/components/goals-dashboard-section';
 import { DashboardFilters } from '../components/dashboard-filters';
 import { DashboardMetricCards } from '../components/dashboard-metric-cards';
@@ -60,11 +60,7 @@ export const HomePage: FC = () => {
         }
 
         if (!resumen) {
-            return (
-                <div className="flex justify-center py-12">
-                    <Spinner size="lg" />
-                </div>
-            );
+            return <DashboardSkeletonBody />;
         }
 
         return (
