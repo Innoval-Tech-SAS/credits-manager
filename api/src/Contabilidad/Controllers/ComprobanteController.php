@@ -2,7 +2,9 @@
 
 namespace App\Contabilidad\Controllers;
 
+use App\Causacion\Services\CausacionService;
 use App\Contabilidad\Models\Comprobante;
+use App\Contabilidad\Requests\CausarConConceptoRequest;
 use App\Contabilidad\Requests\CrearComprobanteRequest;
 use App\Contabilidad\Requests\ReversarComprobanteRequest;
 use App\Contabilidad\Services\ComprobantePdfService;
@@ -17,6 +19,7 @@ class ComprobanteController extends Controller
     public function __construct(
         protected ComprobanteService $comprobantes,
         protected ComprobantePdfService $comprobantesPdf,
+        protected CausacionService $causacion,
     ) {}
 
     public function index(Request $peticion): JsonResponse
@@ -46,6 +49,13 @@ class ComprobanteController extends Controller
             contabilizarInmediato: false,
             consecutivoManual: $datos['consecutivo'] ?? null,
         );
+
+        return response()->json(['comprobante' => $this->comprobantes->mostrar($comprobante)], 201);
+    }
+
+    public function causarConcepto(CausarConConceptoRequest $peticion): JsonResponse
+    {
+        $comprobante = $this->causacion->causar($peticion->validated());
 
         return response()->json(['comprobante' => $this->comprobantes->mostrar($comprobante)], 201);
     }

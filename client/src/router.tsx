@@ -11,6 +11,7 @@ import { CostCenterDetailPage } from './accounting/pages/cost-center-detail-page
 import { CreateAccountPage } from './accounting/pages/create-account-page';
 import { CreateCostCenterPage } from './accounting/pages/create-cost-center-page';
 import { EditCostCenterPage } from './accounting/pages/edit-cost-center-page';
+import { CreateConceptAccrualPage } from './accounting/pages/create-concept-accrual-page';
 import { CreateVoucherPage } from './accounting/pages/create-voucher-page';
 import { CreateVoucherTypePage } from './accounting/pages/create-voucher-type-page';
 import { EditVoucherTypePage } from './accounting/pages/edit-voucher-type-page';
@@ -584,6 +585,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="contabilidad" accion="crear_manual">
                                 <CreateVoucherPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/comprobantes/causar-concepto',
+                        element: (
+                            <RequireModulePermission modulo="contabilidad" accion="crear_manual">
+                                <CreateConceptAccrualPage />
                             </RequireModulePermission>
                         ),
                     },
