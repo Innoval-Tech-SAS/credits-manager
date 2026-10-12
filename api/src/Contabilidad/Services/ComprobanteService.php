@@ -8,9 +8,13 @@ use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Enums\EstadoComprobante;
 use App\Contabilidad\Enums\EstadoPeriodo;
 use App\Contabilidad\Enums\EventoContable;
+use App\Contabilidad\Enums\NaturalezaCuenta;
+use App\Contabilidad\Enums\NaturalezaDocumento;
+use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Models\ReglaContabilizacion;
+use App\Contabilidad\Repositories\AplicacionDocumentoRepository;
 use App\Contabilidad\Repositories\AsientoContableRepository;
 use App\Contabilidad\Repositories\ComprobanteRepository;
 use App\Contabilidad\Repositories\ReglaContabilizacionRepository;
@@ -18,6 +22,7 @@ use App\Contabilidad\Repositories\TipoComprobanteRepository;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Models\Credito;
 use App\Pagos\Models\Pago;
+use App\Terceros\Repositories\TerceroRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -38,6 +43,9 @@ class ComprobanteService
         protected TipoComprobanteRepository $tiposComprobante,
         protected ReglaContabilizacionRepository $reglas,
         protected PeriodoContableService $periodos,
+        protected DocumentoTerceroService $documentosTercero,
+        protected AplicacionDocumentoRepository $aplicacionesDocumento,
+        protected TerceroRepository $terceros,
         protected EmisorAuditoria $auditoria,
     ) {}
 
@@ -210,6 +218,10 @@ class ComprobanteService
                 $original->tercero_id,
             );
 
+            if ($original->modulo_origen === 'manual') {
+                $this->reversarDocumentosTercero($original);
+            }
+
             $this->comprobantes->actualizar($original, [
                 'comprobante_reverso_id' => $reverso->id,
                 'estado' => EstadoComprobante::Anulado,
@@ -293,6 +305,10 @@ class ComprobanteService
                 'contabilizado_en' => now(),
             ]);
 
+            if ($comprobante->modulo_origen === 'manual') {
+                $this->procesarDocumentosTerceroAlContabilizar($comprobante);
+            }
+
             $this->auditoria->registrarModificacion(
                 AuditoriaConstants::MODULO_CONTABILIDAD,
                 'Comprobante #'.$comprobante->consecutivo.' contabilizado por '.$debito->aDecimalString(),
@@ -328,6 +344,119 @@ class ComprobanteService
 
             return $comprobante;
         });
+    }
+
+    /**
+     * Conecta el comprobante manual al motor genérico de `DocumentoTerceroService`: una línea sobre una cuenta
+     * marcada `exige_tercero` + `exige_documento_cruce` (cartera o proveedores reales, no retenciones ni bancos)
+     * causa un documento con saldo la primera vez que aparece ese documento cruce, y lo cruza (abona) las veces
+     * siguientes. La dirección se deriva de la propia cuenta: `naturaleza` (débito/crédito) dice qué lado "aumenta"
+     * el saldo, y `tipo` (activo/pasivo) dice si el documento es por cobrar o por pagar. Corre en `contabilizar()`,
+     * no en `crearComprobante()`, porque un borrador no tiene efecto contable todavía.
+     */
+    private function procesarDocumentosTerceroAlContabilizar(Comprobante $comprobante): void
+    {
+        $comprobante->loadMissing(['lineas.cuenta', 'tipoComprobante']);
+
+        foreach ($comprobante->lineas as $linea) {
+            $cuenta = $linea->cuenta;
+
+            if (! $cuenta->exige_tercero || ! $cuenta->exige_documento_cruce || empty($linea->documento_cruce)) {
+                continue;
+            }
+
+            $terceroId = $linea->tercero_id ?? $comprobante->tercero_id;
+            $naturalezaDocumento = match ($cuenta->tipo) {
+                TipoCuenta::Activo => NaturalezaDocumento::PorCobrar,
+                TipoCuenta::Pasivo => NaturalezaDocumento::PorPagar,
+                default => throw ValidationException::withMessages([
+                    'comprobante' => __('validation.custom.comprobante.cuenta_no_apta_para_documento_cruce', ['cuenta' => $cuenta->codigo]),
+                ]),
+            };
+
+            $aumentaElSaldo = ($cuenta->naturaleza === NaturalezaCuenta::Debito && $linea->debito->esPositivo())
+                || ($cuenta->naturaleza === NaturalezaCuenta::Credito && $linea->credito->esPositivo());
+            $monto = $linea->debito->esPositivo() ? $linea->debito : $linea->credito;
+
+            $existente = $this->documentosTercero->buscarPorNumero($terceroId, $naturalezaDocumento, $linea->documento_cruce);
+
+            if ($aumentaElSaldo) {
+                if ($existente) {
+                    throw ValidationException::withMessages([
+                        'comprobante' => __('validation.custom.comprobante.documento_cruce_duplicado', ['documento' => $linea->documento_cruce]),
+                    ]);
+                }
+
+                $this->documentosTercero->crearDocumento(
+                    $this->terceros->buscarPorIdOFallar($terceroId),
+                    $naturalezaDocumento,
+                    $comprobante->tipoComprobante->codigo,
+                    $linea->documento_cruce,
+                    $comprobante->fecha->toDateString(),
+                    $linea->descripcion ?? $comprobante->concepto,
+                    $monto,
+                    'contabilidad_manual',
+                    $comprobante->id,
+                    planCuentaId: $cuenta->id,
+                    fechaVencimiento: $linea->fecha_vencimiento?->toDateString(),
+                );
+            } else {
+                if (! $existente) {
+                    throw ValidationException::withMessages([
+                        'comprobante' => __('validation.custom.comprobante.documento_cruce_no_encontrado', ['documento' => $linea->documento_cruce]),
+                    ]);
+                }
+
+                $this->documentosTercero->aplicarValor(
+                    $existente->tercero,
+                    $naturalezaDocumento,
+                    [['documento_tercero_id' => $existente->id, 'valor' => $monto]],
+                    'contabilidad_manual',
+                    $comprobante->id,
+                    $comprobante->fecha->toDateString(),
+                );
+            }
+        }
+    }
+
+    /**
+     * Deshace, al reversar, los efectos que `procesarDocumentosTerceroAlContabilizar()` causó: restaura el saldo
+     * de los documentos que este comprobante cruzó (abonó) y anula los que él mismo creó — salvo que alguno de
+     * esos ya tenga un abono vigente de otro origen, caso en el que se bloquea la reversa (ver `GastoService::anular`
+     * para el mismo guard, y `EgresoService::reversar` para el mismo patrón de restaurar saldo).
+     */
+    private function reversarDocumentosTercero(Comprobante $original): void
+    {
+        $documentosCreados = $this->documentosTercero->creadosPorOrigen('contabilidad_manual', $original->id);
+
+        foreach ($documentosCreados as $documento) {
+            if ($this->aplicacionesDocumento->existeVigentePara($documento->id)) {
+                throw ValidationException::withMessages([
+                    'comprobante' => __('validation.custom.comprobante.no_se_puede_reversar_documento_con_pagos', ['documento' => $documento->numero_documento]),
+                ]);
+            }
+        }
+
+        $vigentes = $this->aplicacionesDocumento->vigentesDe('contabilidad_manual', $original->id);
+
+        if ($vigentes->isNotEmpty()) {
+            $documentos = $this->documentosTercero->buscarVariosPorId($vigentes->pluck('documento_tercero_id')->unique()->all())->keyBy('id');
+
+            foreach ($vigentes as $aplicacion) {
+                $this->documentosTercero->incrementarValor(
+                    $documentos[$aplicacion->documento_tercero_id],
+                    $aplicacion->valor_aplicado,
+                    'contabilidad_manual_reverso',
+                    $original->id,
+                );
+            }
+
+            $this->aplicacionesDocumento->marcarReversadas($vigentes->pluck('id')->all());
+        }
+
+        foreach ($documentosCreados as $documento) {
+            $this->documentosTercero->anular($documento);
+        }
     }
 
     /**

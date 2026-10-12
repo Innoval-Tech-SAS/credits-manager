@@ -61,6 +61,26 @@ class DocumentoTerceroRepository extends BaseRepository
         return $this->consulta()->whereIn('id', $ids)->get();
     }
 
+    /** Busca el documento de un tercero por su número (factura/documento cruce), sin importar su estado. */
+    public function buscarPorNumero(int $terceroId, NaturalezaDocumento $naturaleza, string $numeroDocumento): ?DocumentoTercero
+    {
+        return $this->consulta()
+            ->where('tercero_id', $terceroId)
+            ->where('naturaleza', $naturaleza)
+            ->where('numero_documento', $numeroDocumento)
+            ->with('tercero')
+            ->first();
+    }
+
+    /** Documentos que un origen concreto (p. ej. un comprobante manual) creó, para poder deshacerlos si se reversa. */
+    public function creadosPorOrigen(string $moduloOrigen, int $origenId): Collection
+    {
+        return $this->consulta()
+            ->where('modulo_origen', $moduloOrigen)
+            ->where('origen_id', $origenId)
+            ->get();
+    }
+
     /**
      * Cartera por tercero (CxP o CxC): `$filtros['estado']` filtra por el estado que se le muestra al usuario,
      * donde "vencido" es un derivado de `saldo > 0` y `fecha_vencimiento` anterior a la fecha de corte — no un
