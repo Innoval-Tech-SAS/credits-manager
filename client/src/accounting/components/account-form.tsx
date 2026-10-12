@@ -13,50 +13,61 @@ import { ACCOUNT_TYPE_OPTIONS } from '../constants/account-type-options';
 import type { AccountFormProps } from '../props/account-form-props';
 import type { ApiAccount } from '../types/api-account';
 
-export const AccountForm: FC<AccountFormProps> = ({ cuentas, onCreated }) => {
+/** En edición el backend solo acepta el nombre y lo que la cuenta exige: código, naturaleza, tipo, nivel y padre quedan fijos. */
+export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialData, onSaved }) => {
     const { sendRequest } = useSendRequest();
+    const isEditMode = accountId !== undefined;
 
-    const [codigo, setCodigo] = useState('');
-    const [nombre, setNombre] = useState('');
-    const [naturaleza, setNaturaleza] = useState<ApiAccount['naturaleza']>('debito');
-    const [nivel, setNivel] = useState('1');
-    const [cuentaPadreId, setCuentaPadreId] = useState('');
-    const [tipo, setTipo] = useState<ApiAccount['tipo']>('activo');
-    const [permiteMovimiento, setPermiteMovimiento] = useState(true);
-    const [exigeTercero, setExigeTercero] = useState(false);
-    const [exigeDocumentoCruce, setExigeDocumentoCruce] = useState(false);
-    const [exigeVencimiento, setExigeVencimiento] = useState(false);
-    const [exigeCentroCosto, setExigeCentroCosto] = useState(false);
+    const [codigo, setCodigo] = useState(initialData?.codigo ?? '');
+    const [nombre, setNombre] = useState(initialData?.nombre ?? '');
+    const [naturaleza, setNaturaleza] = useState<ApiAccount['naturaleza']>(initialData?.naturaleza ?? 'debito');
+    const [nivel, setNivel] = useState(String(initialData?.nivel ?? 1));
+    const [cuentaPadreId, setCuentaPadreId] = useState(initialData?.cuenta_padre_id ? String(initialData.cuenta_padre_id) : '');
+    const [tipo, setTipo] = useState<ApiAccount['tipo']>(initialData?.tipo ?? 'activo');
+    const [permiteMovimiento, setPermiteMovimiento] = useState(initialData?.permite_movimiento ?? true);
+    const [exigeTercero, setExigeTercero] = useState(initialData?.exige_tercero ?? false);
+    const [exigeDocumentoCruce, setExigeDocumentoCruce] = useState(initialData?.exige_documento_cruce ?? false);
+    const [exigeVencimiento, setExigeVencimiento] = useState(initialData?.exige_vencimiento ?? false);
+    const [exigeCentroCosto, setExigeCentroCosto] = useState(initialData?.exige_centro_costo ?? false);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const cuentaPadre = cuentas.find((cuenta) => String(cuenta.id) === cuentaPadreId);
+    const nombreCuentaPadre = cuentaPadre ? `${cuentaPadre.codigo} - ${cuentaPadre.nombre}` : 'Ninguna';
 
     const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(null);
         setIsSubmitting(true);
 
-        try {
-            const respuesta = await sendRequest<{ cuenta: ApiAccount }>('/contabilidad/plan-cuentas', {
-                method: 'POST',
-                body: {
-                    codigo,
-                    nombre,
-                    naturaleza,
-                    nivel: Number(nivel),
-                    cuenta_padre_id: cuentaPadreId ? Number(cuentaPadreId) : null,
-                    tipo,
-                    permite_movimiento: permiteMovimiento,
-                    exige_tercero: exigeTercero,
-                    exige_documento_cruce: exigeDocumentoCruce,
-                    exige_vencimiento: exigeVencimiento,
-                    exige_centro_costo: exigeCentroCosto,
-                },
-            });
+        const requisitos = {
+            permite_movimiento: permiteMovimiento,
+            exige_tercero: exigeTercero,
+            exige_documento_cruce: exigeDocumentoCruce,
+            exige_vencimiento: exigeVencimiento,
+            exige_centro_costo: exigeCentroCosto,
+        };
 
-            onCreated(respuesta.cuenta);
-            setCodigo('');
-            setNombre('');
-            setCuentaPadreId('');
+        try {
+            const respuesta = isEditMode
+                ? await sendRequest<{ cuenta: ApiAccount }>(`/contabilidad/plan-cuentas/${accountId}`, {
+                      method: 'PATCH',
+                      body: { nombre, ...requisitos },
+                  })
+                : await sendRequest<{ cuenta: ApiAccount }>('/contabilidad/plan-cuentas', {
+                      method: 'POST',
+                      body: {
+                          codigo,
+                          nombre,
+                          naturaleza,
+                          nivel: Number(nivel),
+                          cuenta_padre_id: cuentaPadreId ? Number(cuentaPadreId) : null,
+                          tipo,
+                          ...requisitos,
+                      },
+                  });
+
+            onSaved(respuesta.cuenta);
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         } finally {
@@ -76,7 +87,7 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, onCreated }) => {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="codigo">Código</Label>
-                        <Input id="codigo" name="codigo" required value={codigo} onChange={(event) => setCodigo(event.target.value)} />
+                        <Input id="codigo" name="codigo" required disabled={isEditMode} value={codigo} onChange={(event) => setCodigo(event.target.value)} />
                     </div>
 
                     <div className="md:col-span-2">
@@ -85,40 +96,64 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, onCreated }) => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-                    <div>
-                        <Label htmlFor="naturaleza">Naturaleza</Label>
-                        <Select
-                            options={ACCOUNT_NATURE_OPTIONS}
-                            defaultValue={naturaleza}
-                            onChange={(value) => setNaturaleza(value as ApiAccount['naturaleza'])}
-                        />
-                    </div>
+                {isEditMode ? (
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+                        <div>
+                            <Label htmlFor="naturaleza">Naturaleza</Label>
+                            <Input id="naturaleza" disabled value={ACCOUNT_NATURE_OPTIONS.find((opcion) => opcion.value === naturaleza)?.label ?? naturaleza} />
+                        </div>
 
-                    <div>
-                        <Label htmlFor="tipo">Tipo</Label>
-                        <Select
-                            options={ACCOUNT_TYPE_OPTIONS}
-                            defaultValue={tipo}
-                            onChange={(value) => setTipo(value as ApiAccount['tipo'])}
-                        />
-                    </div>
+                        <div>
+                            <Label htmlFor="tipo">Tipo</Label>
+                            <Input id="tipo" disabled value={ACCOUNT_TYPE_OPTIONS.find((opcion) => opcion.value === tipo)?.label ?? tipo} />
+                        </div>
 
-                    <div>
-                        <Label htmlFor="nivel">Nivel</Label>
-                        <Input id="nivel" name="nivel" type="number" min="1" value={nivel} onChange={(event) => setNivel(event.target.value)} />
-                    </div>
+                        <div>
+                            <Label htmlFor="nivel">Nivel</Label>
+                            <Input id="nivel" disabled value={nivel} />
+                        </div>
 
-                    <div>
-                        <Label htmlFor="cuenta-padre">Cuenta padre</Label>
-                        <Select
-                            options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
-                            placeholder="Ninguna"
-                            defaultValue={cuentaPadreId}
-                            onChange={setCuentaPadreId}
-                        />
+                        <div>
+                            <Label htmlFor="cuenta-padre">Cuenta padre</Label>
+                            <Input id="cuenta-padre" disabled value={nombreCuentaPadre} />
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+                        <div>
+                            <Label htmlFor="naturaleza">Naturaleza</Label>
+                            <Select
+                                options={ACCOUNT_NATURE_OPTIONS}
+                                defaultValue={naturaleza}
+                                onChange={(value) => setNaturaleza(value as ApiAccount['naturaleza'])}
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="tipo">Tipo</Label>
+                            <Select
+                                options={ACCOUNT_TYPE_OPTIONS}
+                                defaultValue={tipo}
+                                onChange={(value) => setTipo(value as ApiAccount['tipo'])}
+                            />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="nivel">Nivel</Label>
+                            <Input id="nivel" name="nivel" type="number" min="1" value={nivel} onChange={(event) => setNivel(event.target.value)} />
+                        </div>
+
+                        <div>
+                            <Label htmlFor="cuenta-padre">Cuenta padre</Label>
+                            <Select
+                                options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
+                                placeholder="Ninguna"
+                                defaultValue={cuentaPadreId}
+                                onChange={setCuentaPadreId}
+                            />
+                        </div>
+                    </div>
+                )}
 
                 <Checkbox
                     label="Permite movimiento (cuenta de detalle)"
@@ -138,7 +173,7 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, onCreated }) => {
 
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                     <Button type="submit" disabled={isSubmitting} startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}>
-                        {isSubmitting ? 'Creando…' : 'Crear cuenta'}
+                        {isSubmitting ? (isEditMode ? 'Actualizando…' : 'Creando…') : isEditMode ? 'Actualizar cuenta' : 'Crear cuenta'}
                     </Button>
                 </div>
             </div>

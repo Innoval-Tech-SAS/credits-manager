@@ -20,7 +20,7 @@ export const CreateAccountPage: FC = () => {
             <PageBreadcrumb pageTitle="Crear cuenta" />
 
             <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3">
-                <AccountForm cuentas={cuentas} onCreated={handleCreated} />
+                <AccountForm cuentas={cuentas} onSaved={handleCreated} />
             </div>
         </div>
     );

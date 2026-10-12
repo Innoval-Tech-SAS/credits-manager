@@ -16,7 +16,7 @@ export const CreateEconomicActivityPage: FC = () => {
             <PageBreadcrumb pageTitle="Crear actividad económica" />
 
             <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3">
-                <EconomicActivityForm onCreated={handleCreated} />
+                <EconomicActivityForm onSaved={handleCreated} />
             </div>
         </div>
     );

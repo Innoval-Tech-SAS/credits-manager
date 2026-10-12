@@ -2,5 +2,7 @@ import type { ApiAccount } from '../types/api-account';
 
 export type AccountFormProps = {
     cuentas: ApiAccount[];
-    onCreated: (cuenta: ApiAccount) => void;
+    accountId?: number;
+    initialData?: ApiAccount;
+    onSaved: (cuenta: ApiAccount) => void;
 };

@@ -1,12 +1,13 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ListTree, Search } from 'lucide-react';
+import { ListTree, Pencil, Search } from 'lucide-react';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { usePermission } from '../../auth/hooks/use-permission';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
@@ -149,6 +150,21 @@ export const ChartOfAccountsPage: FC = () => {
                             </div>
                         ),
                     },
+                    ...(canEdit
+                        ? [
+                              {
+                                  key: 'acciones',
+                                  label: 'Acciones',
+                                  render: (cuenta: ApiAccount) => (
+                                      <ActionButton
+                                          icon={<Pencil className="size-5" />}
+                                          label="Editar"
+                                          onClick={() => navigate(`/contabilidad/plan-cuentas/${cuenta.id}/editar`)}
+                                      />
+                                  ),
+                              },
+                          ]
+                        : []),
                 ]}
                 rows={cuentas}
                 getRowKey={(row) => row.id}

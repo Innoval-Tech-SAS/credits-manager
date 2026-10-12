@@ -9,6 +9,7 @@ import { ChartOfAccountsPage } from './accounting/pages/chart-of-accounts-page';
 import { CostCentersPage } from './accounting/pages/cost-centers-page';
 import { CostCenterDetailPage } from './accounting/pages/cost-center-detail-page';
 import { CreateAccountPage } from './accounting/pages/create-account-page';
+import { EditAccountPage } from './accounting/pages/edit-account-page';
 import { CreateCostCenterPage } from './accounting/pages/create-cost-center-page';
 import { EditCostCenterPage } from './accounting/pages/edit-cost-center-page';
 import { CreateConceptAccrualPage } from './accounting/pages/create-concept-accrual-page';
@@ -51,6 +52,7 @@ import { CreateUvtValuePage } from './expenses/pages/create-uvt-value-page';
 import { EditUvtValuePage } from './expenses/pages/edit-uvt-value-page';
 import { ExpenseCostCenterReportPage } from './expenses/pages/expense-cost-center-report-page';
 import { EconomicActivitiesPage } from './expenses/pages/economic-activities-page';
+import { EditEconomicActivityPage } from './expenses/pages/edit-economic-activity-page';
 import { ExpenseDetailPage } from './expenses/pages/expense-detail-page';
 import { ExpenseTypesPage } from './expenses/pages/expense-types-page';
 import { ExpensesListPage } from './expenses/pages/expenses-list-page';
@@ -496,6 +498,14 @@ const routes: RouteObject[] = [
                         ),
                     },
                     {
+                        path: 'contabilidad/plan-cuentas/:id/editar',
+                        element: (
+                            <RequireModulePermission modulo="configuracion_contable" accion="editar_plan_cuentas">
+                                <EditAccountPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
                         path: 'contabilidad/periodos',
                         element: (
                             <RequireModulePermission modulo="configuracion_contable" accion="listar_periodos">
@@ -860,6 +870,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="tributario" accion="crear_actividades_economicas">
                                 <CreateEconomicActivityPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'gastos/actividades-economicas/:id/editar',
+                        element: (
+                            <RequireModulePermission modulo="tributario" accion="editar_actividades_economicas">
+                                <EditEconomicActivityPage />
                             </RequireModulePermission>
                         ),
                     },
