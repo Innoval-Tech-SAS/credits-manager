@@ -68,7 +68,7 @@ class EmpresaConstants
             'pagos.exportar_listado', 'pagos.reversar',
             'recibos.listar',
             'conciliacion.listar', 'conciliacion.configurar', 'conciliacion.cargar_extracto', 'conciliacion.conciliar',
-            'conciliacion.cerrar', 'conciliacion.exportar',
+            'conciliacion.cerrar',
         ],
         'cartera' => [
             'clientes.listar', 'clientes.ver', 'clientes.editar', 'clientes.exportar_listado',

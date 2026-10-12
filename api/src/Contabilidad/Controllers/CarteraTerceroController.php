@@ -20,7 +20,7 @@ class CarteraTerceroController extends Controller
     public function index(ConsultarCarteraTerceroRequest $peticion): JsonResponse
     {
         $naturaleza = NaturalezaDocumento::from($peticion->validated('naturaleza'));
-        $this->acceso->exigir($peticion->user(), $naturaleza);
+        $this->acceso->exigir($peticion->user(), $naturaleza, $peticion->integer('tercero_id') ?: null);
 
         $documentos = $this->cartera->listar([
             'naturaleza' => $naturaleza,
@@ -38,7 +38,7 @@ class CarteraTerceroController extends Controller
     public function edades(ConsultarEdadesCarteraRequest $peticion): JsonResponse
     {
         $naturaleza = NaturalezaDocumento::from($peticion->validated('naturaleza'));
-        $this->acceso->exigir($peticion->user(), $naturaleza);
+        $this->acceso->exigir($peticion->user(), $naturaleza, $peticion->integer('tercero_id') ?: null);
 
         $edades = $this->cartera->edades(
             $naturaleza,

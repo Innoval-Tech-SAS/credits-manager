@@ -21,7 +21,7 @@ class DocumentoTerceroController extends Controller
     {
         $naturaleza = NaturalezaDocumento::tryFrom($peticion->string('naturaleza')->toString());
         abort_if(! $naturaleza, 422, __('validation.custom.documento.naturaleza_invalida'));
-        $this->acceso->exigir($peticion->user(), $naturaleza);
+        $this->acceso->exigir($peticion->user(), $naturaleza, $tercero->id);
 
         return response()->json([
             'documentos' => $this->documentoTerceroService->pendientesPorTercero($tercero, $naturaleza),
