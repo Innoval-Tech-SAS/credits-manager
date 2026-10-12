@@ -1,9 +1,15 @@
 import type { FC } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { formatDateEs } from '../../shared/utils/format-date-es';
+import { formatMoney } from '../../shared/utils/format-money';
+import type { PaginatedResponse } from '../../shared/types/paginated-response';
+import { ClientFullSelect } from '../../clients/components/client-full-select';
+import type { ApiClient } from '../../clients/types/api-client';
+import type { ApiCredit } from '../../credits/types/api-credit';
 import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
@@ -11,29 +17,90 @@ import { DatePicker } from '@ui/forms/components/date-picker';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
+import { DataTable } from '@ui/table/components/data-table';
 import { InvoiceLinesForm } from '../components/invoice-lines-form';
+import { ThirdPartyFiscalSummary } from '../components/third-party-fiscal-summary';
 import type { InvoiceLineDraft } from '../props/invoice-lines-form-props';
-import type { ApiInvoice } from '../types/api-invoice';
+import type { ApiInvoice, ApiSuggestedConcept } from '../types/api-invoice';
 
-type CreditOption = { id: number; estado: string; cliente?: { tercero?: { nombre: string } } };
-
-const LINEA_INICIAL: InvoiceLineDraft = { concepto: '', descripcion: '', valor: '' };
+const sugerenciaADraft = (sugerencia: ApiSuggestedConcept): InvoiceLineDraft => ({
+    concepto: sugerencia.concepto,
+    descripcion: sugerencia.descripcion,
+    valor: sugerencia.valor,
+    cuota_id: sugerencia.cuota_id,
+    tipo_concepto: sugerencia.tipo_concepto,
+});
 
 export const CreateInvoicePage: FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { sendRequest, isLoading } = useSendRequest();
+    const { sendRequest: sendRequestInicial } = useSendRequest();
 
-    const creditoInicial = searchParams.get('credito') ?? '';
-    const [creditoId, setCreditoId] = useState(creditoInicial);
+    const [cliente, setCliente] = useState<ApiClient | null>(null);
+    const [creditoId, setCreditoId] = useState('');
     const [fecha, setFecha] = useState(() => new Date().toISOString().slice(0, 10));
     const [fechaVencimiento, setFechaVencimiento] = useState('');
-    const [lineas, setLineas] = useState<InvoiceLineDraft[]>([{ ...LINEA_INICIAL }]);
+    const [lineas, setLineas] = useState<InvoiceLineDraft[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const sugerenciasCargadasDe = useRef<string | null>(null);
 
-    const { data: creditosData, isLoading: cargandoCreditos } = useResource<{ data: CreditOption[] }>('/creditos?per_page=100');
-    // Solo se factura un crédito desembolsado o pagado: el servidor lo exige igual.
+    // El enlace "Facturar" desde el detalle de un crédito llega con `?credito=`: se resuelve su cliente antes de mostrar el paso 1.
+    useEffect(() => {
+        const creditoInicialId = searchParams.get('credito');
+
+        if (!creditoInicialId) {
+            return;
+        }
+
+        sendRequestInicial<{ credito: ApiCredit }>(`/creditos/${creditoInicialId}`)
+            .then((respuesta) => {
+                if (respuesta.credito.cliente) {
+                    setCliente(respuesta.credito.cliente);
+                }
+                setCreditoId(creditoInicialId);
+            })
+            .catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const creditosParams = cliente ? new URLSearchParams({ cliente_id: String(cliente.id), per_page: '100' }).toString() : '';
+    const { data: creditosData, isLoading: cargandoCreditos } = useResource<PaginatedResponse<ApiCredit>>(cliente ? `/creditos?${creditosParams}` : null);
     const creditos = (creditosData?.data ?? []).filter((credito) => ['desembolsado', 'pagado'].includes(credito.estado));
+    const credito = creditos.find((c) => String(c.id) === creditoId) ?? null;
+
+    const pendientesParams = cliente ? new URLSearchParams({ cliente_id: String(cliente.id), estado: 'emitido', con_saldo: '1', per_page: '20' }).toString() : '';
+    const { data: pendientesData } = useResource<PaginatedResponse<ApiInvoice>>(cliente ? `/facturacion/documentos?${pendientesParams}` : null);
+    const pendientes = (pendientesData?.data ?? []).filter((documento) => documento.tipo === 'factura' && parseFloat(documento.saldo ?? '0') > 0);
+
+    const { data: sugeridosData, isLoading: cargandoSugeridos } = useResource<{ conceptos: ApiSuggestedConcept[] }>(
+        creditoId ? `/facturacion/documentos/conceptos-sugeridos?credito_id=${creditoId}` : null,
+    );
+
+    useEffect(() => {
+        if (sugeridosData && sugerenciasCargadasDe.current !== creditoId) {
+            sugerenciasCargadasDe.current = creditoId;
+            setLineas(sugeridosData.conceptos.map(sugerenciaADraft));
+
+            const mayorFecha = sugeridosData.conceptos.reduce<string>((max, s) => (s.fecha_vencimiento > max ? s.fecha_vencimiento : max), '');
+            setFechaVencimiento(mayorFecha);
+        }
+    }, [sugeridosData, creditoId]);
+
+    const seleccionarCliente = (seleccionado: ApiClient | null) => {
+        setCliente(seleccionado);
+        setCreditoId('');
+        setLineas([]);
+        setFechaVencimiento('');
+        sugerenciasCargadasDe.current = null;
+    };
+
+    const seleccionarCredito = (valor: string) => {
+        setCreditoId(valor);
+        setLineas([]);
+        setFechaVencimiento('');
+        sugerenciasCargadasDe.current = null;
+    };
 
     const guardar = async () => {
         setError(null);
@@ -42,10 +109,17 @@ export const CreateInvoicePage: FC = () => {
             const respuesta = await sendRequest<{ documento: ApiInvoice }>('/facturacion/documentos', {
                 method: 'POST',
                 body: {
+                    cliente_id: cliente?.id,
                     credito_id: Number(creditoId),
                     fecha,
                     fecha_vencimiento: fechaVencimiento || null,
-                    lineas: lineas.map((linea) => ({ concepto: linea.concepto, descripcion: linea.descripcion, valor: linea.valor })),
+                    lineas: lineas.map((linea) => ({
+                        tipo_concepto: linea.tipo_concepto,
+                        cuota_id: linea.cuota_id ?? null,
+                        concepto: linea.concepto,
+                        descripcion: linea.descripcion,
+                        valor: linea.valor,
+                    })),
                 },
             });
 
@@ -55,6 +129,8 @@ export const CreateInvoicePage: FC = () => {
         }
     };
 
+    const puedeGuardar = cliente !== null && creditoId !== '' && lineas.length > 0 && lineas.every((linea) => linea.tipo_concepto && linea.valor);
+
     return (
         <div className="flex min-h-full flex-col gap-6 pb-6">
             <PageBreadcrumb pageTitle="Nueva factura" />
@@ -62,45 +138,88 @@ export const CreateInvoicePage: FC = () => {
             {error && <Alert variant="danger" title="No se pudo crear la factura" message={error} onDismiss={() => setError(null)} />}
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-                {cargandoCreditos ? (
-                    <div className="flex justify-center py-6">
-                        <Spinner size="lg" />
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                        <div>
-                            <Label htmlFor="credito">Crédito desembolsado</Label>
-                            <Select
-                                options={creditos.map((credito) => ({
-                                    value: String(credito.id),
-                                    label: `#${credito.id} · ${credito.cliente?.tercero?.nombre ?? 'Sin cliente'}`,
-                                }))}
-                                placeholder="Seleccione un crédito..."
-                                defaultValue={creditoInicial}
-                                onChange={setCreditoId}
-                            />
-                        </div>
-                        <div>
-                            <Label htmlFor="fecha">Fecha</Label>
-                            <DatePicker id="fecha" value={fecha} onChange={setFecha} />
-                        </div>
-                        <div>
-                            <Label htmlFor="fecha-vencimiento">Fecha de vencimiento (opcional)</Label>
-                            <DatePicker id="fecha-vencimiento" value={fechaVencimiento} onChange={setFechaVencimiento} />
-                        </div>
-                    </div>
-                )}
+                <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">1. Cliente</h3>
+                <Label htmlFor="cliente">Cliente</Label>
+                <ClientFullSelect selected={cliente} onSelect={seleccionarCliente} />
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-                <InvoiceLinesForm lineas={lineas} onChange={setLineas} />
-            </div>
+            {cliente && (
+                <>
+                    <ThirdPartyFiscalSummary tercero={cliente.tercero} />
+
+                    {pendientes.length > 0 && (
+                        <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+                            <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">Facturas pendientes de {cliente.tercero.nombre}</h3>
+                            <DataTable
+                                columns={[
+                                    { key: 'numero', label: 'Número', render: (row) => row.numero ?? 'Borrador' },
+                                    { key: 'fecha', label: 'Fecha', render: (row) => formatDateEs(row.fecha) },
+                                    { key: 'saldo', label: 'Saldo', render: (row) => formatMoney(row.saldo ?? '0') },
+                                ]}
+                                rows={pendientes}
+                                getRowKey={(row) => row.id}
+                                emptyMessage="Sin facturas pendientes."
+                            />
+                        </div>
+                    )}
+
+                    <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+                        <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">2. Crédito</h3>
+                        {cargandoCreditos ? (
+                            <div className="flex justify-center py-6">
+                                <Spinner size="lg" />
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                                <div>
+                                    <Label htmlFor="credito">Crédito desembolsado</Label>
+                                    <Select
+                                        key={cliente.id}
+                                        options={creditos.map((c) => ({
+                                            value: String(c.id),
+                                            label: `#${c.id} · Saldo ${formatMoney(c.saldo ?? '0')}`,
+                                        }))}
+                                        placeholder={creditos.length === 0 ? 'Este cliente no tiene créditos disponibles' : 'Seleccione un crédito...'}
+                                        defaultValue={creditoId}
+                                        onChange={seleccionarCredito}
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="fecha">Fecha</Label>
+                                    <DatePicker id="fecha" value={fecha} onChange={setFecha} />
+                                </div>
+                                <div>
+                                    <Label htmlFor="fecha-vencimiento">Fecha de vencimiento (opcional)</Label>
+                                    <DatePicker id="fecha-vencimiento" value={fechaVencimiento} onChange={setFechaVencimiento} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+
+            {credito && (
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+                    <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">3. Conceptos a facturar</h3>
+                    {cargandoSugeridos ? (
+                        <div className="flex justify-center py-6">
+                            <Spinner size="lg" />
+                        </div>
+                    ) : lineas.length === 0 ? (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                            Este crédito no tiene cuotas pendientes por facturar. Agrega una línea manual si necesitas facturar otro concepto.
+                        </p>
+                    ) : null}
+
+                    <InvoiceLinesForm lineas={lineas} onChange={setLineas} requiereTipoConcepto />
+                </div>
+            )}
 
             <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => navigate('/facturacion')}>
                     Cancelar
                 </Button>
-                <Button disabled={isLoading || !creditoId} onClick={() => void guardar()}>
+                <Button disabled={isLoading || !puedeGuardar} onClick={() => void guardar()}>
                     {isLoading ? 'Guardando…' : 'Guardar borrador'}
                 </Button>
             </div>

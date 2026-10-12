@@ -54,6 +54,7 @@ import { EconomicActivitiesPage } from './expenses/pages/economic-activities-pag
 import { ExpenseDetailPage } from './expenses/pages/expense-detail-page';
 import { ExpenseTypesPage } from './expenses/pages/expense-types-page';
 import { ExpensesListPage } from './expenses/pages/expenses-list-page';
+import { ConceptTaxSettingsPage } from './invoicing/pages/concept-tax-settings-page';
 import { CreateInvoicePage } from './invoicing/pages/create-invoice-page';
 import { CreateMultiplePaymentPage } from './invoicing/pages/create-multiple-payment-page';
 import { InvoiceDetailPage } from './invoicing/pages/invoice-detail-page';
@@ -745,6 +746,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="facturacion" accion="configurar">
                                 <InvoiceSequencesPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'facturacion/parametrizacion-conceptos',
+                        element: (
+                            <RequireModulePermission modulo="facturacion" accion="configurar">
+                                <ConceptTaxSettingsPage />
                             </RequireModulePermission>
                         ),
                     },

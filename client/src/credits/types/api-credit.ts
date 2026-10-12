@@ -34,6 +34,8 @@ export type ApiCredit = {
     cuotas_vencidas?: number;
     /** Solo presente en el listado (`GET /creditos`). */
     pagos_count?: number;
+    /** Decimal string en pesos: lo que queda pendiente de sus cuotas. Solo presente en el listado (`GET /creditos`). */
+    saldo?: string;
     /** Solo presente en el detalle (`GET /creditos/{id}`). */
     cuotas?: ApiInstallment[];
 };
