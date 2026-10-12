@@ -76,7 +76,7 @@ export const Tooltip: FC<TooltipProps> = ({ label, hideFrom, children }) => {
     return (
         <>
             <span
-                className="inline-flex"
+                className="inline-flex justify-self-start"
                 onMouseEnter={(event: MouseEvent<HTMLElement>) => show(event.currentTarget)}
                 onMouseLeave={hide}
                 onFocus={(event: FocusEvent<HTMLElement>) => show(event.currentTarget)}
