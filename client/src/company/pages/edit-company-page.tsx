@@ -89,9 +89,8 @@ export const EditCompanyPage: FC = () => {
             <PageBreadcrumb pageTitle="Empresa" />
 
             <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 shadow-theme-sm md:p-8 dark:border-gray-800 dark:bg-gray-900">
-                <div className="mb-8">
-                    <h1 className="text-title-sm font-semibold text-gray-800 dark:text-white/90">Datos de la empresa</h1>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Actualiza la información de tu empresa.</p>
+                <div className="mb-6">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Actualiza la información de tu empresa.</p>
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -111,7 +110,7 @@ export const EditCompanyPage: FC = () => {
 
                                 <div>
                                     <Label htmlFor="name">Nombre de la empresa</Label>
-                                    <Input id="name" name="name" required value={name} onChange={(event) => setName(event.target.value)} />
+                                    <Input id="name" name="name" autoComplete="organization" required value={name} onChange={(event) => setName(event.target.value)} />
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -145,6 +144,7 @@ export const EditCompanyPage: FC = () => {
                                     <Input
                                         id="address"
                                         name="address"
+                                        autoComplete="street-address"
                                         required
                                         value={address}
                                         onChange={(event) => setAddress(event.target.value)}
@@ -168,6 +168,7 @@ export const EditCompanyPage: FC = () => {
                                 <div>
                                     <Label htmlFor="economic-activity">Actividad económica</Label>
                                     <Select
+                                        id="economic-activity"
                                         options={economicActivities.map((actividad) => ({
                                             value: String(actividad.id),
                                             label: `${actividad.codigo} - ${actividad.nombre}`,
@@ -194,6 +195,7 @@ export const EditCompanyPage: FC = () => {
                                         <Input
                                             id="phone"
                                             name="phone"
+                                            autoComplete="tel"
                                             required
                                             value={phone}
                                             onChange={(event) => setPhone(event.target.value)}
@@ -206,6 +208,7 @@ export const EditCompanyPage: FC = () => {
                                             id="email"
                                             name="email"
                                             type="email"
+                                            autoComplete="email"
                                             required
                                             value={email}
                                             onChange={(event) => setEmail(event.target.value)}
@@ -216,7 +219,7 @@ export const EditCompanyPage: FC = () => {
                         </section>
 
                         <section className="border-t border-gray-100 pt-8 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-12 dark:border-gray-800">
-                            <Label>Logo</Label>
+                            <Label htmlFor="logo-empresa">Logo</Label>
 
                             {logoError && (
                                 <div className="mb-3 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400">
@@ -241,7 +244,7 @@ export const EditCompanyPage: FC = () => {
                                     Subiendo logo…
                                 </div>
                             ) : (
-                                <Dropzone onFileAccepted={handleLogoDrop} hint="PNG, JPG, GIF o SVG — máx. 2MB" />
+                                <Dropzone id="logo-empresa" onFileAccepted={handleLogoDrop} hint="PNG, JPG, GIF o SVG — máx. 2MB" />
                             )}
                         </section>
                     </div>

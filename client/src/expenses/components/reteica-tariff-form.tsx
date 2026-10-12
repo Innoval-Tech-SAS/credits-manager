@@ -63,7 +63,7 @@ export const ReteicaTariffForm: FC<ReteicaTariffFormProps> = ({ actividades, onC
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="actividad">Actividad económica</Label>
-                        <Select options={actividadOptions} defaultValue={actividadId} onChange={setActividadId} />
+                        <Select id="actividad" options={actividadOptions} defaultValue={actividadId} onChange={setActividadId} />
                     </div>
 
                     <div>

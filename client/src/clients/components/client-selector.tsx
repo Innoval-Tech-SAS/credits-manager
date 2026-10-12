@@ -8,7 +8,7 @@ import { Search } from 'lucide-react';
 import type { ClientSelectorProps } from '../props/client-selector-props';
 import type { ApiClient } from '../types/api-client';
 
-export const ClientSelector: FC<ClientSelectorProps> = ({ selected, onSelect }) => {
+export const ClientSelector: FC<ClientSelectorProps> = ({ id, selected, onSelect }) => {
     const { query, setQuery, isOpen, setIsOpen, results, isLoading, reset } = useTypeahead<ApiClient>('/clientes');
 
     const handleSelect = (client: ApiClient) => {
@@ -25,6 +25,8 @@ export const ClientSelector: FC<ClientSelectorProps> = ({ selected, onSelect }) 
     return (
         <div className="relative">
             <Input
+                id={id}
+                name={id}
                 placeholder="Busca por nombre o documento…"
                 startIcon={<Search className="size-4" />}
                 value={displayValue}

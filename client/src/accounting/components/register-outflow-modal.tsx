@@ -189,6 +189,7 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
                     <div>
                         <Label htmlFor="egreso-medio">Medio de pago</Label>
                         <Select
+                            id="egreso-medio"
                             options={OUTFLOW_PAYMENT_METHOD_OPTIONS}
                             defaultValue={medioPago}
                             onChange={(valorSeleccionado) => setMedioPago(valorSeleccionado as ApiOutflowPaymentMethod)}
@@ -197,6 +198,7 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
                     <div>
                         <Label htmlFor="egreso-cuenta-caja">Cuenta de caja o banco</Label>
                         <Select
+                            id="egreso-cuenta-caja"
                             options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
                             placeholder="Selecciona la cuenta"
                             onChange={setCuentaCajaId}
@@ -205,6 +207,7 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
                     <div>
                         <Label htmlFor="egreso-tipo-comprobante">Tipo de comprobante</Label>
                         <Select
+                            id="egreso-tipo-comprobante"
                             options={tipos.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }))}
                             placeholder="Selecciona el tipo"
                             onChange={setTipoComprobanteId}
@@ -214,6 +217,7 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
                         <div>
                             <Label htmlFor="egreso-cuenta-descuento">Cuenta de descuentos comerciales condicionados</Label>
                             <Select
+                                id="egreso-cuenta-descuento"
                                 options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
                                 placeholder="Selecciona la cuenta"
                                 onChange={setCuentaDescuentoId}
@@ -234,7 +238,7 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
                                 </button>
                             </div>
                         ) : (
-                            <Dropzone accept={ACCEPTED_DOCUMENT_TYPES} hint="PDF, PNG, JPG o WEBP" onFileAccepted={setSoporte} />
+                            <Dropzone id="egreso-soporte" accept={ACCEPTED_DOCUMENT_TYPES} hint="PDF, PNG, JPG o WEBP" onFileAccepted={setSoporte} />
                         )}
                     </div>
                 </div>

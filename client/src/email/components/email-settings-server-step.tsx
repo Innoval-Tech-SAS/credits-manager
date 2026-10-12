@@ -12,7 +12,7 @@ export const EmailSettingsServerStep: FC<EmailSettingsServerStepProps> = ({ draf
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         <div className="md:col-span-2">
             <Label htmlFor="driver">Proveedor</Label>
-            <Select options={DRIVER_OPTIONS} defaultValue={draft.driver} onChange={(valor) => onChange({ driver: valor as EmailSettingsDraft['driver'] })} />
+            <Select id="driver" options={DRIVER_OPTIONS} defaultValue={draft.driver} onChange={(valor) => onChange({ driver: valor as EmailSettingsDraft['driver'] })} />
             {draft.driver === 'registro' && (
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                     No necesita servidor: los correos se escriben en el log de la aplicación. Úselo solo para pruebas.
@@ -51,7 +51,7 @@ export const EmailSettingsServerStep: FC<EmailSettingsServerStepProps> = ({ draf
                 </div>
                 <div className="md:col-span-2">
                     <Label htmlFor="cifrado">Cifrado</Label>
-                    <Select options={CIFRADO_OPTIONS} defaultValue={draft.cifrado} onChange={(valor) => onChange({ cifrado: valor as EmailSettingsDraft['cifrado'] })} />
+                    <Select id="cifrado" options={CIFRADO_OPTIONS} defaultValue={draft.cifrado} onChange={(valor) => onChange({ cifrado: valor as EmailSettingsDraft['cifrado'] })} />
                 </div>
             </>
         )}

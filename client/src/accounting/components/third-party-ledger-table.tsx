@@ -121,7 +121,7 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                     </div>
                     <div>
                         <Label htmlFor="estado">Estado</Label>
-                        <Select options={ESTADO_OPTIONS} placeholder="Todos" placeholderSelectable onChange={setEstado} />
+                        <Select id="estado" options={ESTADO_OPTIONS} placeholder="Todos" placeholderSelectable onChange={setEstado} />
                     </div>
                 </div>
             </div>
@@ -156,6 +156,7 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                                               render: (documento: ApiCarteraDocument) =>
                                                   Number(documento.saldo) <= 0 ? null : (
                                                       <Checkbox
+                                                          ariaLabel={`Seleccionar documento ${documento.numero_documento}`}
                                                           checked={documento.id in seleccionPago}
                                                           onChange={(marcado) => alternarSeleccion(documento, marcado)}
                                                       />

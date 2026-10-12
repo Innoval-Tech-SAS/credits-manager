@@ -35,8 +35,9 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
         </div>
 
         <div>
-            <Label>Módulo</Label>
+            <Label htmlFor="audit-modulo">Módulo</Label>
             <Select
+                id="audit-modulo"
                 key={`modulo-${resetToken}`}
                 options={AUDIT_MODULE_OPTIONS}
                 placeholder="Todos los módulos"
@@ -47,8 +48,9 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
         </div>
 
         <div>
-            <Label>Acción</Label>
+            <Label htmlFor="audit-accion">Acción</Label>
             <Select
+                id="audit-accion"
                 key={`accion-${resetToken}`}
                 options={AUDIT_ACTION_OPTIONS}
                 placeholder="Todas las acciones"
@@ -81,8 +83,9 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
 
         {companies !== null && (
             <div>
-                <Label>Empresa</Label>
+                <Label htmlFor="audit-empresa">Empresa</Label>
                 <Select
+                    id="audit-empresa"
                     key={`empresa-${resetToken}`}
                     options={companies.map((company) => ({ value: String(company.id), label: company.nombre_empresa }))}
                     placeholder="Todas las empresas"

@@ -135,7 +135,7 @@ export const EditCreditForm: FC<EditCreditFormProps> = ({ credito }) => {
 
                 <div>
                     <Label htmlFor="tipo-pago">Tipo de pago</Label>
-                    <Select options={PAYMENT_TYPE_OPTIONS} defaultValue={tipoPago} onChange={(value) => setTipoPago(value as PaymentType)} />
+                    <Select id="tipo-pago" options={PAYMENT_TYPE_OPTIONS} defaultValue={tipoPago} onChange={(value) => setTipoPago(value as PaymentType)} />
                 </div>
 
                 <div>

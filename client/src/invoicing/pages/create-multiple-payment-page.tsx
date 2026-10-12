@@ -149,7 +149,7 @@ export const CreateMultiplePaymentPage: FC = () => {
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                 <Label htmlFor="cliente">Cliente</Label>
-                <ClientSelector selected={cliente} onSelect={setCliente} />
+                <ClientSelector id="cliente" selected={cliente} onSelect={setCliente} />
             </div>
 
             {cliente && (
@@ -177,6 +177,7 @@ export const CreateMultiplePaymentPage: FC = () => {
                                         className="grid grid-cols-1 gap-3 rounded-xl border border-gray-100 p-4 dark:border-gray-800 md:grid-cols-[auto_1fr_auto] md:items-center"
                                     >
                                         <Checkbox
+                                            id={`factura-${factura.id}`}
                                             label={`${factura.numero ?? '—'} · ${formatDateEs(factura.fecha)}`}
                                             checked={marcada}
                                             onChange={(checked) => seleccionar(factura.id, saldo, checked)}
@@ -218,7 +219,7 @@ export const CreateMultiplePaymentPage: FC = () => {
                         </div>
                         <div>
                             <Label htmlFor="cobro-multiple-medio">Medio de pago</Label>
-                            <Select options={PAYMENT_METHOD_OPTIONS} defaultValue={medio} onChange={(valor) => setMedio(valor as ApiInvoicePaymentMethod)} />
+                            <Select id="cobro-multiple-medio" options={PAYMENT_METHOD_OPTIONS} defaultValue={medio} onChange={(valor) => setMedio(valor as ApiInvoicePaymentMethod)} />
                         </div>
                         <div>
                             <Label htmlFor="cobro-multiple-referencia">Referencia</Label>

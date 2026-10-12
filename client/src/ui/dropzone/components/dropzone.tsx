@@ -5,7 +5,7 @@ import { Upload } from 'lucide-react';
 import { ACCEPTED_IMAGE_TYPES } from '../constants/accepted-image-types';
 import type { DropzoneProps } from '../props/dropzone-props';
 
-export const Dropzone: FC<DropzoneProps> = ({ onFileAccepted, label, hint, accept = ACCEPTED_IMAGE_TYPES }) => {
+export const Dropzone: FC<DropzoneProps> = ({ onFileAccepted, id, name, label, hint, accept = ACCEPTED_IMAGE_TYPES }) => {
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         accept,
         multiple: false,
@@ -27,7 +27,7 @@ export const Dropzone: FC<DropzoneProps> = ({ onFileAccepted, label, hint, accep
                         : 'border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900'
                 }`}
             >
-                <input {...getInputProps()} />
+                <input {...getInputProps({ id, name })} />
 
                 <div className="flex flex-col items-center">
                     <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400">

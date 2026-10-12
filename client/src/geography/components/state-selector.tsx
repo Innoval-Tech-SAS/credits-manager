@@ -29,6 +29,7 @@ export const StateSelector: FC<StateSelectorProps> = ({ onChange, initialCountry
             <div>
                 <Label htmlFor="pais">País</Label>
                 <Select
+                    id="pais"
                     key={`pais-${countries.length}`}
                     options={countries.map((country) => ({ value: String(country.id), label: country.nombre }))}
                     placeholder="País"
@@ -40,6 +41,7 @@ export const StateSelector: FC<StateSelectorProps> = ({ onChange, initialCountry
             <div>
                 <Label htmlFor="estado">Departamento / Estado</Label>
                 <Select
+                    id="estado"
                     key={`estado-${countryId}-${states.length}`}
                     options={states.map((state) => ({ value: String(state.id), label: state.nombre }))}
                     placeholder="Departamento"

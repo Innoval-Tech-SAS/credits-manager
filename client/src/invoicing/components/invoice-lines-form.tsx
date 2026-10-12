@@ -49,6 +49,7 @@ export const InvoiceLinesForm: FC<InvoiceLinesFormProps> = ({ lineas, onChange, 
                                 </p>
                             ) : (
                                 <Select
+                                    id={`tipo-concepto-${indice}`}
                                     options={CONCEPT_TYPE_OPTIONS}
                                     defaultValue={linea.tipo_concepto ?? ''}
                                     onChange={(value) => actualizar(indice, 'tipo_concepto', value)}

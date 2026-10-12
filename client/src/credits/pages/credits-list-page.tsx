@@ -77,6 +77,8 @@ export const CreditsListPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-credito"
+                            name="buscar-credito"
                             placeholder="Buscar por cliente…"
                             startIcon={<Search className="size-4" />}
                             value={search}

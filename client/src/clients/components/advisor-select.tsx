@@ -6,7 +6,7 @@ import type { AdvisorSelectProps } from '../props/advisor-select-props';
 import type { ApiAdvisor } from '../types/api-advisor';
 
 /** Asesores (y administradores) activos de la empresa a quienes se puede asignar un cliente. */
-export const AdvisorSelect: FC<AdvisorSelectProps> = ({ value, onChange, excludeId }) => {
+export const AdvisorSelect: FC<AdvisorSelectProps> = ({ id, value, onChange, excludeId }) => {
     const { data, error } = useResource<{ asesores: ApiAdvisor[] }>('/clientes/asesores-asignables');
 
     if (error) {
@@ -19,6 +19,7 @@ export const AdvisorSelect: FC<AdvisorSelectProps> = ({ value, onChange, exclude
 
     return (
         <Select
+            id={id}
             key={data ? 'loaded' : 'loading'}
             options={options}
             defaultValue={value !== null ? String(value) : undefined}

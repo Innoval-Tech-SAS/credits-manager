@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { Label } from '@ui/forms/components/label';
 import { Modal } from '@ui/modal/components/modal';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
@@ -111,8 +112,9 @@ export const EmailReminderModal: FC<EmailReminderModalProps> = ({ clienteId, cuo
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                        <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Plantilla</p>
+                        <Label htmlFor="recordatorio-plantilla">Plantilla</Label>
                         <Select
+                            id="recordatorio-plantilla"
                             key={plantillasData ? 'loaded' : 'loading'}
                             options={opcionesPlantilla}
                             placeholder={plantillasData ? 'Selecciona una plantilla' : 'Cargando plantillas…'}
@@ -121,8 +123,8 @@ export const EmailReminderModal: FC<EmailReminderModalProps> = ({ clienteId, cuo
                         />
                     </div>
                     <div>
-                        <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Cuota a recordar</p>
-                        <Select options={opcionesCuota} placeholder="Selecciona una cuota" onChange={handleCuotaChange} />
+                        <Label htmlFor="recordatorio-cuota">Cuota a recordar</Label>
+                        <Select id="recordatorio-cuota" options={opcionesCuota} placeholder="Selecciona una cuota" onChange={handleCuotaChange} />
                     </div>
                 </div>
 

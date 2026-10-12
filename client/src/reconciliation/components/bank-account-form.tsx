@@ -68,7 +68,7 @@ export const BankAccountForm: FC<BankAccountFormProps> = ({ onCreated }) => {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div>
                         <Label htmlFor="banco">Banco</Label>
-                        <Select options={BANK_OPTIONS} defaultValue={banco} onChange={(valor) => setBanco(valor as ApiBankAccount['banco'])} />
+                        <Select id="banco" options={BANK_OPTIONS} defaultValue={banco} onChange={(valor) => setBanco(valor as ApiBankAccount['banco'])} />
                     </div>
 
                     <div>
@@ -79,6 +79,7 @@ export const BankAccountForm: FC<BankAccountFormProps> = ({ onCreated }) => {
                     <div>
                         <Label htmlFor="tipo-cuenta">Tipo de cuenta</Label>
                         <Select
+                            id="tipo-cuenta"
                             options={BANK_ACCOUNT_TYPE_OPTIONS}
                             defaultValue={tipoCuenta}
                             onChange={(valor) => setTipoCuenta(valor as ApiBankAccount['tipo_cuenta'])}
@@ -93,6 +94,7 @@ export const BankAccountForm: FC<BankAccountFormProps> = ({ onCreated }) => {
                     <div>
                         <Label htmlFor="plan-cuenta">Cuenta contable (PUC)</Label>
                         <Select
+                            id="plan-cuenta"
                             options={opcionesCuenta}
                             placeholder={isLoadingCuentas ? 'Cargando cuentas…' : 'Selecciona la cuenta'}
                             onChange={setPlanCuentaId}
@@ -102,6 +104,7 @@ export const BankAccountForm: FC<BankAccountFormProps> = ({ onCreated }) => {
                     <div>
                         <Label htmlFor="plan-cuenta-puente">Cuenta puente (por identificar, opcional)</Label>
                         <Select
+                            id="plan-cuenta-puente"
                             options={opcionesCuenta}
                             placeholder={isLoadingCuentas ? 'Cargando cuentas…' : 'Selecciona la cuenta'}
                             placeholderSelectable

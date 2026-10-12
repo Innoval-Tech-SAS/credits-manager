@@ -75,6 +75,8 @@ export const EmployersListPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-empleador"
+                            name="buscar-empleador"
                             placeholder="Buscar por nombre…"
                             startIcon={<Search className="size-4" />}
                             value={search}

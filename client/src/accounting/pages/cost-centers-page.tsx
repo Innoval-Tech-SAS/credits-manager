@@ -81,6 +81,8 @@ export const CostCentersPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-centro-costo"
+                            name="buscar-centro-costo"
                             placeholder="Buscar por código o nombre…"
                             startIcon={<Search className="size-4" />}
                             value={search}

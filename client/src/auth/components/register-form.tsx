@@ -195,6 +195,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                                     <Input
                                         id="name"
                                         name="name"
+                                        autoComplete="name"
                                         pill
                                         startIcon={<User className="size-4" />}
                                         value={name}
@@ -207,6 +208,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                                     <Input
                                         id="username"
                                         name="username"
+                                        autoComplete="off"
                                         pill
                                         startIcon={<User className="size-4" />}
                                         value={username}
@@ -223,6 +225,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                                             id="password"
                                             name="password"
                                             type="password"
+                                            autoComplete="new-password"
                                             pill
                                             startIcon={<KeyRound className="size-4" />}
                                             minLength={8}
@@ -238,6 +241,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                                             id="confirm-password"
                                             name="confirm-password"
                                             type="password"
+                                            autoComplete="new-password"
                                             pill
                                             startIcon={<KeyRound className="size-4" />}
                                             minLength={8}
@@ -249,7 +253,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                             )}
 
                             <div>
-                                <Label>Estado</Label>
+                                <Label htmlFor="activo">Estado</Label>
                                 <div className="flex h-11 items-center">
                                     <ToggleSwitchInput
                                         id="activo"
@@ -263,6 +267,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                             <div className="md:w-1/2 md:pr-3">
                                 <Label htmlFor="role">Rol</Label>
                                 <Select
+                                    id="role"
                                     options={roleOptions}
                                     defaultValue={roleId !== null ? String(roleId) : undefined}
                                     placeholder="Selecciona un rol…"
@@ -275,7 +280,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
 
                             {isAdvisorRole && (
                                 <div>
-                                    <Label>Alcance</Label>
+                                    <Label htmlFor="es-global">Alcance</Label>
                                     <div className="flex h-11 items-center">
                                         <ToggleSwitchInput
                                             id="es-global"

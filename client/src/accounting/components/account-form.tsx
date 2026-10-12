@@ -123,6 +123,7 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialD
                         <div>
                             <Label htmlFor="naturaleza">Naturaleza</Label>
                             <Select
+                                id="naturaleza"
                                 options={ACCOUNT_NATURE_OPTIONS}
                                 defaultValue={naturaleza}
                                 onChange={(value) => setNaturaleza(value as ApiAccount['naturaleza'])}
@@ -132,6 +133,7 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialD
                         <div>
                             <Label htmlFor="tipo">Tipo</Label>
                             <Select
+                                id="tipo"
                                 options={ACCOUNT_TYPE_OPTIONS}
                                 defaultValue={tipo}
                                 onChange={(value) => setTipo(value as ApiAccount['tipo'])}
@@ -146,6 +148,7 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialD
                         <div>
                             <Label htmlFor="cuenta-padre">Cuenta padre</Label>
                             <Select
+                                id="cuenta-padre"
                                 options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
                                 placeholder="Ninguna"
                                 defaultValue={cuentaPadreId}
@@ -156,18 +159,19 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialD
                 )}
 
                 <Checkbox
+                    id="permite-movimiento"
                     label="Permite movimiento (cuenta de detalle)"
                     checked={permiteMovimiento}
                     onChange={setPermiteMovimiento}
                 />
 
                 <div>
-                    <Label>Qué exige esta cuenta al usarse en un comprobante</Label>
+                    <p className="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-400">Qué exige esta cuenta al usarse en un comprobante</p>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <Checkbox label="Exige tercero" checked={exigeTercero} onChange={setExigeTercero} />
-                        <Checkbox label="Exige documento cruce" checked={exigeDocumentoCruce} onChange={setExigeDocumentoCruce} />
-                        <Checkbox label="Exige vencimiento" checked={exigeVencimiento} onChange={setExigeVencimiento} />
-                        <Checkbox label="Exige centro de costo" checked={exigeCentroCosto} onChange={setExigeCentroCosto} />
+                        <Checkbox id="exige-tercero" label="Exige tercero" checked={exigeTercero} onChange={setExigeTercero} />
+                        <Checkbox id="exige-documento-cruce" label="Exige documento cruce" checked={exigeDocumentoCruce} onChange={setExigeDocumentoCruce} />
+                        <Checkbox id="exige-vencimiento" label="Exige vencimiento" checked={exigeVencimiento} onChange={setExigeVencimiento} />
+                        <Checkbox id="exige-centro-costo" label="Exige centro de costo" checked={exigeCentroCosto} onChange={setExigeCentroCosto} />
                     </div>
                 </div>
 

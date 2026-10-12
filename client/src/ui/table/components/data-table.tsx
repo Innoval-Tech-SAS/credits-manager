@@ -25,7 +25,7 @@ export function DataTable<T>({
                             {columns.map((column) => (
                                 <th
                                     key={column.key}
-                                    className={`px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 ${
+                                    className={`px-4 py-3 text-xs font-medium whitespace-nowrap text-gray-500 dark:text-gray-400 ${
                                         maxHeightClassName ? 'sticky top-0 z-10 bg-white dark:bg-gray-900' : ''
                                     }`}
                                 >

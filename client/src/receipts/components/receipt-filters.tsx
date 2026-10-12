@@ -31,6 +31,7 @@ export const ReceiptFilters: FC<ReceiptFiltersProps> = ({
             <div>
                 <Label htmlFor="recibo-estado">Estado</Label>
                 <Select
+                    id="recibo-estado"
                     options={[
                         { value: 'emitido', label: 'Emitido' },
                         { value: 'anulado', label: 'Anulado' },

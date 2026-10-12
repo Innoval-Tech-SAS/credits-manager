@@ -51,6 +51,7 @@ export const GoalCreateForm: FC<GoalCreateFormProps> = ({ periodo, tiposDisponib
                 <div>
                     <Label htmlFor="meta-tipo">Tipo de meta</Label>
                     <Select
+                        id="meta-tipo"
                         key={tiposDisponibles.join('-')}
                         options={tiposDisponibles.map((disponible) => ({ value: disponible, label: GOAL_TYPE_LABELS[disponible] }))}
                         defaultValue={tiposDisponibles[0]}

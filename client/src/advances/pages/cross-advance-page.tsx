@@ -148,7 +148,7 @@ export const CrossAdvancePage: FC = () => {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="lado">Lado</Label>
-                        <Select options={LADO_OPTIONS} defaultValue={lado} onChange={(valor) => setLado(valor as Lado)} />
+                        <Select id="lado" options={LADO_OPTIONS} defaultValue={lado} onChange={(valor) => setLado(valor as Lado)} />
                     </div>
 
                     <div className="md:col-span-2">
@@ -167,6 +167,7 @@ export const CrossAdvancePage: FC = () => {
                                 <p className="text-sm text-gray-500 dark:text-gray-400">Este tercero no tiene anticipos pendientes.</p>
                             ) : (
                                 <Select
+                                    id="anticipo"
                                     key={`${claveSeleccion ?? 'none'}-${cruceToken}`}
                                     options={anticipos.map((item) => ({ value: String(item.id), label: `${item.numero_documento} — saldo ${formatMoney(item.saldo)}` }))}
                                     placeholder="Selecciona el anticipo"
@@ -181,6 +182,7 @@ export const CrossAdvancePage: FC = () => {
                                 <p className="text-sm text-gray-500 dark:text-gray-400">Este tercero no tiene documentos pendientes.</p>
                             ) : (
                                 <Select
+                                    id="documento"
                                     key={`${claveSeleccion ?? 'none'}-${cruceToken}`}
                                     options={documentos.map((item) => ({ value: String(item.id), label: `${item.numero_documento} — saldo ${formatMoney(item.saldo)}` }))}
                                     placeholder="Selecciona el documento"
@@ -215,6 +217,7 @@ export const CrossAdvancePage: FC = () => {
                             <div>
                                 <Label htmlFor="tipo-comprobante">Tipo de comprobante</Label>
                                 <Select
+                                    id="tipo-comprobante"
                                     options={tipos.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }))}
                                     placeholder="Selecciona el tipo"
                                     onChange={setTipoComprobanteId}

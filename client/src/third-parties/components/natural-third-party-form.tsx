@@ -66,6 +66,7 @@ export const NaturalThirdPartyForm: FC<NaturalThirdPartyFormProps> = ({ thirdPar
                         <div>
                             <Label htmlFor="tipo-documento">Tipo de documento</Label>
                             <Select
+                                id="tipo-documento"
                                 options={NATURAL_DOCUMENT_TYPE_OPTIONS}
                                 defaultValue={tipoDocumento}
                                 onChange={(value) => setTipoDocumento(value as NaturalDocumentType)}

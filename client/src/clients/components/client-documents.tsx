@@ -16,7 +16,7 @@ export const ClientDocuments: FC<ClientDocumentsProps> = ({ documentos, canUploa
                         {uploadError}
                     </div>
                 )}
-                <Dropzone accept={ACCEPTED_DOCUMENT_TYPES} hint={isUploading ? 'Subiendo…' : 'PDF, PNG, JPG o WEBP'} onFileAccepted={onUpload} />
+                <Dropzone id="documento-cliente" accept={ACCEPTED_DOCUMENT_TYPES} hint={isUploading ? 'Subiendo…' : 'PDF, PNG, JPG o WEBP'} onFileAccepted={onUpload} />
             </div>
         )}
 

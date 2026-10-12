@@ -83,25 +83,25 @@ export const GoalSettingsForm: FC<GoalSettingsFormProps> = ({ configuracion, onS
                 </div>
 
                 <div>
-                    <Label>Refinanciaciones en la colocación</Label>
-                    <Select options={OPCIONES_REFINANCIACIONES} defaultValue={valores.modo_colocacion_refinanciaciones} onChange={(value) => actualizar('modo_colocacion_refinanciaciones', value as ApiGoalSettings['modo_colocacion_refinanciaciones'])} />
+                    <Label htmlFor="modo-colocacion-refinanciaciones">Refinanciaciones en la colocación</Label>
+                    <Select id="modo-colocacion-refinanciaciones" options={OPCIONES_REFINANCIACIONES} defaultValue={valores.modo_colocacion_refinanciaciones} onChange={(value) => actualizar('modo_colocacion_refinanciaciones', value as ApiGoalSettings['modo_colocacion_refinanciaciones'])} />
                 </div>
 
                 <div>
-                    <Label>Base del recaudo</Label>
-                    <Select options={OPCIONES_BASE_RECAUDO} defaultValue={valores.base_recaudo} onChange={(value) => actualizar('base_recaudo', value as ApiGoalSettings['base_recaudo'])} />
+                    <Label htmlFor="base-recaudo">Base del recaudo</Label>
+                    <Select id="base-recaudo" options={OPCIONES_BASE_RECAUDO} defaultValue={valores.base_recaudo} onChange={(value) => actualizar('base_recaudo', value as ApiGoalSettings['base_recaudo'])} />
                 </div>
 
                 <div>
-                    <Label>Día de cierre</Label>
-                    <Select options={OPCIONES_DIA_CIERRE} defaultValue={valores.dia_de_cierre} onChange={(value) => actualizar('dia_de_cierre', value as ApiGoalSettings['dia_de_cierre'])} />
+                    <Label htmlFor="dia-cierre">Día de cierre</Label>
+                    <Select id="dia-cierre" options={OPCIONES_DIA_CIERRE} defaultValue={valores.dia_de_cierre} onChange={(value) => actualizar('dia_de_cierre', value as ApiGoalSettings['dia_de_cierre'])} />
                 </div>
             </div>
 
             <div className="space-y-4 border-t border-gray-100 pt-6 dark:border-gray-800">
-                <Checkbox label="Alerta cuando una meta se alcanza en el período abierto" checked={valores.alerta_alcanzada_activa} onChange={(checked) => actualizar('alerta_alcanzada_activa', checked)} />
-                <Checkbox label="La distribución por asesor debe sumar exactamente la meta" checked={valores.distribucion_obligatoria_completa} onChange={(checked) => actualizar('distribucion_obligatoria_completa', checked)} />
-                <Checkbox label="Mostrar al asesor la meta de empresa (sin el detalle de otros asesores)" checked={valores.meta_consolidada_visible_asesor} onChange={(checked) => actualizar('meta_consolidada_visible_asesor', checked)} />
+                <Checkbox id="alerta-alcanzada-activa" label="Alerta cuando una meta se alcanza en el período abierto" checked={valores.alerta_alcanzada_activa} onChange={(checked) => actualizar('alerta_alcanzada_activa', checked)} />
+                <Checkbox id="distribucion-obligatoria-completa" label="La distribución por asesor debe sumar exactamente la meta" checked={valores.distribucion_obligatoria_completa} onChange={(checked) => actualizar('distribucion_obligatoria_completa', checked)} />
+                <Checkbox id="meta-consolidada-visible-asesor" label="Mostrar al asesor la meta de empresa (sin el detalle de otros asesores)" checked={valores.meta_consolidada_visible_asesor} onChange={(checked) => actualizar('meta_consolidada_visible_asesor', checked)} />
             </div>
 
             <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
