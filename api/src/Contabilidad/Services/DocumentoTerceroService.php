@@ -59,6 +59,17 @@ class DocumentoTerceroService
         return $this->documentos->bloquearPorId($id);
     }
 
+    public function buscarPorNumero(int $terceroId, NaturalezaDocumento $naturaleza, string $numeroDocumento): ?DocumentoTercero
+    {
+        return $this->documentos->buscarPorNumero($terceroId, $naturaleza, $numeroDocumento);
+    }
+
+    /** @return Collection<int, DocumentoTercero> */
+    public function creadosPorOrigen(string $moduloOrigen, int $origenId): Collection
+    {
+        return $this->documentos->creadosPorOrigen($moduloOrigen, $origenId);
+    }
+
     public function crearDocumento(
         Tercero $tercero,
         NaturalezaDocumento $naturaleza,

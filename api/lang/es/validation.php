@@ -261,6 +261,10 @@ return [
             'no_revisado' => 'Solo se puede contabilizar un comprobante revisado.',
             'revision_propia' => 'No puedes revisar un comprobante que tú creaste: la revisión la hace otro usuario.',
             'descuadrado_al_contabilizar' => 'El comprobante no cuadra entre sus líneas y sus totales; no se puede contabilizar.',
+            'cuenta_no_apta_para_documento_cruce' => 'La cuenta :cuenta exige tercero y documento cruce, pero no es una cuenta de activo ni de pasivo: no se puede usar para causar ni cruzar un documento.',
+            'documento_cruce_duplicado' => 'Ya existe un documento con el número :documento para este tercero; usa un número distinto o verifica si la línea debería cruzarlo en vez de crearlo.',
+            'documento_cruce_no_encontrado' => 'No existe ningún documento pendiente con el número :documento para este tercero.',
+            'no_se_puede_reversar_documento_con_pagos' => 'No se puede reversar: el documento :documento ya tiene pagos o cruces registrados desde otro comprobante.',
         ],
         'fecha' => [
             'periodo_cerrado' => 'El período contable :mes/:anio está cerrado. No se pueden registrar movimientos.',

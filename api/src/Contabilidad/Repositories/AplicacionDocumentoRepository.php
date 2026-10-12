@@ -27,4 +27,13 @@ class AplicacionDocumentoRepository extends BaseRepository
     {
         $this->consulta()->whereIn('id', $ids)->update(['reversado_en' => now()]);
     }
+
+    /** Si un documento tiene al menos una aplicación vigente (de cualquier módulo), ya no se puede anular ni reversar su causación. */
+    public function existeVigentePara(int $documentoTerceroId): bool
+    {
+        return $this->consulta()
+            ->where('documento_tercero_id', $documentoTerceroId)
+            ->whereNull('reversado_en')
+            ->exists();
+    }
 }
