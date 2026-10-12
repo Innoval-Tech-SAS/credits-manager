@@ -709,6 +709,33 @@ span.flatpickr-weekday,
   @apply text-sm font-medium text-gray-500 dark:text-gray-400;
 }
 
+/* El popover de "+more" no hereda el tema del proyecto (lo monta FullCalendar fuera
+   del flujo normal): sin esto queda con el fondo blanco por defecto en modo oscuro. */
+.fc .fc-popover {
+  @apply overflow-hidden rounded-xl border border-gray-200 bg-white shadow-theme-lg dark:border-gray-800 dark:bg-gray-900;
+}
+.fc .fc-popover-header {
+  @apply flex items-center justify-between bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 dark:bg-gray-900 dark:text-gray-300;
+}
+.fc .fc-popover-close {
+  @apply text-gray-400 hover:text-gray-700 dark:hover:text-white/90;
+}
+.fc .fc-popover-body {
+  @apply max-h-72 overflow-y-auto custom-scrollbar p-2;
+}
+.fc .fc-popover .event-fc-color .fc-event-title {
+  @apply text-gray-700;
+}
+/* FullCalendar posiciona el popover junto al día que lo abrió: en una celda cerca del borde
+   derecho a 375px, el popover se corta fuera del viewport sin scroll para alcanzarlo. */
+@media (max-width: 639px) {
+  .fc .fc-popover {
+    left: 1rem !important;
+    right: 1rem !important;
+    width: auto !important;
+  }
+}
+
 .input-date-icon::-webkit-inner-spin-button,
 .input-date-icon::-webkit-calendar-picker-indicator {
   opacity: 0;
