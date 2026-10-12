@@ -38,12 +38,12 @@ export const CreateCreditPage: FC = () => {
         ? new URLSearchParams({ cliente_id: String(cliente.id), estado: 'desembolsado', per_page: '50' }).toString()
         : '';
     const { data: creditosActivosData } = useResource<PaginatedResponse<ApiCredit>>(
-        tipoCredito === 'refinanciacion' && cliente ? `/creditos?${creditosActivosParams}` : '',
+        tipoCredito === 'refinanciacion' && cliente ? `/creditos?${creditosActivosParams}` : null,
     );
     const creditosActivos = creditosActivosData?.data ?? [];
 
     const { data: origenDetalle, isLoading: isLoadingOrigen } = useResource<ApiCreditDetail>(
-        tipoCredito === 'refinanciacion' && creditoOrigenId ? `/creditos/${creditoOrigenId}` : '',
+        tipoCredito === 'refinanciacion' && creditoOrigenId ? `/creditos/${creditoOrigenId}` : null,
     );
     const saldoTomado = creditoOrigenId ? (origenDetalle?.resumen_cuotas.saldo_capital_pendiente ?? null) : null;
 
@@ -125,13 +125,14 @@ export const CreateCreditPage: FC = () => {
                         )}
 
                         <div className="md:col-span-3">
-                            <Label>Cliente</Label>
-                            <ClientSelector selected={cliente} onSelect={handleClienteSelect} />
+                            <Label htmlFor="credito-cliente">Cliente</Label>
+                            <ClientSelector id="credito-cliente" selected={cliente} onSelect={handleClienteSelect} />
                         </div>
 
                         <div>
                             <Label htmlFor="tipo-credito">Tipo de crédito</Label>
                             <Select
+                                id="tipo-credito"
                                 options={CREDIT_TYPE_OPTIONS}
                                 defaultValue={tipoCredito}
                                 onChange={(value) => handleTipoCreditoChange(value as CreditType)}
@@ -142,6 +143,7 @@ export const CreateCreditPage: FC = () => {
                             <div className="md:col-span-2">
                                 <Label htmlFor="credito-origen">Crédito que refinancia</Label>
                                 <Select
+                                    id="credito-origen"
                                     options={creditosActivos.map((c) => ({
                                         value: String(c.id),
                                         label: `#${c.id} — ${formatMoney(c.valor_prestamo)}`,
@@ -219,6 +221,7 @@ export const CreateCreditPage: FC = () => {
                         <div>
                             <Label htmlFor="tipo-pago">Tipo de pago</Label>
                             <Select
+                                id="tipo-pago"
                                 options={PAYMENT_TYPE_OPTIONS}
                                 defaultValue={tipoPago}
                                 onChange={(value) => setTipoPago(value as PaymentType)}

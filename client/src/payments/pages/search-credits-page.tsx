@@ -17,7 +17,7 @@ export const SearchCreditsPage: FC = () => {
     const [cliente, setCliente] = useState<ApiClient | null>(null);
 
     const creditosParams = cliente ? new URLSearchParams({ cliente_id: String(cliente.id), estado: 'desembolsado', per_page: '50' }).toString() : '';
-    const { data: creditosData, isLoading } = useResource<PaginatedResponse<ApiCredit>>(cliente ? `/creditos?${creditosParams}` : '');
+    const { data: creditosData, isLoading } = useResource<PaginatedResponse<ApiCredit>>(cliente ? `/creditos?${creditosParams}` : null);
     const creditosActivos = creditosData?.data ?? [];
 
     return (
@@ -26,7 +26,7 @@ export const SearchCreditsPage: FC = () => {
 
             <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3">
                 <Label htmlFor="cliente">Cliente</Label>
-                <ClientFullSelect selected={cliente} onSelect={setCliente} />
+                <ClientFullSelect id="cliente" selected={cliente} onSelect={setCliente} />
                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Selecciona el cliente para ver sus créditos activos.</p>
             </div>
 
