@@ -62,6 +62,22 @@ class DocumentoFacturacionRepository extends BaseRepository
         return (int) LineaDocumentoFacturacion::query()->where('documento_id', $documentoId)->sum('valor');
     }
 
+    /** @return array{iva: int, retefuente: int, reteica: int, reteiva: int} centavos de impuesto de las líneas activas. */
+    public function sumaImpuestos(int $documentoId): array
+    {
+        $fila = LineaDocumentoFacturacion::query()
+            ->where('documento_id', $documentoId)
+            ->selectRaw('SUM(valor_iva) as iva, SUM(valor_retefuente) as retefuente, SUM(valor_reteica) as reteica, SUM(valor_reteiva) as reteiva')
+            ->first();
+
+        return [
+            'iva' => (int) ($fila->iva ?? 0),
+            'retefuente' => (int) ($fila->retefuente ?? 0),
+            'reteica' => (int) ($fila->reteica ?? 0),
+            'reteiva' => (int) ($fila->reteiva ?? 0),
+        ];
+    }
+
     /**
      * Total de las notas de un tipo emitidas sobre una factura, en centavos. Va con la empresa explícita: la
      * consulta cruza documentos y líneas, y el scope de empresa solo filtra la tabla base.
@@ -77,6 +93,16 @@ class DocumentoFacturacionRepository extends BaseRepository
             ->whereNull('d.borrado_en')
             ->whereNull('l.borrado_en')
             ->sum('l.valor');
+    }
+
+    /** Facturas emitidas (no notas) de un crédito, para que el Service derive cuáles están anuladas antes de validar duplicados. */
+    public function facturasEmitidasDelCredito(int $creditoId): Collection
+    {
+        return $this->consulta()
+            ->where('credito_id', $creditoId)
+            ->where('tipo', TipoDocumentoFacturacion::Factura)
+            ->where('estado', EstadoDocumentoFacturacion::Emitido)
+            ->get();
     }
 
     /** ¿Hay documentos emitidos de este tipo? Bloquea cambiar el número inicial de su secuencia. */

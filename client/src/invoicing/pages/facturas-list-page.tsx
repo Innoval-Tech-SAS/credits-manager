@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { Eye, FileText, HandCoins, Settings } from 'lucide-react';
+import { Eye, FileText, HandCoins, Percent, Settings } from 'lucide-react';
 
 import { usePermission } from '../../auth/hooks/use-permission';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -32,6 +32,11 @@ export const FacturasListPage: FC = () => {
                     {puedeConfigurar && (
                         <Button variant="outline" collapseBelow="md" startIcon={<Settings className="size-4" />} onClick={() => navigate('/facturacion/consecutivos')}>
                             Consecutivos
+                        </Button>
+                    )}
+                    {puedeConfigurar && (
+                        <Button variant="outline" collapseBelow="md" startIcon={<Percent className="size-4" />} onClick={() => navigate('/facturacion/parametrizacion-conceptos')}>
+                            Parametrización fiscal
                         </Button>
                     )}
                     {canCreate && (

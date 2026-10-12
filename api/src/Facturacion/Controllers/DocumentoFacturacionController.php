@@ -6,6 +6,7 @@ use App\Facturacion\Enums\EstadoDocumentoFacturacion;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Requests\ActualizarBorradorFacturaRequest;
+use App\Facturacion\Requests\ConceptosSugeridosFacturaRequest;
 use App\Facturacion\Requests\CrearBorradorFacturaRequest;
 use App\Facturacion\Requests\EmitirNotaRequest;
 use App\Facturacion\Requests\ListarDocumentosFacturacionRequest;
@@ -30,11 +31,17 @@ class DocumentoFacturacionController extends Controller
             $peticion->validated('tipo') ? TipoDocumentoFacturacion::from($peticion->validated('tipo')) : null,
             $peticion->validated('estado') ? EstadoDocumentoFacturacion::from($peticion->validated('estado')) : null,
             $peticion->integer('cliente_id') ?: null,
+            $peticion->boolean('con_saldo'),
             $peticion->integer('per_page', 10),
             $peticion->integer('page', 1),
         );
 
         return response()->json($documentos);
+    }
+
+    public function conceptosSugeridos(ConceptosSugeridosFacturaRequest $peticion): JsonResponse
+    {
+        return response()->json(['conceptos' => $this->documentos->conceptosSugeridos($peticion->integer('credito_id'))]);
     }
 
     public function store(CrearBorradorFacturaRequest $peticion): JsonResponse
@@ -44,6 +51,7 @@ class DocumentoFacturacionController extends Controller
             $peticion->validated('fecha'),
             $peticion->validated('lineas'),
             $peticion->validated('fecha_vencimiento'),
+            $peticion->user(),
         );
 
         return response()->json(['documento' => $documento], 201);
@@ -56,7 +64,7 @@ class DocumentoFacturacionController extends Controller
 
     public function update(ActualizarBorradorFacturaRequest $peticion, DocumentoFacturacion $documento): JsonResponse
     {
-        $actualizado = $this->documentos->actualizarBorrador($documento, $peticion->validated('fecha'), $peticion->validated('lineas'), $peticion->validated('fecha_vencimiento'));
+        $actualizado = $this->documentos->actualizarBorrador($documento, $peticion->validated('fecha'), $peticion->validated('lineas'), $peticion->validated('fecha_vencimiento'), $peticion->user());
 
         return response()->json($this->documentos->detalle($actualizado));
     }

@@ -36,6 +36,7 @@ class EmpresaConstants
             'tributario.listar', 'tributario.parametrizar',
             'facturacion.listar', 'facturacion.crear', 'facturacion.anular', 'facturacion.anular_nota_credito',
             'facturacion.anular_nota_debito', 'facturacion.imprimir', 'facturacion.configurar',
+            'facturacion.modificar_valores_sugeridos',
             'gastos.listar', 'gastos.crear', 'gastos.anular', 'gastos.parametrizar', 'gastos.exportar',
             'egresos.listar', 'egresos.crear', 'egresos.reversar',
             'anticipos.listar', 'anticipos.crear',

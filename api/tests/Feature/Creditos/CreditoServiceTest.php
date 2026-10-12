@@ -145,4 +145,18 @@ class CreditoServiceTest extends TestCase
 
         app(CreditoService::class)->cancelar($credito);
     }
+
+    public function test_listado_de_creditos_incluye_el_saldo_pendiente_de_sus_cuotas(): void
+    {
+        $cliente = $this->crearCliente();
+        $credito = $this->crearCredito($cliente);
+        $this->crearCuota($credito, ['numero_cuota' => 1, 'valor' => 300, 'valor_pagado' => 300, 'estado' => EstadoCuota::Pagada]);
+        $this->crearCuota($credito, ['numero_cuota' => 2, 'valor' => 300, 'valor_pagado' => 100, 'estado' => EstadoCuota::Pendiente]);
+        $this->crearCuota($credito, ['numero_cuota' => 3, 'valor' => 300, 'valor_otros_gastos' => 50, 'valor_pagado' => 0, 'estado' => EstadoCuota::Pendiente]);
+
+        $listado = app(CreditoService::class)->listarCreditos(null, 10, 1);
+        $fila = $listado->getCollection()->firstWhere('id', $credito->id);
+
+        $this->assertSame('550.00', $fila->saldo);
+    }
 }

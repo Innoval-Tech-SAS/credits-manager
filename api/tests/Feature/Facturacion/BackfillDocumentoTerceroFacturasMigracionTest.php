@@ -34,9 +34,12 @@ class BackfillDocumentoTerceroFacturasMigracionTest extends TestCase
 
     private function factura(string $valor): array
     {
+        $credito = $this->crearCredito($this->crearCliente());
+
         $borrador = $this->postJson(self::BASE.'/documentos', [
-            'credito_id' => $this->crearCredito($this->crearCliente())->id,
-            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés administrativo', 'valor' => $valor]],
+            'cliente_id' => $credito->cliente_id,
+            'credito_id' => $credito->id,
+            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés administrativo', 'valor' => $valor, 'tipo_concepto' => 'otros_gastos']],
         ])->assertStatus(201)->json('documento');
 
         return $this->postJson(self::BASE.'/documentos/'.$borrador['id'].'/emitir')->assertOk()->json('documento');
@@ -123,9 +126,11 @@ class BackfillDocumentoTerceroFacturasMigracionTest extends TestCase
         $legada = $this->factura('1000');
         $this->quitarDocumentosTercero();
         $actual = $this->factura('700');
+        $creditoBorrador = $this->crearCredito($this->crearCliente());
         $borrador = $this->postJson(self::BASE.'/documentos', [
-            'credito_id' => $this->crearCredito($this->crearCliente())->id,
-            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Borrador', 'valor' => '100']],
+            'cliente_id' => $creditoBorrador->cliente_id,
+            'credito_id' => $creditoBorrador->id,
+            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Borrador', 'valor' => '100', 'tipo_concepto' => 'otros_gastos']],
         ])->assertStatus(201)->json('documento');
 
         $documentoActual = DB::table('documentos_facturacion')->where('id', $actual['id'])->value('documento_tercero_id');

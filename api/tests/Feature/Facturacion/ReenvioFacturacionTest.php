@@ -28,15 +28,21 @@ class ReenvioFacturacionTest extends TestCase
 
     private function factura(string $correo = 'cliente@example.com'): array
     {
+        $borrador = $this->borrador($correo);
+
+        return $this->postJson(self::BASE.'/documentos/'.$borrador['id'].'/emitir')->assertOk()->json('documento');
+    }
+
+    private function borrador(string $correo = 'cliente@example.com'): array
+    {
         $this->crearReglasFacturacion();
         $credito = $this->crearCredito($this->crearCliente(['correo' => $correo]));
 
-        $borrador = $this->postJson(self::BASE.'/documentos', [
+        return $this->postJson(self::BASE.'/documentos', [
+            'cliente_id' => $credito->cliente_id,
             'credito_id' => $credito->id,
-            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés administrativo', 'valor' => '1000']],
+            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés administrativo', 'valor' => '1000', 'tipo_concepto' => 'otros_gastos']],
         ])->assertStatus(201)->json('documento');
-
-        return $this->postJson(self::BASE.'/documentos/'.$borrador['id'].'/emitir')->assertOk()->json('documento');
     }
 
     public function test_sin_autenticar_recibe_401(): void
@@ -90,15 +96,16 @@ class ReenvioFacturacionTest extends TestCase
         Queue::assertNothingPushed();
     }
 
+    /** Un tercero sin correo ya no llega a emitirse (el correo es un dato fiscal obligatorio): el rechazo ocurre antes del reenvío. */
     public function test_cliente_sin_correo_se_rechaza(): void
     {
         Queue::fake();
         $this->actingAsAdmin();
         $this->configuracionDeCorreo(TipoCorreo::Facturacion);
         $this->plantillaDeCorreo(TipoCorreo::Facturacion);
-        $factura = $this->factura(correo: '');
+        $borrador = $this->borrador(correo: '');
 
-        $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/reenviar')
+        $this->postJson(self::BASE.'/documentos/'.$borrador['id'].'/emitir')
             ->assertStatus(422)
             ->assertJsonValidationErrors('documento');
 

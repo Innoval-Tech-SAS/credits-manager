@@ -38,7 +38,16 @@ class CreditoService
     {
         $this->cuotaService->actualizarVencidas();
 
-        return $this->creditos->paginar($busqueda, max(1, min(100, $porPagina)), max(1, $pagina), $clienteId, $estado);
+        $creditos = $this->creditos->paginar($busqueda, max(1, min(100, $porPagina)), max(1, $pagina), $clienteId, $estado);
+        $resumenPorCredito = $this->cuotas->resumenPorCreditos($creditos->pluck('id')->all());
+
+        $creditos->getCollection()->transform(function (Credito $credito) use ($resumenPorCredito) {
+            $credito->saldo = Dinero::desdeCentavos($resumenPorCredito[$credito->id]['saldo'] ?? 0)->aDecimalString();
+
+            return $credito;
+        });
+
+        return $creditos;
     }
 
     public function solicitarExportacion(Usuario $usuario, ?string $busqueda, ?EstadoCredito $estado, FormatoExportacion $formato): Exportacion

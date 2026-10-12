@@ -92,7 +92,17 @@ final class FacturaPdf implements DocumentoPdf
 
     public function totales(): array
     {
-        $totales = [new TotalDocumento('Total', $this->totales['total'])];
+        // Subtotal/IVA/retención solo si hay algo que mostrar: con impuestos en cero (el caso de hoy), el total basta.
+        $hayImpuestos = ($this->totales['total_iva'] ?? null)?->esPositivo() || ($this->totales['total_retencion'] ?? null)?->esPositivo();
+
+        $totales = $hayImpuestos
+            ? [
+                new TotalDocumento('Subtotal', $this->totales['subtotal']),
+                new TotalDocumento('IVA', $this->totales['total_iva']),
+                new TotalDocumento('Retenciones', $this->totales['total_retencion']),
+                new TotalDocumento('Total', $this->totales['total']),
+            ]
+            : [new TotalDocumento('Total', $this->totales['total'])];
 
         if ($this->documento->tipo === TipoDocumentoFacturacion::Factura) {
             $totales[] = new TotalDocumento('Notas crédito', $this->totales['total_nota_credito']);

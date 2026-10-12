@@ -39,12 +39,13 @@ class DocumentosFacturacionTest extends TestCase
             'concepto' => 'INTERES.AMORT.ADM',
             'descripcion' => 'Interés administrativo',
             'valor' => $valor,
+            'tipo_concepto' => 'otros_gastos',
         ], $valores);
     }
 
     private function borrador(Credito $credito, array $valores = ['1000']): array
     {
-        return $this->postJson(self::BASE, ['credito_id' => $credito->id, 'lineas' => $this->lineas($valores)])
+        return $this->postJson(self::BASE, ['cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id, 'lineas' => $this->lineas($valores)])
             ->assertStatus(201)
             ->json('documento');
     }
@@ -90,10 +91,11 @@ class DocumentosFacturacionTest extends TestCase
     public function test_rechaza_un_credito_inexistente_y_lineas_invalidas(): void
     {
         $this->actingAsAdmin();
+        $credito = $this->credito();
 
-        $this->postJson(self::BASE, ['credito_id' => 9999, 'lineas' => $this->lineas()])->assertStatus(422)->assertJsonValidationErrors('credito_id');
-        $this->postJson(self::BASE, ['credito_id' => $this->credito()->id, 'lineas' => []])->assertStatus(422)->assertJsonValidationErrors('lineas');
-        $this->postJson(self::BASE, ['credito_id' => $this->credito()->id, 'lineas' => $this->lineas(['0'])])
+        $this->postJson(self::BASE, ['cliente_id' => $credito->cliente_id, 'credito_id' => 9999, 'lineas' => $this->lineas()])->assertStatus(422)->assertJsonValidationErrors('credito_id');
+        $this->postJson(self::BASE, ['cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id, 'lineas' => []])->assertStatus(422)->assertJsonValidationErrors('lineas');
+        $this->postJson(self::BASE, ['cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id, 'lineas' => $this->lineas(['0'])])
             ->assertStatus(422)
             ->assertJsonValidationErrors('lineas.0.valor');
     }

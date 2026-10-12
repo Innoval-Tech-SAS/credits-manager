@@ -23,7 +23,7 @@ import { InvoicePaymentModal } from '../components/invoice-payment-modal';
 import { InvoicePaymentsTable } from '../components/invoice-payments-table';
 import { InvoiceSituationBadge } from '../components/invoice-situation-badge';
 import type { InvoiceLineDraft } from '../props/invoice-lines-form-props';
-import type { ApiInvoiceDetail, ApiInvoicePayment } from '../types/api-invoice';
+import type { ApiInvoiceDetail, ApiInvoiceLine, ApiInvoicePayment } from '../types/api-invoice';
 
 const ETIQUETA_TIPO = { factura: 'Factura', nota_credito: 'Nota crédito', nota_debito: 'Nota débito' } as const;
 
@@ -82,6 +82,8 @@ export const InvoiceDetailPage: FC = () => {
     const tituloDocumento = documento.numero ?? `${ETIQUETA_TIPO[documento.tipo]} en borrador`;
     const puedeCobrar = esFactura && !esBorrador && puedeCrear && (situacion === 'emitida' || situacion === 'parcialmente_pagada');
     const puedeAnularFactura = esFactura && !esBorrador && puedeAnular && situacion !== 'anulada';
+    // Con impuestos en cero (el caso de hoy) basta el total: no se les da más protagonismo visual del que ya tienen.
+    const hayImpuestos = parseFloat(totales.total_iva ?? '0') > 0 || parseFloat(totales.total_retencion ?? '0') > 0;
 
     const emitir = async () => {
         try {
@@ -111,7 +113,15 @@ export const InvoiceDetailPage: FC = () => {
         try {
             await sendRequest(`/facturacion/documentos/${documento.id}`, {
                 method: 'PATCH',
-                body: { lineas: lineasEdicion.map((linea) => ({ concepto: linea.concepto, descripcion: linea.descripcion, valor: linea.valor })) },
+                body: {
+                    lineas: lineasEdicion.map((linea) => ({
+                        tipo_concepto: linea.tipo_concepto,
+                        cuota_id: linea.cuota_id ?? null,
+                        concepto: linea.concepto,
+                        descripcion: linea.descripcion,
+                        valor: linea.valor,
+                    })),
+                },
             });
             setLineasEdicion(null);
             informarExito('Borrador actualizado.');
@@ -249,7 +259,7 @@ export const InvoiceDetailPage: FC = () => {
 
                 {lineasEdicion !== null ? (
                     <div className="flex flex-col gap-4">
-                        <InvoiceLinesForm lineas={lineasEdicion} onChange={setLineasEdicion} />
+                        <InvoiceLinesForm lineas={lineasEdicion} onChange={setLineasEdicion} requiereTipoConcepto={esFactura} />
                         <div className="flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setLineasEdicion(null)}>
                                 Cancelar
@@ -265,6 +275,12 @@ export const InvoiceDetailPage: FC = () => {
                             { key: 'concepto', label: 'Concepto' },
                             { key: 'descripcion', label: 'Descripción' },
                             { key: 'valor', label: 'Valor', render: (row) => formatMoney(row.valor) },
+                            ...(hayImpuestos
+                                ? [
+                                      { key: 'valor_iva', label: 'IVA', render: (row: ApiInvoiceLine) => formatMoney(row.valor_iva) },
+                                      { key: 'retencion', label: 'Retención', render: (row: ApiInvoiceLine) => formatMoney(sumaRetencion(row)) },
+                                  ]
+                                : []),
                         ]}
                         rows={documento.lineas ?? []}
                         getRowKey={(row) => row.id}
@@ -274,6 +290,16 @@ export const InvoiceDetailPage: FC = () => {
                 )}
 
                 <dl className="mt-4 grid grid-cols-2 gap-2 text-sm md:ml-auto md:max-w-md">
+                    {hayImpuestos && (
+                        <>
+                            <dt className="text-gray-500 dark:text-gray-400">Subtotal</dt>
+                            <dd className="text-right text-gray-800 dark:text-white/90">{formatMoney(totales.subtotal ?? '0')}</dd>
+                            <dt className="text-gray-500 dark:text-gray-400">IVA</dt>
+                            <dd className="text-right text-gray-800 dark:text-white/90">{formatMoney(totales.total_iva ?? '0')}</dd>
+                            <dt className="text-gray-500 dark:text-gray-400">Retenciones</dt>
+                            <dd className="text-right text-gray-800 dark:text-white/90">{formatMoney(totales.total_retencion ?? '0')}</dd>
+                        </>
+                    )}
                     <dt className="text-gray-500 dark:text-gray-400">Total</dt>
                     <dd className="text-right font-semibold text-gray-800 dark:text-white/90">{formatMoney(totales.total)}</dd>
                     {esFactura && (
@@ -383,6 +409,16 @@ export const InvoiceDetailPage: FC = () => {
     );
 };
 
-function toDraft(linea: { concepto: string; descripcion: string; valor: string }): InvoiceLineDraft {
-    return { concepto: linea.concepto, descripcion: linea.descripcion, valor: linea.valor };
+function toDraft(linea: ApiInvoiceLine): InvoiceLineDraft {
+    return {
+        concepto: linea.concepto,
+        descripcion: linea.descripcion,
+        valor: linea.valor,
+        cuota_id: linea.cuota_id,
+        tipo_concepto: linea.tipo_concepto ?? '',
+    };
+}
+
+function sumaRetencion(linea: ApiInvoiceLine): number {
+    return parseFloat(linea.valor_retefuente) + parseFloat(linea.valor_reteica) + parseFloat(linea.valor_reteiva);
 }

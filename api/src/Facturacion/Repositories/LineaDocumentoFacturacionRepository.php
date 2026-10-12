@@ -8,6 +8,7 @@ use App\Facturacion\Enums\EstadoDocumentoFacturacion;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Models\LineaDocumentoFacturacion;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class LineaDocumentoFacturacionRepository extends BaseRepository
@@ -31,7 +32,7 @@ class LineaDocumentoFacturacionRepository extends BaseRepository
 
         foreach ($lineas as $indice => $datos) {
             if ($activas->has($indice)) {
-                $activas[$indice]->update($datos);
+                $activas[$indice]->update($this->datosDeLinea($datos));
 
                 continue;
             }
@@ -40,7 +41,7 @@ class LineaDocumentoFacturacionRepository extends BaseRepository
                 'empresa_id' => $documento->empresa_id,
                 'documento_id' => $documento->id,
                 'orden' => $siguienteOrden++,
-                ...$datos,
+                ...$this->datosDeLinea($datos),
             ]);
         }
 
@@ -58,14 +59,50 @@ class LineaDocumentoFacturacionRepository extends BaseRepository
                 'documento_id' => $documento->id,
                 'linea_origen_id' => $datos['linea_origen_id'] ?? null,
                 'orden' => $indice + 1,
-                'concepto' => $datos['concepto'],
-                'descripcion' => $datos['descripcion'],
-                'valor' => $datos['valor'],
-                'tasa_mora' => $datos['tasa_mora'] ?? null,
-                'dias_mora' => $datos['dias_mora'] ?? null,
-                'base_mora' => $datos['base_mora'] ?? null,
+                ...$this->datosDeLinea($datos),
             ]);
         }
+    }
+
+    /** Campos comunes de una línea, con los de impuestos/cuota en 0/null cuando no aplican (notas). */
+    private function datosDeLinea(array $datos): array
+    {
+        return [
+            'concepto' => $datos['concepto'],
+            'descripcion' => $datos['descripcion'],
+            'valor' => $datos['valor'],
+            'cuota_id' => $datos['cuota_id'] ?? null,
+            'tipo_concepto' => $datos['tipo_concepto'] ?? null,
+            'valor_iva' => $datos['valor_iva'] ?? Dinero::cero(),
+            'valor_retefuente' => $datos['valor_retefuente'] ?? Dinero::cero(),
+            'valor_reteica' => $datos['valor_reteica'] ?? Dinero::cero(),
+            'valor_reteiva' => $datos['valor_reteiva'] ?? Dinero::cero(),
+            'tasa_mora' => $datos['tasa_mora'] ?? null,
+            'dias_mora' => $datos['dias_mora'] ?? null,
+            'base_mora' => $datos['base_mora'] ?? null,
+        ];
+    }
+
+    /**
+     * Cuota/concepto de líneas de facturas emitidas (no borradas) de este crédito, con el id del documento: una
+     * factura anulada por nota crédito sigue "emitida" (el estado no se guarda, ver `EstadoDocumentoFacturacion`),
+     * así que quien llama decide si la descuenta — `DocumentoFacturacionService::combosVigentes()` lo hace.
+     *
+     * @return Collection<int, object{documento_id: int, cuota_id: int, tipo_concepto: string}>
+     */
+    public function combosFacturados(int $empresaId, int $creditoId): Collection
+    {
+        return DB::table('lineas_documento_facturacion as l')
+            ->join('documentos_facturacion as d', fn ($join) => $join->on('d.id', '=', 'l.documento_id')->on('d.empresa_id', '=', 'l.empresa_id'))
+            ->where('l.empresa_id', $empresaId)
+            ->where('d.credito_id', $creditoId)
+            ->where('d.tipo', TipoDocumentoFacturacion::Factura->value)
+            ->where('d.estado', EstadoDocumentoFacturacion::Emitido->value)
+            ->whereNull('d.borrado_en')
+            ->whereNull('l.borrado_en')
+            ->whereNotNull('l.cuota_id')
+            ->whereNotNull('l.tipo_concepto')
+            ->get(['d.id as documento_id', 'l.cuota_id', 'l.tipo_concepto']);
     }
 
     /** Centavos ya acreditados sobre una línea de factura por notas crédito emitidas. Va con la empresa explícita. */

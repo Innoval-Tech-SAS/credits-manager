@@ -22,6 +22,8 @@ class CrearEmpresaRequest extends FormRequest
             'digito_verificacion' => ['required', 'digits:1', new DigitoVerificacionValido('nit', 'empresa.digito_verificacion.invalido')],
             'direccion' => ['required', 'string', 'max:200'],
             'municipio_id' => ['required', 'integer', Rule::exists('municipios', 'id')->where('activo', true)->whereNull('borrado_en')],
+            'responsable_iva' => ['nullable', 'boolean'],
+            'autorretenedor' => ['nullable', 'boolean'],
             'telefono' => ['required', 'string', 'max:50'],
             'correo' => ['required', 'email', 'max:150'],
             'admin_nombre' => ['required', 'string', 'max:100'],

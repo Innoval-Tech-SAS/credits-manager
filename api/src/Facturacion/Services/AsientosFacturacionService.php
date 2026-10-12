@@ -10,6 +10,9 @@ use App\Contabilidad\Services\ComprobanteService;
 use App\Core\Dinero\Dinero;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
+use App\Facturacion\Models\ParametrizacionConceptoFacturacion;
+use App\Facturacion\Repositories\ParametrizacionConceptoFacturacionRepository;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -21,12 +24,84 @@ class AsientosFacturacionService
 {
     public function __construct(
         protected ReglaContabilizacionRepository $reglas,
+        protected ParametrizacionConceptoFacturacionRepository $parametrizacionesConcepto,
         protected ComprobanteService $comprobantes,
     ) {}
 
-    public function contabilizarEmision(DocumentoFacturacion $factura, Dinero $total): Comprobante
+    /**
+     * CxC = neto (lo que debe el cliente); Ingreso = bruto de las líneas; IVA e impuestos retenidos salen de la
+     * cuenta parametrizada por tipo de concepto (`ParametrizacionConceptoFacturacion`), agrupados si varias líneas
+     * comparten cuenta. Con impuestos en cero (el caso de hoy) es exactamente el asiento de dos líneas de siempre.
+     *
+     * @param  array{subtotal: Dinero, total: Dinero, total_iva?: Dinero}  $totales
+     */
+    public function contabilizarEmision(DocumentoFacturacion $factura, array $totales): Comprobante
     {
-        return $this->contabilizar(EventoContable::FacturaEmision, $factura, $total, $factura->fecha->toDateString(), "Factura {$factura->numero}", 'facturacion', $factura->id);
+        $regla = $this->reglaActiva(EventoContable::FacturaEmision);
+        $parametrizaciones = $this->parametrizacionesConcepto->paraEmpresa($factura->empresa_id);
+
+        $lineasComprobante = [
+            ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $totales['total'], 'credito' => 0],
+            ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $totales['subtotal']],
+        ];
+
+        foreach ($this->desglosePorCuenta($factura, $parametrizaciones, 'valor_iva', 'cuenta_iva_id') as $cuentaId => $valor) {
+            $lineasComprobante[] = ['cuenta_id' => $cuentaId, 'debito' => 0, 'credito' => $valor];
+        }
+
+        foreach ([
+            'valor_retefuente' => 'cuenta_retefuente_id',
+            'valor_reteica' => 'cuenta_reteica_id',
+            'valor_reteiva' => 'cuenta_reteiva_id',
+        ] as $campoValor => $campoCuenta) {
+            foreach ($this->desglosePorCuenta($factura, $parametrizaciones, $campoValor, $campoCuenta) as $cuentaId => $valor) {
+                $lineasComprobante[] = ['cuenta_id' => $cuentaId, 'debito' => $valor, 'credito' => 0];
+            }
+        }
+
+        return $this->comprobantes->crearComprobante(
+            $regla->tipo_comprobante_id,
+            $factura->fecha->toDateString(),
+            $lineasComprobante,
+            "Factura {$factura->numero}",
+            'facturacion',
+            $factura->id,
+            null,
+            $factura->cliente?->tercero_id,
+        );
+    }
+
+    /**
+     * Suma por cuenta contable el campo de impuesto indicado entre las líneas de la factura, usando la cuenta que
+     * la parametrización del tipo de concepto de cada línea tiene configurada. Sin impuesto en ninguna línea,
+     * devuelve un arreglo vacío (ninguna línea de más en el comprobante).
+     *
+     * @param  Collection<string, ParametrizacionConceptoFacturacion>  $parametrizaciones
+     * @return array<int, Dinero>
+     */
+    private function desglosePorCuenta(DocumentoFacturacion $factura, Collection $parametrizaciones, string $campoValor, string $campoCuenta): array
+    {
+        $acumulado = [];
+
+        foreach ($factura->lineas as $linea) {
+            $valor = $linea->{$campoValor};
+
+            if (! $valor instanceof Dinero || ! $valor->esPositivo() || $linea->tipo_concepto === null) {
+                continue;
+            }
+
+            $cuentaId = $parametrizaciones->get($linea->tipo_concepto->value)?->{$campoCuenta};
+
+            if ($cuentaId === null) {
+                throw ValidationException::withMessages([
+                    'contabilidad' => __('validation.custom.facturacion.sin_cuenta_impuesto', ['concepto' => $linea->tipo_concepto->etiqueta()]),
+                ]);
+            }
+
+            $acumulado[$cuentaId] = ($acumulado[$cuentaId] ?? Dinero::cero())->sumar($valor);
+        }
+
+        return $acumulado;
     }
 
     public function contabilizarNota(DocumentoFacturacion $nota, Dinero $total): Comprobante
