@@ -247,7 +247,7 @@ class GastosAdministracionTest extends TestCase
         $empresa = $this->crearEmpresaDePrueba();
         $this->actingAsAdmin($empresa);
         $credito = $this->desembolsar($this->crearCreditoConPorcentaje(0.2));
-        $this->actingAsAsesor($empresa)->update(['es_global' => true]);
+        $this->actingAsAsesor($empresa)->update(['es_asesor_global' => true]);
 
         $this->patchJson("/api/v1/creditos/{$credito->id}/gastos-administracion", [
             'gastos_administracion_pct' => 1,

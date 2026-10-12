@@ -42,9 +42,9 @@ class RolService
 
     public function editar(Rol $rol, array $datos): Rol
     {
-        if ($rol->nombre === UsuarioConstants::ROL_ADMIN && $datos['nombre'] !== UsuarioConstants::ROL_ADMIN) {
+        if (in_array($rol->nombre, UsuarioConstants::ROLES_PROTEGIDOS, true) && $datos['nombre'] !== $rol->nombre) {
             throw ValidationException::withMessages([
-                'nombre' => __('validation.custom.rol.no_renombrar_admin'),
+                'nombre' => __("validation.custom.rol.no_renombrar_{$rol->nombre}"),
             ]);
         }
 
@@ -90,9 +90,9 @@ class RolService
 
     public function eliminar(Rol $rol): bool
     {
-        if ($rol->nombre === UsuarioConstants::ROL_ADMIN) {
+        if (in_array($rol->nombre, UsuarioConstants::ROLES_PROTEGIDOS, true)) {
             throw ValidationException::withMessages([
-                'rol' => __('validation.custom.rol.no_eliminar_admin'),
+                'rol' => __("validation.custom.rol.no_eliminar_{$rol->nombre}"),
             ]);
         }
 

@@ -277,10 +277,13 @@ return [
         'usuario' => [
             'credenciales_invalidas' => 'Usuario o contraseña incorrectos.',
             'unico_admin_activo' => 'No puedes quitarte el rol de administrador o desactivarte siendo el único administrador activo.',
+            'alcance_global_solo_asesor' => 'Solo un usuario con el rol asesor puede tener alcance global.',
         ],
         'rol' => [
             'no_renombrar_admin' => 'El rol de administrador no se puede renombrar.',
             'no_eliminar_admin' => 'El rol de administrador no se puede eliminar.',
+            'no_renombrar_asesor' => 'El rol de asesor no se puede renombrar.',
+            'no_eliminar_asesor' => 'El rol de asesor no se puede eliminar.',
             'tiene_usuarios_activos' => 'No se puede eliminar un rol con usuarios activos asignados.',
         ],
         'clave_actual' => [
@@ -474,7 +477,7 @@ return [
         'codigo' => 'código',
         'naturaleza' => 'naturaleza',
         'asesor_id' => 'asesor',
-        'es_global' => 'alcance global',
+        'es_asesor_global' => 'alcance global',
         'codigo_cuenta' => 'código de cuenta',
         'fecha_corte' => 'fecha de corte',
         'debito' => 'débito',

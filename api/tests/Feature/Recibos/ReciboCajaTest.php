@@ -153,7 +153,7 @@ class ReciboCajaTest extends TestCase
     {
         $credito = $this->creditoConCuotas();
         $pagoId = $this->pagar($credito->id);
-        $this->actingAsAsesor(Empresa::find($credito->empresa_id))->update(['es_global' => true]);
+        $this->actingAsAsesor(Empresa::find($credito->empresa_id))->update(['es_asesor_global' => true]);
 
         $this->getJson("/api/v1/pagos/{$pagoId}/recibo/pdf")->assertStatus(403);
     }

@@ -101,7 +101,7 @@ class ReintentarRecordatorioTest extends TestCase
         $admin = $this->actingAsAdmin();
         ['cliente' => $cliente, 'envio' => $envio] = $this->envioFallido();
 
-        $this->actingAsAsesor(Empresa::findOrFail($admin->empresa_id))->update(['es_global' => true]);
+        $this->actingAsAsesor(Empresa::findOrFail($admin->empresa_id))->update(['es_asesor_global' => true]);
 
         $this->postJson("/api/v1/clientes/{$cliente->id}/recordatorios-correo/{$envio->id}/reintentar")->assertForbidden();
     }

@@ -9,6 +9,7 @@ use App\Geografia\Models\Pais;
 use App\Usuarios\Constants\UsuarioConstants;
 use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
+use App\Usuarios\Repositories\RolRepository;
 
 /**
  * Setup mínimo para tests HTTP: cada llamada crea su propia empresa (ya no
@@ -53,17 +54,28 @@ trait ActsAsAdmin
 
     protected function actingAsSuperAdmin(): Usuario
     {
-        $superAdmin = Usuario::create([
-            'nombre' => 'Super-admin de prueba',
-            'usuario' => 'superadmin_test_'.uniqid(),
-            'password_hash' => 'irrelevante-en-tests',
-            'activo' => true,
-            'es_superadmin' => true,
-        ]);
+        $superAdmin = $this->crearSuperAdmin();
 
         $this->actingAs($superAdmin, 'sanctum');
 
         return $superAdmin;
+    }
+
+    /**
+     * La base admite un solo Super Admin vivo: un test que necesite otro debe borrar antes el anterior. Sale de la
+     * sesión previa porque `PerteneceAEmpresa` le pondría la empresa del usuario autenticado y la base lo rechaza.
+     */
+    protected function crearSuperAdmin(array $overrides = []): Usuario
+    {
+        $this->salirDeSesion();
+
+        return Usuario::create(array_merge([
+            'nombre' => 'Super Admin de prueba',
+            'usuario' => 'superadmin_test_'.uniqid(),
+            'password_hash' => 'irrelevante-en-tests',
+            'rol_id' => app(RolRepository::class)->rolSuperAdmin()->id,
+            'activo' => true,
+        ], $overrides));
     }
 
     /** Deshace actingAs*(): fuerza a que el siguiente request de prueba se resuelva sin usuario autenticado. */

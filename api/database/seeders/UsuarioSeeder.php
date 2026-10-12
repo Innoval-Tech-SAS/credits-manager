@@ -3,17 +3,18 @@
 namespace Database\Seeders;
 
 use App\Usuarios\Models\Usuario;
+use App\Usuarios\Repositories\RolRepository;
 use Illuminate\Database\Seeder;
 
 /**
- * Super-admin de la plataforma (gestiona el panel de empresas, sin
+ * Super Admin de la plataforma (gestiona el panel de empresas, sin
  * pertenecer a ninguna), a partir de las variables SEED_ADMIN_* del .env.
  * No tiene alta por API ni por consola: este seed es el único punto de
- * entrada inicial.
+ * entrada inicial. La base admite un solo Super Admin vivo.
  */
 class UsuarioSeeder extends Seeder
 {
-    public function run(): void
+    public function run(RolRepository $roles): void
     {
         $usuario = strtolower((string) env('SEED_ADMIN_USUARIO'));
         $password = env('SEED_ADMIN_PASSWORD');
@@ -27,8 +28,8 @@ class UsuarioSeeder extends Seeder
             [
                 'nombre' => env('SEED_ADMIN_NOMBRE', 'Administrador'),
                 'password_hash' => $password,
+                'rol_id' => $roles->rolSuperAdmin()->id,
                 'activo' => true,
-                'es_superadmin' => true,
             ],
         );
     }

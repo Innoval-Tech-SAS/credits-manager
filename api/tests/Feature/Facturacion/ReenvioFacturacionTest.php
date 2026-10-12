@@ -54,7 +54,7 @@ class ReenvioFacturacionTest extends TestCase
     {
         $admin = $this->actingAsAdmin();
         $factura = $this->factura();
-        $this->actingAsAsesor(Empresa::findOrFail($admin->empresa_id))->update(['es_global' => true]);
+        $this->actingAsAsesor(Empresa::findOrFail($admin->empresa_id))->update(['es_asesor_global' => true]);
 
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/reenviar')->assertStatus(403);
     }
