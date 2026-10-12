@@ -275,6 +275,7 @@ class ImportacionCoberturaTest extends TestCase
         $this->ejecutarValidacion($id);
 
         $asesor = $this->asesorDeLaEmpresa($admin);
+        $asesor->permisosExtra()->attach(Permiso::query()->where(['modulo' => 'pagos', 'accion' => 'crear'])->value('id'), ['concedido' => true]);
         $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['generar_asiento' => true])->assertForbidden();
         $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['generar_asiento' => false])->assertOk();
         $this->assertSame(false, $this->importacion($id)->decision_generar_asiento);

@@ -149,13 +149,14 @@ class ImportacionDecisionesTest extends TestCase
         $this->assertSame(EstadoImportacion::PendienteDecision, $this->importacion($id)->estado);
     }
 
-    public function test_el_asesor_con_permisos_de_importacion_puede_decidir_si_no_se_le_revoca_nada(): void
+    public function test_el_asesor_con_permisos_de_importacion_y_de_la_hoja_puede_decidir(): void
     {
         $admin = $this->actingAsAdmin();
         $id = $this->subirArchivo('clientes', self::ENCABEZADO."1001;Ana Pérez;;;Empresa Nueva;;;;;\n");
         $this->ejecutarValidacion($id);
 
-        $this->asesorDeLaEmpresa($admin);
+        $asesor = $this->asesorDeLaEmpresa($admin);
+        $this->otorgarPorRol($asesor, 'clientes', 'crear');
 
         $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['crear_empleadores' => false])->assertOk();
         $this->assertSame(false, $this->importacion($id)->decision_crear_empleadores);

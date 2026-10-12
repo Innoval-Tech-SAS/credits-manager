@@ -4,6 +4,7 @@ namespace App\Importacion\Repositories;
 
 use App\Core\Base\BaseRepository;
 use App\Importacion\Enums\EstadoImportacion;
+use App\Importacion\Enums\TipoImportacion;
 use App\Importacion\Models\Importacion;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -14,10 +15,12 @@ class ImportacionRepository extends BaseRepository
         parent::__construct($importacion);
     }
 
-    public function paginarDeEmpresa(int $empresaId, int $porPagina, int $pagina): LengthAwarePaginator
+    /** @param list<TipoImportacion> $tipos */
+    public function paginarDeEmpresa(int $empresaId, array $tipos, int $porPagina, int $pagina): LengthAwarePaginator
     {
         return $this->consulta()
             ->where('empresa_id', $empresaId)
+            ->whereIn('tipo', array_map(fn (TipoImportacion $tipo) => $tipo->value, $tipos))
             ->with('usuario:id,nombre')
             ->orderByDesc('creado_en')
             ->orderByDesc('id')
