@@ -10,6 +10,7 @@ import { formatDateEs } from '../../shared/utils/format-date-es';
 import { formatMoney } from '../../shared/utils/format-money';
 import { ThirdPartySelector } from '../../third-parties/components/third-party-selector';
 import type { ApiThirdParty } from '../../third-parties/types/api-third-party';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { Checkbox } from '@ui/forms/components/checkbox';
@@ -208,28 +209,22 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                                     render: (documento) =>
                                         Number(documento.saldo) <= 0 ? null : naturaleza === 'por_pagar' ? (
                                             puedeRegistrarEgreso && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    startIcon={<Wallet className="size-4" />}
+                                                <ActionButton
+                                                    icon={<Wallet className="size-5" />}
+                                                    label="Pagar"
                                                     onClick={() => {
                                                         setSeleccionPago({ [documento.id]: documento });
                                                         setEgresoModalAbierto(true);
                                                     }}
-                                                >
-                                                    Pagar
-                                                </Button>
+                                                />
                                             )
                                         ) : (
                                             documento.modulo_origen === 'facturacion' && (
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    startIcon={<ArrowRightCircle className="size-4" />}
+                                                <ActionButton
+                                                    icon={<ArrowRightCircle className="size-5" />}
+                                                    label="Ver factura"
                                                     onClick={() => verDocumentoOrigen(documento)}
-                                                >
-                                                    Ver factura
-                                                </Button>
+                                                />
                                             )
                                         ),
                                 },

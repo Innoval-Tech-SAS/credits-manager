@@ -243,17 +243,13 @@ class ComprobanteService
     }
 
     /**
-     * Revisión de un asiento manual: la hace otro usuario que el creador (segregación de funciones). Un borrador no
-     * afecta reportes, así que la revisión no cambia saldos; solo deja constancia de quién lo revisó.
+     * Revisión de un asiento manual. Un borrador no afecta reportes, así que la revisión no cambia saldos; solo
+     * deja constancia de quién lo revisó antes de contabilizarlo.
      */
     public function revisar(Comprobante $comprobante): Comprobante
     {
         if ($comprobante->estado !== EstadoComprobante::Borrador) {
             throw ValidationException::withMessages(['comprobante' => __('validation.custom.comprobante.no_borrador')]);
-        }
-
-        if ((int) $comprobante->creado_por === (int) Auth::id()) {
-            throw ValidationException::withMessages(['comprobante' => __('validation.custom.comprobante.revision_propia')]);
         }
 
         $this->periodos->obtenerAbierto($comprobante->fecha->toDateString());
