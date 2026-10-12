@@ -91,7 +91,7 @@ class ImportacionCreditosTest extends TestCase
 
         $this->assertSame('0.200', $credito->gastos_administracion_pct);
         $this->assertSame(4, Cuota::query()->where('credito_id', $credito->id)->count());
-        $this->assertTrue(Cuota::query()->where('credito_id', $credito->id)->every(fn (Cuota $cuota) => $cuota->valor_otros_gastos->centavos() === 4000));
+        $this->assertTrue(Cuota::query()->where('credito_id', $credito->id)->get()->every(fn (Cuota $cuota) => $cuota->valor_otros_gastos->centavos() === 400000));
     }
 
     public function test_un_credito_de_un_cliente_de_otra_empresa_no_se_importa(): void
@@ -124,7 +124,7 @@ class ImportacionCreditosTest extends TestCase
         $this->actingAsAdmin();
         $this->clienteCon();
 
-        $id = $this->importarCompleto('creditos', self::ENCABEZADO_CREDITOS."CR-2;1001;01/10/2023;2000000;2,5;4;mensual;;Sí;CR-1;;;\n");
+        $id = $this->importarCompleto('creditos', self::ENCABEZADO_CREDITOS."CR-2;1001;01/10/2023;2000000;2,5;4;mensual;;0;Sí;CR-1;;;\n");
 
         $this->assertSame(0, $this->importacion($id)->filas_aceptadas);
         $this->assertStringContainsString('refinanciaciones', implode(' ', $this->motivosDeRechazo($id)));
