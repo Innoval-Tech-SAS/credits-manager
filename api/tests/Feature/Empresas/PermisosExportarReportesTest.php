@@ -52,8 +52,8 @@ class PermisosExportarReportesTest extends TestCase
             'correo' => 'exportadora@example.com', 'admin_nombre' => 'Admin', 'admin_usuario' => 'admin_exportador', 'admin_password' => 'Clave123!',
         ])->assertCreated()->json('empresa.id');
 
-        // El admin recibe todas las filas de `permisos`, incluido el `contabilidad.exportar` que dejó la migración de 2026-09-21.
-        $this->assertSame(['cartera.exportar', 'contabilidad.exportar', 'creditos.exportar', 'informes_contables.exportar'], $this->exportarDelRol($empresaId, 'admin'));
+        // El admin recibe todo el catálogo vigente: `contabilidad.exportar` (de la migración de 2026-09-21) ya está retirado.
+        $this->assertSame(['cartera.exportar', 'creditos.exportar', 'informes_contables.exportar'], $this->exportarDelRol($empresaId, 'admin'));
         $this->assertSame(['cartera.exportar', 'informes_contables.exportar'], $this->exportarDelRol($empresaId, 'contable'));
         $this->assertSame(['cartera.exportar', 'informes_contables.exportar'], $this->exportarDelRol($empresaId, 'auditoria'));
 
