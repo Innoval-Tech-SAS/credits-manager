@@ -5,6 +5,8 @@ namespace App\Gastos\Services;
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Causacion\Repositories\TipoGastoRepository;
+use App\Causacion\Services\CausacionService;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Models\AplicacionDocumento;
 use App\Contabilidad\Services\ComprobanteService;
@@ -17,18 +19,12 @@ use App\Exportacion\Services\ExportacionService;
 use App\Gastos\Enums\EstadoGasto;
 use App\Gastos\Exportaciones\FuenteGastos;
 use App\Gastos\Models\Gasto;
-use App\Gastos\Models\ParametrizacionTipoGasto;
 use App\Gastos\Repositories\GastoReglaFiscalAplicadaRepository;
 use App\Gastos\Repositories\GastoRepository;
-use App\Gastos\Repositories\ParametrizacionTipoGastoRepository;
-use App\Gastos\Repositories\TarifaReteIcaMunicipioRepository;
-use App\Gastos\Repositories\TipoGastoRepository;
-use App\Gastos\Repositories\ValorUvtRepository;
 use App\Terceros\Repositories\TerceroRepository;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -38,12 +34,9 @@ class GastoService
     public function __construct(
         protected GastoRepository $gastos,
         protected TipoGastoRepository $tiposGasto,
-        protected ParametrizacionTipoGastoRepository $parametrizaciones,
-        protected ValorUvtRepository $valoresUvt,
-        protected TarifaReteIcaMunicipioRepository $tarifasReteIca,
         protected GastoReglaFiscalAplicadaRepository $reglasAplicadas,
         protected TerceroRepository $terceros,
-        protected MotorReglasFiscalesService $motor,
+        protected CausacionService $causacion,
         protected ComprobanteService $comprobantes,
         protected DocumentoTerceroService $documentosTercero,
         protected EmisorAuditoria $auditoria,
@@ -87,38 +80,11 @@ class GastoService
                 ]);
             }
 
-            $parametrizacion = $this->parametrizaciones->vigenteParaFecha($tipoGasto->id, $datos['fecha']);
-            if (! $parametrizacion) {
-                throw ValidationException::withMessages([
-                    'tipo_gasto_id' => __('validation.custom.parametrizacion.no_vigente'),
-                ]);
-            }
-
-            $uvt = $this->valoresUvt->paraAnio((int) date('Y', strtotime($datos['fecha'])));
-            if (! $uvt) {
-                throw ValidationException::withMessages([
-                    'fecha' => __('validation.custom.valor_uvt.no_configurado'),
-                ]);
-            }
-
-            $tarifaReteIca = null;
-            if ($parametrizacion->aplica_reteica) {
-                if (! isset($datos['municipio_id']) || ! $tercero?->actividad_economica_id) {
-                    throw ValidationException::withMessages([
-                        'municipio_id' => __('validation.custom.tarifa_reteica.no_vigente'),
-                    ]);
-                }
-
-                $tarifaReteIca = $this->tarifasReteIca->vigenteParaFecha(
-                    $datos['municipio_id'],
-                    $tercero->actividad_economica_id,
-                    $datos['fecha'],
-                );
-            }
-
             $valorBruto = Dinero::desdePesos($datos['valor_bruto']);
-            $calculo = $this->motor->evaluar($valorBruto, $parametrizacion, $tercero, $tarifaReteIca, $uvt);
-            $retencionesPorTipo = collect($calculo['retenciones'])->keyBy(fn (array $r) => $r['tipo']->value);
+            $resultado = $this->causacion->calcular($tipoGasto, $tercero, $datos['fecha'], $valorBruto, $datos['municipio_id'] ?? null);
+            $parametrizacion = $resultado['parametrizacion'];
+            $calculo = $resultado['calculo'];
+            $retencionesPorTipo = $resultado['retenciones_por_tipo'];
 
             $gasto = $this->gastos->crear([
                 'tipo_gasto_id' => $tipoGasto->id,
@@ -146,7 +112,7 @@ class GastoService
             $comprobante = $this->comprobantes->crearComprobante(
                 $parametrizacion->tipo_comprobante_id,
                 $datos['fecha'],
-                $this->construirLineasComprobante($parametrizacion, $valorBruto, $calculo, $retencionesPorTipo, $datos['centro_costo_id']),
+                $this->causacion->construirLineas($parametrizacion, $valorBruto, $calculo, $retencionesPorTipo, $datos['centro_costo_id']),
                 $datos['concepto'],
                 'gastos',
                 $gasto->id,
@@ -232,34 +198,5 @@ class GastoService
 
             return $gasto;
         });
-    }
-
-    /** @param  Collection<string, array>  $retencionesPorTipo */
-    private function construirLineasComprobante(ParametrizacionTipoGasto $parametrizacion, Dinero $valorBruto, array $calculo, Collection $retencionesPorTipo, int $centroCostoId): array
-    {
-        $lineas = [
-            ['cuenta_id' => $parametrizacion->cuenta_gasto_id, 'debito' => $valorBruto, 'credito' => 0, 'centro_costo_id' => $centroCostoId],
-        ];
-
-        if ($calculo['valor_iva']->esPositivo()) {
-            $lineas[] = ['cuenta_id' => $parametrizacion->cuenta_iva_id, 'debito' => $calculo['valor_iva'], 'credito' => 0];
-        }
-
-        $lineas[] = ['cuenta_id' => $parametrizacion->cuenta_cxp_id, 'debito' => 0, 'credito' => $calculo['valor_neto']];
-
-        $cuentasPorTipo = [
-            'retefuente' => $parametrizacion->cuenta_retefuente_id,
-            'reteica' => $parametrizacion->cuenta_reteica_id,
-            'reteiva' => $parametrizacion->cuenta_reteiva_id,
-        ];
-
-        foreach ($cuentasPorTipo as $tipo => $cuentaId) {
-            $retencion = $retencionesPorTipo[$tipo];
-            if ($retencion['incluida'] && $retencion['valor']->esPositivo()) {
-                $lineas[] = ['cuenta_id' => $cuentaId, 'debito' => 0, 'credito' => $retencion['valor']];
-            }
-        }
-
-        return $lineas;
     }
 }

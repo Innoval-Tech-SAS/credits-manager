@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Gastos\Services;
+namespace App\Causacion\Services;
 
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Services\EmisorAuditoria;
-use App\Gastos\Models\ValorUvt;
-use App\Gastos\Repositories\ValorUvtRepository;
+use App\Causacion\Models\ValorUvt;
+use App\Causacion\Repositories\ValorUvtRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
 

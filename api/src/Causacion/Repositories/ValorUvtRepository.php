@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Gastos\Repositories;
+namespace App\Causacion\Repositories;
 
+use App\Causacion\Models\ValorUvt;
 use App\Core\Base\BaseRepository;
 use App\Gastos\Models\Gasto;
-use App\Gastos\Models\ValorUvt;
 use Illuminate\Database\Eloquent\Collection;
 
 class ValorUvtRepository extends BaseRepository

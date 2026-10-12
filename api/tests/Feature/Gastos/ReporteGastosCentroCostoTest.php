@@ -2,12 +2,12 @@
 
 namespace Tests\Feature\Gastos;
 
+use App\Causacion\Models\TipoGasto;
+use App\Causacion\Models\ValorUvt;
 use App\Contabilidad\Models\CentroCosto;
 use App\Empresas\Models\Empresa;
 use App\Exportacion\Constants\ExportacionConstants;
 use App\Exportacion\Jobs\ProcesarExportacionJob;
-use App\Gastos\Models\TipoGasto;
-use App\Gastos\Models\ValorUvt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;

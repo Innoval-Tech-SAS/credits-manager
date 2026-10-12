@@ -2,10 +2,10 @@
 
 namespace App\Gastos\Controllers;
 
-use App\Gastos\Models\TipoGasto;
+use App\Causacion\Models\TipoGasto;
+use App\Causacion\Services\TipoGastoService;
 use App\Gastos\Requests\CrearTipoGastoRequest;
 use App\Gastos\Requests\EditarTipoGastoRequest;
-use App\Gastos\Services\TipoGastoService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;

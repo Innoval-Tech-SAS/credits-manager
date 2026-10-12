@@ -2,8 +2,8 @@
 
 namespace App\Gastos\Controllers;
 
+use App\Causacion\Services\TarifaReteIcaMunicipioService;
 use App\Gastos\Requests\CrearTarifaReteIcaMunicipioRequest;
-use App\Gastos\Services\TarifaReteIcaMunicipioService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 

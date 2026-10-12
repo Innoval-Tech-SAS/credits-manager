@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Contabilidad;
 
+use App\Causacion\Models\ParametrizacionTipoGasto;
+use App\Causacion\Models\TipoGasto;
 use App\Contabilidad\Enums\EventoContable;
 use App\Empresas\Models\Empresa;
-use App\Gastos\Models\ParametrizacionTipoGasto;
-use App\Gastos\Models\TipoGasto;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;

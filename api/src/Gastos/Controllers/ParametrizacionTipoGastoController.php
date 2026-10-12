@@ -2,8 +2,8 @@
 
 namespace App\Gastos\Controllers;
 
+use App\Causacion\Services\ParametrizacionTipoGastoService;
 use App\Gastos\Requests\CrearParametrizacionTipoGastoRequest;
-use App\Gastos\Services\ParametrizacionTipoGastoService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

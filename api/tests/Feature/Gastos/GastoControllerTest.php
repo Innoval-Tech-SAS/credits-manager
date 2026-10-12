@@ -2,10 +2,10 @@
 
 namespace Tests\Feature\Gastos;
 
+use App\Causacion\Services\MotorReglasFiscalesService;
 use App\Contabilidad\Enums\EstadoComprobante;
 use App\Core\Dinero\Dinero;
 use App\Gastos\Models\Gasto;
-use App\Gastos\Services\MotorReglasFiscalesService;
 use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
 use Illuminate\Foundation\Testing\RefreshDatabase;

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Gastos\Services;
+namespace App\Causacion\Services;
 
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Services\EmisorAuditoria;
-use App\Gastos\Models\ParametrizacionTipoGasto;
-use App\Gastos\Models\TipoGasto;
-use App\Gastos\Repositories\ParametrizacionTipoGastoRepository;
+use App\Causacion\Models\ParametrizacionTipoGasto;
+use App\Causacion\Models\TipoGasto;
+use App\Causacion\Repositories\ParametrizacionTipoGastoRepository;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;

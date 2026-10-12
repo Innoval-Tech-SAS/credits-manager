@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Permisos;
 
+use App\Causacion\Models\ValorUvt;
 use App\Contabilidad\Enums\EstadoPeriodo;
 use App\Contabilidad\Enums\EstadoSolicitudReapertura;
 use App\Contabilidad\Models\Comprobante;
@@ -10,7 +11,6 @@ use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Models\SolicitudReaperturaPeriodo;
 use App\Empresas\Models\Empresa;
 use App\Gastos\Models\ActividadEconomica;
-use App\Gastos\Models\ValorUvt;
 use App\Proveedores\Models\Proveedor;
 use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;

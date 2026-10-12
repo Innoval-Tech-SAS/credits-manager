@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Gastos\Services;
+namespace App\Causacion\Services;
 
+use App\Causacion\Enums\TipoRetencion;
+use App\Causacion\Models\ParametrizacionTipoGasto;
+use App\Causacion\Models\TarifaReteIcaMunicipio;
+use App\Causacion\Models\ValorUvt;
 use App\Core\Dinero\Dinero;
-use App\Gastos\Enums\TipoRetencion;
-use App\Gastos\Models\ParametrizacionTipoGasto;
-use App\Gastos\Models\TarifaReteIcaMunicipio;
-use App\Gastos\Models\ValorUvt;
 use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
 use Illuminate\Validation\ValidationException;

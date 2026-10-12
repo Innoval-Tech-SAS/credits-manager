@@ -2,8 +2,8 @@
 
 namespace App\Gastos\Models;
 
+use App\Causacion\Enums\TipoRetencion;
 use App\Core\Base\BaseModel;
-use App\Gastos\Enums\TipoRetencion;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

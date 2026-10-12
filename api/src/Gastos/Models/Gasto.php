@@ -2,6 +2,8 @@
 
 namespace App\Gastos\Models;
 
+use App\Causacion\Models\ParametrizacionTipoGasto;
+use App\Causacion\Models\TipoGasto;
 use App\Contabilidad\Models\CentroCosto;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\DocumentoTercero;

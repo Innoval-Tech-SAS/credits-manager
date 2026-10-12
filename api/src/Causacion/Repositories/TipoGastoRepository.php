@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Gastos\Repositories;
+namespace App\Causacion\Repositories;
 
+use App\Causacion\Models\ParametrizacionTipoGasto;
+use App\Causacion\Models\TipoGasto;
 use App\Core\Base\BaseRepository;
 use App\Gastos\Models\Gasto;
-use App\Gastos\Models\ParametrizacionTipoGasto;
-use App\Gastos\Models\TipoGasto;
 use Illuminate\Database\Eloquent\Collection;
 
 class TipoGastoRepository extends BaseRepository
