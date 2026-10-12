@@ -25,8 +25,9 @@ class ConsecutivosFacturacionTest extends TestCase
     private function factura(Credito $credito): array
     {
         $borrador = $this->postJson(self::DOCUMENTOS, [
+            'cliente_id' => $credito->cliente_id,
             'credito_id' => $credito->id,
-            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés', 'valor' => '100']],
+            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés', 'valor' => '100', 'tipo_concepto' => 'otros_gastos']],
         ])->assertStatus(201)->json('documento');
 
         return $this->postJson(self::DOCUMENTOS.'/'.$borrador['id'].'/emitir')->assertOk()->json('documento');

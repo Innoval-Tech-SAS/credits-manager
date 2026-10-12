@@ -40,15 +40,17 @@ trait CreatesCreditFixtures
         $contador++;
 
         $camposTercero = [
-            'nombre', 'tipo_documento', 'numero_documento',
+            'nombre', 'tipo_documento', 'numero_documento', 'tipo_persona',
             'direccion', 'barrio', 'ciudad', 'celular', 'telefono_fijo', 'correo',
         ];
         $datosTercero = array_intersect_key($overrides, array_flip($camposTercero));
         $datosCliente = array_diff_key($overrides, array_flip($camposTercero));
+        $tipoPersona = $datosTercero['tipo_persona'] ?? TipoPersona::Natural;
+        unset($datosTercero['tipo_persona']);
 
         $tercero = Tercero::create(array_merge(
             $this->datosDePersona(
-                TipoPersona::Natural,
+                $tipoPersona,
                 $datosTercero['nombre'] ?? "Cliente de prueba {$contador}",
                 $datosTercero['numero_documento'] ?? "100000{$contador}",
             ),

@@ -22,6 +22,8 @@ class EditarEmpresaRequest extends FormRequest
             'direccion' => ['required', 'string', 'max:200'],
             'municipio_id' => ['required', 'integer', Rule::exists('municipios', 'id')->where('activo', true)->whereNull('borrado_en')],
             'actividad_economica_id' => ['nullable', 'integer', Rule::exists('actividades_economicas', 'id')->where('empresa_id', $this->empresaEditada())],
+            'responsable_iva' => ['sometimes', 'boolean'],
+            'autorretenedor' => ['sometimes', 'boolean'],
             'telefono' => ['required', 'string', 'max:50'],
             'correo' => ['required', 'email', 'max:150'],
         ];

@@ -36,6 +36,7 @@ use App\Facturacion\Controllers\CobroFacturacionController;
 use App\Facturacion\Controllers\ConfiguracionFacturacionController;
 use App\Facturacion\Controllers\ConsecutivoFacturacionController;
 use App\Facturacion\Controllers\DocumentoFacturacionController;
+use App\Facturacion\Controllers\ParametrizacionConceptoFacturacionController;
 use App\Gastos\Controllers\ActividadEconomicaController;
 use App\Gastos\Controllers\GastoController;
 use App\Gastos\Controllers\ParametrizacionTipoGastoController;
@@ -316,6 +317,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/gastos/reporte-centro-costo/exportar', [ReporteGastosCentroCostoController::class, 'exportar'])->middleware('permiso:gastos,exportar');
 
     Route::get('/facturacion/documentos', [DocumentoFacturacionController::class, 'index'])->middleware('permiso:facturacion,listar');
+    // Antes de la ruta con {documento}: si no, el binding intenta resolver "conceptos-sugeridos" como un id.
+    Route::get('/facturacion/documentos/conceptos-sugeridos', [DocumentoFacturacionController::class, 'conceptosSugeridos'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/documentos', [DocumentoFacturacionController::class, 'store'])->middleware('permiso:facturacion,crear');
     Route::get('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'show'])->middleware('permiso:facturacion,listar');
     Route::patch('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'update'])->middleware('permiso:facturacion,crear');
@@ -336,6 +339,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/facturacion/consecutivos/{tipo}', [ConsecutivoFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');
     Route::get('/facturacion/configuracion', [ConfiguracionFacturacionController::class, 'show'])->middleware('permiso:facturacion,listar');
     Route::put('/facturacion/configuracion', [ConfiguracionFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');
+    Route::get('/facturacion/parametrizacion-conceptos', [ParametrizacionConceptoFacturacionController::class, 'index'])->middleware('permiso:facturacion,listar');
+    Route::put('/facturacion/parametrizacion-conceptos/{tipoConcepto}', [ParametrizacionConceptoFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');
     Route::post('/gastos', [GastoController::class, 'store'])->middleware('permiso:gastos,crear');
     Route::get('/gastos/{gasto}', [GastoController::class, 'show'])->middleware('permiso:gastos,listar');
     Route::delete('/gastos/{gasto}', [GastoController::class, 'destroy'])->middleware('permiso:gastos,anular');

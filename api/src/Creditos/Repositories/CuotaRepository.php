@@ -29,6 +29,16 @@ class CuotaRepository extends BaseRepository
             ->get();
     }
 
+    /** Lectura simple (sin lock): conceptos sugeridos de factura, no una actualización de estado. */
+    public function pendientesOrdenadas(int $creditoId): Collection
+    {
+        return $this->consulta()
+            ->where('credito_id', $creditoId)
+            ->whereIn('estado', [EstadoCuota::Pendiente, EstadoCuota::Vencida])
+            ->orderBy('numero_cuota')
+            ->get();
+    }
+
     public function todasOrdenadasParaActualizar(int $creditoId): Collection
     {
         return $this->consulta()

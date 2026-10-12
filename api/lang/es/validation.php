@@ -207,6 +207,7 @@ return [
             'excede_saldo' => 'El valor supera lo que queda por acreditar de «:concepto».',
             'numeracion_bloqueada' => 'No se puede cambiar el número inicial: ya hay documentos emitidos de este tipo.',
             'sin_regla_contable' => 'Falta la regla de contabilización «:evento». Configúrala en Contabilidad antes de continuar.',
+            'sin_cuenta_impuesto' => 'Falta la cuenta contable del impuesto parametrizado para «:concepto». Configúrala en Facturación antes de continuar.',
             'solo_factura_anulable' => 'Solo una factura se puede anular. Para corregir una nota, emite otra nota.',
             'ya_anulada' => 'La factura ya está anulada.',
             'con_cobros' => 'La factura tiene cobros vigentes. Reversa primero los cobros y luego anula la factura.',
@@ -216,6 +217,8 @@ return [
             'cobro_no_reversible' => 'Solo se puede reversar un cobro, no una reversa.',
             'cobro_ya_reversado' => 'Este cobro ya fue reversado.',
             'nota_debito_excede_tope' => 'La nota débito supera el tope configurado para la empresa (:tope).',
+            'concepto_ya_facturado' => 'Ya existe una factura emitida para «:concepto» de esta cuota.',
+            'tercero_fiscal_incompleto' => 'Al tercero le faltan datos fiscales obligatorios para emitir la factura.',
         ],
         'reversa' => [
             'estado_credito' => 'Solo se pueden reversar pagos de créditos desembolsados o pagados.',

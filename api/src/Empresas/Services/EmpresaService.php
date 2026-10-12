@@ -7,6 +7,7 @@ use App\Auditoria\Services\EmisorAuditoria;
 use App\Empresas\Constants\EmpresaConstants;
 use App\Empresas\Models\Empresa;
 use App\Empresas\Repositories\EmpresaRepository;
+use App\Facturacion\Repositories\ParametrizacionConceptoFacturacionRepository;
 use App\Usuarios\Constants\UsuarioConstants;
 use App\Usuarios\Models\Permiso;
 use App\Usuarios\Models\Rol;
@@ -21,6 +22,7 @@ class EmpresaService
 {
     public function __construct(
         protected EmpresaRepository $empresas,
+        protected ParametrizacionConceptoFacturacionRepository $parametrizacionesConcepto,
         protected EmisorAuditoria $auditoria,
     ) {}
 
@@ -60,9 +62,13 @@ class EmpresaService
                 'digito_verificacion' => $datos['digito_verificacion'],
                 'direccion' => $datos['direccion'],
                 'municipio_id' => $datos['municipio_id'],
+                'responsable_iva' => $datos['responsable_iva'] ?? false,
+                'autorretenedor' => $datos['autorretenedor'] ?? false,
                 'telefono' => $datos['telefono'],
                 'correo' => $datos['correo'],
             ]);
+
+            $this->parametrizacionesConcepto->crearPorDefectoParaEmpresa($empresa->id);
 
             $rolAdmin = $this->crearRolesBase($empresa)[UsuarioConstants::ROL_ADMIN];
 

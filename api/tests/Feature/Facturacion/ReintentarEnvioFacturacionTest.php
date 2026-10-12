@@ -34,8 +34,9 @@ class ReintentarEnvioFacturacionTest extends TestCase
         $credito = $this->crearCredito($this->crearCliente(['correo' => $correo]));
 
         $borrador = $this->postJson(self::BASE.'/documentos', [
+            'cliente_id' => $credito->cliente_id,
             'credito_id' => $credito->id,
-            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés administrativo', 'valor' => '1000']],
+            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés administrativo', 'valor' => '1000', 'tipo_concepto' => 'otros_gastos']],
         ])->assertStatus(201)->json('documento');
         $factura = $this->postJson(self::BASE.'/documentos/'.$borrador['id'].'/emitir')->assertOk()->json('documento');
 

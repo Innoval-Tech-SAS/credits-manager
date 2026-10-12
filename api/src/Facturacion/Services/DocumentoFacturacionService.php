@@ -11,22 +11,29 @@ use App\Core\Consecutivos\Services\ConsecutivoDocumentoService;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Models\Credito;
+use App\Creditos\Models\Cuota;
 use App\Creditos\Repositories\CreditoRepository;
+use App\Creditos\Repositories\CuotaRepository;
 use App\Empresas\Models\Empresa;
+use App\Empresas\Repositories\EmpresaRepository;
 use App\Empresas\Services\EmpresaService;
 use App\Facturacion\Documentos\FacturaPdf;
 use App\Facturacion\Enums\EstadoDocumentoFacturacion;
 use App\Facturacion\Enums\MotivoNotaCredito;
 use App\Facturacion\Enums\MotivoNotaDebito;
 use App\Facturacion\Enums\SituacionFactura;
+use App\Facturacion\Enums\TipoConceptoFacturacion;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Models\LineaDocumentoFacturacion;
 use App\Facturacion\Repositories\CobroFacturacionRepository;
 use App\Facturacion\Repositories\DocumentoFacturacionRepository;
 use App\Facturacion\Repositories\LineaDocumentoFacturacionRepository;
+use App\Facturacion\Repositories\ParametrizacionConceptoFacturacionRepository;
 use App\Impresion\Data\PdfGenerado;
 use App\Impresion\Services\GeneradorPdf;
+use App\Terceros\Enums\TipoPersona;
+use App\Terceros\Models\Tercero;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -49,6 +56,10 @@ class DocumentoFacturacionService
         protected LineaDocumentoFacturacionRepository $lineas,
         protected CobroFacturacionRepository $cobros,
         protected CreditoRepository $creditos,
+        protected CuotaRepository $cuotas,
+        protected EmpresaRepository $empresaRepositorio,
+        protected ParametrizacionConceptoFacturacionRepository $parametrizacionesConcepto,
+        protected MotorFiscalFacturacionService $motorFiscal,
         protected ConsecutivoDocumentoService $consecutivos,
         protected AsientosFacturacionService $asientos,
         protected DocumentoTerceroService $documentosTercero,
@@ -58,13 +69,61 @@ class DocumentoFacturacionService
         protected EmisorAuditoria $auditoria,
     ) {}
 
-    public function listar(?TipoDocumentoFacturacion $tipo, ?EstadoDocumentoFacturacion $estado, ?int $clienteId, int $porPagina, int $pagina): LengthAwarePaginator
+    public function listar(?TipoDocumentoFacturacion $tipo, ?EstadoDocumentoFacturacion $estado, ?int $clienteId, bool $conSaldo, int $porPagina, int $pagina): LengthAwarePaginator
     {
-        return $this->documentos->paginar($tipo, $estado, $clienteId, max(1, min(100, $porPagina)), max(1, $pagina));
+        $documentos = $this->documentos->paginar($tipo, $estado, $clienteId, max(1, min(100, $porPagina)), max(1, $pagina));
+
+        if ($conSaldo) {
+            $documentos->getCollection()->transform(function (DocumentoFacturacion $documento) {
+                $documento->saldo = ($this->totales($documento)['saldo'] ?? Dinero::cero())->aDecimalString();
+
+                return $documento;
+            });
+        }
+
+        return $documentos;
     }
 
-    /** Factura en borrador desde un crédito desembolsado (o ya pagado): el cliente y el crédito salen de él. */
-    public function crearBorrador(int $creditoId, ?string $fecha, array $lineas, ?string $fechaVencimiento = null): DocumentoFacturacion
+    /**
+     * Conceptos sugeridos de un crédito para precargar la factura: una línea por cada componente no-cero (capital,
+     * interés corriente, otros gastos) de sus cuotas pendientes o vencidas, excluyendo lo ya facturado en una
+     * factura emitida. El interés de mora queda fuera a propósito: no está precalculado en la cuota y se agrega
+     * a mano, como ya se hace en nota débito.
+     *
+     * @return list<array{cuota_id: int, tipo_concepto: string, concepto: string, descripcion: string, valor: string, fecha_vencimiento: string}>
+     */
+    public function conceptosSugeridos(int $creditoId): array
+    {
+        /** @var Credito $credito */
+        $credito = $this->creditos->buscarPorIdOFallar($creditoId);
+        $yaFacturados = array_flip($this->combosVigentes($credito));
+        $sugerencias = [];
+
+        foreach ($this->cuotas->pendientesOrdenadas($credito->id) as $cuota) {
+            foreach ($this->componentesDeCuota($cuota) as [$tipoConcepto, $valor]) {
+                if (! $valor->esPositivo() || isset($yaFacturados["{$cuota->id}|{$tipoConcepto->value}"])) {
+                    continue;
+                }
+
+                $sugerencias[] = [
+                    'cuota_id' => $cuota->id,
+                    'tipo_concepto' => $tipoConcepto->value,
+                    'concepto' => "{$tipoConcepto->etiqueta()} cuota {$cuota->numero_cuota}",
+                    'descripcion' => "{$tipoConcepto->etiqueta()} de la cuota {$cuota->numero_cuota}, vence {$cuota->fecha_vencimiento->toDateString()}",
+                    'valor' => $valor->aDecimalString(),
+                    'fecha_vencimiento' => $cuota->fecha_vencimiento->toDateString(),
+                ];
+            }
+        }
+
+        return $sugerencias;
+    }
+
+    /**
+     * Factura en borrador desde un crédito desembolsado (o ya pagado) de un cliente. El `Request` ya validó que
+     * el crédito pertenece al cliente indicado; aquí solo se necesita el crédito, que ya trae su propio cliente.
+     */
+    public function crearBorrador(int $creditoId, ?string $fecha, array $lineas, ?string $fechaVencimiento, Usuario $usuario): DocumentoFacturacion
     {
         /** @var Credito $credito */
         $credito = $this->creditos->buscarPorIdOFallar($creditoId);
@@ -73,7 +132,7 @@ class DocumentoFacturacionService
             throw ValidationException::withMessages(['credito_id' => __('validation.custom.facturacion.credito_no_desembolsado')]);
         }
 
-        return DB::transaction(function () use ($credito, $fecha, $lineas, $fechaVencimiento) {
+        return DB::transaction(function () use ($credito, $fecha, $lineas, $fechaVencimiento, $usuario) {
             $documento = $this->documentos->crear([
                 'tipo' => TipoDocumentoFacturacion::Factura,
                 'estado' => EstadoDocumentoFacturacion::Borrador,
@@ -83,7 +142,7 @@ class DocumentoFacturacionService
                 'credito_id' => $credito->id,
             ]);
 
-            $this->lineas->sincronizar($documento, $this->lineasDeEntrada($lineas));
+            $this->lineas->sincronizar($documento, $this->prepararLineas($credito, $lineas, $usuario));
 
             $this->auditoria->registrar(
                 AccionAuditoria::Crear,
@@ -92,17 +151,18 @@ class DocumentoFacturacionService
                 'documento_facturacion',
                 $documento->id,
                 nuevos: ['credito_id' => $credito->id, 'fecha' => $documento->fecha->toDateString()],
+                autor: $usuario,
             );
 
             return $this->conLineas($documento->refresh());
         });
     }
 
-    public function actualizarBorrador(DocumentoFacturacion $documento, ?string $fecha, array $lineas, ?string $fechaVencimiento = null): DocumentoFacturacion
+    public function actualizarBorrador(DocumentoFacturacion $documento, ?string $fecha, array $lineas, ?string $fechaVencimiento, Usuario $usuario): DocumentoFacturacion
     {
         $this->exigirBorrador($documento);
 
-        return DB::transaction(function () use ($documento, $fecha, $lineas, $fechaVencimiento) {
+        return DB::transaction(function () use ($documento, $fecha, $lineas, $fechaVencimiento, $usuario) {
             $bloqueado = $this->documentos->bloquear($documento->id);
             $this->exigirBorrador($bloqueado);
 
@@ -114,7 +174,10 @@ class DocumentoFacturacionService
                 $bloqueado->update(['fecha_vencimiento' => $fechaVencimiento]);
             }
 
-            $this->lineas->sincronizar($bloqueado, $this->lineasDeEntrada($lineas));
+            /** @var Credito $credito */
+            $credito = $this->creditos->buscarPorIdOFallar($bloqueado->credito_id);
+
+            $this->lineas->sincronizar($bloqueado, $this->prepararLineas($credito, $lineas, $usuario));
 
             $this->auditoria->registrar(
                 AccionAuditoria::Modificar,
@@ -123,6 +186,7 @@ class DocumentoFacturacionService
                 'documento_facturacion',
                 $bloqueado->id,
                 nuevos: ['fecha' => $bloqueado->fecha->toDateString(), 'lineas' => count($lineas)],
+                autor: $usuario,
             );
 
             return $this->conLineas($bloqueado);
@@ -163,9 +227,11 @@ class DocumentoFacturacionService
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.facturacion.sin_lineas')]);
             }
 
+            $this->exigirTerceroFiscalCompleto($bloqueado->cliente->tercero);
+
             $emitido = $this->emitir($bloqueado, $usuario);
-            $total = $this->sumaLineas($emitido);
-            $asiento = $this->asientos->contabilizarEmision($emitido, $total);
+            $totales = $this->totales($this->conLineas($emitido));
+            $asiento = $this->asientos->contabilizarEmision($emitido, $totales);
 
             $documentoTercero = $this->documentosTercero->crearDocumento(
                 $emitido->cliente->tercero,
@@ -174,7 +240,7 @@ class DocumentoFacturacionService
                 $emitido->numero,
                 $emitido->fecha->toDateString(),
                 "Factura {$emitido->numero}",
-                $total,
+                $totales['total'],
                 'facturacion',
                 $emitido->id,
                 planCuentaId: $this->asientos->cuentaCxcFactura(),
@@ -189,12 +255,29 @@ class DocumentoFacturacionService
                 "Factura {$emitido->numero} emitida",
                 'documento_facturacion',
                 $emitido->id,
-                nuevos: ['numero' => $emitido->numero, 'credito_id' => $emitido->credito_id, 'total' => $this->sumaLineas($emitido)->aDecimalString()],
+                nuevos: ['numero' => $emitido->numero, 'credito_id' => $emitido->credito_id, 'total' => $totales['total']->aDecimalString()],
                 autor: $usuario,
             );
 
             return $this->conLineas($emitido);
         });
+    }
+
+    /**
+     * Datos obligatorios para la factura electrónica (aunque el MVP no transmita a la DIAN, se exigen desde ya):
+     * identificación, nombre, dirección, correo y responsabilidad fiscal; el dígito de verificación solo si es
+     * persona jurídica (la persona natural no lo tiene).
+     */
+    private function exigirTerceroFiscalCompleto(Tercero $tercero): void
+    {
+        $faltanDatosBase = blank($tercero->nombre) || blank($tercero->numero_documento) || blank($tercero->tipo_persona)
+            || blank($tercero->direccion) || blank($tercero->correo);
+
+        $faltaDigitoVerificacion = $tercero->tipo_persona === TipoPersona::Juridica && blank($tercero->digito_verificacion);
+
+        if ($faltanDatosBase || $faltaDigitoVerificacion) {
+            throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.tercero_fiscal_incompleto')]);
+        }
     }
 
     /**
@@ -306,20 +389,30 @@ class DocumentoFacturacionService
      */
     public function totales(DocumentoFacturacion $documento): array
     {
-        $total = $this->sumaLineas($documento);
+        $subtotal = $this->sumaLineas($documento);
 
         if ($documento->tipo !== TipoDocumentoFacturacion::Factura) {
-            return ['total' => $total];
+            return ['total' => $subtotal];
         }
+
+        $impuestos = $this->documentos->sumaImpuestos($documento->id);
+        $totalIva = Dinero::desdeCentavos($impuestos['iva']);
+        $totalRetencion = Dinero::desdeCentavos($impuestos['retefuente'] + $impuestos['reteica'] + $impuestos['reteiva']);
+        // Neto: lo que realmente debe el cliente (lo que entra a CxC y a los cobros).
+        $total = $subtotal->sumar($totalIva)->restar($totalRetencion);
 
         $totalNotaCredito = Dinero::desdeCentavos($this->documentos->sumaNotas($documento->empresa_id, $documento->id, TipoDocumentoFacturacion::NotaCredito));
         $totalNotaDebito = Dinero::desdeCentavos($this->documentos->sumaNotas($documento->empresa_id, $documento->id, TipoDocumentoFacturacion::NotaDebito));
         $totalCobrado = Dinero::desdeCentavos($this->cobros->cobradoNeto($documento->id));
 
         $saldo = $total->restar($totalNotaCredito)->sumar($totalNotaDebito)->restar($totalCobrado);
-        $anulada = $total->mayorQue(Dinero::cero()) && $totalNotaCredito->mayorOIgualQue($total);
+        // La nota crédito acredita contra el bruto de cada línea (ver lineasDeNotaCredito), no contra el neto con impuestos.
+        $anulada = $subtotal->mayorQue(Dinero::cero()) && $totalNotaCredito->mayorOIgualQue($subtotal);
 
         return [
+            'subtotal' => $subtotal,
+            'total_iva' => $totalIva,
+            'total_retencion' => $totalRetencion,
             'total' => $total,
             'total_nota_credito' => $totalNotaCredito,
             'total_nota_debito' => $totalNotaDebito,
@@ -539,14 +632,109 @@ class DocumentoFacturacionService
         return $linea;
     }
 
-    /** @return list<array{concepto: string, descripcion: string, valor: Dinero}> */
-    private function lineasDeEntrada(array $lineas): array
+    /**
+     * Valida duplicados y el permiso de modificar un valor sugerido, calcula IVA/retenciones por línea (motor
+     * fiscal) y deja las líneas listas para `LineaDocumentoFacturacionRepository`. Se recalcula siempre con la
+     * parametrización vigente: solo lo que ya quedó emitido es inmutable.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function prepararLineas(Credito $credito, array $lineas, Usuario $usuario): array
     {
-        return array_map(fn (array $entrada) => [
-            'concepto' => $entrada['concepto'],
-            'descripcion' => $entrada['descripcion'],
-            'valor' => Dinero::desdePesos($entrada['valor']),
-        ], $lineas);
+        $empresa = $this->empresaRepositorio->buscarPorIdOFallar($credito->empresa_id);
+        $tercero = $credito->cliente->tercero;
+        $parametrizaciones = $this->parametrizacionesConcepto->paraEmpresa($credito->empresa_id);
+        $sugeridos = collect($this->conceptosSugeridos($credito->id))->keyBy(fn (array $s) => "{$s['cuota_id']}|{$s['tipo_concepto']}");
+        $yaFacturados = array_flip($this->combosVigentes($credito));
+        $fecha = now('America/Bogota')->toDateString();
+        $overrides = [];
+
+        $resultado = array_map(function (array $entrada) use ($empresa, $tercero, $parametrizaciones, $sugeridos, $yaFacturados, $fecha, $usuario, &$overrides) {
+            $tipoConcepto = TipoConceptoFacturacion::from($entrada['tipo_concepto']);
+            $cuotaId = isset($entrada['cuota_id']) ? (int) $entrada['cuota_id'] : null;
+            $valor = Dinero::desdePesos($entrada['valor']);
+
+            if ($cuotaId !== null) {
+                $clave = "{$cuotaId}|{$tipoConcepto->value}";
+
+                if (isset($yaFacturados[$clave])) {
+                    throw ValidationException::withMessages([
+                        'lineas' => __('validation.custom.facturacion.concepto_ya_facturado', ['concepto' => $entrada['concepto']]),
+                    ]);
+                }
+
+                $sugerido = $sugeridos->get($clave);
+
+                if ($sugerido !== null && ! $valor->igualA(Dinero::desdePesos($sugerido['valor']))) {
+                    // Permiso, no regla de negocio del contenido: igual que ImportacionService::generarAsiento, se corta con 403.
+                    abort_unless($usuario->tienePermiso('facturacion', 'modificar_valores_sugeridos'), 403, 'No tienes permiso para realizar esta acción.');
+
+                    $overrides[] = ['concepto' => $entrada['concepto'], 'sugerido' => $sugerido['valor'], 'nuevo' => $valor->aDecimalString()];
+                }
+            }
+
+            $impuestos = $this->motorFiscal->evaluar($valor, $empresa, $tercero, $parametrizaciones->get($tipoConcepto->value), $fecha);
+
+            return [
+                'cuota_id' => $cuotaId,
+                'tipo_concepto' => $tipoConcepto,
+                'concepto' => $entrada['concepto'],
+                'descripcion' => $entrada['descripcion'],
+                'valor' => $valor,
+                'valor_iva' => $impuestos['valor_iva'],
+                'valor_retefuente' => $impuestos['valor_retefuente'],
+                'valor_reteica' => $impuestos['valor_reteica'],
+                'valor_reteiva' => $impuestos['valor_reteiva'],
+            ];
+        }, $lineas);
+
+        if ($overrides !== []) {
+            $this->auditoria->registrar(
+                AccionAuditoria::Modificar,
+                AuditoriaConstants::MODULO_FACTURACION,
+                "Valores sugeridos modificados al facturar el crédito #{$credito->id}",
+                'documento_facturacion',
+                null,
+                nuevos: ['credito_id' => $credito->id, 'overrides' => $overrides],
+                autor: $usuario,
+            );
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Combos cuota/concepto ya facturados que siguen vigentes: si la factura que los contiene quedó anulada
+     * (nota crédito que cubre todo su subtotal), el combo vuelve a estar disponible para una factura nueva.
+     *
+     * @return list<string> claves "cuota_id|tipo_concepto"
+     */
+    private function combosVigentes(Credito $credito): array
+    {
+        $filas = $this->lineas->combosFacturados($credito->empresa_id, $credito->id);
+
+        if ($filas->isEmpty()) {
+            return [];
+        }
+
+        $anuladas = $this->documentos->facturasEmitidasDelCredito($credito->id)
+            ->filter(fn (DocumentoFacturacion $factura) => $this->totales($factura)['anulada'])
+            ->pluck('id');
+
+        return $filas
+            ->reject(fn ($fila) => $anuladas->contains($fila->documento_id))
+            ->map(fn ($fila) => "{$fila->cuota_id}|{$fila->tipo_concepto}")
+            ->all();
+    }
+
+    /** @return list<array{0: TipoConceptoFacturacion, 1: Dinero}> */
+    private function componentesDeCuota(Cuota $cuota): array
+    {
+        return [
+            [TipoConceptoFacturacion::Capital, $cuota->valor_capital],
+            [TipoConceptoFacturacion::InteresCorriente, $cuota->valor_interes],
+            [TipoConceptoFacturacion::OtrosGastos, $cuota->valor_otros_gastos],
+        ];
     }
 
     private function etiquetaMotivo(TipoDocumentoFacturacion $tipo, string $codigo): string

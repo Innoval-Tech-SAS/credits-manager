@@ -28,8 +28,9 @@ class AsientosFacturacionTest extends TestCase
         $credito = $this->crearCredito($this->crearCliente());
 
         return $this->postJson(self::BASE.'/documentos', [
+            'cliente_id' => $credito->cliente_id,
             'credito_id' => $credito->id,
-            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés administrativo', 'valor' => $valor]],
+            'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés administrativo', 'valor' => $valor, 'tipo_concepto' => 'otros_gastos']],
         ])->assertStatus(201)->json('documento');
     }
 
