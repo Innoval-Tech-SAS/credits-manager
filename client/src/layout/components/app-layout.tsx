@@ -1,9 +1,10 @@
 import type { FC } from 'react';
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { Outlet, useLocation } from 'react-router';
 
 import { PageHeaderProvider } from '@ui/breadcrumb/components/page-header-provider';
 import { SidebarProvider } from '@ui/sidebar/components/sidebar-provider';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { useSidebar } from '@ui/sidebar/hooks/use-sidebar';
 import { NotificationsProvider } from '../../notifications/components/notifications-provider';
 import { AppHeader } from './app-header';
@@ -14,6 +15,7 @@ const LayoutContent: FC = () => {
     const { isExpanded, isHovered, isMobileOpen, closeMobileSidebar } = useSidebar();
     const { pathname } = useLocation();
     const scrollerRef = useRef<HTMLDivElement>(null);
+    const anchoContenido = pathname === '/' ? '' : 'max-w-(--breakpoint-2xl)';
 
     useEffect(() => {
         scrollerRef.current?.scrollTo(0, 0);
@@ -39,24 +41,28 @@ const LayoutContent: FC = () => {
                 <div className="print:hidden">
                     <AppHeader />
                 </div>
-                <div
-                    ref={scrollerRef}
-                    className={`custom-scrollbar mx-auto w-full ${pathname === '/' ? '' : 'max-w-(--breakpoint-2xl)'} min-h-0 flex-1 overflow-y-auto print:overflow-visible`}
-                >
-                    {/* Contenedor normal (no flex-1/min-h-0) a propósito: si este wrapper puede
-                        quedar más chico que su contenido, el `pb-6` de cada página deja de contar
-                        en el scrollHeight real del scroller de arriba y el contenido queda pegado
-                        al borde inferior sin margen. Solo el scroller de arriba necesita min-h-0/flex-1
-                        (es el que de verdad hace scroll); todo lo de adentro debe abrazar su contenido. */}
-                    <div className="p-4 md:p-6 print:p-0">
-                        <PageHeaderProvider>
-                            <div className="print:hidden">
-                                <AppPageHeader />
-                            </div>
-                            <Outlet />
-                        </PageHeaderProvider>
+                <PageHeaderProvider>
+                    {/* Fuera del scroller: el título, Volver y la ruta de migas quedan fijos y solo hace scroll el contenido. */}
+                    <div className={`mx-auto w-full shrink-0 ${anchoContenido} px-4 pt-4 pb-4 md:px-6 md:pt-6 md:pb-6 print:hidden`}>
+                        <AppPageHeader />
                     </div>
-                </div>
+                    <div
+                        ref={scrollerRef}
+                        className={`custom-scrollbar mx-auto w-full ${anchoContenido} min-h-0 flex-1 overflow-y-auto print:overflow-visible`}
+                    >
+                        {/* Contenedor normal (no flex-1/min-h-0) a propósito: si este wrapper puede
+                            quedar más chico que su contenido, el `pb-6` de cada página deja de contar
+                            en el scrollHeight real del scroller de arriba y el contenido queda pegado
+                            al borde inferior sin margen. Solo el scroller de arriba necesita min-h-0/flex-1
+                            (es el que de verdad hace scroll); todo lo de adentro debe abrazar su contenido. */}
+                        <div className="px-4 pb-4 md:px-6 md:pb-6 print:p-0">
+                            {/* `key` por ruta: cada página nueva monta su propio límite y muestra el esqueleto mientras llega su código. */}
+                            <Suspense key={pathname} fallback={<PageSkeleton />}>
+                                <Outlet />
+                            </Suspense>
+                        </div>
+                    </div>
+                </PageHeaderProvider>
             </div>
         </div>
     );
