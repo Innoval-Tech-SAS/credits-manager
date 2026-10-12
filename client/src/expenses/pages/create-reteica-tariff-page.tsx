@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { ReteicaTariffForm } from '../components/reteica-tariff-form';
 import type { ApiEconomicActivity } from '../types/api-economic-activity';
 
@@ -24,9 +24,7 @@ export const CreateReteicaTariffPage: FC = () => {
 
             <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3">
                 {isLoading ? (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 ) : (
                     <ReteicaTariffForm actividades={actividades} onCreated={handleCreated} />
                 )}

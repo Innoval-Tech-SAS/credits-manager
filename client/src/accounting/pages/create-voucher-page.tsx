@@ -2,7 +2,7 @@ import type { FC } from 'react';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { VoucherForm } from '../components/voucher-form';
 import type { ApiAccount } from '../types/api-account';
 import type { ApiCostCenter } from '../types/api-cost-center';
@@ -28,9 +28,7 @@ export const CreateVoucherPage: FC = () => {
 
             <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3">
                 {(isLoadingCuentas || isLoadingTipos || isLoadingCentros) ? (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 ) : (
                     <VoucherForm tipos={tipos} cuentas={cuentas} centrosCosto={centrosCosto} />
                 )}

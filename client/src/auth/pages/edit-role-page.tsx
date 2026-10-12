@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { RoleForm } from '../components/role-form';
 import type { ApiRoleWithPermisos } from '../types/api-role';
 
@@ -30,9 +30,7 @@ export const EditRolePage: FC = () => {
                     )}
 
                     {!error && !rol && (
-                        <div className="flex justify-center py-12">
-                            <Spinner size="lg" />
-                        </div>
+                        <FormSkeletonBody />
                     )}
 
                     {rol && <RoleForm roleId={rol.id} initialData={rol} />}

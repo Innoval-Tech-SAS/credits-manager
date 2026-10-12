@@ -9,6 +9,7 @@ import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { Save } from 'lucide-react';
 import type { ApiCreditDetail } from '../../credits/types/api-credit-detail';
@@ -39,11 +40,7 @@ export const SettleCreditPage: FC = () => {
     }
 
     if (!detalle || !cotizacion) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const { credito } = detalle;

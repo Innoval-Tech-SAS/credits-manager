@@ -9,7 +9,7 @@ import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { CreditCapitalRecoveryCard } from '../components/credit-capital-recovery-card';
 import { CreditInfoGrid } from '../components/credit-info-grid';
 import { CreditInstallmentsChartCard } from '../components/credit-installments-chart-card';
@@ -87,11 +87,7 @@ export const CreditDetailPage: FC = () => {
     }
 
     if (!detalle) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const { credito, saldo, cartera, refinanciacion, pagos, resumen_cuotas: resumenCuotas } = detalle;

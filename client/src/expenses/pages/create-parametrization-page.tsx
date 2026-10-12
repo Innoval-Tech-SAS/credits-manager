@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { ParametrizationForm } from '../components/parametrization-form';
 import type { ApiAccount } from '../../accounting/types/api-account';
 import type { ApiVoucherType } from '../../accounting/types/api-voucher-type';
@@ -34,9 +34,7 @@ export const CreateParametrizationPage: FC = () => {
 
             <div className="flex-1 rounded-2xl border border-gray-200 bg-white p-6 md:p-8 dark:border-gray-800 dark:bg-white/3">
                 {isLoading ? (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 ) : (
                     <ParametrizationForm tiposGasto={tiposGasto} cuentas={cuentas} tiposComprobante={tiposComprobante} onCreated={handleCreated} />
                 )}

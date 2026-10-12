@@ -7,7 +7,7 @@ import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { PaymentHistoryTable } from '../../payments/components/payment-history-table';
 import { ClientAdvisorHistoryCard } from '../components/client-advisor-history-card';
 import { ClientCreditsTable } from '../components/client-credits-table';
@@ -83,11 +83,7 @@ export const ClientDetailPage: FC = () => {
     }
 
     if (!resumen) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const {

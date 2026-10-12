@@ -9,7 +9,7 @@ import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { INSTALLMENT_STATUS_CLASSES, INSTALLMENT_STATUS_LABEL } from '../../credits/constants/installment-status-styles';
 import type { ApiEmployerReport } from '../types/api-employer-report';
 import { formatPeriodoEs } from '../utils/format-periodo-es';
@@ -38,11 +38,7 @@ export const EmployerReportPage: FC = () => {
     }
 
     if (!reporte) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const { empleadores, empleador_seleccionado: empleadorSeleccionado, meses, filas, totales_por_mes: totalesPorMes } = reporte;

@@ -16,7 +16,9 @@ import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { DatePicker } from '@ui/forms/components/date-picker';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FieldSkeleton } from '@ui/skeleton/components/field-skeleton';
+import { SkeletonStatus } from '@ui/skeleton/components/skeleton-status';
+import { TableSkeleton } from '@ui/skeleton/components/table-skeleton';
 import { DataTable } from '@ui/table/components/data-table';
 import { InvoiceLinesForm } from '../components/invoice-lines-form';
 import { ThirdPartyFiscalSummary } from '../components/third-party-fiscal-summary';
@@ -167,9 +169,9 @@ export const CreateInvoicePage: FC = () => {
                     <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                         <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">2. Crédito</h3>
                         {cargandoCreditos ? (
-                            <div className="flex justify-center py-6">
-                                <Spinner size="lg" />
-                            </div>
+                            <SkeletonStatus className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                                <FieldSkeleton />
+                            </SkeletonStatus>
                         ) : (
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                                 <div>
@@ -204,9 +206,9 @@ export const CreateInvoicePage: FC = () => {
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                     <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">3. Conceptos a facturar</h3>
                     {cargandoSugeridos ? (
-                        <div className="flex justify-center py-6">
-                            <Spinner size="lg" />
-                        </div>
+                        <SkeletonStatus>
+                            <TableSkeleton columns={5} rows={3} />
+                        </SkeletonStatus>
                     ) : lineas.length === 0 ? (
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             Este crédito no tiene cuotas pendientes por facturar. Agrega una línea manual si necesitas facturar otro concepto.

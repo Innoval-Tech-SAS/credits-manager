@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { RegisterForm } from '../components/register-form';
 import type { ApiUserDetail } from '../types/api-user-detail';
 
@@ -32,9 +32,7 @@ export const EditUserPage: FC = () => {
                     )}
 
                     {!error && !usuario && (
-                        <div className="flex justify-center py-12">
-                            <Spinner size="lg" />
-                        </div>
+                        <FormSkeletonBody />
                     )}
 
                     {usuario && (

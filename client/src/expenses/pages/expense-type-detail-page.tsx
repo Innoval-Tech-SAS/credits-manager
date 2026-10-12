@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { DetailSkeletonBody } from '@ui/skeleton/components/detail-skeleton-body';
 import type { ApiExpenseType } from '../types/api-expense-type';
 
 export const ExpenseTypeDetailPage: FC = () => {
@@ -24,9 +24,7 @@ export const ExpenseTypeDetailPage: FC = () => {
                 )}
 
                 {isLoading && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <DetailSkeletonBody />
                 )}
 
                 {tipoGasto && (

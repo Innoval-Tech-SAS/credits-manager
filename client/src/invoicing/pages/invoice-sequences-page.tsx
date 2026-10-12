@@ -9,7 +9,7 @@ import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import type { ApiInvoiceSequence } from '../types/api-invoice';
 
 type Borrador = { prefijo: string; numeroInicial: string };
@@ -32,11 +32,7 @@ export const InvoiceSequencesPage: FC = () => {
     }
 
     if (!data) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const borradorDe = (secuencia: ApiInvoiceSequence): Borrador =>

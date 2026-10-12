@@ -3,11 +3,12 @@ import { useNavigate } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { Button } from '@ui/button/components/button';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { SkeletonStatus } from '@ui/skeleton/components/skeleton-status';
 import type { ApiGoalAlert } from '../types/api-goal-alert';
 import type { ApiGoalsPeriod } from '../types/api-goals-period';
 import { GoalAlertsList } from './goal-alerts-list';
 import { GoalProgressCard } from './goal-progress-card';
+import { GoalProgressCardSkeleton } from './goal-progress-card-skeleton';
 import { periodoActual } from '../utils/periodo-meta';
 
 const ORDEN_TIPOS = ['colocacion', 'recaudo'] as const;
@@ -37,9 +38,10 @@ export const GoalsDashboardSection: FC = () => {
             </div>
 
             {!resumen ? (
-                <div className="flex justify-center py-8">
-                    <Spinner size="lg" />
-                </div>
+                <SkeletonStatus className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+                    <GoalProgressCardSkeleton />
+                    <GoalProgressCardSkeleton />
+                </SkeletonStatus>
             ) : resumen.metas.length === 0 ? (
                 <p className="text-sm text-gray-500 dark:text-gray-400">No hay metas configuradas para este mes.</p>
             ) : (

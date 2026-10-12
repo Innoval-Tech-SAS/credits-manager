@@ -50,16 +50,19 @@ const LayoutContent: FC = () => {
                         ref={scrollerRef}
                         className={`custom-scrollbar mx-auto w-full ${anchoContenido} min-h-0 flex-1 overflow-y-auto print:overflow-visible`}
                     >
-                        {/* Contenedor normal (no flex-1/min-h-0) a propósito: si este wrapper puede
-                            quedar más chico que su contenido, el `pb-6` de cada página deja de contar
-                            en el scrollHeight real del scroller de arriba y el contenido queda pegado
-                            al borde inferior sin margen. Solo el scroller de arriba necesita min-h-0/flex-1
-                            (es el que de verdad hace scroll); todo lo de adentro debe abrazar su contenido. */}
-                        <div className="px-4 pb-4 md:px-6 md:pb-6 print:p-0">
-                            {/* `key` por ruta: cada página nueva monta su propio límite y muestra el esqueleto mientras llega su código. */}
-                            <Suspense key={pathname} fallback={<PageSkeleton />}>
-                                <Outlet />
-                            </Suspense>
+                        {/* `min-h-full` (nunca `h-full` ni flex-1/min-h-0): mide al menos el alto visible y
+                            crece con su contenido, así el `pb-6` de cada página sigue contando en el
+                            scrollHeight del scroller. Es grid porque el área de un ítem de grid estirado es
+                            una altura definida: el `min-h-full` de la raíz de cada página (y del esqueleto)
+                            se resuelve contra ella y su tarjeta `flex-1` ocupa el alto disponible. */}
+                        <div className="grid min-h-full px-4 pb-4 md:px-6 md:pb-6 print:block print:min-h-0 print:p-0">
+                            {/* Un único ítem de grid aunque la página devuelva un fragmento; `min-w-0` evita que una tabla ancha lo desborde. */}
+                            <div className="min-w-0">
+                                {/* `key` por ruta: cada página nueva monta su propio límite y muestra el esqueleto mientras llega su código. */}
+                                <Suspense key={pathname} fallback={<PageSkeleton />}>
+                                    <Outlet />
+                                </Suspense>
+                            </div>
                         </div>
                     </div>
                 </PageHeaderProvider>

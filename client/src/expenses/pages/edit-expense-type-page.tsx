@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { ExpenseTypeForm } from '../components/expense-type-form';
 import type { ApiExpenseType } from '../types/api-expense-type';
 
@@ -30,9 +30,7 @@ export const EditExpenseTypePage: FC = () => {
                 )}
 
                 {isLoading && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 )}
 
                 {tipoGasto && <ExpenseTypeForm expenseTypeId={tipoGasto.id} initialData={tipoGasto} onSaved={handleSaved} />}

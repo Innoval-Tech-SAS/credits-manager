@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { ClientForm } from '../components/client-form';
 import type { ApiClient } from '../types/api-client';
 
@@ -25,9 +25,7 @@ export const EditClientPage: FC = () => {
                 )}
 
                 {!error && !cliente && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 )}
 
                 {cliente && <ClientForm clientId={cliente.id} initialData={cliente} />}

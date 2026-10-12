@@ -11,6 +11,7 @@ import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { DataTable } from '@ui/table/components/data-table';
 import { Save } from 'lucide-react';
@@ -44,11 +45,7 @@ export const RegisterPaymentPage: FC = () => {
     }
 
     if (!detalle) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const { credito, saldo } = detalle;

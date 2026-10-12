@@ -13,7 +13,7 @@ import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { DataTable } from '@ui/table/components/data-table';
 import { InvoiceDispatchesCard } from '../components/invoice-dispatches-card';
 import { InvoiceLinesForm } from '../components/invoice-lines-form';
@@ -74,11 +74,7 @@ export const InvoiceDetailPage: FC = () => {
     }
 
     if (!data) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const { documento, totales, cobros } = data;

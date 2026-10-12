@@ -1,7 +1,7 @@
 import type { ReactElement } from 'react';
 
 import { ChevronDown } from 'lucide-react';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { TableSkeletonRows } from '@ui/skeleton/components/table-skeleton-rows';
 import type { DataTableProps } from '../props/data-table-props';
 
 export function DataTable<T>({
@@ -50,6 +50,8 @@ export function DataTable<T>({
                         </tr>
                     </thead>
                     <tbody>
+                        {/* Mientras carga, filas esqueleto con las mismas columnas que la tabla real. */}
+                        {loading && <TableSkeletonRows columns={columns.length} />}
                         {!loading &&
                             rows.map((row) => (
                                 <tr key={getRowKey(row)} className="border-b border-gray-100 dark:border-gray-800">
@@ -68,10 +70,9 @@ export function DataTable<T>({
 
             {/* Fuera del scroll horizontal: dentro de la tabla el texto se centraría en el ancho total y quedaría cortado en móvil. */}
             {loading ? (
-                <div className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-gray-400 dark:text-gray-500">
-                    <Spinner size="sm" />
+                <p role="status" className="sr-only">
                     {loadingMessage}
-                </div>
+                </p>
             ) : rows.length === 0 ? (
                 <p className="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500">{emptyMessage}</p>
             ) : null}

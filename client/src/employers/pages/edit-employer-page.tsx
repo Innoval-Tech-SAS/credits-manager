@@ -3,7 +3,7 @@ import { useParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { FormSkeletonBody } from '@ui/skeleton/components/form-skeleton-body';
 import { EmployerForm } from '../components/employer-form';
 import type { ApiEmployer } from '../types/api-employer';
 
@@ -25,9 +25,7 @@ export const EditEmployerPage: FC = () => {
                 )}
 
                 {!error && !empleador && (
-                    <div className="flex justify-center py-12">
-                        <Spinner size="lg" />
-                    </div>
+                    <FormSkeletonBody />
                 )}
 
                 {empleador && <EmployerForm employerId={empleador.id} initialData={empleador} />}

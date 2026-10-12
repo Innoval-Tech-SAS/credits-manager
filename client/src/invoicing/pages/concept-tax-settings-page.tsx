@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useResource } from '../../shared/hooks/use-resource';
 import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Spinner } from '@ui/spinner/components/spinner';
+import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { ConceptTaxSettingsForm } from '../components/concept-tax-settings-form';
 import { CONCEPT_TYPE_LABELS } from '../constants/concept-types';
 import type { ApiAccount } from '../../accounting/types/api-account';
@@ -22,11 +22,7 @@ export const ConceptTaxSettingsPage: FC = () => {
     }
 
     if (!data || cargandoCuentas) {
-        return (
-            <div className="flex justify-center py-12">
-                <Spinner size="lg" />
-            </div>
-        );
+        return <PageSkeleton />;
     }
 
     const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento);
