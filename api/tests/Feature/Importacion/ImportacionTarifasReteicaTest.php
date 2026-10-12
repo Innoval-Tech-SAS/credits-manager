@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Importacion;
 
-use App\Gastos\Models\TarifaReteIcaMunicipio;
+use App\Causacion\Models\TarifaReteIcaMunicipio;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesGastosFixtures;

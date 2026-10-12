@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Gastos\Models;
+namespace App\Causacion\Models;
 
 use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Models\TipoComprobante;

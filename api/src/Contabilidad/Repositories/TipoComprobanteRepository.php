@@ -2,13 +2,13 @@
 
 namespace App\Contabilidad\Repositories;
 
+use App\Causacion\Models\ParametrizacionTipoGasto;
 use App\Contabilidad\Enums\ReinicioConsecutivo;
 use App\Contabilidad\Enums\TipoNumeracionComprobante;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\ReglaContabilizacion;
 use App\Contabilidad\Models\TipoComprobante;
 use App\Core\Base\BaseRepository;
-use App\Gastos\Models\ParametrizacionTipoGasto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;

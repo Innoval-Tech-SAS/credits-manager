@@ -2,10 +2,10 @@
 
 namespace App\Gastos\Controllers;
 
-use App\Gastos\Models\ValorUvt;
+use App\Causacion\Models\ValorUvt;
+use App\Causacion\Services\ValorUvtService;
 use App\Gastos\Requests\EditarValorUvtRequest;
 use App\Gastos\Requests\GuardarValorUvtRequest;
-use App\Gastos\Services\ValorUvtService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;

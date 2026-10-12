@@ -2,8 +2,8 @@
 
 namespace App\Importacion\Procesadores;
 
+use App\Causacion\Services\TarifaReteIcaMunicipioService;
 use App\Gastos\Models\ActividadEconomica;
-use App\Gastos\Services\TarifaReteIcaMunicipioService;
 use App\Geografia\Models\Municipio;
 use App\Importacion\Data\ContextoEjecucion;
 use App\Importacion\Data\FilaRechazada;

@@ -2,10 +2,10 @@
 
 namespace App\Importacion\Procesadores;
 
+use App\Causacion\Models\TipoGasto;
+use App\Causacion\Repositories\ParametrizacionTipoGastoRepository;
+use App\Causacion\Repositories\ValorUvtRepository;
 use App\Contabilidad\Models\CentroCosto;
-use App\Gastos\Models\TipoGasto;
-use App\Gastos\Repositories\ParametrizacionTipoGastoRepository;
-use App\Gastos\Repositories\ValorUvtRepository;
 use App\Gastos\Services\GastoService;
 use App\Geografia\Models\Municipio;
 use App\Importacion\Data\ContextoEjecucion;

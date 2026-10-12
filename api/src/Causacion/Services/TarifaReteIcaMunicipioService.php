@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Gastos\Services;
+namespace App\Causacion\Services;
 
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Services\EmisorAuditoria;
-use App\Gastos\Models\TarifaReteIcaMunicipio;
-use App\Gastos\Repositories\TarifaReteIcaMunicipioRepository;
+use App\Causacion\Models\TarifaReteIcaMunicipio;
+use App\Causacion\Repositories\TarifaReteIcaMunicipioRepository;
 use App\Geografia\Models\Municipio;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Carbon;

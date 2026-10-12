@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Gastos\Repositories;
+namespace App\Causacion\Repositories;
 
+use App\Causacion\Models\TarifaReteIcaMunicipio;
 use App\Core\Base\BaseRepository;
-use App\Gastos\Models\TarifaReteIcaMunicipio;
 use Illuminate\Database\Eloquent\Collection;
 
 class TarifaReteIcaMunicipioRepository extends BaseRepository

@@ -2,7 +2,7 @@
 
 namespace App\Importacion\Procesadores;
 
-use App\Gastos\Services\ValorUvtService;
+use App\Causacion\Services\ValorUvtService;
 use App\Importacion\Data\ContextoEjecucion;
 use App\Importacion\Data\FilaRechazada;
 use App\Importacion\Lectura\ConvertidorValor;

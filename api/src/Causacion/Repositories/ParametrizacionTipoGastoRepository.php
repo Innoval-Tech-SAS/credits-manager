@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Gastos\Repositories;
+namespace App\Causacion\Repositories;
 
+use App\Causacion\Models\ParametrizacionTipoGasto;
 use App\Core\Base\BaseRepository;
-use App\Gastos\Models\ParametrizacionTipoGasto;
 use Illuminate\Database\Eloquent\Collection;
 
 class ParametrizacionTipoGastoRepository extends BaseRepository

@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useNavigate } from 'react-router';
-import { FilePlus2, Search } from 'lucide-react';
+import { FilePlus2, FileSpreadsheet, Search } from 'lucide-react';
 
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
@@ -44,9 +44,19 @@ export const VouchersListPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button collapseBelow="md" startIcon={<FilePlus2 className="size-4" />} onClick={() => navigate('/contabilidad/comprobantes/crear')}>
-                            Nuevo comprobante manual
-                        </Button>
+                        <>
+                            <Button
+                                variant="outline"
+                                collapseBelow="md"
+                                startIcon={<FileSpreadsheet className="size-4" />}
+                                onClick={() => navigate('/contabilidad/comprobantes/causar-concepto')}
+                            >
+                                Causar con concepto
+                            </Button>
+                            <Button collapseBelow="md" startIcon={<FilePlus2 className="size-4" />} onClick={() => navigate('/contabilidad/comprobantes/crear')}>
+                                Nuevo comprobante manual
+                            </Button>
+                        </>
                     )}
                 </>
             }

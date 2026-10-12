@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Gastos\Enums;
+namespace App\Causacion\Enums;
 
 enum TipoRetencion: string
 {

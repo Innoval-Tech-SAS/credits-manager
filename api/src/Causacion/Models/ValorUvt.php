@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Gastos\Models;
+namespace App\Causacion\Models;
 
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;

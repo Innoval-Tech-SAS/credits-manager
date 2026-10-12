@@ -2,12 +2,12 @@
 
 namespace Tests\Concerns;
 
+use App\Causacion\Models\ParametrizacionTipoGasto;
+use App\Causacion\Models\TarifaReteIcaMunicipio;
+use App\Causacion\Models\TipoGasto;
+use App\Causacion\Models\ValorUvt;
 use App\Contabilidad\Models\CentroCosto;
 use App\Gastos\Models\ActividadEconomica;
-use App\Gastos\Models\ParametrizacionTipoGasto;
-use App\Gastos\Models\TarifaReteIcaMunicipio;
-use App\Gastos\Models\TipoGasto;
-use App\Gastos\Models\ValorUvt;
 use App\Geografia\Models\Municipio;
 use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;

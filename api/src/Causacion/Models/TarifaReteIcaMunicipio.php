@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Gastos\Models;
+namespace App\Causacion\Models;
 
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
+use App\Gastos\Models\ActividadEconomica;
 use App\Geografia\Models\Municipio;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
