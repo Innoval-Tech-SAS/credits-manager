@@ -8,7 +8,7 @@ import { formatMoney } from '../../shared/utils/format-money';
 import type { ApiExpenseCostCenterReport } from '../types/api-expense-cost-center-report';
 import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Input } from '@ui/forms/components/input';
+import { DatePicker } from '@ui/forms/components/date-picker';
 import { Label } from '@ui/forms/components/label';
 import { DataTable } from '@ui/table/components/data-table';
 
@@ -32,34 +32,33 @@ export const ExpenseCostCenterReportPage: FC = () => {
             <PageBreadcrumb pageTitle="Gastos por centro de costo" />
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="desde">Desde (mes)</Label>
-                        <Input id="desde" type="month" value={desde} onChange={(event) => setDesde(event.target.value)} />
+                        <DatePicker id="desde" mode="month" value={desde} onChange={setDesde} />
                     </div>
                     <div>
                         <Label htmlFor="hasta">Hasta (mes)</Label>
-                        <Input id="hasta" type="month" value={hasta} onChange={(event) => setHasta(event.target.value)} />
+                        <DatePicker id="hasta" mode="month" value={hasta} onChange={setHasta} />
                     </div>
+                    {canExport && (
+                        <div className="flex items-end">
+                            <ExportButton
+                                endpoint="/gastos/reporte-centro-costo/exportar"
+                                filters={{ desde, hasta }}
+                                disabled={filas.length === 0}
+                                onRequested={() => {
+                                    setExportError(null);
+                                    setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
+                                }}
+                                onError={(message) => {
+                                    setExportMessage(null);
+                                    setExportError(message);
+                                }}
+                            />
+                        </div>
+                    )}
                 </div>
-
-                {canExport && (
-                    <div className="mt-6 flex justify-end">
-                        <ExportButton
-                            endpoint="/gastos/reporte-centro-costo/exportar"
-                            filters={{ desde, hasta }}
-                            disabled={filas.length === 0}
-                            onRequested={() => {
-                                setExportError(null);
-                                setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
-                            }}
-                            onError={(message) => {
-                                setExportMessage(null);
-                                setExportError(message);
-                            }}
-                        />
-                    </div>
-                )}
 
                 {exportMessage && <div className="mt-4"><Alert variant="success" title="Listo" message={exportMessage} onDismiss={() => setExportMessage(null)} /></div>}
                 {exportError && <div className="mt-4"><Alert variant="danger" title="No se pudo exportar" message={exportError} onDismiss={() => setExportError(null)} /></div>}
