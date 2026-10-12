@@ -36,7 +36,7 @@ export const ModuleListPage: FC<ModuleListPageProps> = ({
             <div className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <p className="text-sm text-gray-500 dark:text-gray-400">{countLabel}</p>
 
-                {toolbar && <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:justify-end">{toolbar}</div>}
+                {toolbar && <div className="flex flex-row flex-wrap items-center gap-3 lg:justify-end">{toolbar}</div>}
             </div>
 
             {children}
