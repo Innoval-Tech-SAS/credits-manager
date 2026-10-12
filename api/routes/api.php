@@ -50,6 +50,7 @@ use App\Gastos\Controllers\ValorUvtController;
 use App\Geografia\Controllers\EstadoController;
 use App\Geografia\Controllers\MunicipioController;
 use App\Geografia\Controllers\PaisController;
+use App\Importacion\Constants\ImportacionConstants;
 use App\Importacion\Controllers\ImportacionController;
 use App\Metas\Controllers\AlertaMetaController;
 use App\Metas\Controllers\CierreMetaController;
@@ -266,15 +267,18 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/contabilidad/auxiliares/exportar', [AuxiliarContableController::class, 'exportar'])->middleware(['permiso:informes_contables,listar_auxiliares', 'permiso:informes_contables,exportar']);
     Route::get('/contabilidad/auxiliares/pdf', [AuxiliarContableController::class, 'pdf'])->middleware(['permiso:informes_contables,listar_auxiliares', 'permiso:informes_contables,imprimir']);
 
-    Route::get('/importaciones', [ImportacionController::class, 'index'])->middleware('permiso:importaciones,listar');
-    Route::post('/importaciones', [ImportacionController::class, 'store'])->middleware('permiso:importaciones,ejecutar');
-    Route::get('/importaciones/guias/{tipo}', [ImportacionController::class, 'guia'])->middleware('permiso:importaciones,ejecutar')->where('tipo', '[a-z_]+');
-    Route::get('/importaciones/{importacion}', [ImportacionController::class, 'show'])->middleware('permiso:importaciones,listar')->whereNumber('importacion');
-    Route::get('/importaciones/{importacion}/errores', [ImportacionController::class, 'errores'])->middleware('permiso:importaciones,listar')->whereNumber('importacion');
-    Route::get('/importaciones/{importacion}/reporte', [ImportacionController::class, 'reporte'])->middleware('permiso:importaciones,listar')->whereNumber('importacion');
-    Route::post('/importaciones/{importacion}/decisiones', [ImportacionController::class, 'decidir'])->middleware('permiso:importaciones,ejecutar')->whereNumber('importacion');
-    Route::post('/importaciones/{importacion}/confirmar', [ImportacionController::class, 'confirmar'])->middleware('permiso:importaciones,ejecutar')->whereNumber('importacion');
-    Route::post('/importaciones/{importacion}/cancelar', [ImportacionController::class, 'cancelar'])->middleware('permiso:importaciones,ejecutar')->whereNumber('importacion');
+    // Importaciones: la ruta pide algún permiso de hoja; el servicio exige el de la hoja de cada carga o guía.
+    Route::prefix('importaciones')->middleware('algun_permiso:'.implode(',', ImportacionConstants::PERMISOS_IMPORTAR))->group(function () {
+        Route::get('/', [ImportacionController::class, 'index']);
+        Route::post('/', [ImportacionController::class, 'store']);
+        Route::get('/guias/{tipo}', [ImportacionController::class, 'guia'])->where('tipo', '[a-z_]+');
+        Route::get('/{importacion}', [ImportacionController::class, 'show'])->whereNumber('importacion');
+        Route::get('/{importacion}/errores', [ImportacionController::class, 'errores'])->whereNumber('importacion');
+        Route::get('/{importacion}/reporte', [ImportacionController::class, 'reporte'])->whereNumber('importacion');
+        Route::post('/{importacion}/decisiones', [ImportacionController::class, 'decidir'])->whereNumber('importacion');
+        Route::post('/{importacion}/confirmar', [ImportacionController::class, 'confirmar'])->whereNumber('importacion');
+        Route::post('/{importacion}/cancelar', [ImportacionController::class, 'cancelar'])->whereNumber('importacion');
+    });
 
     Route::get('/terceros', [TerceroController::class, 'index']);
     Route::post('/terceros/personas-naturales', [TerceroController::class, 'storeNatural'])->middleware('permiso:terceros,crear');

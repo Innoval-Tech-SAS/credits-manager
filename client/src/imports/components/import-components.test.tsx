@@ -62,6 +62,8 @@ describe('ImportDecisionModals', () => {
                 importacion={importacion({ empleadores_pendientes: 1 })}
                 decisiones={{ ...sinDecisiones, requiere_decision_empleadores: true }}
                 isSubmitting={false}
+                canCreateEmployers
+                canPostEntries
                 onDecide={onDecide}
             />,
         );
@@ -78,6 +80,8 @@ describe('ImportDecisionModals', () => {
                 importacion={importacion({ empleadores_pendientes: 3 })}
                 decisiones={{ ...sinDecisiones, requiere_decision_empleadores: true }}
                 isSubmitting={false}
+                canCreateEmployers
+                canPostEntries
                 onDecide={onDecide}
             />,
         );
@@ -91,6 +95,8 @@ describe('ImportDecisionModals', () => {
                 importacion={importacion({ tipo: 'creditos' })}
                 decisiones={{ puede_contabilizar: true, requiere_decision_empleadores: true, requiere_decision_asiento: true }}
                 isSubmitting={false}
+                canCreateEmployers
+                canPostEntries
                 onDecide={onDecide}
             />,
         );
@@ -101,6 +107,8 @@ describe('ImportDecisionModals', () => {
                 importacion={importacion({ tipo: 'creditos' })}
                 decisiones={{ puede_contabilizar: true, requiere_decision_empleadores: false, requiere_decision_asiento: true }}
                 isSubmitting={false}
+                canCreateEmployers
+                canPostEntries
                 onDecide={onDecide}
             />,
         );
@@ -111,7 +119,7 @@ describe('ImportDecisionModals', () => {
 
     it('no muestra nada cuando no hay decisiones abiertas', () => {
         const { container } = render(
-            <ImportDecisionModals importacion={importacion()} decisiones={sinDecisiones} isSubmitting={false} onDecide={vi.fn()} />,
+            <ImportDecisionModals importacion={importacion()} decisiones={sinDecisiones} isSubmitting={false} canCreateEmployers canPostEntries onDecide={vi.fn()} />,
         );
 
         expect(container.innerHTML).toBe('');
@@ -123,11 +131,47 @@ describe('ImportDecisionModals', () => {
                 importacion={importacion()}
                 decisiones={{ ...sinDecisiones, requiere_decision_empleadores: true }}
                 isSubmitting
+                canCreateEmployers
+                canPostEntries
                 onDecide={vi.fn()}
             />,
         );
 
         expect((screen.getByRole('button', { name: 'Aceptar' }) as HTMLButtonElement).disabled).toBe(true);
         expect((screen.getByRole('button', { name: 'Rechazar' }) as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it('sin empleadores.crear solo permite rechazar la creación de empleadores', () => {
+        const onDecide = vi.fn();
+        render(
+            <ImportDecisionModals
+                importacion={importacion({ empleadores_pendientes: 2, preferencia_crear_empleadores: true })}
+                decisiones={{ ...sinDecisiones, requiere_decision_empleadores: true }}
+                isSubmitting={false}
+                canCreateEmployers={false}
+                canPostEntries
+                onDecide={onDecide}
+            />,
+        );
+
+        expect(screen.queryByRole('button', { name: 'Aceptar' })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Rechazar' }));
+        expect(onDecide).toHaveBeenLastCalledWith('crear_empleadores', false);
+    });
+
+    it('sin contabilidad.crear_manual solo permite rechazar el asiento', () => {
+        render(
+            <ImportDecisionModals
+                importacion={importacion({ tipo: 'creditos', preferencia_generar_asiento: true })}
+                decisiones={{ puede_contabilizar: true, requiere_decision_empleadores: false, requiere_decision_asiento: true }}
+                isSubmitting={false}
+                canCreateEmployers
+                canPostEntries={false}
+                onDecide={vi.fn()}
+            />,
+        );
+
+        expect(screen.queryByRole('button', { name: 'Aceptar' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'Rechazar' })).toBeTruthy();
     });
 });

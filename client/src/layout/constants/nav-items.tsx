@@ -43,6 +43,8 @@ import {
     GitCompare,
 } from "lucide-react";
 import { canAccessAudit } from "../../auth/utils/can-access-audit";
+import { hasAnyPermission } from "../../auth/utils/has-any-permission";
+import { IMPORT_PERMISSIONS } from "../../imports/constants/import-types";
 import type { NavItem } from "../types/nav-item";
 
 export const SUPERADMIN_NAV_ITEMS: NavItem[] = [
@@ -401,8 +403,7 @@ export const NAV_ITEMS: NavItem[] = [
                 name: "Importaciones",
                 path: "/importaciones",
                 icon: FileInput,
-                moduleKey: "importaciones",
-                action: "listar",
+                isVisible: (user) => hasAnyPermission(user, IMPORT_PERMISSIONS),
             },
             { name: "Correo", path: "/correo", icon: Mail, adminOnly: true },
             { name: "Plantillas de correo", path: "/plantillas-correo", icon: FileText, adminOnly: true },

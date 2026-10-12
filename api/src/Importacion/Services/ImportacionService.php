@@ -35,14 +35,23 @@ class ImportacionService
         protected EmisorAuditoria $auditoria,
     ) {}
 
+    /** Solo las cargas de las hojas que el usuario puede importar: sus filas y errores traen datos de ese módulo. */
     public function listar(Usuario $usuario, int $porPagina, int $pagina): LengthAwarePaginator
     {
-        return $this->importaciones->paginarDeEmpresa((int) $usuario->empresa_id, max(1, min(100, $porPagina)), max(1, $pagina));
+        return $this->importaciones->paginarDeEmpresa((int) $usuario->empresa_id, $this->tiposPermitidos($usuario), max(1, min(100, $porPagina)), max(1, $pagina));
     }
 
+    /**
+     * Toda acción sobre una carga existente (ver, decidir, confirmar, cancelar, errores, reporte) pasa por aquí: exige el
+     * permiso de su hoja (`importaciones.importar_<hoja>`), el mismo que pide subirla. La ruta solo exige alguno de ellos,
+     * así que sin esto el permiso de una hoja bastaría para confirmar la carga de otra.
+     */
     public function mostrar(int $id, Usuario $usuario): Importacion
     {
-        return $this->importaciones->buscarDeEmpresaOFallar($id, (int) $usuario->empresa_id);
+        $importacion = $this->importaciones->buscarDeEmpresaOFallar($id, (int) $usuario->empresa_id);
+        $this->exigirPermisoDeTipo($usuario, $importacion->tipo);
+
+        return $importacion;
     }
 
     public function solicitar(
@@ -258,8 +267,10 @@ class ImportacionService
     }
 
     /** Guía descargable: columnas, obligatoriedad, nota de dependencias y la fila de encabezados lista para pegar datos. */
-    public function guia(TipoImportacion $tipo): StreamedResponse
+    public function guia(TipoImportacion $tipo, Usuario $usuario): StreamedResponse
     {
+        $this->exigirPermisoDeTipo($usuario, $tipo);
+
         $definicion = DefinicionImportacion::para($tipo);
 
         return response()->streamDownload(function () use ($definicion) {
@@ -297,6 +308,15 @@ class ImportacionService
     {
         return $this->ejecutor->puedeContabilizar($importacion->tipo)
             && ($importacion->filas_aceptadas + $importacion->filas_pendientes) > 0;
+    }
+
+    /** @return list<TipoImportacion> */
+    private function tiposPermitidos(Usuario $usuario): array
+    {
+        return array_values(array_filter(
+            TipoImportacion::cases(),
+            fn (TipoImportacion $tipo) => $usuario->tienePermiso(...DefinicionImportacion::para($tipo)['permiso']),
+        ));
     }
 
     private function exigirPermisoDeTipo(Usuario $usuario, TipoImportacion $tipo): void

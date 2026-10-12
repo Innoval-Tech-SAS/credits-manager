@@ -694,9 +694,7 @@ class ImportacionCoberturaTest extends TestCase
     private function asesorDeLaEmpresa(Usuario $admin): Usuario
     {
         $asesor = $this->actingAsAsesor(Empresa::query()->findOrFail($admin->empresa_id));
-        foreach (['listar', 'ejecutar'] as $accion) {
-            $asesor->permisosExtra()->attach(Permiso::query()->where(['modulo' => 'importaciones', 'accion' => $accion])->value('id'), ['concedido' => true]);
-        }
+        $asesor->permisosExtra()->attach(Permiso::query()->where(['modulo' => 'importaciones', 'accion' => 'importar_pagos'])->value('id'), ['concedido' => true]);
 
         return $asesor;
     }

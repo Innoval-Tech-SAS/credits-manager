@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { Ban, Download } from 'lucide-react';
 
+import { usePermission } from '../../auth/hooks/use-permission';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
@@ -37,6 +38,8 @@ export const ImportDetailPage: FC = () => {
     const { data, refetch } = useResource<ApiImportDetails>(Number.isInteger(importId) ? `/importaciones/${importId}` : null);
     const { sendRequest } = useSendRequest();
     const { download, isDownloading } = useDownloadFile();
+    const canCreateEmployers = usePermission('empleadores', 'crear');
+    const canPostEntries = usePermission('contabilidad', 'crear_manual');
 
     const [actionError, setActionError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -189,6 +192,8 @@ export const ImportDetailPage: FC = () => {
                 importacion={importacion}
                 decisiones={decisiones}
                 isSubmitting={isSubmitting}
+                canCreateEmployers={canCreateEmployers}
+                canPostEntries={canPostEntries}
                 onDecide={(decision, value) => void ejecutar(`/importaciones/${importacion.id}/decisiones`, { [decision]: value })}
             />
 

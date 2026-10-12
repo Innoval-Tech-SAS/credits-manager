@@ -57,7 +57,11 @@ class PermisoSeeder extends Seeder
             'listar_facturas', 'listar_notas_credito', 'listar_notas_debito', 'crear', 'anular', 'anular_nota_credito',
             'anular_nota_debito', 'imprimir', 'configurar', 'modificar_valores_sugeridos', 'registrar_cobro', 'reversar_cobro',
         ],
-        'importaciones' => ['listar', 'ejecutar'],
+        'importaciones' => [
+            'importar_clientes', 'importar_creditos', 'importar_plan_cuotas', 'importar_pagos', 'importar_saldos_iniciales',
+            'importar_plan_cuentas', 'importar_terceros', 'importar_gastos', 'importar_actividades_economicas',
+            'importar_valores_uvt', 'importar_tarifas_reteica',
+        ],
         'metas' => ['listar', 'configurar', 'recalcular'],
     ];
 

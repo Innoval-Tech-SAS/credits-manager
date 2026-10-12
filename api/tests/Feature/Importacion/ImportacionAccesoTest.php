@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Importacion;
 
+use App\Empresas\Models\Empresa;
 use App\Importacion\Enums\EstadoImportacion;
 use App\Importacion\Models\Importacion;
 use App\Importacion\Services\ImportacionEjecutorService;
@@ -37,6 +38,39 @@ class ImportacionAccesoTest extends TestCase
         $usuario->permisosExtra()->attach(Permiso::query()->where(['modulo' => $modulo, 'accion' => $accion])->value('id'), ['concedido' => true]);
     }
 
+    public function test_sin_el_permiso_de_la_hoja_no_ve_ni_opera_las_cargas_de_ese_modulo(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $id = $this->subirArchivo('clientes', self::ENCABEZADO_CLIENTES."1001;Ana Pérez\n");
+        $this->ejecutarValidacion($id);
+        $estado = $this->importacion($id)->estado;
+
+        $usuario = $this->actingAsAsesor(Empresa::query()->findOrFail($admin->empresa_id));
+        $this->concederPermiso($usuario, 'importaciones', 'importar_pagos');
+        $this->concederPermiso($usuario, 'clientes', 'crear');
+
+        $this->getJson('/api/v1/importaciones')->assertOk()->assertJsonPath('total', 0);
+        $this->getJson("/api/v1/importaciones/{$id}")->assertForbidden();
+        $this->getJson("/api/v1/importaciones/{$id}/errores")->assertForbidden();
+        $this->get("/api/v1/importaciones/{$id}/reporte")->assertForbidden();
+        $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['crear_empleadores' => false])->assertForbidden();
+        $this->postJson("/api/v1/importaciones/{$id}/confirmar")->assertForbidden();
+        $this->postJson("/api/v1/importaciones/{$id}/cancelar")->assertForbidden();
+        $this->assertSame($estado, $this->importacion($id)->estado, 'Nada de lo anterior cambia la carga.');
+    }
+
+    public function test_con_el_permiso_de_la_hoja_ve_las_cargas_de_ese_modulo_y_no_las_de_otros(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $id = $this->subirArchivo('clientes', self::ENCABEZADO_CLIENTES."1001;Ana Pérez\n");
+
+        $usuario = $this->actingAsAsesor(Empresa::query()->findOrFail($admin->empresa_id));
+        $this->concederPermiso($usuario, 'importaciones', 'importar_clientes');
+
+        $this->getJson('/api/v1/importaciones')->assertOk()->assertJsonPath('total', 1)->assertJsonPath('data.0.id', $id);
+        $this->getJson("/api/v1/importaciones/{$id}")->assertOk();
+    }
+
     public function test_sin_sesion_responde_401(): void
     {
         $this->getJson('/api/v1/importaciones')->assertUnauthorized();
@@ -54,10 +88,10 @@ class ImportacionAccesoTest extends TestCase
         ])->assertForbidden();
     }
 
-    public function test_subir_una_hoja_exige_el_permiso_de_crear_de_su_modulo_destino(): void
+    public function test_subir_una_hoja_exige_su_propio_permiso_y_no_el_de_otra_hoja(): void
     {
         $asesor = $this->actingAsAsesor();
-        $this->concederPermiso($asesor, 'importaciones', 'ejecutar');
+        $this->concederPermiso($asesor, 'importaciones', 'importar_clientes');
 
         $this->postJson('/api/v1/importaciones', [
             'tipo' => 'creditos',
@@ -65,6 +99,43 @@ class ImportacionAccesoTest extends TestCase
         ])->assertForbidden();
 
         $this->assertDatabaseCount('importaciones', 0);
+    }
+
+    public function test_el_permiso_de_crear_del_modulo_destino_no_basta_para_importar_su_hoja(): void
+    {
+        $asesor = $this->actingAsAsesor();
+        $this->concederPermiso($asesor, 'clientes', 'crear');
+
+        $this->postJson('/api/v1/importaciones', [
+            'tipo' => 'clientes',
+            'archivo' => UploadedFile::fake()->createWithContent('clientes.csv', self::ENCABEZADO_CLIENTES."1001;Ana Pérez\n"),
+        ])->assertForbidden();
+        $this->get('/api/v1/importaciones/guias/clientes')->assertForbidden();
+
+        $this->assertDatabaseCount('importaciones', 0);
+    }
+
+    public function test_con_el_permiso_de_la_hoja_sube_el_archivo_sin_el_permiso_de_crear_del_modulo(): void
+    {
+        $asesor = $this->actingAsAsesor();
+        $this->concederPermiso($asesor, 'importaciones', 'importar_clientes');
+
+        $this->postJson('/api/v1/importaciones', [
+            'tipo' => 'clientes',
+            'archivo' => UploadedFile::fake()->createWithContent('clientes.csv', self::ENCABEZADO_CLIENTES."1001;Ana Pérez\n"),
+        ])->assertStatus(202);
+
+        $this->assertDatabaseHas('importaciones', ['tipo' => 'clientes', 'usuario_id' => $asesor->id]);
+    }
+
+    public function test_la_guia_de_una_hoja_exige_su_permiso(): void
+    {
+        $asesor = $this->actingAsAsesor();
+        $this->concederPermiso($asesor, 'importaciones', 'importar_clientes');
+
+        $this->get('/api/v1/importaciones/guias/clientes')->assertOk();
+        $this->get('/api/v1/importaciones/guias/creditos')->assertForbidden();
+        $this->get('/api/v1/importaciones/guias/inexistente')->assertNotFound();
     }
 
     public function test_la_importacion_de_otra_empresa_responde_404_en_todas_sus_acciones(): void
