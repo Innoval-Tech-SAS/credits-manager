@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.css';
@@ -19,8 +19,8 @@ export const DatePicker: FC<DatePickerProps> = ({
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const instanceRef = useRef<flatpickr.Instance | null>(null);
-    const onChangeRef = useRef(onChange);
-    onChangeRef.current = onChange;
+    // Lee siempre el `onChange` vigente sin volver a crear la instancia de flatpickr en cada render.
+    const notificarCambio = useEffectEvent((fecha: string) => onChange?.(fecha));
 
     useEffect(() => {
         if (!inputRef.current) {
@@ -34,7 +34,7 @@ export const DatePicker: FC<DatePickerProps> = ({
             dateFormat: 'Y-m-d',
             defaultDate: value || undefined,
             disableMobile: true,
-            onChange: (_dates, dateStr) => onChangeRef.current?.(dateStr),
+            onChange: (_dates, dateStr) => notificarCambio(dateStr),
         });
 
         return () => {

@@ -5,7 +5,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import type { FC } from 'react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
@@ -37,11 +37,10 @@ export const CalendarPage: FC = () => {
     const [agendaVisible, setAgendaVisible] = useState<ApiCalendarAgenda | null>(null);
     const [detalle, setDetalle] = useState<CalendarEventProps | null>(null);
 
-    useEffect(() => {
-        if (agenda) {
-            setAgendaVisible(agenda);
-        }
-    }, [agenda]);
+    // Se ajusta durante el render (no en un efecto): React re-renderiza de inmediato sin pintar la agenda vieja.
+    if (agenda && agenda !== agendaVisible) {
+        setAgendaVisible(agenda);
+    }
 
     const handleDatesSet = (info: DatesSetArg) => {
         const inicio = info.view.currentStart;
