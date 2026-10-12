@@ -44,6 +44,8 @@ export const InvoiceDetailPage: FC = () => {
     const puedeRegistrarCobro = usePermission('facturacion', 'registrar_cobro');
     const puedeReversarCobro = usePermission('facturacion', 'reversar_cobro');
     const puedeImprimir = usePermission('facturacion', 'imprimir');
+    const puedeEmitir = usePermission('facturacion', 'emitir');
+    const puedeEnviar = usePermission('facturacion', 'enviar');
 
     const { data, error, refetch } = useResource<ApiInvoiceDetail>(`/facturacion/documentos/${id}`);
 
@@ -194,14 +196,14 @@ export const InvoiceDetailPage: FC = () => {
 
                     <div className="flex flex-wrap gap-3">
                         {esBorrador && puedeCrear && (
-                            <>
-                                <Button variant="outline" startIcon={<Trash2 className="size-4" />} onClick={() => setConfirmarEliminar(true)}>
-                                    Eliminar borrador
-                                </Button>
-                                <Button startIcon={<Send className="size-4" />} disabled={enviando} onClick={() => void emitir()}>
-                                    Emitir factura
-                                </Button>
-                            </>
+                            <Button variant="outline" startIcon={<Trash2 className="size-4" />} onClick={() => setConfirmarEliminar(true)}>
+                                Eliminar borrador
+                            </Button>
+                        )}
+                        {esBorrador && puedeEmitir && (
+                            <Button startIcon={<Send className="size-4" />} disabled={enviando} onClick={() => void emitir()}>
+                                Emitir factura
+                            </Button>
                         )}
                         {puedeCobrar && (
                             <Button startIcon={<Wallet className="size-4" />} onClick={() => setCobroAbierto(true)}>
@@ -230,7 +232,7 @@ export const InvoiceDetailPage: FC = () => {
                                 {isDownloading ? 'Generando…' : 'Descargar PDF'}
                             </Button>
                         )}
-                        {!esBorrador && puedeImprimir && (
+                        {!esBorrador && puedeEnviar && (
                             <Button variant="outline" iconOnly startIcon={<Mail className="size-4" />} disabled={enviando} onClick={() => void reenviarPorCorreo()}>
                                 Reenviar por correo
                             </Button>
@@ -250,7 +252,7 @@ export const InvoiceDetailPage: FC = () => {
                 )}
             </div>
 
-            {!esBorrador && puedeImprimir && <InvoiceDispatchesCard key={dispatchesVersion} documentoId={documento.id} />}
+            {!esBorrador && <InvoiceDispatchesCard key={dispatchesVersion} documentoId={documento.id} canSend={puedeEnviar} />}
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                 <div className="mb-4 flex items-center justify-between">

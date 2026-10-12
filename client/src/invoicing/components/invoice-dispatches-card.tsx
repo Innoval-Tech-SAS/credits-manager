@@ -11,8 +11,8 @@ import { DISPATCH_STATUS_LABELS } from '../../email/constants/email-options';
 import type { InvoiceDispatchesCardProps } from '../props/invoice-dispatches-card-props';
 import type { ApiInvoiceDispatch, ApiInvoiceDispatchHistory } from '../types/api-invoice-dispatch';
 
-/** Correos del documento (envíos y reenvíos), con "Reintentar" sobre los que quedaron fallidos. */
-export const InvoiceDispatchesCard: FC<InvoiceDispatchesCardProps> = ({ documentoId }) => {
+/** Correos del documento (envíos y reenvíos), con "Reintentar" sobre los que quedaron fallidos si el usuario puede enviar. */
+export const InvoiceDispatchesCard: FC<InvoiceDispatchesCardProps> = ({ documentoId, canSend }) => {
     const { data, refetch } = useResource<ApiInvoiceDispatchHistory>(`/facturacion/documentos/${documentoId}/envios`);
     const { sendRequest } = useSendRequest();
 
@@ -64,7 +64,7 @@ export const InvoiceDispatchesCard: FC<InvoiceDispatchesCardProps> = ({ document
                         key: 'acciones',
                         label: 'Acción',
                         render: (envio) =>
-                            envio.estado === 'fallido' ? (
+                            canSend && envio.estado === 'fallido' ? (
                                 <ActionButton
                                     icon={<RotateCcw className="size-5" />}
                                     label={retryingId === envio.id ? 'Reintentando...' : 'Reintentar'}

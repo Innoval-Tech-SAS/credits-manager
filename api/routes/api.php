@@ -331,7 +331,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'show'])->middleware('algun_permiso:'.implode(',', FacturacionConstants::CONSULTA_DOCUMENTOS));
     Route::patch('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'update'])->middleware('permiso:facturacion,crear');
     Route::delete('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'destroy'])->middleware('permiso:facturacion,crear');
-    Route::post('/facturacion/documentos/{documento}/emitir', [DocumentoFacturacionController::class, 'emitir'])->middleware('permiso:facturacion,crear');
+    Route::post('/facturacion/documentos/{documento}/emitir', [DocumentoFacturacionController::class, 'emitir'])->middleware('permiso:facturacion,emitir');
     // El permiso depende del tipo de nota (en el body, no en la ruta): el Controller exige anular_nota_credito/anular_nota_debito.
     Route::post('/facturacion/documentos/{documento}/notas', [DocumentoFacturacionController::class, 'nota']);
     Route::post('/facturacion/documentos/{documento}/anular', [DocumentoFacturacionController::class, 'anular'])->middleware('permiso:facturacion,anular');
@@ -340,9 +340,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/facturacion/cobros/{cobro}/reversar', [CobroFacturacionController::class, 'reversar'])->middleware('permiso:facturacion,reversar_cobro');
     Route::get('/facturacion/cobros/{cobro}/recibo/pdf', [CobroFacturacionController::class, 'pdf'])->middleware('permiso:facturacion,imprimir');
     Route::get('/facturacion/documentos/{documento}/pdf', [DocumentoFacturacionController::class, 'pdf'])->middleware('permiso:facturacion,imprimir');
-    Route::post('/facturacion/documentos/{documento}/reenviar', [DocumentoFacturacionController::class, 'reenviar'])->middleware('permiso:facturacion,imprimir');
-    Route::get('/facturacion/documentos/{documento}/envios', [DocumentoFacturacionController::class, 'historialEnvios'])->middleware('permiso:facturacion,imprimir');
-    Route::post('/facturacion/documentos/{documento}/envios/{envio}/reintentar', [DocumentoFacturacionController::class, 'reintentarEnvio'])->middleware('permiso:facturacion,imprimir');
+    Route::post('/facturacion/documentos/{documento}/reenviar', [DocumentoFacturacionController::class, 'reenviar'])->middleware('permiso:facturacion,enviar');
+    Route::get('/facturacion/documentos/{documento}/envios', [DocumentoFacturacionController::class, 'historialEnvios'])->middleware('algun_permiso:'.implode(',', FacturacionConstants::CONSULTA_DOCUMENTOS));
+    Route::post('/facturacion/documentos/{documento}/envios/{envio}/reintentar', [DocumentoFacturacionController::class, 'reintentarEnvio'])->middleware('permiso:facturacion,enviar');
     Route::get('/facturacion/consecutivos', [ConsecutivoFacturacionController::class, 'index'])->middleware('permiso:facturacion,configurar');
     Route::patch('/facturacion/consecutivos/{tipo}', [ConsecutivoFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');
     Route::get('/facturacion/configuracion', [ConfiguracionFacturacionController::class, 'show'])->middleware('permiso:facturacion,configurar');
