@@ -35,8 +35,8 @@ class ContabilidadConstants
         'configuracion_contable.editar_centros_costo', 'contabilidad.crear_manual', 'gastos.crear',
     ];
 
-    /** Cuentas por pagar y por cobrar comparten endpoint (`naturaleza`); cruzar anticipos consulta ambas. */
+    /** Cuentas por pagar, por cobrar y anticipos comparten endpoint (`naturaleza`); `AccesoCarteraTerceros` decide por naturaleza. */
     public const CONSULTA_CARTERA_TERCEROS = [
-        'contabilidad.listar_cuentas_por_pagar', 'contabilidad.listar_cuentas_por_cobrar', 'anticipos.crear',
+        'contabilidad.listar_cuentas_por_pagar', 'contabilidad.listar_cuentas_por_cobrar', 'anticipos.listar', 'anticipos.crear',
     ];
 }

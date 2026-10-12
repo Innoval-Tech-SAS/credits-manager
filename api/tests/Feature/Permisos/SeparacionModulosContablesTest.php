@@ -171,8 +171,8 @@ class SeparacionModulosContablesTest extends TestCase
             ['GET', "/api/v1/contabilidad/comprobantes/{$this->comprobante->id}", ['contabilidad.listar_comprobantes'], []],
             ['GET', "/api/v1/contabilidad/comprobantes/{$this->comprobante->id}/pdf", ['contabilidad.imprimir_comprobante'], []],
             ['POST', "/api/v1/contabilidad/comprobantes/{$this->comprobante->id}/reversar", ['contabilidad.anular'], []],
-            ['GET', '/api/v1/cartera-terceros?naturaleza=por_pagar', $porPagar, []],
-            ['GET', '/api/v1/cartera-terceros?naturaleza=por_cobrar', ['contabilidad.listar_cuentas_por_cobrar', 'anticipos.crear'], []],
+            ['GET', '/api/v1/cartera-terceros?naturaleza=por_pagar', ['contabilidad.listar_cuentas_por_pagar'], []],
+            ['GET', '/api/v1/cartera-terceros?naturaleza=por_cobrar', ['contabilidad.listar_cuentas_por_cobrar'], []],
 
             ['GET', '/api/v1/contabilidad/libro-diario', ['informes_contables.listar_libro_diario'], []],
             ['GET', "/api/v1/contabilidad/libro-mayor?cuenta_id={$this->cuenta->id}", ['informes_contables.listar_libro_mayor'], []],
