@@ -6,7 +6,6 @@ import type { WithChildrenProps } from '../../../shared/props/with-children-prop
 
 export const PageHeaderProvider: FC<WithChildrenProps> = ({ children }) => {
     const [title, setTitle] = useState('');
-    const [hideTitle, setHideTitle] = useState(false);
 
-    return <PageHeaderContext.Provider value={{ title, setTitle, hideTitle, setHideTitle }}>{children}</PageHeaderContext.Provider>;
+    return <PageHeaderContext.Provider value={{ title, setTitle }}>{children}</PageHeaderContext.Provider>;
 };

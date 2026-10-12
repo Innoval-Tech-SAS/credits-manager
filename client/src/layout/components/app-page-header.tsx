@@ -4,25 +4,29 @@ import { Link, useLocation } from 'react-router';
 import { ChevronRight, Home } from 'lucide-react';
 import { usePageHeader } from '@ui/breadcrumb/hooks/use-page-header';
 import { GoBackButton } from '@ui/go-back/components/go-back-button';
+import { SkeletonBar } from '@ui/skeleton/components/skeleton-bar';
 import { Tooltip } from '@ui/tooltip/components/tooltip';
 import { findNavBreadcrumb } from '../utils/find-nav-breadcrumb';
 
-/** Desde `md` la ruta de migas muestra icono y nombre; en móvil y tablet solo el icono, con el nombre en el tooltip, para que nunca se parta. */
+/**
+ * Encabezado fijo de cada página (no se va con el scroll del contenido). Mientras la página no registra su título
+ * (su código aún se está descargando) muestra un esqueleto en su lugar, para que el encabezado no salte al llegar.
+ * Desde `md` la ruta de migas muestra icono y nombre; en móvil y tablet solo el icono, con el nombre en el tooltip.
+ */
 export const AppPageHeader: FC = () => {
-    const { title, hideTitle } = usePageHeader();
+    const { title } = usePageHeader();
     const location = useLocation();
-
-    if (!title) {
-        return null;
-    }
-
     const trail = findNavBreadcrumb(location.pathname);
 
     return (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex min-w-0 items-center gap-2">
                 <GoBackButton />
-                {!hideTitle && <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">{title}</h2>}
+                {title ? (
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">{title}</h2>
+                ) : (
+                    <SkeletonBar className="h-7 w-48" />
+                )}
             </div>
             <nav aria-label="Ruta de navegación">
                 <ol className="flex items-center gap-1.5">

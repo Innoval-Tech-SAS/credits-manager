@@ -5,20 +5,16 @@ import { usePageHeader } from '../hooks/use-page-header';
 import type { PageBreadcrumbProps } from '../props/page-breadcrumb-props';
 
 /**
- * Registra el título de la página en el layout (donde se renderiza junto al botón Volver)
- * en vez de dibujarlo aquí mismo — así cada página conserva su título dinámico sin duplicar el header.
+ * Registra el título de la página en el encabezado fijo del layout (junto al botón Volver y la ruta de migas)
+ * en vez de dibujarlo aquí mismo: así cada página conserva su título dinámico y el encabezado no se va con el scroll.
  */
-export const PageBreadcrumb: FC<PageBreadcrumbProps> = ({ pageTitle, hideTitle = false }) => {
-    const { setTitle, setHideTitle } = usePageHeader();
+export const PageBreadcrumb: FC<PageBreadcrumbProps> = ({ pageTitle }) => {
+    const { setTitle } = usePageHeader();
 
     useLayoutEffect(() => {
         setTitle(pageTitle);
-        setHideTitle(hideTitle);
-        return () => {
-            setTitle('');
-            setHideTitle(false);
-        };
-    }, [pageTitle, hideTitle, setTitle, setHideTitle]);
+        return () => setTitle('');
+    }, [pageTitle, setTitle]);
 
     return null;
 };
