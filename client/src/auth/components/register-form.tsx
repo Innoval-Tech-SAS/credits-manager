@@ -42,11 +42,13 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
     const [roleId, setRoleId] = useState<number | null>(initialData?.rol?.id ?? null);
     const [overrides, setOverrides] = useState<Record<number, boolean>>({});
     const [active, setActive] = useState(initialData?.activo ?? true);
-    const [isGlobal, setIsGlobal] = useState(initialData?.es_global ?? false);
+    const [isGlobal, setIsGlobal] = useState(initialData?.es_asesor_global ?? false);
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const hasInitializedOverrides = useRef(false);
+    const isAdvisorRole = roles.find((rol) => rol.id === roleId)?.nombre === 'asesor';
+    const isAdvisorGlobal = isAdvisorRole && isGlobal;
 
     useEffect(() => {
         if (hasInitializedOverrides.current || roles.length === 0 || permisos.length === 0) {
@@ -112,7 +114,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
             if (isEditMode) {
                 await sendRequest(`/usuarios/${userId}`, {
                     method: 'PATCH',
-                    body: { nombre: name, usuario: username, rol_id: roleId, activo: active, es_global: isGlobal, permisos_extra: permisosExtra },
+                    body: { nombre: name, usuario: username, rol_id: roleId, activo: active, es_asesor_global: isAdvisorGlobal, permisos_extra: permisosExtra },
                 });
             } else {
                 await sendRequest('/usuarios', {
@@ -123,7 +125,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                         clave: password,
                         rol_id: roleId,
                         activo: active,
-                        es_global: isGlobal,
+                        es_asesor_global: isAdvisorGlobal,
                         permisos_extra: permisosExtra,
                     },
                 });
@@ -239,7 +241,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                                 </p>
                             </div>
 
-                            {roles.find((rol) => rol.id === roleId)?.nombre === 'asesor' && (
+                            {isAdvisorRole && (
                                 <div>
                                     <Label>Alcance</Label>
                                     <div className="flex h-11 items-center">

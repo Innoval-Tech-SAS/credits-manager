@@ -59,4 +59,32 @@ class RolServiceTest extends TestCase
 
         app(RolService::class)->editar($admin, ['nombre' => 'superadmin']);
     }
+
+    public function test_no_permite_eliminar_el_rol_asesor(): void
+    {
+        $asesor = Rol::create(['empresa_id' => $this->crearEmpresaDePrueba()->id, 'nombre' => UsuarioConstants::ROL_ASESOR]);
+
+        $this->expectException(ValidationException::class);
+
+        app(RolService::class)->eliminar($asesor);
+    }
+
+    public function test_no_permite_renombrar_el_rol_asesor(): void
+    {
+        $asesor = Rol::create(['empresa_id' => $this->crearEmpresaDePrueba()->id, 'nombre' => UsuarioConstants::ROL_ASESOR]);
+
+        $this->expectException(ValidationException::class);
+
+        app(RolService::class)->editar($asesor, ['nombre' => 'vendedor']);
+    }
+
+    public function test_permite_editar_la_descripcion_del_rol_asesor(): void
+    {
+        $this->actingAsAdmin();
+        $asesor = Rol::create(['nombre' => UsuarioConstants::ROL_ASESOR]);
+
+        $rol = app(RolService::class)->editar($asesor, ['nombre' => UsuarioConstants::ROL_ASESOR, 'descripcion' => 'Atiende clientes']);
+
+        $this->assertSame('Atiende clientes', $rol->descripcion);
+    }
 }

@@ -124,7 +124,7 @@ class ReintentarEnvioFacturacionTest extends TestCase
         $admin = $this->actingAsAdmin();
         ['factura' => $factura, 'envio' => $envio] = $this->facturaConEnvioFallido();
 
-        $this->actingAsAsesor(Empresa::findOrFail($admin->empresa_id))->update(['es_global' => true]);
+        $this->actingAsAsesor(Empresa::findOrFail($admin->empresa_id))->update(['es_asesor_global' => true]);
 
         $this->postJson(self::BASE."/documentos/{$factura['id']}/envios/{$envio->id}/reintentar")->assertForbidden();
     }

@@ -13,14 +13,16 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-#[Fillable(['empresa_id', 'nombre', 'usuario', 'password_hash', 'rol_id', 'activo', 'es_global', 'es_superadmin'])]
-#[Hidden(['password_hash'])]
+#[Fillable(['empresa_id', 'nombre', 'usuario', 'password_hash', 'rol_id', 'activo', 'es_asesor_global'])]
+#[Hidden(['password_hash', 'clave_superadmin'])]
 class Usuario extends BaseModel implements AuthenticatableContract
 {
     use Authenticatable;
     use PerteneceAEmpresa;
 
     protected $table = 'usuarios';
+
+    protected $appends = ['es_superadmin'];
 
     public function getAuthPasswordName(): string
     {
@@ -52,10 +54,20 @@ class Usuario extends BaseModel implements AuthenticatableContract
             ->withPivot(['concedido']);
     }
 
-    /** Solo el rol asesor sin `es_global` queda limitado a sus clientes asignados; los demás roles ven toda su empresa. */
+    /**
+     * Lo da el rol, no una columna. Un usuario de empresa no carga el rol para responder: así un listado de usuarios
+     * no hace una consulta por fila. La base garantiza que sin empresa ⇔ rol Super Admin (triggers de `usuarios`).
+     * El rol se carga con el scope de la sesión: se evalúa sin sesión (login) o con la del propio Super Admin.
+     */
+    protected function esSuperadmin(): Attribute
+    {
+        return Attribute::get(fn (): bool => $this->empresa_id === null && $this->rol?->nombre === UsuarioConstants::ROL_SUPERADMIN);
+    }
+
+    /** Solo el rol asesor sin `es_asesor_global` queda limitado a sus clientes asignados; los demás roles ven toda su empresa. */
     public function restringidoAClientesPropios(): bool
     {
-        return $this->rol?->nombre === UsuarioConstants::ROL_ASESOR && ! $this->es_global;
+        return $this->rol?->nombre === UsuarioConstants::ROL_ASESOR && ! $this->es_asesor_global;
     }
 
     /** Id del asesor cuyo alcance limita los datos, o null si el usuario ve toda su empresa. */
@@ -90,8 +102,7 @@ class Usuario extends BaseModel implements AuthenticatableContract
         return [
             'password_hash' => 'hashed',
             'activo' => 'boolean',
-            'es_global' => 'boolean',
-            'es_superadmin' => 'boolean',
+            'es_asesor_global' => 'boolean',
         ];
     }
 }

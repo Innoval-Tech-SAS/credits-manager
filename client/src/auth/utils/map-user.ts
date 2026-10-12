@@ -25,7 +25,7 @@ export function mapUser(apiUser: ApiUser): User {
         id: apiUser.id,
         name: apiUser.nombre,
         username: apiUser.usuario,
-        role: apiUser.rol?.nombre ?? (apiUser.es_superadmin ? 'Super Admin' : ''),
+        role: apiUser.es_superadmin ? 'Super Admin' : (apiUser.rol?.nombre ?? ''),
         permissions: buildEffectivePermissions(apiUser),
         isSuperAdmin: apiUser.es_superadmin,
     };

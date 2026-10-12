@@ -178,7 +178,7 @@ class AlcancePorAsesorTest extends TestCase
 
     public function test_con_alcance_global_el_asesor_ve_todos_los_clientes_y_creditos(): void
     {
-        $this->asesorA->update(['es_global' => true]);
+        $this->asesorA->update(['es_asesor_global' => true]);
 
         $this->assertCount(2, $this->getJson('/api/v1/clientes')->json('data'));
         $this->assertCount(2, $this->getJson('/api/v1/creditos')->json('data'));
@@ -203,7 +203,7 @@ class AlcancePorAsesorTest extends TestCase
     public function test_otra_empresa_no_ve_clientes_de_esta_aunque_tenga_el_mismo_asesor_global(): void
     {
         $otro = $this->actingAsRolConPermisos('asesor', self::PERMISOS);
-        $otro->update(['es_global' => true]);
+        $otro->update(['es_asesor_global' => true]);
 
         $this->assertSame([], $this->getJson('/api/v1/clientes')->json('data'));
         $this->getJson("/api/v1/clientes/{$this->clienteA->id}")->assertStatus(404);

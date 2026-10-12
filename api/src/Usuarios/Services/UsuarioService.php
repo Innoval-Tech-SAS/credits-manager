@@ -45,7 +45,7 @@ class UsuarioService
                 'password_hash' => $datos['clave'],
                 'rol_id' => $datos['rol_id'],
                 'activo' => $datos['activo'],
-                'es_global' => $datos['es_global'] ?? false,
+                'es_asesor_global' => $datos['es_asesor_global'] ?? false,
             ]);
 
             $this->usuarios->sincronizarPermisosExtra($usuario, $this->mapaPermisosExtra($datos));
@@ -69,7 +69,7 @@ class UsuarioService
                 'usuario' => $datos['usuario'],
                 'rol_id' => $datos['rol_id'],
                 'activo' => $datos['activo'],
-                ...(array_key_exists('es_global', $datos) ? ['es_global' => $datos['es_global']] : []),
+                ...$this->alcanceAsesorAlEditar($datos),
             ]);
 
             $this->usuarios->sincronizarPermisosExtra($usuario, $this->mapaPermisosExtra($datos));
@@ -91,6 +91,16 @@ class UsuarioService
 
             return $usuario;
         });
+    }
+
+    /** Un asesor que cambia a otro rol pierde el alcance global aunque el formulario no lo envíe (la base lo exige). */
+    private function alcanceAsesorAlEditar(array $datos): array
+    {
+        if (! $this->roles->esRolAsesor($datos['rol_id'])) {
+            return ['es_asesor_global' => false];
+        }
+
+        return array_key_exists('es_asesor_global', $datos) ? ['es_asesor_global' => $datos['es_asesor_global']] : [];
     }
 
     private function mapaPermisosExtra(array $datos): array

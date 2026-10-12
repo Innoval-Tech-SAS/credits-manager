@@ -135,10 +135,7 @@ class AuthAuditoriaTest extends TestCase
 
     public function test_el_fallo_del_superadmin_no_pertenece_a_ninguna_empresa(): void
     {
-        Usuario::create([
-            'nombre' => 'Super', 'usuario' => 'super_fallo_test', 'password_hash' => 'Clave123!',
-            'activo' => true, 'es_superadmin' => true,
-        ]);
+        $this->crearSuperAdmin(['nombre' => 'Super', 'usuario' => 'super_fallo_test', 'password_hash' => 'Clave123!']);
 
         $this->intentarLogin('super_fallo_test', 'ClaveErrada#99')->assertStatus(422);
 
@@ -226,10 +223,7 @@ class AuthAuditoriaTest extends TestCase
 
     public function test_el_login_del_superadmin_no_pertenece_a_ninguna_empresa(): void
     {
-        Usuario::create([
-            'nombre' => 'Super', 'usuario' => 'super_login_test', 'password_hash' => 'Clave123!',
-            'activo' => true, 'es_superadmin' => true,
-        ]);
+        $this->crearSuperAdmin(['nombre' => 'Super', 'usuario' => 'super_login_test', 'password_hash' => 'Clave123!']);
 
         $this->withHeader('Referer', $this->referer())
             ->postJson('/api/v1/login', ['usuario' => 'super_login_test', 'clave' => 'Clave123!'])
