@@ -259,7 +259,6 @@ return [
             'periodo_cerrado' => 'El período del comprobante original está cerrado; solicite reapertura autorizada.',
             'no_borrador' => 'Solo se puede revisar un comprobante en borrador.',
             'no_revisado' => 'Solo se puede contabilizar un comprobante revisado.',
-            'revision_propia' => 'No puedes revisar un comprobante que tú creaste: la revisión la hace otro usuario.',
             'descuadrado_al_contabilizar' => 'El comprobante no cuadra entre sus líneas y sus totales; no se puede contabilizar.',
             'cuenta_no_apta_para_documento_cruce' => 'La cuenta :cuenta exige tercero y documento cruce, pero no es una cuenta de activo ni de pasivo: no se puede usar para causar ni cruzar un documento.',
             'documento_cruce_duplicado' => 'Ya existe un documento con el número :documento para este tercero; usa un número distinto o verifica si la línea debería cruzarlo en vez de crearlo.',

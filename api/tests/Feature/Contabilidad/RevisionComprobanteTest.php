@@ -14,7 +14,7 @@ use Tests\Concerns\CreatesAuditoriaFixtures;
 use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\TestCase;
 
-/** Flujo de asientos manuales: borrador → revisado → contabilizado, con segregación entre quien crea y quien revisa. */
+/** Flujo de asientos manuales: borrador → revisado → contabilizado. */
 class RevisionComprobanteTest extends TestCase
 {
     use ActsAsAdmin;
@@ -41,9 +41,9 @@ class RevisionComprobanteTest extends TestCase
         return $this->postJson(self::BASE, $payload)->assertCreated()->json('comprobante.id');
     }
 
-    private function creador(Empresa $empresa): void
+    private function creador(Empresa $empresa): Usuario
     {
-        $this->actingAsRolConPermisos('creador', ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar', 'contabilidad.anular'], $empresa);
+        return $this->actingAsRolConPermisos('creador', ['contabilidad.crear_manual', 'contabilidad.revisar', 'contabilidad.contabilizar', 'contabilidad.listar', 'contabilidad.anular'], $empresa);
     }
 
     private function revisor(Empresa $empresa): Usuario
@@ -68,17 +68,17 @@ class RevisionComprobanteTest extends TestCase
         $this->assertDatabaseHas('comprobantes', ['id' => $id, 'estado' => 'borrador']);
     }
 
-    public function test_quien_creo_el_asiento_no_puede_revisarlo(): void
+    public function test_quien_creo_el_asiento_tambien_puede_revisarlo(): void
     {
         $empresa = $this->crearEmpresaDePrueba();
-        $this->creador($empresa);
+        $admin = $this->creador($empresa);
         $id = $this->crearBorrador();
 
         $this->postJson(self::BASE."/{$id}/revisar")
-            ->assertStatus(422)
-            ->assertJsonValidationErrors('comprobante');
+            ->assertOk()
+            ->assertJsonPath('comprobante.estado', 'revisado');
 
-        $this->assertDatabaseHas('comprobantes', ['id' => $id, 'estado' => 'borrador', 'revisado_por' => null]);
+        $this->assertDatabaseHas('comprobantes', ['id' => $id, 'estado' => 'revisado', 'revisado_por' => $admin->id]);
     }
 
     public function test_otro_usuario_revisa_el_borrador_y_queda_registrado(): void
