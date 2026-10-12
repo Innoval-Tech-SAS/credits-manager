@@ -38,10 +38,12 @@ class MigracionPermisosPorPantallaTest extends TestCase
     /** @var array<string, Rol> */
     private array $roles = [];
 
+    /** Parte del estado previo: los genéricos vigentes (sin el retiro posterior) y sin los permisos por pantalla. */
     protected function setUp(): void
     {
         parent::setUp();
 
+        (require database_path('migrations/2026_10_12_120000_retirar_permisos_genericos_sin_uso.php'))->down();
         $this->migracion()->down();
     }
 

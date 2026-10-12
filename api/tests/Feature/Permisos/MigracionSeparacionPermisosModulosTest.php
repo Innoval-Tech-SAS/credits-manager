@@ -42,6 +42,14 @@ class MigracionSeparacionPermisosModulosTest extends TestCase
     /** @var array<string, Rol> */
     private array $roles = [];
 
+    /** Parte del estado previo al retiro de los permisos genéricos, que esta migración todavía usa como origen. */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        (require database_path('migrations/2026_10_12_120000_retirar_permisos_genericos_sin_uso.php'))->down();
+    }
+
     private function migracion(): object
     {
         return require database_path(self::MIGRACION);
