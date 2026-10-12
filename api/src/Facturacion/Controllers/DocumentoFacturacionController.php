@@ -82,6 +82,8 @@ class DocumentoFacturacionController extends Controller
 
     public function emitir(Request $peticion, DocumentoFacturacion $documento): JsonResponse
     {
+        $this->acceso->exigirVer($peticion->user(), $documento);
+
         $emitido = $this->documentos->emitirFactura($documento, $peticion->user());
 
         return response()->json($this->documentos->detalle($emitido));
