@@ -10,8 +10,10 @@ use App\Exportacion\Enums\EstadoExportacion;
 use App\Exportacion\Enums\FormatoExportacion;
 use App\Exportacion\Enums\TipoColumna;
 use App\Exportacion\Models\Exportacion;
+use App\Exportacion\Services\AccesoExportaciones;
 use App\Exportacion\Services\ExportacionService;
 use App\Notificaciones\Events\NotificacionCreada;
+use App\Usuarios\Models\Permiso;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,6 +37,16 @@ class ExportacionesDelUsuarioTest extends TestCase
         parent::setUp();
 
         Storage::fake(ExportacionConstants::DISCO);
+        $this->registrarReporteDePruebas();
+    }
+
+    /** La fuente falsa (`pruebas.reporte`) se autoriza, como cualquier reporte, por su entrada en el mapa de permisos. */
+    private function registrarReporteDePruebas(): void
+    {
+        $this->app->instance(AccesoExportaciones::class, new AccesoExportaciones([
+            ...ExportacionConstants::PERMISOS_POR_REPORTE,
+            'pruebas.reporte' => ['pruebas.exportar'],
+        ]));
     }
 
     private function fuente(bool $falla = false): FuenteExportableFalsa
@@ -121,6 +133,39 @@ class ExportacionesDelUsuarioTest extends TestCase
         $this->actingAsAsesor(Empresa::find($admin->empresa_id));
 
         $this->getJson("/api/v1/exportaciones/{$exportacion->id}/descargar")->assertStatus(404);
+    }
+
+    public function test_quien_perdio_el_permiso_del_reporte_ya_no_descarga_lo_que_habia_pedido(): void
+    {
+        $usuario = $this->actingAsRolConPermisos('exportador', ['pruebas.exportar']);
+        $exportacion = $this->exportacionCompleta();
+        $this->get("/api/v1/exportaciones/{$exportacion->id}/descargar")->assertOk();
+
+        $usuario->rol->permisos()->detach(Permiso::query()->where(['modulo' => 'pruebas', 'accion' => 'exportar'])->value('id'));
+        $this->redis->streams = [];
+
+        $this->getJson("/api/v1/exportaciones/{$exportacion->id}/descargar")->assertForbidden();
+        $this->assertSame([], $this->redis->payloads(AuditoriaConstants::STREAM), 'Una descarga rechazada no se audita.');
+    }
+
+    public function test_un_permiso_de_otro_reporte_no_basta_para_descargar(): void
+    {
+        $usuario = $this->actingAsRolConPermisos('exportador', ['pruebas.exportar']);
+        $exportacion = $this->exportacionCompleta();
+
+        $usuario->rol->permisos()->sync([Permiso::query()->where(['modulo' => 'clientes', 'accion' => 'exportar_listado'])->value('id')]);
+
+        $this->getJson("/api/v1/exportaciones/{$exportacion->id}/descargar")->assertForbidden();
+    }
+
+    public function test_un_reporte_sin_permiso_declarado_no_se_descarga_ni_siendo_admin(): void
+    {
+        $this->actingAsAdmin();
+        $exportacion = $this->exportacionCompleta();
+
+        $this->app->instance(AccesoExportaciones::class, new AccesoExportaciones);
+
+        $this->getJson("/api/v1/exportaciones/{$exportacion->id}/descargar")->assertForbidden();
     }
 
     public function test_un_usuario_de_otra_empresa_recibe_404_al_descargar(): void

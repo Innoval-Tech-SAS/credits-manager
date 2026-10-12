@@ -6,9 +6,9 @@ use App\Auditoria\Constants\AuditoriaConstants;
 use App\Usuarios\Models\Usuario;
 
 /**
- * Regla de acceso a la bitácora (listar y exportar): superadmin, administrador de empresa o
- * permiso explícito `auditoria.<accion>`. El acceso del admin y del superadmin NO depende de que
- * el permiso esté asignado. Se vuelve a comprobar en el servicio además del middleware de ruta.
+ * Regla de acceso a la bitácora: superadmin, administrador de empresa o permiso explícito `auditoria.<accion>`. El
+ * acceso del admin y del superadmin NO depende de que el permiso esté asignado. Se vuelve a comprobar en el servicio
+ * además del middleware de ruta. Exportarla sigue la regla común de exportaciones (`AccesoExportaciones`).
  */
 class AccesoAuditoria
 {

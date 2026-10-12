@@ -50,7 +50,7 @@ export const ExpensesListPage: FC = () => {
                     </div>
 
                     <PermissionExportButton
-                        modulo="gastos"
+                        permiso="gastos.exportar_gastos"
                         endpoint="/gastos/exportar"
                         filters={{ search }}
                         onRequested={() => {

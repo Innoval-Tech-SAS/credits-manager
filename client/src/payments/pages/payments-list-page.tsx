@@ -99,7 +99,7 @@ export const PaymentsListPage: FC = () => {
                         </div>
 
                         <PermissionExportButton
-                            modulo="pagos"
+                            permiso="pagos.exportar_listado"
                             endpoint="/pagos/exportar"
                             filters={{ search, mes }}
                             onRequested={() => {

@@ -146,7 +146,7 @@ class ExportarPagosTest extends TestCase
         $admin = $this->actingAsAdmin();
         $this->pagoDe('Pago del admin', 100);
 
-        $this->actingAsRolConPermisos('asesor', ['pagos.exportar'], Empresa::find($admin->empresa_id));
+        $this->actingAsRolConPermisos('asesor', ['pagos.exportar_listado'], Empresa::find($admin->empresa_id));
         $this->pagoDe('Pago del asesor', 200);
 
         $respuesta = $this->postJson(self::EXPORTAR, ['formato' => 'xlsx'])->assertStatus(202);

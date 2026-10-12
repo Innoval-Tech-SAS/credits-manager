@@ -38,7 +38,7 @@ final class FuenteCartera implements FuenteExportable
     public function filas(): iterable { /* lazy()/cursor(), NUNCA get(): yield ['cliente' => ..., 'saldo' => $dinero, ...] */ }
     public function totalFilas(): int { /* misma consulta que el listado */ }
     public function filtrosAplicados(): array { return $this->filtros->aArray(); }
-    public function autorizadoPara(Usuario $usuario): bool { return $usuario->tienePermiso('cartera', 'exportar'); }
+    public function autorizadoPara(Usuario $usuario): bool { return app(AccesoExportaciones::class)->puede($usuario, $this->reporte()); }
 }
 ```
 
@@ -49,10 +49,14 @@ Reglas de la fuente:
 - **Foto consistente**: captura un `id` de corte al solicitar (`hastaId`) para que lo que llegue mientras el job espera no entre al archivo.
 - **Valores**: monetarios como `Dinero` o cadena decimal; fechas como `DateTimeInterface`/string; los escritores convierten (montos → celdas numéricas con formato, fechas en America/Bogota, texto neutralizado contra inyección de fórmulas).
 
-**2. Una ruta y un método de servicio** (permiso `<modulo>.exportar`):
+**2. Su permiso, una ruta y un método de servicio.** Cada reporte tiene su permiso propio dentro de su módulo
+(`cartera.exportar_listado`), declarado una sola vez en `ExportacionConstants::PERMISOS_POR_REPORTE` (clave del reporte
+=> permisos que lo autorizan). Ese mapa lo leen la ruta (middleware `exportacion:<clave>`), `autorizadoPara` y la
+descarga (`AccesoExportaciones`): quien pierde el permiso tampoco descarga lo que ya había pedido. Un reporte que no
+esté en el mapa no se autoriza a nadie. El permiso nuevo va además en `PermisoSeeder::CATALOGO` y en su migración.
 
 ```php
-Route::post('/cartera/exportar', [CarteraController::class, 'exportar'])->middleware('permiso:cartera,exportar');
+Route::post('/cartera/exportar', [CarteraController::class, 'exportar'])->middleware('exportacion:cartera.listado');
 // Service:  return $this->exportaciones->solicitar(new FuenteCartera(...), FormatoExportacion::from($validados['formato']), $usuario);
 // Controller: return response()->json(['exportacion' => $exportacion], 202);
 ```

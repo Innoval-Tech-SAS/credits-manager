@@ -16,7 +16,7 @@ const mesActual = () => new Date().toISOString().slice(0, 7);
 
 /** Gastos causados por mes y centro de costo. Los anulados no entran; los anteriores a la obligatoriedad salen sin centro. */
 export const ExpenseCostCenterReportPage: FC = () => {
-    const canExport = usePermission('gastos', 'exportar');
+    const canExport = usePermission('gastos', 'exportar_gastos_centro_costo');
     const [desde, setDesde] = useState(() => `${new Date().getFullYear()}-01`);
     const [hasta, setHasta] = useState(mesActual);
     const [exportMessage, setExportMessage] = useState<string | null>(null);

@@ -1,6 +1,6 @@
 export type PermissionExportButtonProps = {
-    /** Módulo cuyo permiso `exportar` habilita el botón (p. ej. `cartera`, `creditos`). */
-    modulo: string;
+    /** Permiso "modulo.accion" de esta exportación (p. ej. `cartera.exportar_listado`): el mismo que exige su ruta. */
+    permiso: string;
     /** Ruta `POST` de la exportación (p. ej. `/cartera/exportar`). */
     endpoint: string;
     /** Filtros vigentes en pantalla: el archivo sale con los mismos que ve el usuario. */

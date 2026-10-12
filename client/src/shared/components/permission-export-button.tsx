@@ -4,9 +4,10 @@ import { usePermission } from '../../auth/hooks/use-permission';
 import { ExportButton } from './export-button';
 import type { PermissionExportButtonProps } from '../props/permission-export-button-props';
 
-/** Botón de exportación que solo aparece con el permiso `exportar` del módulo. Cada pantalla muestra su resultado. */
-export const PermissionExportButton: FC<PermissionExportButtonProps> = ({ modulo, endpoint, filters, disabled = false, onRequested, onError }) => {
-    const canExport = usePermission(modulo, 'exportar');
+/** Botón de exportación que solo aparece con el permiso propio de esa exportación. Cada pantalla muestra su resultado. */
+export const PermissionExportButton: FC<PermissionExportButtonProps> = ({ permiso, endpoint, filters, disabled = false, onRequested, onError }) => {
+    const [modulo, accion] = permiso.split('.');
+    const canExport = usePermission(modulo, accion);
 
     if (!canExport) {
         return null;

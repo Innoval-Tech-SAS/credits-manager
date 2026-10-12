@@ -2,6 +2,7 @@
 
 namespace App\Contabilidad\Services;
 
+use App\Contabilidad\Constants\ContabilidadConstants;
 use App\Contabilidad\Enums\NaturalezaCuenta;
 use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Exportaciones\FuenteBalancePrueba;
@@ -141,9 +142,13 @@ class ReporteContableService
         return $this->exportaciones->solicitar(new FuenteLibroDiario((int) $usuario->empresa_id, $desde, $hasta), $formato, $usuario);
     }
 
+    /** Una cuenta de caja y bancos (clase 11) se exporta como `contabilidad.caja_bancos`: la autoriza también ese permiso. */
     public function solicitarExportacionLibroMayor(Usuario $usuario, int $cuentaId, string $desde, string $hasta, FormatoExportacion $formato): Exportacion
     {
-        return $this->exportaciones->solicitar(new FuenteLibroMayor((int) $usuario->empresa_id, $cuentaId, $desde, $hasta), $formato, $usuario);
+        $cuenta = $this->cuentas->buscarDeEmpresaOFallar((int) $usuario->empresa_id, $cuentaId);
+        $esCajaBancos = str_starts_with($cuenta->codigo, ContabilidadConstants::PREFIJO_CUENTAS_CAJA_BANCOS);
+
+        return $this->exportaciones->solicitar(new FuenteLibroMayor((int) $usuario->empresa_id, $cuentaId, $desde, $hasta, $esCajaBancos), $formato, $usuario);
     }
 
     public function solicitarExportacionBalancePrueba(Usuario $usuario, string $hasta, FormatoExportacion $formato): Exportacion

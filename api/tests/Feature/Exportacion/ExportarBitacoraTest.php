@@ -99,7 +99,7 @@ class ExportarBitacoraTest extends TestCase
 
     public function test_el_permiso_exportar_basta_para_exportar(): void
     {
-        $this->actingAsRolConPermisos('auditoria', ['auditoria.exportar']);
+        $this->actingAsRolConPermisos('auditoria', ['auditoria.exportar_bitacora']);
 
         $this->postJson(self::URL, ['formato' => 'csv'])->assertStatus(202);
     }

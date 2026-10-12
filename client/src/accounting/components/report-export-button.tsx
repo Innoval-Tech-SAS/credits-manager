@@ -1,17 +1,20 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 
+import { useAuth } from '../../auth/hooks/use-auth';
 import { usePermission } from '../../auth/hooks/use-permission';
+import { hasAnyPermission } from '../../auth/utils/has-any-permission';
 import { ExportButton } from '../../shared/components/export-button';
 import { Alert } from '@ui/alert/components/alert';
 import type { ReportExportButtonProps } from '../props/report-export-button-props';
 
 /**
- * Exportación de un reporte contable. Excel y CSV requieren `informes_contables.exportar`; el PDF, `informes_contables.imprimir`.
- * Sin ninguno de los dos no se muestra el botón.
+ * Exportación de un reporte contable. Excel y CSV requieren el permiso de exportar de ese informe
+ * (`informes_contables.exportar_<informe>`); el PDF, `informes_contables.imprimir`. Sin ninguno no se muestra el botón.
  */
-export const ReportExportButton: FC<ReportExportButtonProps> = ({ endpoint, pdfEndpoint, pdfFilename, filters, disabled = false }) => {
-    const canExport = usePermission('informes_contables', 'exportar');
+export const ReportExportButton: FC<ReportExportButtonProps> = ({ endpoint, exportPermissions, pdfEndpoint, pdfFilename, filters, disabled = false }) => {
+    const { user } = useAuth();
+    const canExport = hasAnyPermission(user, exportPermissions);
     const canPrint = usePermission('informes_contables', 'imprimir');
     const [message, setMessage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);

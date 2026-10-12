@@ -33,10 +33,9 @@ class BitacoraAuditoriaService
         );
     }
 
+    /** El permiso (`auditoria.exportar_bitacora` o superadmin) lo exige `ExportacionService::solicitar` vía la fuente. */
     public function solicitarExportacion(Usuario $usuario, array $validados): Exportacion
     {
-        $this->acceso->exigir($usuario, 'exportar');
-
         $fuente = new FuenteBitacoraAuditoria(Visibilidad::desdeUsuario($usuario), $this->filtros($usuario, $validados), $this->bitacora->ultimoId());
 
         return $this->exportaciones->solicitar($fuente, FormatoExportacion::from($validados['formato']), $usuario);

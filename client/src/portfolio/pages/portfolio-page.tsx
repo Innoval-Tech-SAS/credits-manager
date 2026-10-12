@@ -44,7 +44,7 @@ export const PortfolioPage: FC = () => {
             <div className="flex flex-col gap-4">
                 <div className="flex justify-end">
                     <PermissionExportButton
-                        modulo="cartera"
+                        permiso="cartera.exportar_listado"
                         endpoint="/cartera/exportar"
                         filters={{}}
                         onRequested={() => {

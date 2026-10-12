@@ -47,6 +47,7 @@ class MigracionSeparacionPermisosModulosTest extends TestCase
     {
         parent::setUp();
 
+        (require database_path('migrations/2026_10_12_140000_separar_permisos_exportacion_por_reporte.php'))->down();
         (require database_path('migrations/2026_10_12_120000_retirar_permisos_genericos_sin_uso.php'))->down();
     }
 

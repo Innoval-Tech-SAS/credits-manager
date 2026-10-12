@@ -26,6 +26,11 @@ export const LedgerPage: FC<LedgerPageProps> = ({ modo = 'mayor' }) => {
     );
 
     const [cuentaId, setCuentaId] = useState('');
+    // Una cuenta de caja y bancos se exporta también con `exportar_caja_bancos` (mismo criterio que el backend).
+    const esCajaBancos = modo === 'cajaBancos' || (cuentas.find((cuenta) => String(cuenta.id) === cuentaId)?.codigo.startsWith('11') ?? false);
+    const exportPermissions = esCajaBancos
+        ? ['informes_contables.exportar_libro_mayor', 'informes_contables.exportar_caja_bancos']
+        : ['informes_contables.exportar_libro_mayor'];
     const [desde, setDesde] = useState(primerDiaDelAnio());
     const [hasta, setHasta] = useState(() => new Date().toISOString().slice(0, 10));
 
@@ -72,6 +77,7 @@ export const LedgerPage: FC<LedgerPageProps> = ({ modo = 'mayor' }) => {
                 <div className="mt-6">
                     <ReportExportButton
                         endpoint="/contabilidad/libro-mayor/exportar"
+                        exportPermissions={exportPermissions}
                         pdfEndpoint="/contabilidad/libro-mayor/pdf"
                         pdfFilename="libro-mayor.pdf"
                         filters={{ cuenta_id: cuentaId, desde, hasta }}

@@ -100,6 +100,7 @@ export const AuxiliariesPage: FC = () => {
                 <div className="mt-6">
                     <ReportExportButton
                         endpoint="/contabilidad/auxiliares/exportar"
+                        exportPermissions={['informes_contables.exportar_auxiliares']}
                         pdfEndpoint="/contabilidad/auxiliares/pdf"
                         pdfFilename="auxiliar.pdf"
                         filters={filtros}

@@ -7,10 +7,10 @@ use App\Auditoria\Data\FiltrosBitacora;
 use App\Auditoria\Data\Visibilidad;
 use App\Auditoria\Models\BitacoraAuditoria;
 use App\Auditoria\Repositories\BitacoraAuditoriaRepository;
-use App\Auditoria\Services\AccesoAuditoria;
 use App\Exportacion\Contracts\FuenteExportable;
 use App\Exportacion\Data\ColumnaExportable;
 use App\Exportacion\Enums\TipoColumna;
+use App\Exportacion\Services\AccesoExportaciones;
 use App\Usuarios\Models\Usuario;
 
 /**
@@ -106,7 +106,7 @@ final class FuenteBitacoraAuditoria implements FuenteExportable
 
     public function autorizadoPara(Usuario $usuario): bool
     {
-        return app(AccesoAuditoria::class)->puede($usuario, 'exportar');
+        return app(AccesoExportaciones::class)->puede($usuario, $this->reporte());
     }
 
     private function repositorio(): BitacoraAuditoriaRepository

@@ -21,6 +21,14 @@ class PermisosRevisionMigracionTest extends TestCase
 
     private const MIGRACION = 'database/migrations/2026_10_07_100200_agregar_permisos_revision_y_pdf_contables.php';
 
+    /** Parte del estado previo a la separación por reporte: `informes_contables.exportar` vigente, como cuando corrió. */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        (require database_path('migrations/2026_10_12_140000_separar_permisos_exportacion_por_reporte.php'))->down();
+    }
+
     private function migracion(): object
     {
         return require base_path(self::MIGRACION);

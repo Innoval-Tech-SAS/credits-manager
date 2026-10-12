@@ -102,7 +102,7 @@ class ExportarEstadoCuentaTest extends TestCase
         $admin = $this->actingAsAdmin();
         $credito = $this->crearCredito($this->crearCliente(['nombre' => 'Cliente del admin']));
 
-        $this->actingAsRolConPermisos('asesor', ['creditos.exportar'], Empresa::find($admin->empresa_id));
+        $this->actingAsRolConPermisos('asesor', ['creditos.exportar_estado_cuenta'], Empresa::find($admin->empresa_id));
 
         $this->postJson($this->ruta($credito->id), ['formato' => 'xlsx'])->assertStatus(404);
 

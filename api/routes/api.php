@@ -93,7 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/geografia/municipios/{municipio}', [MunicipioController::class, 'update'])->middleware('superadmin');
 
     Route::get('/auditoria/bitacora', [BitacoraAuditoriaController::class, 'index'])->middleware('permiso_o_superadmin:auditoria,listar');
-    Route::post('/auditoria/bitacora/exportar', [BitacoraAuditoriaController::class, 'exportar'])->middleware('permiso_o_superadmin:auditoria,exportar');
+    Route::post('/auditoria/bitacora/exportar', [BitacoraAuditoriaController::class, 'exportar'])->middleware('exportacion:auditoria.bitacora');
     Route::get('/auditoria/respaldo', [RecuperacionAuditoriaController::class, 'index'])->middleware('superadmin');
     Route::post('/auditoria/respaldo/recuperar', [RecuperacionAuditoriaController::class, 'recuperar'])->middleware('superadmin');
 
@@ -122,7 +122,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/permisos', [PermisoController::class, 'index'])->middleware('permiso:usuarios,listar');
 
     Route::get('/clientes', [ClienteController::class, 'index'])->middleware('permiso:clientes,listar');
-    Route::post('/clientes/exportar', [ClienteController::class, 'exportar'])->middleware('permiso:clientes,exportar');
+    Route::post('/clientes/exportar', [ClienteController::class, 'exportar'])->middleware('exportacion:clientes.listado');
     Route::post('/clientes', [ClienteController::class, 'store'])->middleware('permiso:clientes,crear');
     // Catálogo de consulta: lo usan el alta de clientes, la reasignación de asesor y la distribución de metas.
     Route::get('/clientes/asesores-asignables', [ClienteController::class, 'asesoresAsignables'])->middleware('algun_permiso:clientes.crear,clientes.reasignar_asesor,metas.configurar');
@@ -143,12 +143,12 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/creditos', [CreditoController::class, 'index'])->middleware('permiso:creditos,listar');
     Route::post('/creditos', [CreditoController::class, 'store'])->middleware('permiso:creditos,crear');
-    Route::post('/creditos/exportar', [CreditoController::class, 'exportar'])->middleware('permiso:creditos,exportar');
+    Route::post('/creditos/exportar', [CreditoController::class, 'exportar'])->middleware('exportacion:creditos.listado');
     Route::get('/creditos/{credito}', [CreditoController::class, 'show'])->middleware('permiso:creditos,listar');
     Route::patch('/creditos/{credito}', [CreditoController::class, 'update'])->middleware('permiso:creditos,editar');
     Route::patch('/creditos/{credito}/gastos-administracion', [CreditoController::class, 'actualizarGastosAdministracion'])->middleware('permiso:creditos,editar');
     Route::get('/creditos/{credito}/estado-cuenta', [CreditoController::class, 'estadoCuenta'])->middleware('permiso:creditos,listar');
-    Route::post('/creditos/{credito}/estado-cuenta/exportar', [CreditoController::class, 'estadoCuentaExportar'])->middleware('permiso:creditos,exportar');
+    Route::post('/creditos/{credito}/estado-cuenta/exportar', [CreditoController::class, 'estadoCuentaExportar'])->middleware('exportacion:creditos.estado_cuenta');
     Route::get('/creditos/{credito}/estado-cuenta/pdf', [CreditoController::class, 'estadoCuentaPdf'])->middleware('permiso:creditos,imprimir_estado_cuenta');
     Route::post('/creditos/{credito}/aprobar', [CreditoController::class, 'aprobar'])->middleware('permiso:creditos,aprobar');
     Route::post('/creditos/{credito}/desembolsar', [CreditoController::class, 'desembolsar'])->middleware('permiso:creditos,desembolsar');
@@ -156,7 +156,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/creditos/{credito}', [CreditoController::class, 'destroy'])->middleware('permiso:creditos,eliminar');
 
     Route::get('/pagos', [PagoController::class, 'listar'])->middleware('permiso:pagos,listar');
-    Route::post('/pagos/exportar', [PagoController::class, 'exportar'])->middleware('permiso:pagos,exportar');
+    Route::post('/pagos/exportar', [PagoController::class, 'exportar'])->middleware('exportacion:pagos.listado');
     Route::get('/creditos/{credito}/pagos', [PagoController::class, 'index'])->middleware('permiso:pagos,listar');
     Route::get('/recibos', [ReciboCajaController::class, 'listar'])->middleware('permiso:recibos,listar');
     Route::get('/pagos/{pago}/recibo/pdf', [ReciboCajaController::class, 'pdf'])->middleware('permiso:pagos,imprimir_recibo')->whereNumber('pago');
@@ -166,10 +166,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/creditos/{credito}/liquidacion', [PagoController::class, 'liquidar'])->middleware('permiso:pagos,crear');
 
     Route::get('/cartera', [CarteraController::class, 'index'])->middleware('permiso:cartera,listar');
-    Route::post('/cartera/exportar', [CarteraController::class, 'exportar'])->middleware('permiso:cartera,exportar');
+    Route::post('/cartera/exportar', [CarteraController::class, 'exportar'])->middleware('exportacion:cartera.listado');
     Route::get('/cartera/reporte-empleador', [CarteraController::class, 'reporteEmpleador'])->middleware('permiso:cartera,listar');
     Route::get('/cartera/reporte-empleador/pdf', [CarteraController::class, 'reporteEmpleadorPdf'])->middleware('permiso:cartera,imprimir_reporte_empleador');
-    Route::post('/cartera/reporte-empleador/exportar', [CarteraController::class, 'exportarReporteEmpleador'])->middleware('permiso:cartera,exportar');
+    Route::post('/cartera/reporte-empleador/exportar', [CarteraController::class, 'exportarReporteEmpleador'])->middleware('exportacion:cartera.reporte_empleador');
 
     // Correo: la configuración (credenciales) y las plantillas son solo de admin; los envíos los dispara quien tiene el permiso del módulo dueño.
     Route::prefix('correo')->middleware('admin')->group(function () {
@@ -252,10 +252,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/libro-mayor', [ReporteContableController::class, 'libroMayor'])->middleware('algun_permiso:informes_contables.listar_libro_mayor,informes_contables.listar_caja_bancos');
     Route::get('/contabilidad/balance-prueba', [ReporteContableController::class, 'balancePrueba'])->middleware('permiso:informes_contables,listar_balance_prueba');
     Route::get('/contabilidad/estados-financieros', [ReporteContableController::class, 'estadosFinancieros'])->middleware('permiso:informes_contables,listar_estados_financieros');
-    Route::post('/contabilidad/libro-diario/exportar', [ReporteContableController::class, 'exportarLibroDiario'])->middleware(['permiso:informes_contables,listar_libro_diario', 'permiso:informes_contables,exportar']);
-    Route::post('/contabilidad/libro-mayor/exportar', [ReporteContableController::class, 'exportarLibroMayor'])->middleware(['algun_permiso:informes_contables.listar_libro_mayor,informes_contables.listar_caja_bancos', 'permiso:informes_contables,exportar']);
-    Route::post('/contabilidad/balance-prueba/exportar', [ReporteContableController::class, 'exportarBalancePrueba'])->middleware(['permiso:informes_contables,listar_balance_prueba', 'permiso:informes_contables,exportar']);
-    Route::post('/contabilidad/estados-financieros/exportar', [ReporteContableController::class, 'exportarEstadosFinancieros'])->middleware(['permiso:informes_contables,listar_estados_financieros', 'permiso:informes_contables,exportar']);
+    Route::post('/contabilidad/libro-diario/exportar', [ReporteContableController::class, 'exportarLibroDiario'])->middleware(['permiso:informes_contables,listar_libro_diario', 'exportacion:contabilidad.libro_diario']);
+    Route::post('/contabilidad/libro-mayor/exportar', [ReporteContableController::class, 'exportarLibroMayor'])->middleware(['algun_permiso:informes_contables.listar_libro_mayor,informes_contables.listar_caja_bancos', 'exportacion:contabilidad.libro_mayor,contabilidad.caja_bancos']);
+    Route::post('/contabilidad/balance-prueba/exportar', [ReporteContableController::class, 'exportarBalancePrueba'])->middleware(['permiso:informes_contables,listar_balance_prueba', 'exportacion:contabilidad.balance_prueba']);
+    Route::post('/contabilidad/estados-financieros/exportar', [ReporteContableController::class, 'exportarEstadosFinancieros'])->middleware(['permiso:informes_contables,listar_estados_financieros', 'exportacion:contabilidad.estados_financieros']);
 
     Route::get('/contabilidad/libro-diario/pdf', [ReporteContableController::class, 'pdfLibroDiario'])->middleware(['permiso:informes_contables,listar_libro_diario', 'permiso:informes_contables,imprimir']);
     Route::get('/contabilidad/libro-mayor/pdf', [ReporteContableController::class, 'pdfLibroMayor'])->middleware(['algun_permiso:informes_contables.listar_libro_mayor,informes_contables.listar_caja_bancos', 'permiso:informes_contables,imprimir']);
@@ -264,7 +264,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/conciliacion-apertura', [ReporteContableController::class, 'conciliacionApertura'])->middleware('permiso:informes_contables,listar_conciliacion_apertura');
 
     Route::get('/contabilidad/auxiliares', [AuxiliarContableController::class, 'index'])->middleware('permiso:informes_contables,listar_auxiliares');
-    Route::post('/contabilidad/auxiliares/exportar', [AuxiliarContableController::class, 'exportar'])->middleware(['permiso:informes_contables,listar_auxiliares', 'permiso:informes_contables,exportar']);
+    Route::post('/contabilidad/auxiliares/exportar', [AuxiliarContableController::class, 'exportar'])->middleware(['permiso:informes_contables,listar_auxiliares', 'exportacion:contabilidad.auxiliar']);
     Route::get('/contabilidad/auxiliares/pdf', [AuxiliarContableController::class, 'pdf'])->middleware(['permiso:informes_contables,listar_auxiliares', 'permiso:informes_contables,imprimir']);
 
     // Importaciones: la ruta pide algún permiso de hoja; el servicio exige el de la hoja de cada carga o guía.
@@ -320,9 +320,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/gastos/tarifas-reteica', [TarifaReteIcaMunicipioController::class, 'store'])->middleware('permiso:tributario,crear_tarifas_reteica');
 
     Route::get('/gastos', [GastoController::class, 'index'])->middleware('permiso:gastos,listar_gastos');
-    Route::post('/gastos/exportar', [GastoController::class, 'exportar'])->middleware(['permiso:gastos,listar_gastos', 'permiso:gastos,exportar']);
+    Route::post('/gastos/exportar', [GastoController::class, 'exportar'])->middleware(['permiso:gastos,listar_gastos', 'exportacion:gastos.listado']);
     Route::get('/gastos/reporte-centro-costo', [ReporteGastosCentroCostoController::class, 'index'])->middleware('permiso:gastos,listar_gastos_centro_costo');
-    Route::post('/gastos/reporte-centro-costo/exportar', [ReporteGastosCentroCostoController::class, 'exportar'])->middleware(['permiso:gastos,listar_gastos_centro_costo', 'permiso:gastos,exportar']);
+    Route::post('/gastos/reporte-centro-costo/exportar', [ReporteGastosCentroCostoController::class, 'exportar'])->middleware(['permiso:gastos,listar_gastos_centro_costo', 'exportacion:gastos.centro_costo']);
 
     Route::get('/facturacion/documentos', [DocumentoFacturacionController::class, 'index'])->middleware('algun_permiso:'.implode(',', FacturacionConstants::CONSULTA_DOCUMENTOS));
     // Antes de la ruta con {documento}: si no, el binding intenta resolver "conceptos-sugeridos" como un id.

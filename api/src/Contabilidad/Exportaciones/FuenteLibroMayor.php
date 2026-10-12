@@ -11,6 +11,7 @@ use App\Core\Dinero\Dinero;
 use App\Exportacion\Contracts\FuenteExportable;
 use App\Exportacion\Data\ColumnaExportable;
 use App\Exportacion\Enums\TipoColumna;
+use App\Exportacion\Services\AccesoExportaciones;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Support\Str;
 
@@ -26,11 +27,12 @@ final class FuenteLibroMayor implements FuenteExportable
         private readonly int $cuentaId,
         private readonly string $desde,
         private readonly string $hasta,
+        private readonly bool $esCajaBancos = false,
     ) {}
 
     public function reporte(): string
     {
-        return 'contabilidad.libro_mayor';
+        return $this->esCajaBancos ? 'contabilidad.caja_bancos' : 'contabilidad.libro_mayor';
     }
 
     public function modulo(): string
@@ -125,7 +127,7 @@ final class FuenteLibroMayor implements FuenteExportable
 
     public function autorizadoPara(Usuario $usuario): bool
     {
-        return $usuario->empresa_id !== null && $usuario->tienePermiso('informes_contables', 'exportar')
+        return $usuario->empresa_id !== null && app(AccesoExportaciones::class)->puede($usuario, $this->reporte())
             && ($usuario->tienePermiso('informes_contables', 'listar_libro_mayor') || $usuario->tienePermiso('informes_contables', 'listar_caja_bancos'));
     }
 }
