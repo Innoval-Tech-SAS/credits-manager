@@ -5,19 +5,18 @@ import { useNavigate } from 'react-router';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
-import { Checkbox } from '@ui/forms/components/checkbox';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { Save } from 'lucide-react';
+import { PermissionMatrix } from './permission-matrix';
 import type { RoleFormProps } from '../props/role-form-props';
-import type { ApiPermisoCatalogItem } from '../types/api-permiso';
-import { groupPermisosByModulo } from '../utils/group-permisos-by-modulo';
+import type { ApiPermisoPanelItem } from '../types/api-permiso';
 
 export const RoleForm: FC<RoleFormProps> = ({ roleId, initialData }) => {
     const navigate = useNavigate();
     const { sendRequest } = useSendRequest();
-    const { data: permisosData } = useResource<{ permisos: ApiPermisoCatalogItem[] }>('/permisos');
+    const { data: permisosData } = useResource<{ permisos: ApiPermisoPanelItem[] }>('/permisos');
     const permisos = permisosData?.permisos ?? [];
 
     const isEditMode = roleId !== undefined;
@@ -31,13 +30,15 @@ export const RoleForm: FC<RoleFormProps> = ({ roleId, initialData }) => {
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const togglePermiso = (permisoId: number, isChecked: boolean) => {
+    const togglePermisos = (permisoIds: number[], isChecked: boolean) => {
         setSeleccionados((current) => {
             const siguiente = new Set(current);
-            if (isChecked) {
-                siguiente.add(permisoId);
-            } else {
-                siguiente.delete(permisoId);
+            for (const permisoId of permisoIds) {
+                if (isChecked) {
+                    siguiente.add(permisoId);
+                } else {
+                    siguiente.delete(permisoId);
+                }
             }
             return siguiente;
         });
@@ -105,28 +106,14 @@ export const RoleForm: FC<RoleFormProps> = ({ roleId, initialData }) => {
                     </div>
                 </div>
 
-                <div>
-                    <h3 className="mb-4 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
-                        Permisos
-                    </h3>
-                    <div className="space-y-4">
-                        {groupPermisosByModulo(permisos).map(([modulo, permisosDelModulo]) => (
-                            <div key={modulo} className="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/3">
-                                <p className="mb-2 text-xs font-semibold text-gray-600 uppercase dark:text-gray-400">{modulo}</p>
-                                <div className="flex flex-wrap gap-x-6 gap-y-2">
-                                    {permisosDelModulo.map((permiso) => (
-                                        <Checkbox
-                                            key={permiso.id}
-                                            id={`permiso-${permiso.id}`}
-                                            label={permiso.accion}
-                                            checked={seleccionados.has(permiso.id)}
-                                            onChange={(isChecked) => togglePermiso(permiso.id, isChecked)}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                <div className="border-t border-gray-100 pt-8 dark:border-gray-800">
+                    <PermissionMatrix
+                        permisos={permisos}
+                        isLoading={!permisosData}
+                        isChecked={(permiso) => seleccionados.has(permiso.id)}
+                        canChange={() => true}
+                        onChange={togglePermisos}
+                    />
                 </div>
 
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">

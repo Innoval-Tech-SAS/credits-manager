@@ -6,18 +6,19 @@ import { useAuth } from '../hooks/use-auth';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
-import { Checkbox } from '@ui/forms/components/checkbox';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { ToggleSwitchInput } from '@ui/forms/components/toggle-switch-input';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { KeyRound, User, Save } from 'lucide-react';
+import { KeyRound, RotateCcw, User, Save } from 'lucide-react';
+import { PermissionMatrix } from './permission-matrix';
+import { PERMISSION_ORIGIN_BADGES } from '../constants/permission-origin-badges';
 import type { RegisterFormProps } from '../props/register-form-props';
-import type { ApiPermisoCatalogItem } from '../types/api-permiso';
+import type { ApiPermisoCatalogItem, ApiPermisoPanelItem } from '../types/api-permiso';
 import type { ApiRoleWithPermisos } from '../types/api-role';
+import type { PermissionOrigin } from '../types/permission-origin';
 import type { PaginatedResponse } from '../../shared/types/paginated-response';
-import { groupPermisosByModulo } from '../utils/group-permisos-by-modulo';
 import { hasPermission } from '../utils/has-permission';
 import { isCompanyAdmin } from '../utils/is-company-admin';
 
@@ -33,7 +34,7 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
     const { sendRequest } = useSendRequest();
     const { user: currentUser } = useAuth();
     const { data: rolesData } = useResource<PaginatedResponse<ApiRoleWithPermisos>>('/roles?per_page=100');
-    const { data: permisosData } = useResource<{ permisos: ApiPermisoCatalogItem[] }>('/permisos');
+    const { data: permisosData } = useResource<{ permisos: ApiPermisoPanelItem[] }>('/permisos');
     const roles = rolesData?.data ?? [];
     const permisos = permisosData?.permisos ?? [];
 
@@ -83,8 +84,8 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
         setOverrides(buildBaseline(roles.find((rol) => rol.id === nuevoRolId), permisos));
     };
 
-    const togglePermiso = (permisoId: number, isChecked: boolean) => {
-        setOverrides((current) => ({ ...current, [permisoId]: isChecked }));
+    const togglePermisos = (permisoIds: number[], isChecked: boolean) => {
+        setOverrides((current) => ({ ...current, ...Object.fromEntries(permisoIds.map((permisoId) => [permisoId, isChecked])) }));
     };
 
     // Espejo de la regla del backend: quien no es admin no concede, por rol nuevo o excepción, lo que él no tiene.
@@ -92,6 +93,27 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
     const isAssignableRole = (rol: ApiRoleWithPermisos) =>
         isCompanyAdmin(currentUser) || rol.id === initialData?.rol?.id || (rol.nombre !== 'admin' && rol.permisos.every(canGrant));
     const currentBaseline = buildBaseline(roles.find((rol) => rol.id === roleId), permisos);
+
+    // Lo que el rol ya da o quita se puede volver a marcar o desmarcar; agregar algo nuevo exige poder concederlo.
+    const canChange = (permiso: ApiPermisoCatalogItem) => canGrant(permiso) || Boolean(overrides[permiso.id]) || Boolean(currentBaseline[permiso.id]);
+    const originOf = (permiso: ApiPermisoCatalogItem): PermissionOrigin | null => {
+        const marcado = overrides[permiso.id] ?? false;
+        const delRol = currentBaseline[permiso.id] ?? false;
+
+        if (marcado) {
+            return delRol ? 'rol' : 'extra';
+        }
+
+        return delRol ? 'quitado' : null;
+    };
+    const conteoOrigen = permisos.reduce<Record<PermissionOrigin, number>>(
+        (conteo, permiso) => {
+            const origen = originOf(permiso);
+            return origen ? { ...conteo, [origen]: conteo[origen] + 1 } : conteo;
+        },
+        { rol: 0, extra: 0, quitado: 0 },
+    );
+    const tieneExcepciones = conteoOrigen.extra + conteoOrigen.quitado > 0;
 
     const roleOptions = roles.filter(isAssignableRole).map((rol) => ({ value: String(rol.id), label: capitalize(rol.nombre) }));
 
@@ -271,35 +293,42 @@ export const RegisterForm: FC<RegisterFormProps> = ({ userId, initialData }) => 
                     </section>
 
                     <section className="border-t border-gray-100 pt-8 xl:border-t-0 xl:border-l xl:pt-0 xl:pl-12 dark:border-gray-800">
-                        <h3 className="mb-4 text-xs font-semibold tracking-wide text-gray-400 uppercase dark:text-gray-500">
-                            Permisos
-                        </h3>
-                        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
-                            Marcados los permisos que da el rol elegido. Puedes agregarle permisos extra o quitarle alguno puntual a
-                            este usuario sin cambiar su rol.
-                        </p>
-
-                        <div className="space-y-4">
-                            {groupPermisosByModulo(permisos).map(([modulo, permisosDelModulo]) => (
-                                <div key={modulo} className="rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/3">
-                                    <p className="mb-2 text-xs font-semibold text-gray-600 uppercase dark:text-gray-400">
-                                        {modulo}
+                        <PermissionMatrix
+                            permisos={permisos}
+                            isLoading={!permisosData || !rolesData}
+                            isChecked={(permiso) => overrides[permiso.id] ?? false}
+                            canChange={canChange}
+                            onChange={togglePermisos}
+                            getOrigin={originOf}
+                            summary={
+                                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/3">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        {roleId
+                                            ? 'Los permisos marcados con «Rol» vienen del rol elegido. Puedes darle permisos extra o quitarle alguno puntual a este usuario sin cambiar su rol.'
+                                            : 'Elige un rol: sus permisos se marcan aquí y luego puedes ajustar excepciones para este usuario.'}
                                     </p>
-                                    <div className="flex flex-wrap gap-x-6 gap-y-2">
-                                        {permisosDelModulo.map((permiso) => (
-                                            <Checkbox
-                                                key={permiso.id}
-                                                id={`permiso-${permiso.id}`}
-                                                label={permiso.accion}
-                                                checked={overrides[permiso.id] ?? false}
-                                                disabled={!canGrant(permiso) && !overrides[permiso.id] && !currentBaseline[permiso.id]}
-                                                onChange={(isChecked) => togglePermiso(permiso.id, isChecked)}
-                                            />
+                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                        {(['rol', 'extra', 'quitado'] as const).map((origen) => (
+                                            <span key={origen} className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${PERMISSION_ORIGIN_BADGES[origen].className}`}>
+                                                {`${PERMISSION_ORIGIN_BADGES[origen].label}: ${conteoOrigen[origen]}`}
+                                            </span>
                                         ))}
+                                        {tieneExcepciones && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="sm:ml-auto"
+                                                startIcon={<RotateCcw className="size-4" />}
+                                                onClick={() => setOverrides(currentBaseline)}
+                                            >
+                                                Restablecer al rol
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
-                            ))}
-                        </div>
+                            }
+                        />
                     </section>
                 </div>
 

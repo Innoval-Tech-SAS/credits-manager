@@ -1,0 +1,217 @@
+<?php
+
+namespace App\Usuarios\Constants;
+
+/**
+ * Nombres legibles del catálogo de permisos (`PermisoSeeder::CATALOGO`) para el panel de roles y usuarios: los grupos
+ * siguen el orden del menú lateral y cada módulo cuelga del grupo donde aparecen sus pantallas. Un test exige que todo
+ * permiso del catálogo tenga etiqueta y que no sobren etiquetas: un permiso nuevo no se ve como clave cruda.
+ */
+class PermisoConstants
+{
+    /** Grupo del menú => [etiqueta, módulos en el orden en que se muestran]. */
+    public const GRUPOS = [
+        'auditoria' => ['etiqueta' => 'Auditoría', 'modulos' => ['auditoria']],
+        'cartera' => [
+            'etiqueta' => 'Cartera',
+            'modulos' => ['clientes', 'empleadores', 'creditos', 'pagos', 'recibos', 'cartera', 'calendario', 'metas'],
+        ],
+        'terceros' => ['etiqueta' => 'Terceros', 'modulos' => ['terceros']],
+        'contabilidad' => ['etiqueta' => 'Contabilidad', 'modulos' => ['contabilidad', 'egresos', 'anticipos']],
+        'configuracion_contable' => ['etiqueta' => 'Configuración contable', 'modulos' => ['configuracion_contable']],
+        'gastos' => ['etiqueta' => 'Gastos', 'modulos' => ['gastos']],
+        'tributario' => ['etiqueta' => 'Tributario', 'modulos' => ['tributario']],
+        'facturacion' => ['etiqueta' => 'Facturación', 'modulos' => ['facturacion']],
+        'conciliacion' => ['etiqueta' => 'Conciliación bancaria', 'modulos' => ['conciliacion']],
+        'informes_contables' => ['etiqueta' => 'Informes contables', 'modulos' => ['informes_contables']],
+        'administracion' => ['etiqueta' => 'Administración', 'modulos' => ['usuarios', 'importaciones']],
+    ];
+
+    public const MODULOS = [
+        'auditoria' => 'Bitácora de auditoría',
+        'clientes' => 'Clientes',
+        'empleadores' => 'Empleadores',
+        'creditos' => 'Créditos',
+        'pagos' => 'Pagos',
+        'recibos' => 'Recibos de caja',
+        'cartera' => 'Cartera',
+        'calendario' => 'Calendario',
+        'metas' => 'Metas',
+        'terceros' => 'Terceros',
+        'contabilidad' => 'Comprobantes y cuentas por pagar o cobrar',
+        'egresos' => 'Egresos',
+        'anticipos' => 'Anticipos',
+        'configuracion_contable' => 'Configuración contable',
+        'gastos' => 'Gastos',
+        'tributario' => 'Tributario',
+        'facturacion' => 'Facturación',
+        'conciliacion' => 'Conciliación bancaria',
+        'informes_contables' => 'Informes contables',
+        'usuarios' => 'Usuarios',
+        'importaciones' => 'Importaciones',
+    ];
+
+    /** 'modulo.accion' => lo que permite hacer, en el orden del catálogo. */
+    public const ACCIONES = [
+        'usuarios.listar' => 'Ver usuarios',
+        'usuarios.crear' => 'Crear usuarios',
+        'usuarios.editar' => 'Editar usuarios',
+        'usuarios.eliminar' => 'Eliminar usuarios',
+
+        'clientes.listar' => 'Ver listado de clientes',
+        'clientes.ver' => 'Ver detalle del cliente',
+        'clientes.crear' => 'Crear clientes',
+        'clientes.editar' => 'Editar clientes',
+        'clientes.eliminar' => 'Eliminar clientes',
+        'clientes.exportar_listado' => 'Exportar listado de clientes',
+        'clientes.reasignar_asesor' => 'Reasignar asesor',
+
+        'empleadores.listar' => 'Ver listado de empleadores',
+        'empleadores.ver' => 'Ver detalle del empleador',
+        'empleadores.crear' => 'Crear empleadores',
+        'empleadores.editar' => 'Editar empleadores',
+        'empleadores.eliminar' => 'Eliminar empleadores',
+
+        'creditos.listar' => 'Ver créditos',
+        'creditos.crear' => 'Crear créditos',
+        'creditos.editar' => 'Editar créditos',
+        'creditos.aprobar' => 'Aprobar créditos',
+        'creditos.desembolsar' => 'Desembolsar créditos',
+        'creditos.cancelar' => 'Cancelar créditos',
+        'creditos.eliminar' => 'Eliminar créditos',
+        'creditos.exportar_listado' => 'Exportar listado de créditos',
+        'creditos.exportar_estado_cuenta' => 'Exportar estado de cuenta',
+        'creditos.imprimir_estado_cuenta' => 'Imprimir estado de cuenta',
+
+        'pagos.listar' => 'Ver pagos',
+        'pagos.crear' => 'Registrar pagos y liquidar',
+        'pagos.imprimir_recibo' => 'Imprimir recibo de pago',
+        'pagos.exportar_listado' => 'Exportar listado de pagos',
+        'pagos.reversar' => 'Reversar pagos',
+
+        'recibos.listar' => 'Ver recibos de caja',
+
+        'cartera.listar' => 'Ver cartera',
+        'cartera.exportar_listado' => 'Exportar cartera',
+        'cartera.exportar_reporte_empleador' => 'Exportar reporte por empleador',
+        'cartera.imprimir_reporte_empleador' => 'Imprimir reporte por empleador',
+        'cartera.enviar_recordatorio' => 'Enviar recordatorios de pago',
+
+        'calendario.listar' => 'Ver calendario de vencimientos',
+
+        'terceros.listar' => 'Ver terceros',
+        'terceros.crear' => 'Crear terceros',
+        'terceros.editar' => 'Editar terceros',
+
+        'contabilidad.listar_comprobantes' => 'Ver comprobantes contables',
+        'contabilidad.listar_cuentas_por_pagar' => 'Ver cuentas por pagar',
+        'contabilidad.listar_cuentas_por_cobrar' => 'Ver cuentas por cobrar',
+        'contabilidad.crear_manual' => 'Crear comprobantes manuales',
+        'contabilidad.revisar' => 'Revisar comprobantes',
+        'contabilidad.contabilizar' => 'Contabilizar comprobantes',
+        'contabilidad.anular' => 'Reversar comprobantes',
+        'contabilidad.imprimir_comprobante' => 'Imprimir comprobantes',
+
+        'configuracion_contable.listar_plan_cuentas' => 'Ver plan de cuentas',
+        'configuracion_contable.crear_plan_cuentas' => 'Crear cuentas',
+        'configuracion_contable.editar_plan_cuentas' => 'Editar cuentas',
+        'configuracion_contable.listar_tipos_comprobante' => 'Ver tipos de comprobante',
+        'configuracion_contable.crear_tipos_comprobante' => 'Crear tipos de comprobante',
+        'configuracion_contable.editar_tipos_comprobante' => 'Editar tipos de comprobante',
+        'configuracion_contable.eliminar_tipos_comprobante' => 'Eliminar tipos de comprobante',
+        'configuracion_contable.listar_centros_costo' => 'Ver centros de costo',
+        'configuracion_contable.crear_centros_costo' => 'Crear centros de costo',
+        'configuracion_contable.editar_centros_costo' => 'Editar centros de costo',
+        'configuracion_contable.eliminar_centros_costo' => 'Eliminar centros de costo',
+        'configuracion_contable.configurar' => 'Configurar reglas de causación',
+        'configuracion_contable.listar_periodos' => 'Ver períodos contables',
+        'configuracion_contable.cerrar_periodo' => 'Cerrar períodos y pedir reapertura',
+        'configuracion_contable.reabrir_periodo' => 'Reabrir períodos',
+
+        'informes_contables.listar_libro_diario' => 'Ver libro diario',
+        'informes_contables.listar_libro_mayor' => 'Ver libro mayor',
+        'informes_contables.listar_caja_bancos' => 'Ver caja y bancos',
+        'informes_contables.listar_balance_prueba' => 'Ver balance de prueba',
+        'informes_contables.listar_estados_financieros' => 'Ver estados financieros',
+        'informes_contables.listar_auxiliares' => 'Ver auxiliares',
+        'informes_contables.listar_conciliacion_apertura' => 'Ver conciliación de apertura',
+        'informes_contables.exportar_libro_diario' => 'Exportar libro diario',
+        'informes_contables.exportar_libro_mayor' => 'Exportar libro mayor',
+        'informes_contables.exportar_caja_bancos' => 'Exportar caja y bancos',
+        'informes_contables.exportar_balance_prueba' => 'Exportar balance de prueba',
+        'informes_contables.exportar_estados_financieros' => 'Exportar estados financieros',
+        'informes_contables.exportar_auxiliares' => 'Exportar auxiliares',
+        'informes_contables.imprimir' => 'Imprimir informes en PDF',
+
+        'tributario.listar_tarifas_reteica' => 'Ver tarifas ReteICA',
+        'tributario.crear_tarifas_reteica' => 'Crear tarifas ReteICA',
+        'tributario.listar_actividades_economicas' => 'Ver actividades económicas',
+        'tributario.crear_actividades_economicas' => 'Crear actividades económicas',
+        'tributario.editar_actividades_economicas' => 'Editar actividades económicas',
+        'tributario.listar_valores_uvt' => 'Ver valores UVT',
+        'tributario.crear_valores_uvt' => 'Crear valores UVT',
+        'tributario.editar_valores_uvt' => 'Editar valores UVT',
+        'tributario.eliminar_valores_uvt' => 'Eliminar valores UVT',
+
+        'gastos.listar_gastos' => 'Ver gastos',
+        'gastos.crear' => 'Registrar gastos',
+        'gastos.anular' => 'Anular gastos',
+        'gastos.exportar_gastos' => 'Exportar gastos',
+        'gastos.listar_gastos_centro_costo' => 'Ver gastos por centro de costo',
+        'gastos.exportar_gastos_centro_costo' => 'Exportar gastos por centro de costo',
+        'gastos.listar_tipos_gasto' => 'Ver tipos de gasto',
+        'gastos.crear_tipos_gasto' => 'Crear tipos de gasto',
+        'gastos.editar_tipos_gasto' => 'Editar tipos de gasto',
+        'gastos.eliminar_tipos_gasto' => 'Eliminar tipos de gasto',
+        'gastos.listar_parametrizaciones' => 'Ver parametrización de gastos',
+        'gastos.crear_parametrizaciones' => 'Parametrizar gastos',
+
+        'egresos.listar' => 'Ver egresos',
+        'egresos.crear' => 'Registrar egresos',
+        'egresos.reversar' => 'Reversar egresos',
+
+        'anticipos.listar' => 'Consultar anticipos',
+        'anticipos.crear' => 'Registrar y cruzar anticipos',
+
+        'conciliacion.listar' => 'Ver cuentas bancarias y extractos',
+        'conciliacion.configurar' => 'Configurar cuentas bancarias',
+        'conciliacion.cargar_extracto' => 'Cargar extractos',
+        'conciliacion.conciliar' => 'Conciliar movimientos',
+        'conciliacion.cerrar' => 'Cerrar extractos',
+        'conciliacion.reabrir' => 'Reabrir extractos',
+
+        'auditoria.listar' => 'Ver bitácora',
+        'auditoria.exportar_bitacora' => 'Exportar bitácora',
+
+        'facturacion.listar_facturas' => 'Ver facturas',
+        'facturacion.listar_notas_credito' => 'Ver notas crédito',
+        'facturacion.listar_notas_debito' => 'Ver notas débito',
+        'facturacion.crear' => 'Crear y editar borradores de factura',
+        'facturacion.emitir' => 'Emitir facturas',
+        'facturacion.anular' => 'Anular facturas',
+        'facturacion.anular_nota_credito' => 'Emitir notas crédito',
+        'facturacion.anular_nota_debito' => 'Emitir notas débito',
+        'facturacion.imprimir' => 'Descargar PDF de facturas y recibos',
+        'facturacion.enviar' => 'Reenviar facturas por correo',
+        'facturacion.configurar' => 'Configurar facturación',
+        'facturacion.modificar_valores_sugeridos' => 'Modificar valores sugeridos',
+        'facturacion.registrar_cobro' => 'Registrar cobros',
+        'facturacion.reversar_cobro' => 'Reversar cobros',
+
+        'importaciones.importar_clientes' => 'Importar clientes',
+        'importaciones.importar_creditos' => 'Importar créditos',
+        'importaciones.importar_plan_cuotas' => 'Importar plan de cuotas',
+        'importaciones.importar_pagos' => 'Importar pagos',
+        'importaciones.importar_saldos_iniciales' => 'Importar saldos contables iniciales',
+        'importaciones.importar_plan_cuentas' => 'Importar plan de cuentas',
+        'importaciones.importar_terceros' => 'Importar terceros',
+        'importaciones.importar_gastos' => 'Importar gastos',
+        'importaciones.importar_actividades_economicas' => 'Importar actividades económicas',
+        'importaciones.importar_valores_uvt' => 'Importar valores UVT',
+        'importaciones.importar_tarifas_reteica' => 'Importar tarifas ReteICA',
+
+        'metas.listar' => 'Ver metas de todos los asesores',
+        'metas.configurar' => 'Configurar y distribuir metas',
+        'metas.recalcular' => 'Recalcular cierres de metas',
+    ];
+}
