@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router';
 import { Eye, FileInput, Search } from 'lucide-react';
 
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
-import { usePermission } from '../../auth/hooks/use-permission';
 import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
@@ -17,7 +16,6 @@ import { formatImportDate } from '../utils/format-import-date';
 
 export const ImportsPage: FC = () => {
     const navigate = useNavigate();
-    const canExecute = usePermission('importaciones', 'ejecutar');
 
     const { items, isLoading, page, setPage, totalPages, totalItems, search, setSearch } = usePaginatedResource<ApiImport>('/importaciones');
 
@@ -36,11 +34,9 @@ export const ImportsPage: FC = () => {
                         />
                     </div>
 
-                    {canExecute && (
-                        <Button collapseBelow="md" startIcon={<FileInput className="size-4" />} onClick={() => navigate('/importaciones/nueva')}>
-                            Nueva importación
-                        </Button>
-                    )}
+                    <Button collapseBelow="md" startIcon={<FileInput className="size-4" />} onClick={() => navigate('/importaciones/nueva')}>
+                        Nueva importación
+                    </Button>
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}

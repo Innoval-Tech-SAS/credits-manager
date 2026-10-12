@@ -43,8 +43,8 @@ class ImportacionService
 
     /**
      * Toda acción sobre una carga existente (ver, decidir, confirmar, cancelar, errores, reporte) pasa por aquí: exige el
-     * permiso de su hoja, el mismo que pide subirla. Sin esto, `importaciones.ejecutar` bastaría para confirmar la carga
-     * de un módulo ajeno, y la confirmación es la que escribe los datos.
+     * permiso de su hoja (`importaciones.importar_<hoja>`), el mismo que pide subirla. La ruta solo exige alguno de ellos,
+     * así que sin esto el permiso de una hoja bastaría para confirmar la carga de otra.
      */
     public function mostrar(int $id, Usuario $usuario): Importacion
     {
@@ -267,8 +267,10 @@ class ImportacionService
     }
 
     /** Guía descargable: columnas, obligatoriedad, nota de dependencias y la fila de encabezados lista para pegar datos. */
-    public function guia(TipoImportacion $tipo): StreamedResponse
+    public function guia(TipoImportacion $tipo, Usuario $usuario): StreamedResponse
     {
+        $this->exigirPermisoDeTipo($usuario, $tipo);
+
         $definicion = DefinicionImportacion::para($tipo);
 
         return response()->streamDownload(function () use ($definicion) {

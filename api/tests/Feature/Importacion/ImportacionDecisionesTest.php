@@ -43,8 +43,7 @@ class ImportacionDecisionesTest extends TestCase
     private function asesorDeLaEmpresa(Usuario $admin): Usuario
     {
         $asesor = $this->actingAsAsesor(Empresa::query()->findOrFail($admin->empresa_id));
-        $this->excepcion($asesor, 'importaciones', 'listar', true);
-        $this->excepcion($asesor, 'importaciones', 'ejecutar', true);
+        $this->excepcion($asesor, 'importaciones', 'importar_clientes', true);
 
         return $asesor;
     }
@@ -89,12 +88,11 @@ class ImportacionDecisionesTest extends TestCase
         $this->assertSame(EstadoImportacion::Importando, $this->importacion($id)->estado);
     }
 
-    public function test_pedir_crear_empleadores_sin_clientes_crear_responde_403(): void
+    public function test_subir_la_hoja_con_su_permiso_revocado_al_usuario_responde_403(): void
     {
         $asesor = $this->actingAsAsesor();
-        $this->excepcion($asesor, 'importaciones', 'ejecutar', true);
-        $this->otorgarPorRol($asesor, 'clientes', 'crear');
-        $this->excepcion($asesor, 'clientes', 'crear', false);
+        $this->otorgarPorRol($asesor, 'importaciones', 'importar_clientes');
+        $this->excepcion($asesor, 'importaciones', 'importar_clientes', false);
 
         $this->postJson('/api/v1/importaciones', [
             'tipo' => 'clientes',
@@ -108,8 +106,7 @@ class ImportacionDecisionesTest extends TestCase
     public function test_pedir_el_asiento_sin_contabilidad_crear_manual_responde_403(): void
     {
         $asesor = $this->actingAsAsesor();
-        $this->excepcion($asesor, 'importaciones', 'ejecutar', true);
-        $this->excepcion($asesor, 'pagos', 'crear', true);
+        $this->excepcion($asesor, 'importaciones', 'importar_pagos', true);
 
         $this->postJson('/api/v1/importaciones', [
             'tipo' => 'pagos',
@@ -127,7 +124,6 @@ class ImportacionDecisionesTest extends TestCase
         $this->ejecutarValidacion($id);
 
         $asesor = $this->asesorDeLaEmpresa($admin);
-        $this->otorgarPorRol($asesor, 'clientes', 'crear');
         $this->otorgarPorRol($asesor, 'empleadores', 'crear');
         $this->excepcion($asesor, 'empleadores', 'crear', false);
 
@@ -135,28 +131,26 @@ class ImportacionDecisionesTest extends TestCase
         $this->assertDatabaseCount('empleadores', 0);
     }
 
-    public function test_crear_clientes_no_basta_para_que_la_importacion_cree_empleadores(): void
+    public function test_el_permiso_de_la_hoja_no_basta_para_que_la_importacion_cree_empleadores(): void
     {
         $admin = $this->actingAsAdmin();
         $id = $this->subirArchivo('clientes', self::ENCABEZADO."1001;Ana Pérez;;;Empresa Nueva;;;;;\n");
         $this->ejecutarValidacion($id);
 
-        $asesor = $this->asesorDeLaEmpresa($admin);
-        $this->otorgarPorRol($asesor, 'clientes', 'crear');
+        $this->asesorDeLaEmpresa($admin);
 
         $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['crear_empleadores' => true])->assertForbidden();
         $this->assertDatabaseCount('empleadores', 0);
         $this->assertSame(EstadoImportacion::PendienteDecision, $this->importacion($id)->estado);
     }
 
-    public function test_el_asesor_con_permisos_de_importacion_y_de_la_hoja_puede_decidir(): void
+    public function test_el_asesor_con_el_permiso_de_la_hoja_puede_decidir(): void
     {
         $admin = $this->actingAsAdmin();
         $id = $this->subirArchivo('clientes', self::ENCABEZADO."1001;Ana Pérez;;;Empresa Nueva;;;;;\n");
         $this->ejecutarValidacion($id);
 
-        $asesor = $this->asesorDeLaEmpresa($admin);
-        $this->otorgarPorRol($asesor, 'clientes', 'crear');
+        $this->asesorDeLaEmpresa($admin);
 
         $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['crear_empleadores' => false])->assertOk();
         $this->assertSame(false, $this->importacion($id)->decision_crear_empleadores);

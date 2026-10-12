@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router';
 import { Navigate, createBrowserRouter } from 'react-router';
 
 import { INVOICE_DETAIL_PERMISSIONS } from './invoicing/constants/invoice-detail-permissions';
+import { IMPORT_PERMISSIONS } from './imports/constants/import-types';
 import { LoginPage } from './auth/pages/login-page';
 import { RequireAdmin } from './auth/components/require-admin';
 import { RequireAuditAccess } from './auth/components/require-audit-access';
@@ -710,25 +711,25 @@ const routes: RouteObject[] = [
                     {
                         path: 'importaciones',
                         element: (
-                            <RequireModulePermission modulo="importaciones" accion="listar">
+                            <RequireAnyPermission permisos={IMPORT_PERMISSIONS}>
                                 <ImportsPage />
-                            </RequireModulePermission>
+                            </RequireAnyPermission>
                         ),
                     },
                     {
                         path: 'importaciones/nueva',
                         element: (
-                            <RequireModulePermission modulo="importaciones" accion="ejecutar">
+                            <RequireAnyPermission permisos={IMPORT_PERMISSIONS}>
                                 <NewImportPage />
-                            </RequireModulePermission>
+                            </RequireAnyPermission>
                         ),
                     },
                     {
                         path: 'importaciones/:id',
                         element: (
-                            <RequireModulePermission modulo="importaciones" accion="listar">
+                            <RequireAnyPermission permisos={IMPORT_PERMISSIONS}>
                                 <ImportDetailPage />
-                            </RequireModulePermission>
+                            </RequireAnyPermission>
                         ),
                     },
                     {

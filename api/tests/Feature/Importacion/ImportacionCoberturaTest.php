@@ -275,7 +275,6 @@ class ImportacionCoberturaTest extends TestCase
         $this->ejecutarValidacion($id);
 
         $asesor = $this->asesorDeLaEmpresa($admin);
-        $asesor->permisosExtra()->attach(Permiso::query()->where(['modulo' => 'pagos', 'accion' => 'crear'])->value('id'), ['concedido' => true]);
         $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['generar_asiento' => true])->assertForbidden();
         $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['generar_asiento' => false])->assertOk();
         $this->assertSame(false, $this->importacion($id)->decision_generar_asiento);
@@ -695,9 +694,7 @@ class ImportacionCoberturaTest extends TestCase
     private function asesorDeLaEmpresa(Usuario $admin): Usuario
     {
         $asesor = $this->actingAsAsesor(Empresa::query()->findOrFail($admin->empresa_id));
-        foreach (['listar', 'ejecutar'] as $accion) {
-            $asesor->permisosExtra()->attach(Permiso::query()->where(['modulo' => 'importaciones', 'accion' => $accion])->value('id'), ['concedido' => true]);
-        }
+        $asesor->permisosExtra()->attach(Permiso::query()->where(['modulo' => 'importaciones', 'accion' => 'importar_pagos'])->value('id'), ['concedido' => true]);
 
         return $asesor;
     }

@@ -30,7 +30,7 @@ vi.mock('../../auth/hooks/use-auth', () => ({
     }),
 }));
 
-const PERMISOS_COMPLETOS = ['clientes.crear', 'creditos.crear', 'empleadores.crear', 'contabilidad.crear_manual'];
+const PERMISOS_COMPLETOS = ['importaciones.importar_clientes', 'importaciones.importar_creditos', 'empleadores.crear', 'contabilidad.crear_manual'];
 
 vi.mock('../../shared/hooks/use-send-request', () => ({
     useSendRequest: () => ({ sendRequest: mocks.sendRequest }),
@@ -113,15 +113,23 @@ describe('NewImportPage', () => {
     });
 
     it('solo ofrece las hojas que el usuario puede importar', () => {
-        mocks.permisos = new Set(['clientes.crear']);
+        mocks.permisos = new Set(['importaciones.importar_clientes']);
         renderPagina('/importaciones/nueva');
 
         const opciones = Array.from(screen.getByRole('combobox').querySelectorAll('option')).map((opcion) => opcion.value).filter(Boolean);
         expect(opciones).toEqual(['clientes']);
     });
 
+    it('el permiso de crear del módulo destino no habilita su hoja', () => {
+        mocks.permisos = new Set(['clientes.crear', 'creditos.crear', 'importaciones.importar_pagos']);
+        renderPagina('/importaciones/nueva');
+
+        const opciones = Array.from(screen.getByRole('combobox').querySelectorAll('option')).map((opcion) => opcion.value).filter(Boolean);
+        expect(opciones).toEqual(['pagos']);
+    });
+
     it('sin empleadores.crear ni contabilidad.crear_manual no ofrece crear empleadores ni generar asientos', async () => {
-        mocks.permisos = new Set(['clientes.crear', 'creditos.crear']);
+        mocks.permisos = new Set(['importaciones.importar_clientes', 'importaciones.importar_creditos']);
         renderPagina('/importaciones/nueva?tipo=creditos');
 
         await waitFor(() => expect(botonValidar().disabled).toBe(false));

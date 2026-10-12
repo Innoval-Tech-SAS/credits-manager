@@ -18,7 +18,7 @@ final class DefinicionImportacion
                 'hoja' => 'Clientes',
                 'orden' => 1,
                 'nota' => 'Cédula y nombre completo son obligatorios. El nombre se separa en nombres y apellidos (los dos últimos términos son apellidos).',
-                'permiso' => ['clientes', 'crear'],
+                'permiso' => ['importaciones', 'importar_clientes'],
                 'columnas' => [
                     self::c('cedula', 'Cédula', true, 'texto'),
                     self::c('nombre', 'Nombre completo', true, 'texto'),
@@ -36,7 +36,7 @@ final class DefinicionImportacion
                 'hoja' => 'Creditos',
                 'orden' => 2,
                 'nota' => 'Requiere que los clientes ya existan en el sistema. Las refinanciaciones no se importan en esta carga.',
-                'permiso' => ['creditos', 'crear'],
+                'permiso' => ['importaciones', 'importar_creditos'],
                 'columnas' => [
                     self::c('codigo', 'Código de crédito', true, 'texto'),
                     self::c('cedula', 'Cédula cliente', true, 'texto'),
@@ -58,7 +58,7 @@ final class DefinicionImportacion
                 'hoja' => 'Plan_Cuotas',
                 'orden' => 3,
                 'nota' => 'Requiere que los créditos ya estén importados y sin pagos. Reemplaza las cuotas que calculó el sistema por las del archivo.',
-                'permiso' => ['creditos', 'crear'],
+                'permiso' => ['importaciones', 'importar_plan_cuotas'],
                 'columnas' => [
                     self::c('codigo', 'Código de crédito', true, 'texto'),
                     self::c('numero', 'Número de cuota', true, 'entero'),
@@ -74,7 +74,7 @@ final class DefinicionImportacion
                 'hoja' => 'Pagos',
                 'orden' => 4,
                 'nota' => 'Requiere que los créditos ya estén importados con su plan. Se aplican en orden cronológico: primero interés, luego capital.',
-                'permiso' => ['pagos', 'crear'],
+                'permiso' => ['importaciones', 'importar_pagos'],
                 'columnas' => [
                     self::c('codigo', 'Código de crédito', true, 'texto'),
                     self::c('fecha', 'Fecha de pago', true, 'fecha'),
@@ -90,7 +90,7 @@ final class DefinicionImportacion
                 'hoja' => 'Saldos_Contables_Iniciales',
                 'orden' => 5,
                 'nota' => 'Hoja opcional. La cuenta PUC debe existir en el plan de cuentas.',
-                'permiso' => ['configuracion_contable', 'crear_plan_cuentas'],
+                'permiso' => ['importaciones', 'importar_saldos_iniciales'],
                 'columnas' => [
                     self::c('fecha_corte', 'Fecha de corte', true, 'fecha'),
                     self::c('cuenta', 'Cuenta PUC', true, 'texto'),
@@ -103,7 +103,7 @@ final class DefinicionImportacion
                 'hoja' => 'Gastos',
                 'orden' => 8,
                 'nota' => 'Requiere tipos de gasto y centros de costo ya creados, y parametrización vigente para la fecha. Cada fila se causa como un gasto nuevo, con sus retenciones y asiento.',
-                'permiso' => ['gastos', 'crear'],
+                'permiso' => ['importaciones', 'importar_gastos'],
                 'columnas' => [
                     self::c('fecha', 'Fecha del gasto', true, 'fecha'),
                     self::c('numero_documento', 'Número de documento', true, 'texto'),
@@ -119,7 +119,7 @@ final class DefinicionImportacion
                 'hoja' => 'Plan de cuentas (formato anterior)',
                 'orden' => 6,
                 'nota' => 'Formato de migración anterior, se mantiene para cargas existentes.',
-                'permiso' => ['configuracion_contable', 'crear_plan_cuentas'],
+                'permiso' => ['importaciones', 'importar_plan_cuentas'],
                 'columnas' => [
                     self::c('codigo', 'codigo', true, 'texto'),
                     self::c('nombre', 'nombre', true, 'texto'),
@@ -132,7 +132,7 @@ final class DefinicionImportacion
                 'hoja' => 'Terceros (formato anterior)',
                 'orden' => 7,
                 'nota' => 'Formato de migración anterior, se mantiene para cargas existentes.',
-                'permiso' => ['terceros', 'crear'],
+                'permiso' => ['importaciones', 'importar_terceros'],
                 'columnas' => [
                     self::c('tipo', 'tipo', true, 'texto'),
                     self::c('tipo_persona', 'tipo_persona', true, 'texto'),
@@ -153,7 +153,7 @@ final class DefinicionImportacion
                 'hoja' => 'Actividades_Economicas',
                 'orden' => 9,
                 'nota' => 'Si el código CIIU ya existe para la empresa, se actualiza el nombre; si no, se crea una actividad nueva.',
-                'permiso' => ['tributario', 'crear_actividades_economicas'],
+                'permiso' => ['importaciones', 'importar_actividades_economicas'],
                 'columnas' => [
                     self::c('codigo', 'Código CIIU', true, 'texto'),
                     self::c('nombre', 'Actividad económica', true, 'texto'),
@@ -163,7 +163,7 @@ final class DefinicionImportacion
                 'hoja' => 'Valores_UVT',
                 'orden' => 10,
                 'nota' => 'Un valor por año. Si el año ya existe, se reemplaza.',
-                'permiso' => ['tributario', 'crear_valores_uvt'],
+                'permiso' => ['importaciones', 'importar_valores_uvt'],
                 'columnas' => [
                     self::c('anio', 'Año', true, 'entero'),
                     self::c('valor', 'Valor UVT', true, 'monto'),
@@ -173,7 +173,7 @@ final class DefinicionImportacion
                 'hoja' => 'Tarifas_ReteICA',
                 'orden' => 11,
                 'nota' => 'Requiere que el municipio (código DANE) y la actividad económica (código CIIU) ya existan. Abre una nueva vigencia desde la fecha indicada; si había una vigencia abierta para ese municipio y esa actividad, se cierra el día anterior.',
-                'permiso' => ['tributario', 'crear_tarifas_reteica'],
+                'permiso' => ['importaciones', 'importar_tarifas_reteica'],
                 'columnas' => [
                     self::c('municipio', 'Código DANE del municipio', true, 'texto'),
                     self::c('actividad_economica', 'Código CIIU de la actividad', true, 'texto'),

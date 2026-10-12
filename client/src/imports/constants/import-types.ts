@@ -45,18 +45,21 @@ export const IMPORT_TYPE_OPTIONS = [
 
 /** Permiso "modulo.accion" que exige cada hoja (espejo de `DefinicionImportacion` en el backend). */
 export const IMPORT_TYPE_PERMISSIONS: Record<ImportType, string> = {
-    clientes: 'clientes.crear',
-    creditos: 'creditos.crear',
-    plan_cuotas: 'creditos.crear',
-    pagos: 'pagos.crear',
-    saldos_iniciales: 'configuracion_contable.crear_plan_cuentas',
-    plan_cuentas: 'configuracion_contable.crear_plan_cuentas',
-    terceros: 'terceros.crear',
-    gastos: 'gastos.crear',
-    actividades_economicas: 'tributario.crear_actividades_economicas',
-    valores_uvt: 'tributario.crear_valores_uvt',
-    tarifas_reteica: 'tributario.crear_tarifas_reteica',
+    clientes: 'importaciones.importar_clientes',
+    creditos: 'importaciones.importar_creditos',
+    plan_cuotas: 'importaciones.importar_plan_cuotas',
+    pagos: 'importaciones.importar_pagos',
+    saldos_iniciales: 'importaciones.importar_saldos_iniciales',
+    plan_cuentas: 'importaciones.importar_plan_cuentas',
+    terceros: 'importaciones.importar_terceros',
+    gastos: 'importaciones.importar_gastos',
+    actividades_economicas: 'importaciones.importar_actividades_economicas',
+    valores_uvt: 'importaciones.importar_valores_uvt',
+    tarifas_reteica: 'importaciones.importar_tarifas_reteica',
 };
+
+/** Con cualquiera de ellos se entra al módulo; el listado y cada carga se filtran por el de su hoja. */
+export const IMPORT_PERMISSIONS: string[] = Object.values(IMPORT_TYPE_PERMISSIONS);
 
 export const IMPORT_TYPES_WITH_EMPLOYER_CHECK: ImportType[] = ['clientes'];
 
