@@ -235,6 +235,7 @@ export const NewImportPage: FC = () => {
                     <div>
                         <Label htmlFor="tipo-importacion">Hoja a importar</Label>
                         <Select
+                            id="tipo-importacion"
                             options={opcionesTipo}
                             placeholder="Elige una hoja"
                             defaultValue={tipo}
@@ -276,6 +277,7 @@ export const NewImportPage: FC = () => {
                     <div>
                         <Label htmlFor="archivo-importacion">Archivo CSV</Label>
                         <Dropzone
+                            id="archivo-importacion"
                             onFileAccepted={setArchivo}
                             hint={archivo ? archivo.name : 'Arrastra o selecciona un archivo .csv (separador ; o , y codificación UTF-8 o Windows-1252)'}
                             accept={{ 'text/csv': ['.csv'] }}
@@ -300,6 +302,7 @@ export const NewImportPage: FC = () => {
                             <div className="max-w-xl">
                                 <Label htmlFor="cuenta-contrapartida">Cuenta de contrapartida del asiento de apertura</Label>
                                 <Select
+                                    id="cuenta-contrapartida"
                                     options={opcionesCuentas}
                                     placeholder="Elige la cuenta"
                                     defaultValue={cuentaContrapartidaId}

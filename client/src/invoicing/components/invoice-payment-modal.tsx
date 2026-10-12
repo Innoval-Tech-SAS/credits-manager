@@ -85,7 +85,7 @@ const FormularioCobro: FC<FormularioCobroProps> = ({ documentoId, saldo, onClose
                 </div>
                 <div>
                     <Label htmlFor="cobro-medio">Medio de pago</Label>
-                    <Select options={PAYMENT_METHOD_OPTIONS} defaultValue={medio} onChange={(valorSeleccionado) => setMedio(valorSeleccionado as ApiInvoicePaymentMethod)} />
+                    <Select id="cobro-medio" options={PAYMENT_METHOD_OPTIONS} defaultValue={medio} onChange={(valorSeleccionado) => setMedio(valorSeleccionado as ApiInvoicePaymentMethod)} />
                 </div>
                 <div>
                     <Label htmlFor="cobro-referencia">Referencia</Label>

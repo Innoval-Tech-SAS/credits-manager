@@ -26,8 +26,9 @@ export const DashboardFilters: FC<DashboardFiltersProps> = ({ filtros, onChange,
         <section className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 md:p-6">
             <div className="grid grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-4">
                 <div className="min-w-0">
-                    <Label>Período</Label>
+                    <Label htmlFor="dashboard-filtro-periodo">Período</Label>
                     <DashboardFilterSelect
+                        id="dashboard-filtro-periodo"
                         options={periodos}
                         value={filtros.periodo}
                         onChange={(periodo) => onChange({ periodo })}
@@ -37,8 +38,9 @@ export const DashboardFilters: FC<DashboardFiltersProps> = ({ filtros, onChange,
 
                 {empresas !== null && (
                     <div className="min-w-0">
-                        <Label>Empresa</Label>
+                        <Label htmlFor="dashboard-filtro-empresa">Empresa</Label>
                         <DashboardFilterSelect
+                            id="dashboard-filtro-empresa"
                             options={empresas.map((empresa) => ({ value: String(empresa.id), label: empresa.nombre_empresa }))}
                             value={filtros.empresaId !== null ? String(filtros.empresaId) : ''}
                             onChange={(valor) => onChange({ empresaId: valor === '' ? null : Number(valor) })}
@@ -49,8 +51,9 @@ export const DashboardFilters: FC<DashboardFiltersProps> = ({ filtros, onChange,
 
                 {mostrarAsesor && (
                     <div className="min-w-0">
-                        <Label>Asesor</Label>
+                        <Label htmlFor="dashboard-filtro-asesor">Asesor</Label>
                         <DashboardFilterSelect
+                            id="dashboard-filtro-asesor"
                             options={[
                                 { value: '', label: 'Todos los asesores' },
                                 ...(asesores?.asesores ?? []).map((asesor) => ({ value: String(asesor.id), label: asesor.nombre })),
@@ -64,10 +67,14 @@ export const DashboardFilters: FC<DashboardFiltersProps> = ({ filtros, onChange,
 
                 {mostrarCliente && (
                     <div className="min-w-0">
-                        <Label>Cliente</Label>
+                        <Label htmlFor="dashboard-filtro-cliente">Cliente</Label>
                         <div className="flex items-center gap-2">
                             <div className="min-w-0 flex-1">
-                                <ClientSelector selected={filtros.cliente} onSelect={(cliente) => onChange({ cliente })} />
+                                <ClientSelector
+                                    id="dashboard-filtro-cliente"
+                                    selected={filtros.cliente}
+                                    onSelect={(cliente) => onChange({ cliente })}
+                                />
                             </div>
                             {filtros.cliente !== null && (
                                 <Button size="sm" variant="outline" onClick={() => onChange({ cliente: null })}>
@@ -79,8 +86,9 @@ export const DashboardFilters: FC<DashboardFiltersProps> = ({ filtros, onChange,
                 )}
 
                 <div className="min-w-0">
-                    <Label>Estado del crédito</Label>
+                    <Label htmlFor="dashboard-filtro-estado">Estado del crédito</Label>
                     <DashboardFilterSelect
+                        id="dashboard-filtro-estado"
                         options={[{ value: '', label: 'Todos los estados' }, ...ESTADOS_OPCIONES]}
                         value={filtros.estado ?? ''}
                         onChange={(valor) => onChange({ estado: valor !== '' && esEstadoCredito(valor) ? valor : null })}

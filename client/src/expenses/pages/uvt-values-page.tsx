@@ -6,6 +6,7 @@ import { FileText, Pencil, Trash2 } from 'lucide-react';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { formatMoney } from '../../shared/utils/format-money';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
@@ -76,7 +77,7 @@ export const UvtValuesPage: FC = () => {
             <DataTable<ApiUvtValue>
                 columns={[
                     { key: 'anio', label: 'Año' },
-                    { key: 'valor', label: 'Valor UVT' },
+                    { key: 'valor', label: 'Valor UVT', render: (valorUvt) => formatMoney(valorUvt.valor) },
                     ...(canEdit || canDelete
                         ? [
                               {

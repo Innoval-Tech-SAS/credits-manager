@@ -7,6 +7,7 @@ import { useResource } from '../../shared/hooks/use-resource';
 import { formatMoney } from '../../shared/utils/format-money';
 import { Alert } from '@ui/alert/components/alert';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
+import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { INSTALLMENT_STATUS_CLASSES, INSTALLMENT_STATUS_LABEL } from '../../credits/constants/installment-status-styles';
@@ -62,37 +63,41 @@ export const EmployerReportPage: FC = () => {
                 </div>
             )}
 
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
-                <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-                    {empleadores.length === 0 ? (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay clientes con empleador registrado.</p>
-                    ) : (
-                        <Select
-                            key={empleadorSeleccionado ?? ''}
-                            options={empleadores.map((empleador) => ({ value: String(empleador.id), label: empleador.nombre }))}
-                            defaultValue={empleadorSeleccionado ? String(empleadorSeleccionado) : ''}
-                            onChange={(value) => setEmpleadorId(value ? Number(value) : null)}
-                        />
-                    )}
-                </div>
+            <div className="mb-6 w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3 print:hidden">
+                {empleadores.length === 0 ? (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">No hay clientes con empleador registrado.</p>
+                ) : (
+                    <div className="flex items-end gap-3">
+                        <div className="min-w-0 flex-1">
+                            <Label htmlFor="empleador">Empleador</Label>
+                            <Select
+                                id="empleador"
+                                key={empleadorSeleccionado ?? ''}
+                                options={empleadores.map((empleador) => ({ value: String(empleador.id), label: empleador.nombre }))}
+                                defaultValue={empleadorSeleccionado ? String(empleadorSeleccionado) : ''}
+                                onChange={(value) => setEmpleadorId(value ? Number(value) : null)}
+                            />
+                        </div>
 
-                {empleadorSeleccionado && (canExport || canPrint) && (
-                    <ExportButton
-                        endpoint="/cartera/reporte-empleador/exportar"
-                        filters={{ empleador_id: String(empleadorSeleccionado) }}
-                        formats={canExport ? ['xlsx'] : []}
-                        pdfEndpoint={canPrint ? '/cartera/reporte-empleador/pdf' : undefined}
-                        pdfFilename="relacion-descuento.pdf"
-                        disabled={filas.length === 0}
-                        onRequested={() => {
-                            setExportError(null);
-                            setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
-                        }}
-                        onError={(message) => {
-                            setExportMessage(null);
-                            setExportError(message);
-                        }}
-                    />
+                        {empleadorSeleccionado && (canExport || canPrint) && (
+                            <ExportButton
+                                endpoint="/cartera/reporte-empleador/exportar"
+                                filters={{ empleador_id: String(empleadorSeleccionado) }}
+                                formats={canExport ? ['xlsx'] : []}
+                                pdfEndpoint={canPrint ? '/cartera/reporte-empleador/pdf' : undefined}
+                                pdfFilename="relacion-descuento.pdf"
+                                disabled={filas.length === 0}
+                                onRequested={() => {
+                                    setExportError(null);
+                                    setExportMessage('Exportación solicitada. Se genera en segundo plano y te avisaremos cuando esté lista para descargar.');
+                                }}
+                                onError={(message) => {
+                                    setExportMessage(null);
+                                    setExportError(message);
+                                }}
+                            />
+                        )}
+                    </div>
                 )}
             </div>
 

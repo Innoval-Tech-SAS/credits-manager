@@ -65,6 +65,7 @@ const FormularioPuente: FC<FormularioPuenteProps> = ({ movimiento, onClose, onSe
                     <div>
                         <Label htmlFor="puente-tipo-comprobante">Tipo de comprobante</Label>
                         <Select
+                            id="puente-tipo-comprobante"
                             options={tipos.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }))}
                             placeholder="Selecciona el tipo"
                             onChange={setTipoComprobanteId}

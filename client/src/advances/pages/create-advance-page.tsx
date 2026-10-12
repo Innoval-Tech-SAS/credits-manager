@@ -100,7 +100,7 @@ export const CreateAdvancePage: FC = () => {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="lado">Tipo de anticipo</Label>
-                        <Select options={LADO_OPTIONS} defaultValue={lado} onChange={(valor) => setLado(valor as Lado)} />
+                        <Select id="lado" options={LADO_OPTIONS} defaultValue={lado} onChange={(valor) => setLado(valor as Lado)} />
                     </div>
 
                     <div className="md:col-span-2">
@@ -137,6 +137,7 @@ export const CreateAdvancePage: FC = () => {
                             {lado === 'proveedor' ? 'Cuenta de anticipos a proveedores' : 'Cuenta de anticipos de clientes'}
                         </Label>
                         <Select
+                            id="cuenta-anticipo"
                             options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
                             placeholder="Selecciona la cuenta"
                             onChange={setCuentaAnticipoId}
@@ -146,6 +147,7 @@ export const CreateAdvancePage: FC = () => {
                     <div>
                         <Label htmlFor="cuenta-caja">Cuenta de caja o banco</Label>
                         <Select
+                            id="cuenta-caja"
                             options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
                             placeholder="Selecciona la cuenta"
                             onChange={setCuentaCajaId}
@@ -155,6 +157,7 @@ export const CreateAdvancePage: FC = () => {
                     <div>
                         <Label htmlFor="tipo-comprobante">Tipo de comprobante</Label>
                         <Select
+                            id="tipo-comprobante"
                             options={tipos.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }))}
                             placeholder="Selecciona el tipo"
                             onChange={setTipoComprobanteId}

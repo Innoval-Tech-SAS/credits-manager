@@ -1,7 +1,7 @@
 export type DatePickerProps = {
     id: string;
     name?: string;
-    mode?: 'single' | 'range';
+    mode?: 'single' | 'range' | 'month';
     value?: string;
     onChange?: (value: string) => void;
     placeholder?: string;

@@ -47,6 +47,8 @@ export const ThirdPartiesListPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-tercero"
+                            name="buscar-tercero"
                             placeholder="Buscar por nombre o documento…"
                             startIcon={<Search className="size-4" />}
                             value={search}
@@ -56,6 +58,8 @@ export const ThirdPartiesListPage: FC = () => {
 
                     <div className="w-full sm:w-48">
                         <Select
+                            id="filtro-tipo-tercero"
+                            ariaLabel="Tipo de tercero"
                             options={THIRD_PARTY_TYPE_OPTIONS}
                             placeholder="Todos los tipos"
                             placeholderSelectable

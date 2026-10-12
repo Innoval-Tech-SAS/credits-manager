@@ -7,6 +7,7 @@ import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
+import { TextArea } from '@ui/forms/components/text-area';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { EMAIL_TEMPLATE_VARIABLES } from '../constants/email-template-variables';
 import { EmailPreviewModal } from './email-preview-modal';
@@ -142,7 +143,7 @@ export const EmailTemplateForm: FC<EmailTemplateFormProps> = ({ tipo, templateId
 
                 <div className="flex flex-col gap-2">
                     <Label htmlFor="plantilla-cuerpo">Cuerpo del correo (HTML)</Label>
-                    <textarea
+                    <TextArea
                         id="plantilla-cuerpo"
                         name="cuerpo"
                         rows={12}
@@ -152,7 +153,7 @@ export const EmailTemplateForm: FC<EmailTemplateFormProps> = ({ tipo, templateId
                             campoActivo.current = { campo: 'cuerpo', elemento: event.currentTarget };
                         }}
                         onChange={(event) => setCuerpo(event.target.value)}
-                        className="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 font-mono text-sm text-gray-800 focus:border-brand-300 focus:outline-hidden dark:border-gray-700 dark:text-white/90 dark:focus:border-brand-800"
+                        className="font-mono"
                     />
                 </div>
             </div>

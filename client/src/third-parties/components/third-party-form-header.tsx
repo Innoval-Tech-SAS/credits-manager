@@ -19,7 +19,7 @@ export const ThirdPartyFormHeader: FC<ThirdPartyFormHeaderProps> = ({ isEditMode
     ) : (
         <div>
             <Label htmlFor="rol">Tipo</Label>
-            <Select options={THIRD_PARTY_ROLE_OPTIONS} defaultValue={role} onChange={(value) => onRoleChange(value as ThirdPartyRole)} />
+            <Select id="rol" options={THIRD_PARTY_ROLE_OPTIONS} defaultValue={role} onChange={(value) => onRoleChange(value as ThirdPartyRole)} />
         </div>
     );
 };

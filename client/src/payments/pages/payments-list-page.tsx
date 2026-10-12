@@ -9,6 +9,7 @@ import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource'
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Button } from '@ui/button/components/button';
+import { DatePicker } from '@ui/forms/components/date-picker';
 import { Input } from '@ui/forms/components/input';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
@@ -72,6 +73,8 @@ export const PaymentsListPage: FC = () => {
                     <>
                         <div className="w-full sm:w-72">
                             <Input
+                                id="buscar-pago"
+                                name="buscar-pago"
                                 placeholder="Buscar por cliente…"
                                 startIcon={<Search className="size-4" />}
                                 value={search}
@@ -81,12 +84,12 @@ export const PaymentsListPage: FC = () => {
 
                         <div className="flex w-full items-center gap-2 sm:w-auto">
                             <div className="w-full sm:w-44">
-                                <Input
+                                <DatePicker
                                     id="mes-pago"
-                                    type="month"
+                                    mode="month"
                                     value={mes}
-                                    onChange={(event) => {
-                                        setMes(event.target.value);
+                                    onChange={(value) => {
+                                        setMes(value);
                                         setPage(1);
                                     }}
                                 />

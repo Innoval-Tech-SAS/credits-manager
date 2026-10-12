@@ -96,6 +96,8 @@ export const UsersListPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-usuario"
+                            name="buscar-usuario"
                             placeholder="Buscar por nombre o usuario…"
                             startIcon={<Search className="size-4" />}
                             value={search}

@@ -149,6 +149,7 @@ export const VoucherTypeForm: FC<VoucherTypeFormProps> = ({ voucherTypeId, initi
                                 <div>
                                     <Label htmlFor="tipo-numeracion">Tipo de numeración</Label>
                                     <Select
+                                        id="tipo-numeracion"
                                         options={TIPO_NUMERACION_OPTIONS}
                                         defaultValue={tipoNumeracion}
                                         onChange={(value) => setTipoNumeracion(value as 'automatico' | 'manual')}
@@ -158,6 +159,7 @@ export const VoucherTypeForm: FC<VoucherTypeFormProps> = ({ voucherTypeId, initi
                                 <div>
                                     <Label htmlFor="reinicio-periodo">Reinicio periódico</Label>
                                     <Select
+                                        id="reinicio-periodo"
                                         options={REINICIO_PERIODO_OPTIONS}
                                         defaultValue={reinicioPeriodo}
                                         onChange={(value) => setReinicioPeriodo(value as 'nunca' | 'anual' | 'mensual')}

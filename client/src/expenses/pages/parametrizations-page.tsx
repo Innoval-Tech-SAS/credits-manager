@@ -28,7 +28,7 @@ export const ParametrizationsPage: FC = () => {
     const tipoGastoOptions = tiposGasto.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }));
 
     const { data: parametrizacionesData, isLoading } = useResource<{ parametrizaciones: ApiParametrization[] }>(
-        tipoGastoId ? `/gastos/parametrizaciones?tipo_gasto_id=${tipoGastoId}` : '',
+        tipoGastoId ? `/gastos/parametrizaciones?tipo_gasto_id=${tipoGastoId}` : null,
     );
     const parametrizaciones = parametrizacionesData?.parametrizaciones ?? [];
 
@@ -37,12 +37,16 @@ export const ParametrizationsPage: FC = () => {
             pageTitle="Parametrización de tipos de gasto"
             successMessage={successMessage}
             onDismissSuccess={() => setSuccessMessage(null)}
-            countLabel={tipoGastoId ? `${parametrizaciones.length} versiones de vigencia` : 'Selecciona un tipo de gasto'}
+            countLabel={
+                tipoGastoId
+                    ? `${parametrizaciones.length} ${parametrizaciones.length === 1 ? 'versión de vigencia' : 'versiones de vigencia'}`
+                    : 'Selecciona un tipo de gasto'
+            }
             toolbar={
                 <>
                     <div className="w-full sm:w-72">
                         <Label htmlFor="tipo-gasto-filtro">Tipo de gasto</Label>
-                        <Select options={tipoGastoOptions} defaultValue={tipoGastoId} onChange={setTipoGastoId} />
+                        <Select id="tipo-gasto-filtro" options={tipoGastoOptions} defaultValue={tipoGastoId} onChange={setTipoGastoId} />
                     </div>
 
                     {canCreate && (

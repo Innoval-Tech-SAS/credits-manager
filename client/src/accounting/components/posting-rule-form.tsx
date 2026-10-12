@@ -57,17 +57,17 @@ export const PostingRuleForm: FC<PostingRuleFormProps> = ({ evento, reglaActual,
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor={`${evento}-debito`}>Cuenta débito</Label>
-                        <Select options={cuentaOptions} defaultValue={cuentaDebitoId} onChange={setCuentaDebitoId} />
+                        <Select id={`${evento}-debito`} options={cuentaOptions} defaultValue={cuentaDebitoId} onChange={setCuentaDebitoId} />
                     </div>
 
                     <div>
                         <Label htmlFor={`${evento}-credito`}>Cuenta crédito</Label>
-                        <Select options={cuentaOptions} defaultValue={cuentaCreditoId} onChange={setCuentaCreditoId} />
+                        <Select id={`${evento}-credito`} options={cuentaOptions} defaultValue={cuentaCreditoId} onChange={setCuentaCreditoId} />
                     </div>
 
                     <div>
                         <Label htmlFor={`${evento}-tipo`}>Tipo de comprobante</Label>
-                        <Select options={tipoOptions} defaultValue={tipoComprobanteId} onChange={setTipoComprobanteId} />
+                        <Select id={`${evento}-tipo`} options={tipoOptions} defaultValue={tipoComprobanteId} onChange={setTipoComprobanteId} />
                     </div>
                 </div>
 

@@ -85,7 +85,7 @@ export const ConceptTaxSettingsForm: FC<ConceptTaxSettingsFormProps> = ({ parame
                 </div>
                 <div>
                     <Label htmlFor={`cuenta-iva-${parametrizacion.tipo_concepto}`}>Cuenta IVA generado</Label>
-                    <Select options={cuentaOptions} placeholder="--" defaultValue={cuentaIvaId} onChange={setCuentaIvaId} />
+                    <Select id={`cuenta-iva-${parametrizacion.tipo_concepto}`} options={cuentaOptions} placeholder="--" defaultValue={cuentaIvaId} onChange={setCuentaIvaId} />
                 </div>
             </div>
 
@@ -120,7 +120,7 @@ export const ConceptTaxSettingsForm: FC<ConceptTaxSettingsFormProps> = ({ parame
                         </div>
                         <div>
                             <Label htmlFor={`cuenta-retefuente-${parametrizacion.tipo_concepto}`}>Cuenta por pagar</Label>
-                            <Select options={cuentaOptions} placeholder="--" defaultValue={cuentaRetefuenteId} onChange={setCuentaRetefuenteId} />
+                            <Select id={`cuenta-retefuente-${parametrizacion.tipo_concepto}`} options={cuentaOptions} placeholder="--" defaultValue={cuentaRetefuenteId} onChange={setCuentaRetefuenteId} />
                         </div>
                     </div>
                 )}
@@ -136,7 +136,7 @@ export const ConceptTaxSettingsForm: FC<ConceptTaxSettingsFormProps> = ({ parame
                                 La tarifa de ReteICA no se define aquí: sale de la tabla de tarifas por municipio y actividad económica de la empresa.
                             </p>
                             <Label htmlFor={`cuenta-reteica-${parametrizacion.tipo_concepto}`}>Cuenta por pagar</Label>
-                            <Select options={cuentaOptions} placeholder="--" defaultValue={cuentaReteicaId} onChange={setCuentaReteicaId} />
+                            <Select id={`cuenta-reteica-${parametrizacion.tipo_concepto}`} options={cuentaOptions} placeholder="--" defaultValue={cuentaReteicaId} onChange={setCuentaReteicaId} />
                         </div>
                     </div>
                 )}
@@ -159,7 +159,7 @@ export const ConceptTaxSettingsForm: FC<ConceptTaxSettingsFormProps> = ({ parame
                         </div>
                         <div>
                             <Label htmlFor={`cuenta-reteiva-${parametrizacion.tipo_concepto}`}>Cuenta por pagar</Label>
-                            <Select options={cuentaOptions} placeholder="--" defaultValue={cuentaReteivaId} onChange={setCuentaReteivaId} />
+                            <Select id={`cuenta-reteiva-${parametrizacion.tipo_concepto}`} options={cuentaOptions} placeholder="--" defaultValue={cuentaReteivaId} onChange={setCuentaReteivaId} />
                         </div>
                     </div>
                 )}

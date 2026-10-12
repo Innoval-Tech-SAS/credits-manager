@@ -84,6 +84,7 @@ export const ThirdPartyContactFields: FC<ThirdPartyContactFieldsProps> = ({ valu
                     <div>
                         <Label htmlFor="actividad-economica">Actividad económica</Label>
                         <Select
+                            id="actividad-economica"
                             options={actividadOptions}
                             placeholder="--"
                             defaultValue={values.actividadEconomicaId}

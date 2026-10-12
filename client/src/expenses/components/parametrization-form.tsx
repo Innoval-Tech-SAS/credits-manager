@@ -94,7 +94,7 @@ export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="tipo-gasto">Tipo de gasto</Label>
-                        <Select options={tipoGastoOptions} defaultValue={tipoGastoId} onChange={setTipoGastoId} />
+                        <Select id="tipo-gasto" options={tipoGastoOptions} defaultValue={tipoGastoId} onChange={setTipoGastoId} />
                     </div>
                     <div>
                         <Label htmlFor="fecha-desde">Vigente desde</Label>
@@ -102,22 +102,22 @@ export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, 
                     </div>
                     <div>
                         <Label htmlFor="tipo-comprobante">Tipo de comprobante a generar</Label>
-                        <Select options={tipoComprobanteOptions} defaultValue={tipoComprobanteId} onChange={setTipoComprobanteId} />
+                        <Select id="tipo-comprobante" options={tipoComprobanteOptions} defaultValue={tipoComprobanteId} onChange={setTipoComprobanteId} />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
                     <div>
                         <Label htmlFor="cuenta-gasto">Cuenta de gasto</Label>
-                        <Select options={cuentaOptions} placeholder="--" defaultValue={cuentaGastoId} onChange={setCuentaGastoId} />
+                        <Select id="cuenta-gasto" options={cuentaOptions} placeholder="--" defaultValue={cuentaGastoId} onChange={setCuentaGastoId} />
                     </div>
                     <div>
                         <Label htmlFor="cuenta-cxp">Cuenta de cuentas por pagar</Label>
-                        <Select options={cuentaOptions} placeholder="--" defaultValue={cuentaCxpId} onChange={setCuentaCxpId} />
+                        <Select id="cuenta-cxp" options={cuentaOptions} placeholder="--" defaultValue={cuentaCxpId} onChange={setCuentaCxpId} />
                     </div>
                     <div>
                         <Label htmlFor="cuenta-iva">Cuenta IVA descontable</Label>
-                        <Select options={cuentaOptions} placeholder="--" defaultValue={cuentaIvaId} onChange={setCuentaIvaId} />
+                        <Select id="cuenta-iva" options={cuentaOptions} placeholder="--" defaultValue={cuentaIvaId} onChange={setCuentaIvaId} />
                     </div>
                     <div>
                         <Label htmlFor="tarifa-iva">Tarifa de IVA (%)</Label>
@@ -183,6 +183,7 @@ export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, 
                             <div className="md:col-span-2">
                                 <Label htmlFor="cuenta-retefuente">Cuenta ReteFuente por pagar</Label>
                                 <Select
+                                    id="cuenta-retefuente"
                                     options={cuentaOptions}
                                     placeholder="--"
                                     defaultValue={cuentaRetefuenteId}
@@ -203,7 +204,7 @@ export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, 
                                     La tarifa de ReteICA no se define aquí: sale de la tabla de tarifas por municipio y actividad económica.
                                 </p>
                                 <Label htmlFor="cuenta-reteica">Cuenta ReteICA por pagar</Label>
-                                <Select options={cuentaOptions} placeholder="--" defaultValue={cuentaReteicaId} onChange={setCuentaReteicaId} />
+                                <Select id="cuenta-reteica" options={cuentaOptions} placeholder="--" defaultValue={cuentaReteicaId} onChange={setCuentaReteicaId} />
                             </div>
                         </div>
                     )}
@@ -228,7 +229,7 @@ export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, 
                             </div>
                             <div>
                                 <Label htmlFor="cuenta-reteiva">Cuenta ReteIVA por pagar</Label>
-                                <Select options={cuentaOptions} placeholder="--" defaultValue={cuentaReteivaId} onChange={setCuentaReteivaId} />
+                                <Select id="cuenta-reteiva" options={cuentaOptions} placeholder="--" defaultValue={cuentaReteivaId} onChange={setCuentaReteivaId} />
                             </div>
                         </div>
                     )}

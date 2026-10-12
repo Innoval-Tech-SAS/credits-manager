@@ -87,7 +87,7 @@ export const ConceptAccrualForm: FC<ConceptAccrualFormProps> = ({ tiposGasto }) 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="tipo-gasto">Concepto</Label>
-                        <Select options={tipoGastoOptions} defaultValue={tipoGastoId} onChange={setTipoGastoId} />
+                        <Select id="tipo-gasto" options={tipoGastoOptions} defaultValue={tipoGastoId} onChange={setTipoGastoId} />
                     </div>
 
                     <div>
@@ -105,7 +105,7 @@ export const ConceptAccrualForm: FC<ConceptAccrualFormProps> = ({ tiposGasto }) 
                     <div>
                         <Label htmlFor="centro-costo">Centro de costo (opcional)</Label>
                         {centroOptions.length > 0 ? (
-                            <Select options={centroOptions} defaultValue={centroCostoId} onChange={setCentroCostoId} />
+                            <Select id="centro-costo" options={centroOptions} defaultValue={centroCostoId} onChange={setCentroCostoId} />
                         ) : (
                             <p className="text-sm text-gray-500 dark:text-gray-400">No hay centros de costo activos.</p>
                         )}

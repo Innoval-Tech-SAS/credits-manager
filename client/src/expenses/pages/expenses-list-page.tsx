@@ -42,6 +42,8 @@ export const ExpensesListPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-gasto"
+                            name="buscar-gasto"
                             placeholder="Buscar por documento o concepto…"
                             startIcon={<Search className="size-4" />}
                             value={search}

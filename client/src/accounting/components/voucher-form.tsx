@@ -122,7 +122,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
                     <div>
                         <Label htmlFor="tipo-comprobante">Tipo de comprobante</Label>
-                        <Select options={tipoOptions} defaultValue={tipoComprobanteId} onChange={setTipoComprobanteId} />
+                        <Select id="tipo-comprobante" options={tipoOptions} defaultValue={tipoComprobanteId} onChange={setTipoComprobanteId} />
                     </div>
 
                     {esNumeracionManual && (
@@ -249,7 +249,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                                                 type="button"
                                                 onClick={() => eliminarLinea(linea.key)}
                                                 disabled={lineas.length <= 2}
-                                                className="text-gray-400 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                className="text-gray-500 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:text-error-500"
                                             >
                                                 <Trash2 className="size-4" />
                                             </button>

@@ -27,6 +27,8 @@ export const ImportsPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-importacion"
+                            name="buscar-importacion"
                             placeholder="Buscar por archivo…"
                             startIcon={<Search className="size-4" />}
                             value={search}

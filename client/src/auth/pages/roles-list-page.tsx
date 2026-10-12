@@ -74,6 +74,8 @@ export const RolesListPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-rol"
+                            name="buscar-rol"
                             placeholder="Buscar por nombre…"
                             startIcon={<Search className="size-4" />}
                             value={search}

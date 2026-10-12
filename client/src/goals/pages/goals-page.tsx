@@ -9,6 +9,7 @@ import { usePermission } from '../../auth/hooks/use-permission';
 import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
+import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
 import type { ApiAdvisor } from '../../clients/types/api-advisor';
@@ -82,9 +83,10 @@ export const GoalsPage: FC = () => {
         <div className="flex min-h-full flex-col pb-6">
             <PageBreadcrumb pageTitle="Metas" />
 
-            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div className="w-full md:max-w-xs">
-                    <Select options={opcionesDePeriodo()} defaultValue={periodo} onChange={setPeriodo} />
+                    <Label htmlFor="metas-periodo">Período</Label>
+                    <Select id="metas-periodo" options={opcionesDePeriodo()} defaultValue={periodo} onChange={setPeriodo} />
                 </div>
 
                 {puedeConfigurar && (

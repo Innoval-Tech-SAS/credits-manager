@@ -1,4 +1,5 @@
 export type AdvisorSelectProps = {
+    id?: string;
     /** Id del asesor elegido (`null` si aún no hay selección). */
     value: number | null;
     onChange: (advisorId: number | null) => void;

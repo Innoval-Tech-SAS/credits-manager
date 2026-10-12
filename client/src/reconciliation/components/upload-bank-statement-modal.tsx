@@ -60,7 +60,7 @@ const FormularioCarga: FC<FormularioCargaProps> = ({ cuentaBancariaId, onClose, 
 
             <div>
                 <Label htmlFor="extracto-mes-primera-fila">Mes de la primera fila del archivo</Label>
-                <DatePicker id="extracto-mes-primera-fila" value={fechaReferencia} onChange={setFechaReferencia} required />
+                <DatePicker id="extracto-mes-primera-fila" mode="month" value={fechaReferencia} onChange={setFechaReferencia} required />
             </div>
 
             <div>
@@ -74,6 +74,7 @@ const FormularioCarga: FC<FormularioCargaProps> = ({ cuentaBancariaId, onClose, 
                     </div>
                 ) : (
                     <Dropzone
+                        id="extracto-archivo"
                         accept={ACCEPTED_SPREADSHEET_TYPES}
                         label="Arrastra y suelta el extracto aquí"
                         hint="Excel (.xlsx) del banco"

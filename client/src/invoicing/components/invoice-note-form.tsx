@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { usePermission } from '../../auth/hooks/use-permission';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { formatMoney } from '../../shared/utils/format-money';
 import { Button } from '@ui/button/components/button';
 import { DatePicker } from '@ui/forms/components/date-picker';
 import { Input } from '@ui/forms/components/input';
@@ -53,6 +54,9 @@ const FormularioNota: FC<FormularioNotaProps> = ({ documento, onClose, onEmitida
     const esOtros = motivoCodigo === 'otros';
     const esMora = tipo === 'nota_debito' && motivoCodigo === 'intereses';
 
+    const totalCredito = Object.values(valoresCredito).reduce((acumulado, valor) => acumulado + (parseFloat(valor) || 0), 0);
+    const totalDebito = lineasDebito.reduce((acumulado, linea) => acumulado + (parseFloat(linea.valor) || 0), 0);
+
     const cambiarTipo = (nuevoTipo: NoteKind) => {
         setTipo(nuevoTipo);
         setMotivoCodigo(nuevoTipo === 'nota_credito' ? NOTE_CREDIT_REASON_OPTIONS[0].value : NOTE_DEBIT_REASON_OPTIONS[0].value);
@@ -96,6 +100,7 @@ const FormularioNota: FC<FormularioNotaProps> = ({ documento, onClose, onEmitida
                 <div className="max-w-xs">
                     <Label htmlFor="tipo-nota">Tipo de nota</Label>
                     <Select
+                        id="tipo-nota"
                         options={tiposPermitidos.map((tipoNota) => ({
                             value: tipoNota,
                             label: tipoNota === 'nota_credito' ? 'Nota crédito' : 'Nota débito',
@@ -110,6 +115,7 @@ const FormularioNota: FC<FormularioNotaProps> = ({ documento, onClose, onEmitida
                 <div>
                     <Label htmlFor="motivo-codigo-nota">Motivo</Label>
                     <Select
+                        id="motivo-codigo-nota"
                         options={tipo === 'nota_credito' ? NOTE_CREDIT_REASON_OPTIONS : NOTE_DEBIT_REASON_OPTIONS}
                         defaultValue={motivoCodigo}
                         onChange={(valor) => setMotivoCodigo(valor as ApiInvoiceNoteCreditReason | ApiInvoiceNoteDebitReason)}
@@ -136,7 +142,7 @@ const FormularioNota: FC<FormularioNotaProps> = ({ documento, onClose, onEmitida
                         <div key={linea.id} className="grid grid-cols-1 gap-4 md:grid-cols-[2fr_1fr] md:items-end">
                             <div>
                                 <Label htmlFor={`credito-${linea.id}`}>{`${linea.concepto} · ${linea.descripcion}`}</Label>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Valor original: {linea.valor}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">Valor original: {formatMoney(linea.valor)}</p>
                             </div>
                             <Input
                                 id={`credito-${linea.id}`}
@@ -149,9 +155,25 @@ const FormularioNota: FC<FormularioNotaProps> = ({ documento, onClose, onEmitida
                             />
                         </div>
                     ))}
+
+                    {totalCredito > 0 && (
+                        <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">Total nota crédito</span>
+                            <span className="text-base font-semibold text-gray-800 dark:text-white/90">{formatMoney(totalCredito)}</span>
+                        </div>
+                    )}
                 </div>
             ) : (
-                <InvoiceLinesForm lineas={lineasDebito} onChange={setLineasDebito} mostrarSoporteMora={esMora} />
+                <>
+                    <InvoiceLinesForm lineas={lineasDebito} onChange={setLineasDebito} mostrarSoporteMora={esMora} />
+
+                    {totalDebito > 0 && (
+                        <div className="flex items-center justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">Total nota débito</span>
+                            <span className="text-base font-semibold text-gray-800 dark:text-white/90">{formatMoney(totalDebito)}</span>
+                        </div>
+                    )}
+                </>
             )}
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

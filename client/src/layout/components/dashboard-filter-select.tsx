@@ -7,7 +7,7 @@ import { DropdownItem } from '@ui/dropdown/components/dropdown-item';
 import type { DashboardFilterSelectProps } from '../props/dashboard-filter-select-props';
 
 /** Reemplaza al `<select>` nativo: su lista la pinta el navegador y no admite el scroll del proyecto. */
-export const DashboardFilterSelect: FC<DashboardFilterSelectProps> = ({ options, value, onChange, placeholder }) => {
+export const DashboardFilterSelect: FC<DashboardFilterSelectProps> = ({ id, options, value, onChange, placeholder }) => {
     const [isOpen, setIsOpen] = useState(false);
     const seleccionada = options.find((option) => option.value === value);
 
@@ -15,6 +15,7 @@ export const DashboardFilterSelect: FC<DashboardFilterSelectProps> = ({ options,
         <div className="relative">
             <button
                 type="button"
+                id={id}
                 onClick={() => setIsOpen((abierto) => !abierto)}
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}

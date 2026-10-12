@@ -74,6 +74,8 @@ export const AuditRecoveryPage: FC = () => {
 
                     <div className="w-full sm:w-52">
                         <Select
+                            id="filtro-estado-respaldo"
+                            ariaLabel="Estado"
                             options={AUDIT_BACKUP_STATUS_OPTIONS}
                             placeholder="Todos los estados"
                             placeholderSelectable

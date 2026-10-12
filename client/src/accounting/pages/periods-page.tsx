@@ -11,6 +11,7 @@ import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { Label } from '@ui/forms/components/label';
+import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { Modal } from '@ui/modal/components/modal';
 import { DataTable } from '@ui/table/components/data-table';
 import { ReopenRequestsCard } from '../components/reopen-requests-card';
@@ -46,6 +47,7 @@ export const PeriodsPage: FC = () => {
 
     const [cerrandoId, setCerrandoId] = useState<number | null>(null);
     const [cerrarError, setCerrarError] = useState<string | null>(null);
+    const [cerrarTarget, setCerrarTarget] = useState<ApiPeriod | null>(null);
 
     const refrescar = () => setRefreshToken((token) => token + 1);
 
@@ -55,12 +57,17 @@ export const PeriodsPage: FC = () => {
         setError(null);
     };
 
-    const handleCerrar = async (periodo: ApiPeriod) => {
+    const handleCerrar = async () => {
+        if (!cerrarTarget) {
+            return;
+        }
+
         setCerrarError(null);
-        setCerrandoId(periodo.id);
+        setCerrandoId(cerrarTarget.id);
 
         try {
-            await sendRequest(`/contabilidad/periodos/${periodo.id}/cerrar`, { method: 'POST' });
+            await sendRequest(`/contabilidad/periodos/${cerrarTarget.id}/cerrar`, { method: 'POST' });
+            setCerrarTarget(null);
             refrescar();
         } catch (caught) {
             setCerrarError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
@@ -136,7 +143,7 @@ export const PeriodsPage: FC = () => {
                                             icon={<Lock className="size-5" />}
                                             label={cerrandoId === row.id ? 'Cerrando…' : 'Cerrar'}
                                             disabled={cerrandoId === row.id}
-                                            onClick={() => void handleCerrar(row)}
+                                            onClick={() => setCerrarTarget(row)}
                                         />
                                     ) : null;
                                 }
@@ -174,6 +181,21 @@ export const PeriodsPage: FC = () => {
                     maxHeightClassName="max-h-[65vh]"
                 />
             </div>
+
+            <ConfirmModal
+                isOpen={cerrarTarget !== null}
+                onClose={() => setCerrarTarget(null)}
+                onConfirm={() => void handleCerrar()}
+                variant="warning"
+                title="Cerrar período"
+                description={
+                    cerrarTarget
+                        ? `¿Seguro que quieres cerrar ${MONTHS[cerrarTarget.mes - 1] ?? cerrarTarget.mes} de ${cerrarTarget.anio}? Ya no se podrán registrar ni modificar comprobantes en este período hasta que se reabra.`
+                        : ''
+                }
+                confirmLabel="Cerrar período"
+                isConfirming={cerrandoId !== null}
+            />
 
             <Modal isOpen={reopenTarget !== null} onClose={closeReopenModal} size="sm">
                 <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">

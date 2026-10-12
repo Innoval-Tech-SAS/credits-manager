@@ -37,16 +37,15 @@ export const JournalPage: FC = () => {
                         <Label htmlFor="hasta">Hasta</Label>
                         <DatePicker id="hasta" value={hasta} onChange={setHasta} />
                     </div>
-                </div>
-
-                <div className="mt-6">
-                    <ReportExportButton
-                        endpoint="/contabilidad/libro-diario/exportar"
-                        exportPermissions={['informes_contables.exportar_libro_diario']}
-                        pdfEndpoint="/contabilidad/libro-diario/pdf"
-                        pdfFilename="libro-diario.pdf"
-                        filters={{ desde, hasta }}
-                    />
+                    <div className="flex items-end">
+                        <ReportExportButton
+                            endpoint="/contabilidad/libro-diario/exportar"
+                            exportPermissions={['informes_contables.exportar_libro_diario']}
+                            pdfEndpoint="/contabilidad/libro-diario/pdf"
+                            pdfFilename="libro-diario.pdf"
+                            filters={{ desde, hasta }}
+                        />
+                    </div>
                 </div>
             </div>
 

@@ -96,7 +96,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="tipo-gasto">Tipo de gasto</Label>
-                        <Select options={tipoGastoOptions} defaultValue={tipoGastoId} onChange={setTipoGastoId} />
+                        <Select id="tipo-gasto" options={tipoGastoOptions} defaultValue={tipoGastoId} onChange={setTipoGastoId} />
                     </div>
 
                     <div>
@@ -114,7 +114,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                     <div>
                         <Label htmlFor="centro-costo">Centro de costo</Label>
                         {centroOptions.length > 0 ? (
-                            <Select options={centroOptions} defaultValue={centroCostoId} onChange={setCentroCostoId} />
+                            <Select id="centro-costo" options={centroOptions} defaultValue={centroCostoId} onChange={setCentroCostoId} />
                         ) : (
                             <p className="text-sm text-gray-500 dark:text-gray-400">No hay centros de costo activos. Créalos en Contabilidad antes de registrar gastos.</p>
                         )}
@@ -174,7 +174,7 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                             </button>
                         </div>
                     ) : (
-                        <Dropzone accept={ACCEPTED_DOCUMENT_TYPES} hint="PDF, PNG, JPG o WEBP" onFileAccepted={setSoporte} />
+                        <Dropzone id="soporte" accept={ACCEPTED_DOCUMENT_TYPES} hint="PDF, PNG, JPG o WEBP" onFileAccepted={setSoporte} />
                     )}
                 </div>
 

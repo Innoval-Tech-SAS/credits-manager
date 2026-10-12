@@ -3,6 +3,8 @@ import { useEffect, useEffectEvent, useRef } from 'react';
 
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.css';
+import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect';
+import 'flatpickr/dist/plugins/monthSelect/style.css';
 import { Calendar } from 'lucide-react';
 import type { DatePickerProps } from '../props/date-picker-props';
 
@@ -12,7 +14,7 @@ export const DatePicker: FC<DatePickerProps> = ({
     mode = 'single',
     value,
     onChange,
-    placeholder = 'Seleccione una fecha',
+    placeholder = mode === 'month' ? 'Seleccione un mes' : 'Seleccione una fecha',
     required = false,
     disabled = false,
     className = '',
@@ -28,12 +30,13 @@ export const DatePicker: FC<DatePickerProps> = ({
         }
 
         instanceRef.current = flatpickr(inputRef.current, {
-            mode,
+            mode: mode === 'month' ? 'single' : mode,
             static: true,
             monthSelectorType: 'static',
-            dateFormat: 'Y-m-d',
+            dateFormat: mode === 'month' ? 'Y-m' : 'Y-m-d',
             defaultDate: value || undefined,
             disableMobile: true,
+            plugins: mode === 'month' ? [monthSelectPlugin({ shorthand: true, dateFormat: 'Y-m', altFormat: 'M Y' })] : [],
             onChange: (_dates, dateStr) => notificarCambio(dateStr),
         });
 
@@ -60,7 +63,7 @@ export const DatePicker: FC<DatePickerProps> = ({
                 required={required}
                 disabled={disabled}
                 readOnly
-                className={`h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:focus:border-brand-800 ${
+                className={`h-11 w-full rounded-lg border appearance-none py-2.5 pl-4 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:focus:border-brand-800 ${
                     disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'
                 } ${className}`}
             />

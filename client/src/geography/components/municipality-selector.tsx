@@ -27,6 +27,7 @@ export const MunicipalitySelector: FC<MunicipalitySelectorProps> = ({ onChange, 
             <div>
                 <Label htmlFor="municipio">Municipio</Label>
                 <Select
+                    id="municipio"
                     key={`municipio-${stateId}-${municipalities.length}`}
                     options={municipalities.map((municipality) => ({ value: String(municipality.id), label: municipality.nombre }))}
                     placeholder="Municipio"

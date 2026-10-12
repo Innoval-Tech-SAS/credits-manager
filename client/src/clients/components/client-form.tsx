@@ -141,6 +141,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                         <div>
                             <Label htmlFor="tipo-documento">Tipo de documento</Label>
                             <Select
+                                id="tipo-documento"
                                 options={NATURAL_DOCUMENT_TYPE_OPTIONS}
                                 defaultValue={tipoDocumento}
                                 onChange={(value) => setTipoDocumento(value as NaturalDocumentType)}
@@ -166,7 +167,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                         {mustChooseAdvisor && (
                             <div>
                                 <Label htmlFor="asesor">Asesor</Label>
-                                <AdvisorSelect value={asesorId} onChange={setAsesorId} />
+                                <AdvisorSelect id="asesor" value={asesorId} onChange={setAsesorId} />
                             </div>
                         )}
                     </div>

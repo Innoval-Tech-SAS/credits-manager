@@ -38,7 +38,7 @@ export const CostCenterDetailPage: FC = () => {
                             </div>
 
                             <span
-                                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                className={`w-fit self-start rounded-full px-2.5 py-0.5 text-xs font-medium ${
                                     centro.activo
                                         ? 'bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-400'
                                         : 'bg-error-50 text-error-600 dark:bg-error-500/15 dark:text-error-400'

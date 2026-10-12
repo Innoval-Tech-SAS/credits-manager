@@ -33,6 +33,8 @@ export const CompaniesListPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-empresa"
+                            name="buscar-empresa"
                             placeholder="Buscar por nombre…"
                             startIcon={<Search className="size-4" />}
                             value={search}

@@ -108,6 +108,8 @@ export const ClientsListPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-cliente"
+                            name="buscar-cliente"
                             placeholder="Nombre, documento o empresa…"
                             startIcon={<Search className="size-4" />}
                             value={search}
@@ -117,6 +119,8 @@ export const ClientsListPage: FC = () => {
 
                     <div className="w-full sm:w-44">
                         <Select
+                            id="filtro-estado"
+                            ariaLabel="Estado"
                             placeholder="Estado"
                             options={CLIENT_STATUS_FILTER_OPTIONS}
                             defaultValue={estado}
@@ -129,6 +133,8 @@ export const ClientsListPage: FC = () => {
 
                     <div className="w-full sm:w-48">
                         <Select
+                            id="filtro-estado-credito"
+                            ariaLabel="Estado de crédito"
                             placeholder="Estado de crédito"
                             options={CLIENT_CREDIT_STATUS_FILTER_OPTIONS}
                             defaultValue={estadoCredito}

@@ -74,11 +74,11 @@ export const AuxiliariesPage: FC = () => {
                     ))}
                 </div>
 
-                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3 xl:grid-cols-4">
                     {modo === 'cuenta' ? (
                         <div className="md:col-span-1">
                             <Label htmlFor="cuenta">Cuenta</Label>
-                            <Select options={cuentaOptions} defaultValue={cuentaId} onChange={setCuentaId} />
+                            <Select id="cuenta" options={cuentaOptions} defaultValue={cuentaId} onChange={setCuentaId} />
                         </div>
                     ) : (
                         <div className="md:col-span-1">
@@ -95,17 +95,16 @@ export const AuxiliariesPage: FC = () => {
                         <Label htmlFor="hasta">Hasta</Label>
                         <DatePicker id="hasta" value={hasta} onChange={setHasta} />
                     </div>
-                </div>
-
-                <div className="mt-6">
-                    <ReportExportButton
-                        endpoint="/contabilidad/auxiliares/exportar"
-                        exportPermissions={['informes_contables.exportar_auxiliares']}
-                        pdfEndpoint="/contabilidad/auxiliares/pdf"
-                        pdfFilename="auxiliar.pdf"
-                        filters={filtros}
-                        disabled={!endpoint}
-                    />
+                    <div className="flex items-end">
+                        <ReportExportButton
+                            endpoint="/contabilidad/auxiliares/exportar"
+                            exportPermissions={['informes_contables.exportar_auxiliares']}
+                            pdfEndpoint="/contabilidad/auxiliares/pdf"
+                            pdfFilename="auxiliar.pdf"
+                            filters={filtros}
+                            disabled={!endpoint}
+                        />
+                    </div>
                 </div>
             </div>
 

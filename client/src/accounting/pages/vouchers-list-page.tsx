@@ -36,6 +36,8 @@ export const VouchersListPage: FC = () => {
                 <>
                     <div className="w-full sm:w-72">
                         <Input
+                            id="buscar-comprobante"
+                            name="buscar-comprobante"
                             placeholder="Buscar por concepto o tipo…"
                             startIcon={<Search className="size-4" />}
                             value={search}

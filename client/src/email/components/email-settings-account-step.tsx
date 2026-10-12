@@ -45,7 +45,7 @@ export const EmailSettingsAccountStep: FC<EmailSettingsAccountStepProps> = ({ dr
                         id="clave"
                         name="clave"
                         type="password"
-                        autoComplete="new-password"
+                        autoComplete="current-password"
                         placeholder={claveGuardada ? 'Guardada: escriba una nueva para cambiarla' : 'Sin configurar'}
                         value={draft.clave}
                         onChange={(event) => onChange({ clave: event.target.value })}

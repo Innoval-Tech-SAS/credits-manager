@@ -71,6 +71,7 @@ export const ChangeOwnPasswordModal: FC<ChangeOwnPasswordModalProps> = ({ onClos
                             <Input
                                 id="current-password"
                                 name="current-password"
+                                autoComplete="current-password"
                                 type={showPassword ? 'text' : 'password'}
                                 startIcon={<KeyRound className="size-5" />}
                                 endIcon={
@@ -96,6 +97,7 @@ export const ChangeOwnPasswordModal: FC<ChangeOwnPasswordModalProps> = ({ onClos
                             <Input
                                 id="new-password"
                                 name="new-password"
+                                autoComplete="new-password"
                                 type={showPassword ? 'text' : 'password'}
                                 startIcon={<KeyRound className="size-5" />}
                                 minLength={8}
@@ -110,6 +112,7 @@ export const ChangeOwnPasswordModal: FC<ChangeOwnPasswordModalProps> = ({ onClos
                             <Input
                                 id="confirm-new-password"
                                 name="confirm-new-password"
+                                autoComplete="new-password"
                                 type={showPassword ? 'text' : 'password'}
                                 startIcon={<KeyRound className="size-5" />}
                                 minLength={8}

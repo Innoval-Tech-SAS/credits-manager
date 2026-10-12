@@ -85,6 +85,7 @@ export const SettleCreditPage: FC = () => {
                         <div>
                             <Label htmlFor="forma-pago">Forma de pago</Label>
                             <Select
+                                id="forma-pago"
                                 options={PAYMENT_METHOD_OPTIONS}
                                 defaultValue={formaPago}
                                 onChange={(value) => setFormaPago(value as PaymentMethod)}

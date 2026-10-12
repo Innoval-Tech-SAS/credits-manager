@@ -130,6 +130,7 @@ export const CreateInvoicePage: FC = () => {
     };
 
     const puedeGuardar = cliente !== null && creditoId !== '' && lineas.length > 0 && lineas.every((linea) => linea.tipo_concepto && linea.valor);
+    const total = lineas.reduce((acumulado, linea) => acumulado + (parseFloat(linea.valor) || 0), 0);
 
     return (
         <div className="flex min-h-full flex-col gap-6 pb-6">
@@ -140,7 +141,7 @@ export const CreateInvoicePage: FC = () => {
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                 <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">1. Cliente</h3>
                 <Label htmlFor="cliente">Cliente</Label>
-                <ClientFullSelect selected={cliente} onSelect={seleccionarCliente} />
+                <ClientFullSelect id="cliente" selected={cliente} onSelect={seleccionarCliente} />
             </div>
 
             {cliente && (
@@ -174,6 +175,7 @@ export const CreateInvoicePage: FC = () => {
                                 <div>
                                     <Label htmlFor="credito">Crédito desembolsado</Label>
                                     <Select
+                                        id="credito"
                                         key={cliente.id}
                                         options={creditos.map((c) => ({
                                             value: String(c.id),
@@ -212,6 +214,13 @@ export const CreateInvoicePage: FC = () => {
                     ) : null}
 
                     <InvoiceLinesForm lineas={lineas} onChange={setLineas} requiereTipoConcepto />
+
+                    {lineas.length > 0 && (
+                        <div className="mt-4 flex items-center justify-end gap-3 border-t border-gray-200 pt-4 dark:border-gray-800">
+                            <span className="text-sm text-gray-500 dark:text-gray-400">Total a facturar</span>
+                            <span className="text-base font-semibold text-gray-800 dark:text-white/90">{formatMoney(total)}</span>
+                        </div>
+                    )}
                 </div>
             )}
 

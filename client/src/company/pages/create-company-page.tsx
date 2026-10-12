@@ -89,7 +89,7 @@ export const CreateCompanyPage: FC = () => {
                                 <div className="space-y-6">
                                     <div>
                                         <Label htmlFor="name">Nombre de la empresa</Label>
-                                        <Input id="name" name="name" required value={name} onChange={(event) => setName(event.target.value)} />
+                                        <Input id="name" name="name" autoComplete="organization" required value={name} onChange={(event) => setName(event.target.value)} />
                                     </div>
 
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -123,6 +123,7 @@ export const CreateCompanyPage: FC = () => {
                                         <Input
                                             id="address"
                                             name="address"
+                                            autoComplete="street-address"
                                             required
                                             value={address}
                                             onChange={(event) => setAddress(event.target.value)}
@@ -137,6 +138,7 @@ export const CreateCompanyPage: FC = () => {
                                             <Input
                                                 id="phone"
                                                 name="phone"
+                                                autoComplete="tel"
                                                 required
                                                 value={phone}
                                                 onChange={(event) => setPhone(event.target.value)}
@@ -149,6 +151,7 @@ export const CreateCompanyPage: FC = () => {
                                                 id="email"
                                                 name="email"
                                                 type="email"
+                                                autoComplete="email"
                                                 required
                                                 value={email}
                                                 onChange={(event) => setEmail(event.target.value)}
@@ -168,6 +171,7 @@ export const CreateCompanyPage: FC = () => {
                                         <Input
                                             id="admin-name"
                                             name="admin-name"
+                                            autoComplete="name"
                                             required
                                             startIcon={<User className="size-4" />}
                                             value={adminName}
@@ -180,6 +184,7 @@ export const CreateCompanyPage: FC = () => {
                                         <Input
                                             id="admin-username"
                                             name="admin-username"
+                                            autoComplete="off"
                                             required
                                             startIcon={<User className="size-4" />}
                                             value={adminUsername}
@@ -194,6 +199,7 @@ export const CreateCompanyPage: FC = () => {
                                                 id="admin-password"
                                                 name="admin-password"
                                                 type="password"
+                                                autoComplete="new-password"
                                                 required
                                                 startIcon={<KeyRound className="size-4" />}
                                                 minLength={8}
@@ -209,6 +215,7 @@ export const CreateCompanyPage: FC = () => {
                                                 id="admin-confirm-password"
                                                 name="admin-confirm-password"
                                                 type="password"
+                                                autoComplete="new-password"
                                                 required
                                                 startIcon={<KeyRound className="size-4" />}
                                                 minLength={8}

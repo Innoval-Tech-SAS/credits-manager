@@ -26,7 +26,7 @@ export const FinancialStatementsPage: FC = () => {
             <PageBreadcrumb pageTitle="Estados financieros" />
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="desde">Desde (P&amp;G)</Label>
                         <DatePicker id="desde" value={desde} onChange={setDesde} />
@@ -35,16 +35,15 @@ export const FinancialStatementsPage: FC = () => {
                         <Label htmlFor="hasta">Corte al</Label>
                         <DatePicker id="hasta" value={hasta} onChange={setHasta} />
                     </div>
-                </div>
-
-                <div className="mt-6">
-                    <ReportExportButton
-                        endpoint="/contabilidad/estados-financieros/exportar"
-                        exportPermissions={['informes_contables.exportar_estados_financieros']}
-                        pdfEndpoint="/contabilidad/estados-financieros/pdf"
-                        pdfFilename="estados-financieros.pdf"
-                        filters={{ desde, hasta }}
-                    />
+                    <div className="flex items-end">
+                        <ReportExportButton
+                            endpoint="/contabilidad/estados-financieros/exportar"
+                            exportPermissions={['informes_contables.exportar_estados_financieros']}
+                            pdfEndpoint="/contabilidad/estados-financieros/pdf"
+                            pdfFilename="estados-financieros.pdf"
+                            filters={{ desde, hasta }}
+                        />
+                    </div>
                 </div>
             </div>
 
