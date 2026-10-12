@@ -13,6 +13,7 @@ use App\Contabilidad\Models\SolicitudReaperturaPeriodo;
 use App\Empresas\Models\Empresa;
 use App\Gastos\Constants\GastosConstants;
 use App\Gastos\Models\ActividadEconomica;
+use App\Importacion\Constants\ImportacionConstants;
 use App\Proveedores\Models\Proveedor;
 use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
@@ -164,7 +165,7 @@ class SeparacionModulosContablesTest extends TestCase
             ['PATCH', "/api/v1/contabilidad/centros-costo/{$this->centroId}", ['configuracion_contable.editar_centros_costo'], []],
             ['GET', '/api/v1/contabilidad/reglas', ['configuracion_contable.configurar'], []],
             ['POST', '/api/v1/contabilidad/reglas', ['configuracion_contable.configurar'], []],
-            ['GET', '/api/v1/importaciones', ['importaciones.importar_plan_cuentas', 'importaciones.importar_saldos_iniciales'], []],
+            ['GET', '/api/v1/importaciones', ImportacionConstants::PERMISOS_IMPORTAR, []],
 
             ['GET', '/api/v1/contabilidad/comprobantes', ['contabilidad.listar_comprobantes'], []],
             ['POST', '/api/v1/contabilidad/comprobantes', ['contabilidad.crear_manual'], []],
