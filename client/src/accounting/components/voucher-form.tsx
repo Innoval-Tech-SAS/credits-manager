@@ -23,6 +23,7 @@ function nuevaLinea(): VoucherFormLine {
         key: nextLineKey++,
         cuenta_id: '',
         centro_costo_id: '',
+        tercero: null,
         documento_cruce: '',
         fecha_vencimiento: '',
         descripcion: '',
@@ -90,6 +91,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                     lineas: lineasValidas.map((linea) => ({
                         cuenta_id: Number(linea.cuenta_id),
                         centro_costo_id: linea.centro_costo_id ? Number(linea.centro_costo_id) : null,
+                        tercero_id: linea.tercero?.id ?? null,
                         documento_cruce: linea.documento_cruce || null,
                         fecha_vencimiento: linea.fecha_vencimiento || null,
                         descripcion: linea.descripcion || null,
@@ -157,7 +159,10 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
 
                     <div>
                         <Label htmlFor="tercero">Tercero (opcional)</Label>
-                        <ThirdPartySelector id="tercero" selected={tercero} onSelect={setTercero} />
+                        <ThirdPartySelector id="tercero" selected={tercero} onSelect={setTercero} onClear={() => setTercero(null)} />
+                        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                            Tercero por defecto de las líneas que no tengan uno propio.
+                        </p>
                     </div>
                 </div>
 
@@ -177,11 +182,12 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                     </div>
 
                     <div className="custom-scrollbar overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
-                        <table className="w-full min-w-240 text-left text-sm">
+                        <table className="w-full min-w-280 text-left text-sm">
                             <thead>
                                 <tr className="border-b border-gray-100 dark:border-gray-800">
                                     <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Cuenta</th>
                                     <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Centro de costo</th>
+                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Tercero</th>
                                     <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Doc. cruce</th>
                                     <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Vence</th>
                                     <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Descripción</th>
@@ -207,6 +213,14 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                                                 placeholder="--"
                                                 defaultValue={linea.centro_costo_id}
                                                 onChange={(value) => actualizarLinea(linea.key, { centro_costo_id: value })}
+                                            />
+                                        </td>
+                                        <td className="min-w-50 px-4 py-2">
+                                            <ThirdPartySelector
+                                                id={`tercero-${linea.key}`}
+                                                selected={linea.tercero}
+                                                onSelect={(thirdParty) => actualizarLinea(linea.key, { tercero: thirdParty })}
+                                                onClear={() => actualizarLinea(linea.key, { tercero: null })}
                                             />
                                         </td>
                                         <td className="px-4 py-2">

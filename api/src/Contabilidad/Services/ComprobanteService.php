@@ -457,9 +457,9 @@ class ComprobanteService
 
     /**
      * Cada cuenta declara qué exige al usarse en un asiento manual (centro de costo, tercero, documento cruce,
-     * vencimiento). El tercero se resuelve igual que al armar las líneas (`$linea['tercero_id'] ?? $terceroId`, el
-     * único del comprobante hoy); documento cruce y vencimiento son propios de cada línea. Los flujos automáticos
-     * resuelven esos datos por su cuenta y no pasan por aquí.
+     * vencimiento). El tercero se resuelve igual que al armar las líneas (`$linea['tercero_id'] ?? $terceroId`,
+     * el del comprobante si la línea no trae uno propio); documento cruce y vencimiento son propios de cada
+     * línea. Los flujos automáticos resuelven esos datos por su cuenta y no pasan por aquí.
      */
     private function exigirRequisitosParametrizados(array $lineas, ?int $terceroId): void
     {
