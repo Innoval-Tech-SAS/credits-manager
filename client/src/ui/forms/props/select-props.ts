@@ -12,4 +12,5 @@ export type SelectProps = {
     defaultValue?: string;
     /** Permite volver a seleccionar el placeholder (útil en filtros donde "sin selección" es un valor válido). */
     placeholderSelectable?: boolean;
+    disabled?: boolean;
 };

@@ -63,7 +63,6 @@ class DocumentoFacturacionService
         protected ConsecutivoDocumentoService $consecutivos,
         protected AsientosFacturacionService $asientos,
         protected DocumentoTerceroService $documentosTercero,
-        protected ConfiguracionFacturacionService $configuracion,
         protected EmpresaService $empresas,
         protected GeneradorPdf $generador,
         protected EmisorAuditoria $auditoria,
@@ -322,10 +321,6 @@ class DocumentoFacturacionService
             $lineasNota = $tipo === TipoDocumentoFacturacion::NotaCredito
                 ? $this->lineasDeNotaCredito($bloqueado, $lineas)
                 : $this->lineasDeNotaDebito($bloqueado, $lineas);
-
-            if ($tipo === TipoDocumentoFacturacion::NotaDebito) {
-                $this->exigirDentroDelTope($lineasNota, (int) $usuario->empresa_id);
-            }
 
             return $this->crearNota($bloqueado, $tipo, $motivo, $lineasNota, $usuario, fechaVencimiento: $fechaVencimiento);
         });
@@ -594,20 +589,7 @@ class DocumentoFacturacionService
         return $resultado;
     }
 
-    /** @return list<array{linea_origen_id: ?int, concepto: string, descripcion: string, valor: Dinero}> */
-    /** @param  list<array{valor: Dinero, ...}>  $lineasNota */
-    private function exigirDentroDelTope(array $lineasNota, int $empresaId): void
-    {
-        $tope = $this->configuracion->parametros($empresaId)->notaDebitoTope;
-        $total = Dinero::sumarVarios(...array_column($lineasNota, 'valor'));
-
-        if ($total->mayorQue($tope)) {
-            throw ValidationException::withMessages([
-                'lineas' => __('validation.custom.facturacion.nota_debito_excede_tope', ['tope' => $tope->aDecimalString()]),
-            ]);
-        }
-    }
-
+    /** @return list<array{linea_origen_id: ?int, concepto: string, descripcion: string, valor: Dinero, tasa_mora: ?string, dias_mora: ?int, base_mora: ?Dinero}> */
     private function lineasDeNotaDebito(DocumentoFacturacion $origen, array $lineas): array
     {
         return array_map(function (array $entrada) use ($origen) {
