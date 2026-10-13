@@ -11,6 +11,7 @@ import { Spinner } from '@ui/spinner/components/spinner';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { Pagination } from '@ui/table/components/pagination';
 import type { BreadcrumbItem } from '@ui/breadcrumb/types/breadcrumb-item';
+import { NotificationDetailModal } from '../components/notification-detail-modal';
 import { NotificationList } from '../components/notification-list';
 import { useNotifications } from '../hooks/use-notifications';
 import { buildNotificationLink } from '../utils/build-notification-link';
@@ -34,6 +35,7 @@ export const NotificationsPage: FC = () => {
 
     const [tipo, setTipo] = useState('');
     const [leida, setLeida] = useState('');
+    const [detailNotification, setDetailNotification] = useState<ApiNotification | null>(null);
 
     const { items, isLoading, page, setPage, totalPages, totalItems, refetch } = usePaginatedResource<ApiNotification>('/notificaciones/pagina', {
         tipo,
@@ -51,6 +53,8 @@ export const NotificationsPage: FC = () => {
 
         if (destino) {
             navigate(destino);
+        } else {
+            setDetailNotification(notification);
         }
     };
 
@@ -111,6 +115,7 @@ export const NotificationsPage: FC = () => {
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
+            modals={<NotificationDetailModal notification={detailNotification} onClose={() => setDetailNotification(null)} />}
         >
             {isLoading && items.length === 0 ? (
                 <div className="flex items-center justify-center gap-2 py-10 text-sm text-gray-400 dark:text-gray-500">
