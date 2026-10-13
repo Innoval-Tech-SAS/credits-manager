@@ -11,6 +11,7 @@ use App\Contabilidad\Requests\ExportarLibroMayorRequest;
 use App\Contabilidad\Requests\ImprimirLibroMayorRequest;
 use App\Contabilidad\Services\AccesoLibroMayor;
 use App\Contabilidad\Services\ConciliacionAperturaService;
+use App\Contabilidad\Services\ControlesCierreService;
 use App\Contabilidad\Services\InformeContablePdfService;
 use App\Contabilidad\Services\ReporteContableService;
 use App\Exportacion\Enums\FormatoExportacion;
@@ -26,6 +27,7 @@ class ReporteContableController extends Controller
         protected ReporteContableService $reportes,
         protected InformeContablePdfService $informesPdf,
         protected ConciliacionAperturaService $conciliacion,
+        protected ControlesCierreService $controlesCierre,
         protected AccesoLibroMayor $accesoLibroMayor,
     ) {}
 
@@ -70,6 +72,14 @@ class ReporteContableController extends Controller
     public function conciliacionApertura(ConsultarCorteContableRequest $peticion): JsonResponse
     {
         return response()->json($this->conciliacion->conciliar(
+            (int) $peticion->user()->empresa_id,
+            $peticion->validated('hasta'),
+        ));
+    }
+
+    public function controlesCierre(ConsultarCorteContableRequest $peticion): JsonResponse
+    {
+        return response()->json($this->controlesCierre->ejecutar(
             (int) $peticion->user()->empresa_id,
             $peticion->validated('hasta'),
         ));

@@ -297,6 +297,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/balance-prueba/pdf', [ReporteContableController::class, 'pdfBalancePrueba'])->middleware(['permiso:informes_contables,listar_balance_prueba', 'permiso:informes_contables,imprimir']);
     Route::get('/contabilidad/estados-financieros/pdf', [ReporteContableController::class, 'pdfEstadosFinancieros'])->middleware(['permiso:informes_contables,listar_estados_financieros', 'permiso:informes_contables,imprimir']);
     Route::get('/contabilidad/conciliacion-apertura', [ReporteContableController::class, 'conciliacionApertura'])->middleware('permiso:informes_contables,listar_conciliacion_apertura');
+    Route::get('/contabilidad/controles-cierre', [ReporteContableController::class, 'controlesCierre'])->middleware('permiso:informes_contables,listar_controles_cierre');
 
     Route::get('/contabilidad/auxiliares', [AuxiliarContableController::class, 'index'])->middleware('permiso:informes_contables,listar_auxiliares');
     Route::post('/contabilidad/auxiliares/exportar', [AuxiliarContableController::class, 'exportar'])->middleware(['permiso:informes_contables,listar_auxiliares', 'exportacion:contabilidad.auxiliar']);
@@ -325,6 +326,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/cartera-terceros', [CarteraTerceroController::class, 'index'])->middleware('algun_permiso:'.implode(',', ContabilidadConstants::CONSULTA_CARTERA_TERCEROS));
     Route::get('/cartera-terceros/edades', [CarteraTerceroController::class, 'edades'])->middleware('algun_permiso:'.implode(',', ContabilidadConstants::CONSULTA_CARTERA_TERCEROS));
+    Route::get('/contabilidad/documentos-tercero/{documentoTercero}/trazabilidad', [DocumentoTerceroController::class, 'trazabilidad'])->middleware('algun_permiso:'.implode(',', ContabilidadConstants::CONSULTA_CARTERA_TERCEROS));
 
     Route::get('/proveedores', [ProveedorController::class, 'index'])->middleware('permiso:terceros,listar');
     Route::post('/proveedores/personas-naturales', [ProveedorController::class, 'storeNatural'])->middleware('permiso:terceros,crear');

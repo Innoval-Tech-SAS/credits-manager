@@ -82,6 +82,24 @@ class DocumentoTerceroRepository extends BaseRepository
     }
 
     /**
+     * Documentos cuyo `saldo` no concuerda con su `estado` — ej. saldo positivo pero marcado Cancelado/Anulado, o
+     * saldo en cero o negativo pero todavía Pendiente/AbonadoParcial. Ver `ControlesCierreService`: es el chequeo de
+     * integridad que hace las veces de "documentos huérfanos" (la arquitectura ya impide un cruce sin documento real).
+     */
+    public function inconsistentesEstadoSaldo(int $empresaId): Collection
+    {
+        return $this->consulta()
+            ->where('empresa_id', $empresaId)
+            ->where(function (Builder $query) {
+                $query->where(fn (Builder $sub) => $sub->where('saldo', '<=', 0)
+                    ->whereNotIn('estado', [EstadoDocumentoTercero::Cancelado, EstadoDocumentoTercero::Anulado]))
+                    ->orWhere(fn (Builder $sub) => $sub->where('saldo', '>', 0)
+                        ->whereIn('estado', [EstadoDocumentoTercero::Cancelado, EstadoDocumentoTercero::Anulado]));
+            })
+            ->get();
+    }
+
+    /**
      * Cartera por tercero (CxP o CxC): `$filtros['estado']` filtra por el estado que se le muestra al usuario,
      * donde "vencido" es un derivado de `saldo > 0` y `fecha_vencimiento` anterior a la fecha de corte — no un
      * valor de la columna `estado`, que solo guarda pendiente/abonado_parcial/cancelado.
