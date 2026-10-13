@@ -119,6 +119,8 @@ class PermisoConstants
         'configuracion_contable.crear_tipos_comprobante' => 'Crear tipos de comprobante',
         'configuracion_contable.editar_tipos_comprobante' => 'Editar tipos de comprobante',
         'configuracion_contable.eliminar_tipos_comprobante' => 'Eliminar tipos de comprobante',
+        'configuracion_contable.listar_tipos_documento_negocio' => 'Ver tipos de documento de negocio',
+        'configuracion_contable.editar_tipos_documento_negocio' => 'Editar tipos de documento de negocio',
         'configuracion_contable.listar_centros_costo' => 'Ver centros de costo',
         'configuracion_contable.crear_centros_costo' => 'Crear centros de costo',
         'configuracion_contable.editar_centros_costo' => 'Editar centros de costo',
