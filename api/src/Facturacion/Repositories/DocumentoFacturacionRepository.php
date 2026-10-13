@@ -19,24 +19,33 @@ class DocumentoFacturacionRepository extends BaseRepository
         parent::__construct($documento);
     }
 
-    /** @param list<TipoDocumentoFacturacion> $tipos */
-    public function paginar(array $tipos, ?EstadoDocumentoFacturacion $estado, ?int $clienteId, int $porPagina, int $pagina): LengthAwarePaginator
+    /**
+     * @param  list<TipoDocumentoFacturacion>  $tipos
+     * @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo: ?string}  $filtros
+     */
+    public function paginar(array $tipos, array $filtros, int $porPagina, int $pagina): LengthAwarePaginator
     {
         $consulta = $this->consulta()
             ->with(['cliente.tercero', 'origen:id,numero,tipo'])
             ->orderByDesc('creado_en');
 
-        $this->filtrar($consulta, $tipos, $estado, $clienteId);
+        $this->filtrar($consulta, $tipos, $filtros);
 
         return $consulta->paginate(perPage: $porPagina, page: $pagina);
     }
 
-    private function filtrar(Builder $consulta, array $tipos, ?EstadoDocumentoFacturacion $estado, ?int $clienteId): Builder
+    /** @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo: ?string}  $filtros */
+    private function filtrar(Builder $consulta, array $tipos, array $filtros): Builder
     {
         return $consulta
             ->whereIn('tipo', array_map(fn (TipoDocumentoFacturacion $tipo) => $tipo->value, $tipos))
-            ->when($estado, fn (Builder $q) => $q->where('estado', $estado))
-            ->when($clienteId, fn (Builder $q) => $q->where('cliente_id', $clienteId));
+            ->when($filtros['estado'], fn (Builder $q) => $q->where('estado', $filtros['estado']))
+            ->when($filtros['cliente_id'], fn (Builder $q) => $q->where('cliente_id', $filtros['cliente_id']))
+            ->when($filtros['desde'], fn (Builder $q) => $q->whereDate('fecha', '>=', $filtros['desde']))
+            ->when($filtros['hasta'], fn (Builder $q) => $q->whereDate('fecha', '<=', $filtros['hasta']))
+            // El origen es la misma tabla (self-relation): `EmpresaScope` ya la filtra por empresa en ambos lados.
+            ->when($filtros['factura'], fn (Builder $q) => $q->whereHas('origen', fn (Builder $o) => $o->where('numero', 'like', '%'.$filtros['factura'].'%')))
+            ->when($filtros['motivo'], fn (Builder $q) => $q->where('motivo', 'like', '%'.$filtros['motivo'].'%'));
     }
 
     /** Bloquea la fila: dos notas simultáneas sobre la misma factura no pueden acreditar el mismo saldo dos veces. */

@@ -379,6 +379,41 @@ class DocumentosFacturacionTest extends TestCase
         ])->assertStatus(403);
     }
 
+    public function test_el_listado_se_filtra_por_fecha_factura_origen_y_motivo(): void
+    {
+        $this->actingAsAdmin();
+
+        $creditoEnero = $this->credito();
+        $borradorEnero = $this->postJson(self::BASE, ['fecha' => '2026-01-10', 'cliente_id' => $creditoEnero->cliente_id, 'credito_id' => $creditoEnero->id, 'lineas' => $this->lineas()])
+            ->assertCreated()->json('documento');
+        $facturaEnero = $this->postJson(self::BASE.'/'.$borradorEnero['id'].'/emitir')->assertOk()->json('documento');
+
+        $creditoFebrero = $this->credito();
+        $borradorFebrero = $this->postJson(self::BASE, ['fecha' => '2026-02-20', 'cliente_id' => $creditoFebrero->cliente_id, 'credito_id' => $creditoFebrero->id, 'lineas' => $this->lineas()])
+            ->assertCreated()->json('documento');
+        $facturaFebrero = $this->postJson(self::BASE.'/'.$borradorFebrero['id'].'/emitir')->assertOk()->json('documento');
+
+        $notaSobreEnero = $this->postJson(self::BASE.'/'.$facturaEnero['id'].'/notas', [
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'otros', 'motivo_detalle' => 'Ajuste solicitado por el cliente',
+            'lineas' => [['linea_origen_id' => $facturaEnero['lineas'][0]['id'], 'valor' => '100']],
+        ])->assertStatus(201)->json('documento');
+
+        $this->postJson(self::BASE.'/'.$facturaFebrero['id'].'/notas', [
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'otros', 'motivo_detalle' => 'Devolución parcial de mercancía',
+            'lineas' => [['linea_origen_id' => $facturaFebrero['lineas'][0]['id'], 'valor' => '100']],
+        ])->assertStatus(201);
+
+        $porFecha = $this->getJson(self::BASE.'?tipo=factura&desde=2026-02-01')->assertOk();
+        $this->assertSame([$facturaFebrero['id']], collect($porFecha->json('data'))->pluck('id')->all());
+
+        $porFactura = $this->getJson(self::BASE.'?tipo=nota_credito&factura='.urlencode($facturaEnero['numero']))->assertOk();
+        $this->assertSame([$notaSobreEnero['id']], collect($porFactura->json('data'))->pluck('id')->all());
+
+        $porMotivo = $this->getJson(self::BASE.'?tipo=nota_credito&motivo=devolución')->assertOk();
+        $this->assertSame('Devolución parcial de mercancía', collect($porMotivo->json('data'))->first()['motivo']);
+        $this->assertCount(1, $porMotivo->json('data'));
+    }
+
     public function test_un_documento_de_otra_empresa_responde_404(): void
     {
         $this->actingAsAdmin();

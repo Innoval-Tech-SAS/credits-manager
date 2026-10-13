@@ -31,8 +31,14 @@ class DocumentoFacturacionController extends Controller
     {
         $documentos = $this->documentos->listar(
             $this->acceso->tiposVisibles($peticion->user(), $peticion->validated('tipo') ? TipoDocumentoFacturacion::from($peticion->validated('tipo')) : null),
-            $peticion->validated('estado') ? EstadoDocumentoFacturacion::from($peticion->validated('estado')) : null,
-            $peticion->integer('cliente_id') ?: null,
+            [
+                'estado' => $peticion->validated('estado') ? EstadoDocumentoFacturacion::from($peticion->validated('estado')) : null,
+                'cliente_id' => $peticion->integer('cliente_id') ?: null,
+                'desde' => $peticion->validated('desde'),
+                'hasta' => $peticion->validated('hasta'),
+                'factura' => $peticion->validated('factura'),
+                'motivo' => $peticion->validated('motivo'),
+            ],
             $peticion->boolean('con_saldo'),
             $peticion->integer('per_page', 10),
             $peticion->integer('page', 1),

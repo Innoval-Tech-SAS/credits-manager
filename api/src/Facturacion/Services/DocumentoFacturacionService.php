@@ -69,10 +69,13 @@ class DocumentoFacturacionService
         protected EmisorAuditoria $auditoria,
     ) {}
 
-    /** @param list<TipoDocumentoFacturacion> $tipos */
-    public function listar(array $tipos, ?EstadoDocumentoFacturacion $estado, ?int $clienteId, bool $conSaldo, int $porPagina, int $pagina): LengthAwarePaginator
+    /**
+     * @param  list<TipoDocumentoFacturacion>  $tipos
+     * @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo: ?string}  $filtros
+     */
+    public function listar(array $tipos, array $filtros, bool $conSaldo, int $porPagina, int $pagina): LengthAwarePaginator
     {
-        $documentos = $this->documentos->paginar($tipos, $estado, $clienteId, max(1, min(100, $porPagina)), max(1, $pagina));
+        $documentos = $this->documentos->paginar($tipos, $filtros, max(1, min(100, $porPagina)), max(1, $pagina));
 
         if ($conSaldo) {
             $documentos->getCollection()->transform(function (DocumentoFacturacion $documento) {
