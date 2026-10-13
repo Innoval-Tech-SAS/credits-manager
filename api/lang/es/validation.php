@@ -220,7 +220,6 @@ return [
             'cobro_excede_saldo' => 'El cobro supera el saldo pendiente de la factura (:saldo).',
             'cobro_no_reversible' => 'Solo se puede reversar un cobro, no una reversa.',
             'cobro_ya_reversado' => 'Este cobro ya fue reversado.',
-            'nota_debito_excede_tope' => 'La nota débito supera el tope configurado para la empresa (:tope).',
             'concepto_ya_facturado' => 'Ya existe una factura emitida para «:concepto» de esta cuota.',
             'tercero_fiscal_incompleto' => 'Al tercero le faltan datos fiscales obligatorios para emitir la factura.',
         ],

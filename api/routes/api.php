@@ -35,7 +35,6 @@ use App\Empresas\Controllers\EmpresaController;
 use App\Exportacion\Controllers\ExportacionController;
 use App\Facturacion\Constants\FacturacionConstants;
 use App\Facturacion\Controllers\CobroFacturacionController;
-use App\Facturacion\Controllers\ConfiguracionFacturacionController;
 use App\Facturacion\Controllers\ConsecutivoFacturacionController;
 use App\Facturacion\Controllers\DocumentoFacturacionController;
 use App\Facturacion\Controllers\ParametrizacionConceptoFacturacionController;
@@ -377,8 +376,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/facturacion/documentos/{documento}/envios/{envio}/reintentar', [DocumentoFacturacionController::class, 'reintentarEnvio'])->middleware('permiso:facturacion,enviar');
     Route::get('/facturacion/consecutivos', [ConsecutivoFacturacionController::class, 'index'])->middleware('permiso:facturacion,configurar');
     Route::patch('/facturacion/consecutivos/{tipo}', [ConsecutivoFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');
-    Route::get('/facturacion/configuracion', [ConfiguracionFacturacionController::class, 'show'])->middleware('permiso:facturacion,configurar');
-    Route::put('/facturacion/configuracion', [ConfiguracionFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');
     Route::get('/facturacion/parametrizacion-conceptos', [ParametrizacionConceptoFacturacionController::class, 'index'])->middleware('permiso:facturacion,configurar');
     Route::put('/facturacion/parametrizacion-conceptos/{tipoConcepto}', [ParametrizacionConceptoFacturacionController::class, 'update'])->middleware('permiso:facturacion,configurar');
     Route::post('/gastos', [GastoController::class, 'store'])->middleware('permiso:gastos,crear');
