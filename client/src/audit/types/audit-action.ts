@@ -21,4 +21,5 @@ export type AuditAction =
     | 'reversar'
     | 'cerrar_periodo'
     | 'reabrir_periodo'
-    | 'revisar';
+    | 'revisar'
+    | 'reintentar';

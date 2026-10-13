@@ -6,6 +6,9 @@ use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Data\EventoAuditoria;
 use App\Auditoria\Enums\MotivoRespaldo;
 use App\Auditoria\Repositories\BitacoraAuditoriaRepository;
+use App\Monitoreo\Constants\MonitoreoConstants;
+use App\Monitoreo\Enums\EstadoServicio;
+use App\Monitoreo\Services\RegistroLatidos;
 use App\Redis\Contracts\RedisClienteInterface;
 use App\Redis\Exceptions\RedisClienteException;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +35,7 @@ class EscuchaAuditoria
         protected BitacoraAuditoriaRepository $bitacora,
         protected RespaldoAuditoriaService $respaldo,
         protected DetectorConexionPerdida $conexionPerdida,
+        protected ?RegistroLatidos $latidos = null,
     ) {}
 
     public function solicitarParada(): void
@@ -61,6 +65,8 @@ class EscuchaAuditoria
         $espera = $this->esperaInicial;
 
         while (! $this->detener) {
+            $this->latidos?->registrar(MonitoreoConstants::SERVICIO_LISTENER, EstadoServicio::Activo);
+
             try {
                 $this->ciclo($consumidor, AuditoriaConstants::BLOQUEO_MS);
                 $espera = $this->esperaInicial;

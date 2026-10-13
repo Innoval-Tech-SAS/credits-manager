@@ -19,6 +19,7 @@ export const AUDIT_MODULE_LABELS: Record<string, string> = {
     geografia: 'Geografía',
     correo: 'Correo de cobranza',
     auditoria: 'Auditoría',
+    monitoreo: 'Monitoreo',
 };
 
 export const AUDIT_MODULE_OPTIONS: SelectOption[] = Object.entries(AUDIT_MODULE_LABELS).map(([value, label]) => ({ value, label }));

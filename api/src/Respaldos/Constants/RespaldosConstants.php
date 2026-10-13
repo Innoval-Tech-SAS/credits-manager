@@ -19,4 +19,6 @@ class RespaldosConstants
     public const PREFIJO_TEMPORAL = '.tmp-';
 
     public const HORA_AUTOMATICA = '01:00';
+
+    public const LLAVE_ULTIMA_SUBIDA_EXTERNA = 'respaldos:ultima_subida_externa';
 }
