@@ -21,8 +21,7 @@ IMAGENES_CONSERVADAS=5
 
 # Todo lo que corre con la imagen propia. database, redis y phpmyadmin no se tocan.
 SERVICIOS_APP=(
-  auditoria-listener exportaciones-worker importaciones-worker conciliacion-worker
-  correos-worker scheduler monitor reverb api nginx
+  auditoria-listener horizon scheduler monitor reverb api nginx
 )
 
 export HOME=/root

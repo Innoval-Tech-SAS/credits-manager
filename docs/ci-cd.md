@@ -172,8 +172,7 @@ ANTERIOR=<sha>
 podman tag localhost/credits-manager-api:$ANTERIOR   localhost/credits-manager-api:latest
 podman tag localhost/credits-manager-nginx:$ANTERIOR localhost/credits-manager-nginx:latest
 podman compose up -d --force-recreate --no-deps \
-  auditoria-listener exportaciones-worker importaciones-worker conciliacion-worker \
-  correos-worker scheduler monitor reverb api nginx
+  auditoria-listener horizon scheduler monitor reverb api nginx
 echo $ANTERIOR > /var/lib/credits-manager/desplegado
 ```
 
@@ -181,7 +180,7 @@ echo $ANTERIOR > /var/lib/credits-manager/desplegado
 
 ### 3.2. Efectos del despliegue en curso
 
-- Los workers reciben `SIGTERM`. Un job que esté corriendo (una exportación larga, por ejemplo) se corta y queda fallido (`--tries=1`), así que el usuario debe volver a lanzarlo. Conviene desplegar fuera de horas de uso.
+- Horizon recibe `SIGTERM` y lo reenvía a sus supervisores. Un job que esté corriendo (una exportación larga, por ejemplo) se corta y queda fallido (`tries: 1` en `config/horizon.php`), así que el usuario debe volver a lanzarlo. Conviene desplegar fuera de horas de uso.
 - Si el despliegue coincide con las tareas de la madrugada (00:05–03:15), la tarea se reintenta al día siguiente. Mejor no hacer merge a `main` en esa franja: cada merge despliega.
 
 ### 3.3. "ya hay un despliegue en curso"

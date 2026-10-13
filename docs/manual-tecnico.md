@@ -22,9 +22,7 @@ Navegador ──HTTPS──▶ nginx ──┬── /            SPA React (bui
 | `phpmyadmin` | `docker.io/phpmyadmin/phpmyadmin:latest` | Administración de la base, solo para técnicos. |
 | `api` | `credits-manager-api` (construida desde `api/`) | PHP-FPM con Laravel 13. Atiende las peticiones de la SPA. |
 | `auditoria-listener` | misma imagen | Lee la bitácora de Redis e inserta en la base (idempotente). |
-| `exportaciones-worker` | misma imagen | Genera los archivos de exportación en segundo plano. |
-| `importaciones-worker` | misma imagen | Valida y escribe las importaciones históricas. |
-| `correos-worker` | misma imagen | Envía recordatorios de cobranza por correo. |
+| `horizon` | misma imagen | Laravel Horizon: un supervisor por cola (`exportaciones`, `importaciones`, `conciliacion`, `correos`), cada uno con su propio timeout/tries en `api/config/horizon.php` — un job lento de una cola no bloquea a las demás. Panel en `/horizon`, solo superadmin. |
 | `scheduler` | misma imagen | Tareas programadas de Laravel. **Una sola instancia.** |
 | `monitor` | misma imagen | Panel de salud del superadmin (`/monitoreo`): cada 5 s, y solo si alguien lo mira, publica por Reverb el estado del servidor (leído de `/proc`), los servicios y las colas. Monta `respaldos_data` en solo lectura para medir el disco. |
 | `reverb` | misma imagen | Servidor WebSocket para notificaciones en tiempo real. |
@@ -36,9 +34,9 @@ Navegador ──HTTPS──▶ nginx ──┬── /            SPA React (bui
 |---|---|---|---|
 | `mysql_data` | `database:/var/lib/mysql` | Base de datos | MySQL |
 | `redis_data` | `redis:/data` | Persistencia de Redis (AOF) | Redis |
-| `api_storage` | `api`, `scheduler`, workers: `/var/www/html/storage`; `nginx` en solo lectura | Adjuntos (`storage/app/private`), logos (`storage/app/public`), logs y caché | `api`, workers |
-| `exportaciones_data` | `/var/exportaciones` | Archivos de exportación (se limpian a los 7 días) | workers |
-| `importaciones_data` | `/var/importaciones` | CSV subidos para importación | `api`, worker |
+| `api_storage` | `api`, `scheduler`, `horizon`: `/var/www/html/storage`; `nginx` en solo lectura | Adjuntos (`storage/app/private`), logos (`storage/app/public`), logs y caché | `api`, `horizon` |
+| `exportaciones_data` | `/var/exportaciones` | Archivos de exportación (se limpian a los 7 días) | `horizon` |
+| `importaciones_data` | `/var/importaciones` | CSV subidos para importación | `api`, `horizon` |
 | `respaldos_data` | `api`, `scheduler`: `/var/respaldos` | Respaldos de base y archivos | `scheduler`, `api` (manual) |
 
 `respaldos_data` puede sustituirse por una carpeta del equipo con `RESPALDOS_ORIGEN` en `.env` (ver [respaldos](respaldos.md), sección 2).
@@ -49,18 +47,18 @@ Navegador ──HTTPS──▶ nginx ──┬── /            SPA React (bui
 
 ## 2. Variables de entorno
 
-Se leen de `.env` (raíz del repositorio). La plantilla comentada es `.env.example`. Los workers, el scheduler y `reverb` comparten el mismo bloque de variables (ancla `api-worker-env` en el compose).
+Se leen de `.env` (raíz del repositorio). La plantilla comentada es `.env.example`. `horizon`, el scheduler y `reverb` comparten el mismo bloque de variables (ancla `api-worker-env` en el compose).
 
 | Variable | Usada por | Uso |
 |---|---|---|
-| `APP_NAME`, `APP_ENV`, `APP_DEBUG` | api y workers | Nombre; en producción `APP_ENV=production` y `APP_DEBUG=false`. |
-| `APP_KEY` | api y workers | Clave de cifrado (valores cifrados como la clave SMTP). **Custodia obligatoria.** |
-| `APP_URL`, `APP_TIMEZONE`, `APP_LOCALE`, `APP_FALLBACK_LOCALE`, `APP_FAKER_LOCALE` | api y workers | URL pública; zona horaria (`America/Bogota`); idioma (`es`). |
-| `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | database (creación), api y workers | Base y usuario de la aplicación. `DB_USERNAME` no puede ser `root`. |
+| `APP_NAME`, `APP_ENV`, `APP_DEBUG` | api y horizon | Nombre; en producción `APP_ENV=production` y `APP_DEBUG=false`. |
+| `APP_KEY` | api y horizon | Clave de cifrado (valores cifrados como la clave SMTP). **Custodia obligatoria.** |
+| `APP_URL`, `APP_TIMEZONE`, `APP_LOCALE`, `APP_FALLBACK_LOCALE`, `APP_FAKER_LOCALE` | api y horizon | URL pública; zona horaria (`America/Bogota`); idioma (`es`). |
+| `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | database (creación), api y horizon | Base y usuario de la aplicación. `DB_USERNAME` no puede ser `root`. |
 | `DB_ROOT_PASSWORD` | database | Contraseña de `root` de MySQL. No la usa la aplicación. |
-| `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS` | api | Cookies de sesión de la SPA. |
+| `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS` | api | Cookies de sesión de la SPA (también protege `/horizon`, solo superadmin). |
 | `SEED_ADMIN_NOMBRE`, `SEED_ADMIN_USUARIO`, `SEED_ADMIN_PASSWORD` | api (seed) | Superadmin inicial. Solo se usa al ejecutar `migrate --seed`. |
-| `REDIS_HOST`, `REDIS_PORT` | api y workers | Redis. |
+| `REDIS_HOST`, `REDIS_PORT` | api y horizon | Redis. |
 | `REVERB_APP_ID`, `REVERB_APP_KEY`, `REVERB_APP_SECRET` | api, reverb | Credenciales del WebSocket. |
 | `REVERB_ALLOWED_ORIGINS` | api, reverb | Orígenes permitidos para el WebSocket. |
 | `VITE_API_URL`, `VITE_REVERB_*` | build de `nginx` | Se compilan dentro de la interfaz; cambiarlas exige reconstruir `nginx`. |
@@ -122,8 +120,7 @@ podman compose build
 
 # 4. Recrear los servicios de la aplicación (podman-compose no recrea con `up -d` si solo cambió la imagen)
 podman compose up -d --force-recreate --no-deps \
-  auditoria-listener exportaciones-worker importaciones-worker conciliacion-worker \
-  correos-worker scheduler monitor reverb api nginx
+  auditoria-listener horizon scheduler monitor reverb api nginx
 
 # 5. Migrar la base
 podman compose exec api php artisan migrate --force

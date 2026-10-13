@@ -16,7 +16,7 @@ WORKDIR /var/www/html
 
 RUN apk add --no-cache icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev mysql-client mariadb-connector-c \
     && docker-php-ext-configure gd --with-jpeg \
-    && docker-php-ext-install pdo_mysql mbstring bcmath intl zip opcache pcntl gd \
+    && docker-php-ext-install pdo_mysql mbstring bcmath intl zip opcache pcntl posix gd \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
     && pecl channel-update pecl.php.net \
     && pecl install redis-6.3.0 \
