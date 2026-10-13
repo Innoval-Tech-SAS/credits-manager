@@ -6,7 +6,7 @@ use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 
-#[Fillable(['codigo', 'nombre', 'activo'])]
+#[Fillable(['empresa_id', 'codigo', 'nombre', 'activo'])]
 class ActividadEconomica extends BaseModel
 {
     use PerteneceAEmpresa;

@@ -505,6 +505,8 @@ return [
         'tipo_gasto_id' => 'tipo de gasto',
         'municipio_id' => 'municipio',
         'actividad_economica_id' => 'actividad económica',
+        'actividad_economica_codigo' => 'código de la actividad económica',
+        'actividad_economica_nombre' => 'nombre de la actividad económica',
         'valor_bruto' => 'valor bruto',
         'requiere_tercero' => 'requiere tercero',
         'aplica_iva' => 'aplica IVA',

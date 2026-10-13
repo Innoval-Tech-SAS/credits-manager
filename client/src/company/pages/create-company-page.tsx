@@ -21,6 +21,8 @@ export const CreateCompanyPage: FC = () => {
     const taxVerificationDigit = calculateVerificationDigit(taxId);
     const [address, setAddress] = useState('');
     const [municipalityId, setMunicipalityId] = useState('');
+    const [economicActivityCode, setEconomicActivityCode] = useState('');
+    const [economicActivityName, setEconomicActivityName] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
 
@@ -41,6 +43,11 @@ export const CreateCompanyPage: FC = () => {
             return;
         }
 
+        if (Boolean(economicActivityCode) !== Boolean(economicActivityName)) {
+            setError('El código CIIU y el nombre de la actividad económica deben completarse juntos.');
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -52,6 +59,8 @@ export const CreateCompanyPage: FC = () => {
                     digito_verificacion: taxVerificationDigit,
                     direccion: address,
                     municipio_id: Number(municipalityId),
+                    actividad_economica_codigo: economicActivityCode || null,
+                    actividad_economica_nombre: economicActivityName || null,
                     telefono: phone,
                     correo: email,
                     admin_nombre: adminName,
@@ -131,6 +140,28 @@ export const CreateCompanyPage: FC = () => {
                                     </div>
 
                                     <MunicipalitySelector stacked onChange={setMunicipalityId} />
+
+                                    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                                        <div>
+                                            <Label htmlFor="economic-activity-code">Código CIIU</Label>
+                                            <Input
+                                                id="economic-activity-code"
+                                                name="economic-activity-code"
+                                                value={economicActivityCode}
+                                                onChange={(event) => setEconomicActivityCode(event.target.value)}
+                                            />
+                                        </div>
+
+                                        <div className="md:col-span-2">
+                                            <Label htmlFor="economic-activity-name">Actividad económica</Label>
+                                            <Input
+                                                id="economic-activity-name"
+                                                name="economic-activity-name"
+                                                value={economicActivityName}
+                                                onChange={(event) => setEconomicActivityName(event.target.value)}
+                                            />
+                                        </div>
+                                    </div>
 
                                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                                         <div>
