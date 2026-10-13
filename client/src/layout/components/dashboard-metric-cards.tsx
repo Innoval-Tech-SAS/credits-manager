@@ -47,64 +47,81 @@ function columnasXl(total: number): string {
 }
 
 /**
- * Con 2 columnas en `sm`, la última tarjeta impar ocupa el ancho entero; con 4 en `xl`, 7 tarjetas dejan una última
- * de 2 columnas. Desde `2xl` todas tienen una columna y el span se deshace.
+ * Con 2 columnas en `sm`, la última tarjeta impar ocupa el ancho entero. Si además `xl` cae en 4 columnas (el
+ * resultado por defecto de `columnasXl`), la última de un grupo de 3 en esa fila también se estira a 2 columnas.
+ * El span solo tiene sentido si `columnasXl` realmente usa 4 columnas para este total: con un total como 3, que cae
+ * en `xl:grid-cols-3` (división exacta, sin fila a medias), hay que resetear el span heredado desde `sm` en vez de
+ * dejarlo activo hasta `2xl`.
  */
 function spanParaTarjeta(indice: number, total: number): string {
     const ultima = indice === total - 1;
+    const xlEnCuatroColumnas = columnasXl(total) === 'xl:grid-cols-4';
     const clases: string[] = [];
 
     if (total % 2 === 1 && ultima) {
         clases.push('sm:col-span-2 2xl:col-span-1');
+
+        if (!xlEnCuatroColumnas) {
+            clases.push('xl:col-span-1');
+        }
     }
 
-    if (total % 4 === 3 && ultima) {
+    if (total % 4 === 3 && ultima && xlEnCuatroColumnas) {
         clases.push('xl:col-span-2 2xl:col-span-1');
     }
 
     return clases.join(' ');
 }
 
+/** Una fila de `StatCard` con la misma altura: separar por fila las que llevan insignia de tendencia de las que no
+ * evita que una tarjeta de solo conteo quede estirada con mucho espacio vacío para igualar a una con insignia. */
+const FilaTarjetas: FC<{ tarjetas: ReactNode[] }> = ({ tarjetas }) =>
+    tarjetas.length === 0 ? null : (
+        <div className={`mb-6 grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 ${columnasXl(tarjetas.length)} ${COLUMNAS_2XL[tarjetas.length] ?? ''}`}>
+            {tarjetas.map((tarjeta, indice) => (
+                <div key={indice} className={`h-full ${spanParaTarjeta(indice, tarjetas.length)}`}>
+                    {tarjeta}
+                </div>
+            ))}
+        </div>
+    );
+
 /** Las tarjetas de cada módulo solo aparecen si el usuario tiene su permiso. */
 export const DashboardMetricCards: FC<DashboardMetricCardsProps> = ({ metricas }) => {
     const { colocacion, recaudo, gastos, cartera } = metricas;
 
-    const tarjetas: ReactNode[] = [];
+    const conTendencia: ReactNode[] = [];
+    const sinTendencia: ReactNode[] = [];
 
     if (colocacion) {
-        tarjetas.push(<StatCard key="colocacion" label="Colocación del mes" value={formatMoney(colocacion.valor)} icon={HandCoins} cambio={buildCambioStatCard(colocacion)} />);
+        conTendencia.push(<StatCard key="colocacion" label="Colocación del mes" value={formatMoney(colocacion.valor)} icon={HandCoins} cambio={buildCambioStatCard(colocacion)} />);
     }
 
     if (recaudo) {
-        tarjetas.push(<StatCard key="recaudo" label="Recaudo del mes" value={formatMoney(recaudo.valor)} icon={Coins} cambio={buildCambioStatCard(recaudo)} />);
+        conTendencia.push(<StatCard key="recaudo" label="Recaudo del mes" value={formatMoney(recaudo.valor)} icon={Coins} cambio={buildCambioStatCard(recaudo)} />);
     }
 
     if (gastos) {
-        tarjetas.push(<StatCard key="gastos" label="Gastos del mes" value={formatMoney(gastos.valor)} icon={Receipt} cambio={buildCambioStatCard(gastos, true)} />);
+        conTendencia.push(<StatCard key="gastos" label="Gastos del mes" value={formatMoney(gastos.valor)} icon={Receipt} cambio={buildCambioStatCard(gastos, true)} />);
     }
 
     if (metricas.clientes_activos !== null) {
-        tarjetas.push(<StatCard key="clientes" label="Clientes activos" value={String(metricas.clientes_activos)} icon={Users} />);
+        sinTendencia.push(<StatCard key="clientes" label="Clientes activos" value={String(metricas.clientes_activos)} icon={Users} />);
     }
 
     if (metricas.creditos_activos !== null) {
-        tarjetas.push(<StatCard key="creditos" label="Créditos activos" value={String(metricas.creditos_activos)} icon={CreditCard} />);
+        sinTendencia.push(<StatCard key="creditos" label="Créditos activos" value={String(metricas.creditos_activos)} icon={CreditCard} />);
     }
 
     if (cartera) {
-        tarjetas.push(<StatCard key="al-dia" label="Cartera al día" value={formatMoney(cartera.al_dia)} icon={CircleCheck} accent="success" />);
-        tarjetas.push(<StatCard key="vencida" label="Cartera vencida" value={formatMoney(cartera.vencida)} icon={TriangleAlert} accent="error" />);
+        sinTendencia.push(<StatCard key="al-dia" label="Cartera al día" value={formatMoney(cartera.al_dia)} icon={CircleCheck} accent="success" />);
+        sinTendencia.push(<StatCard key="vencida" label="Cartera vencida" value={formatMoney(cartera.vencida)} icon={TriangleAlert} accent="error" />);
     }
 
     return (
         <>
-            <div className={`mb-6 grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 ${columnasXl(tarjetas.length)} ${COLUMNAS_2XL[tarjetas.length] ?? ''}`}>
-                {tarjetas.map((tarjeta, indice) => (
-                    <div key={indice} className={`h-full ${spanParaTarjeta(indice, tarjetas.length)}`}>
-                        {tarjeta}
-                    </div>
-                ))}
-            </div>
+            <FilaTarjetas tarjetas={conTendencia} />
+            <FilaTarjetas tarjetas={sinTendencia} />
 
             {cartera && <DashboardMoraCard mora={cartera.mora} />}
         </>
