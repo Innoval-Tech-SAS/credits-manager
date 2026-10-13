@@ -42,13 +42,14 @@ export const Modal: FC<ModalProps> = ({
     }
 
     return (
-        <div className="fixed inset-0 z-99999 flex items-center justify-center overflow-y-auto p-4">
+        <div className="fixed inset-0 z-99999 flex justify-center overflow-y-auto p-4">
             <div className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px] dark:bg-gray-900/50" onClick={onClose} />
 
             <div
                 ref={modalRef}
                 onClick={(event) => event.stopPropagation()}
-                className={`relative w-full rounded-3xl bg-white p-5 dark:bg-gray-900 sm:p-8 ${MODAL_SIZE_CLASSES[size]} ${className}`}
+                // `my-auto` centra verticalmente cuando cabe, sin el recorte de `items-center` cuando el contenido es más alto que el viewport.
+                className={`relative my-auto w-full rounded-3xl bg-white p-5 dark:bg-gray-900 sm:p-8 ${MODAL_SIZE_CLASSES[size]} ${className}`}
             >
                 {showCloseButton && (
                     <button
