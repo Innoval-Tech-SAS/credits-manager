@@ -14,4 +14,5 @@ enum TipoNotificacion: string
     case ImportacionFallida = 'importacion_fallida';
     case ExtractoBancarioCargado = 'extracto_bancario_cargado';
     case ExtractoBancarioRechazado = 'extracto_bancario_rechazado';
+    case ObligacionTributariaPorVencer = 'obligacion_tributaria_por_vencer';
 }

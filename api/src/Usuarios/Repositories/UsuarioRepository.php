@@ -47,13 +47,13 @@ class UsuarioRepository extends BaseRepository
             ->values();
     }
 
-    /** Usuarios activos a quienes se puede asignar un cliente. */
-    public function asignables(): Collection
+    /** Usuarios activos a quienes se puede asignar algo (un cliente, una obligación...). Por defecto, los roles asignables de cartera. */
+    public function asignables(?array $roles = null): Collection
     {
         return $this->consulta()
             ->select(['id', 'nombre', 'usuario', 'rol_id'])
             ->where('activo', true)
-            ->whereHas('rol', fn (Builder $consulta) => $consulta->whereIn('nombre', UsuarioConstants::ROLES_ASIGNABLES))
+            ->whereHas('rol', fn (Builder $consulta) => $consulta->whereIn('nombre', $roles ?? UsuarioConstants::ROLES_ASIGNABLES))
             ->with('rol:id,nombre')
             ->orderBy('nombre')
             ->get();

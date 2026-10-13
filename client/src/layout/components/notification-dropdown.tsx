@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 import { useState } from 'react';
+import { Link } from 'react-router';
 
 import { Dropdown } from '@ui/dropdown/components/dropdown';
 import { Spinner } from '@ui/spinner/components/spinner';
@@ -122,6 +123,14 @@ export const NotificationDropdown: FC = () => {
                         ))}
                     </ul>
                 )}
+
+                <Link
+                    to="/notificaciones"
+                    onClick={closeDropdown}
+                    className="mt-3 block border-t border-gray-100 pt-3 text-center text-xs font-medium text-brand-500 hover:text-brand-600 dark:border-gray-700 dark:text-brand-400"
+                >
+                    Ver todas las notificaciones
+                </Link>
             </Dropdown>
         </div>
     );

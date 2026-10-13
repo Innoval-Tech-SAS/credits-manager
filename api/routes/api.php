@@ -57,6 +57,9 @@ use App\Metas\Controllers\CierreMetaController;
 use App\Metas\Controllers\ConfiguracionMetaController;
 use App\Metas\Controllers\MetaController;
 use App\Notificaciones\Controllers\NotificacionController;
+use App\ObligacionesTributarias\Controllers\AlertaObligacionTributariaController;
+use App\ObligacionesTributarias\Controllers\ObligacionTributariaController;
+use App\ObligacionesTributarias\Controllers\TipoObligacionTributariaController;
 use App\Pagos\Controllers\PagoController;
 use App\Proveedores\Controllers\ProveedorController;
 use App\Recibos\Controllers\ReciboCajaController;
@@ -104,6 +107,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/exportaciones/{exportacion}/descargar', [ExportacionController::class, 'descargar'])->whereNumber('exportacion');
 
     Route::get('/notificaciones', [NotificacionController::class, 'index']);
+    Route::get('/notificaciones/pagina', [NotificacionController::class, 'todas']);
     Route::post('/notificaciones/leer-todas', [NotificacionController::class, 'leerTodas']);
     Route::post('/notificaciones/{notificacion}/leer', [NotificacionController::class, 'leer'])->whereNumber('notificacion');
 
@@ -210,6 +214,27 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/calendario', [CalendarioController::class, 'index'])->middleware('permiso:calendario,listar');
+
+    // Calendario tributario: herramienta de control (no liquida ni presenta declaraciones). Solo admin y contable.
+    Route::prefix('obligaciones-tributarias')->group(function () {
+        Route::get('/', [ObligacionTributariaController::class, 'index'])->middleware('permiso:obligaciones_tributarias,listar');
+        Route::get('/alertas', [AlertaObligacionTributariaController::class, 'index'])->middleware('permiso:obligaciones_tributarias,listar');
+        Route::post('/alertas/{alerta}/vista', [AlertaObligacionTributariaController::class, 'marcarVista'])
+            ->whereNumber('alerta')->middleware('permiso:obligaciones_tributarias,listar');
+
+        Route::get('/tipos', [TipoObligacionTributariaController::class, 'index'])->middleware('permiso:obligaciones_tributarias,listar');
+        Route::post('/tipos', [TipoObligacionTributariaController::class, 'store'])->middleware('permiso:obligaciones_tributarias,configurar');
+        Route::put('/tipos/{tipo}', [TipoObligacionTributariaController::class, 'update'])->whereNumber('tipo')->middleware('permiso:obligaciones_tributarias,configurar');
+
+        // Catálogo de consulta: lo usa el formulario de crear/editar obligación para elegir responsable.
+        Route::get('/responsables-asignables', [ObligacionTributariaController::class, 'responsablesAsignables'])
+            ->middleware('algun_permiso:obligaciones_tributarias.crear,obligaciones_tributarias.editar');
+
+        Route::post('/', [ObligacionTributariaController::class, 'store'])->middleware('permiso:obligaciones_tributarias,crear');
+        Route::put('/{obligacion}', [ObligacionTributariaController::class, 'update'])->whereNumber('obligacion')->middleware('permiso:obligaciones_tributarias,editar');
+        Route::put('/{obligacion}/estado', [ObligacionTributariaController::class, 'cambiarEstado'])
+            ->whereNumber('obligacion')->middleware('permiso:obligaciones_tributarias,cambiar_estado');
+    });
 
     Route::get('/contabilidad/plan-cuentas', [PlanCuentaController::class, 'index'])->middleware('algun_permiso:'.implode(',', ContabilidadConstants::CONSULTA_PLAN_CUENTAS));
     Route::post('/contabilidad/plan-cuentas', [PlanCuentaController::class, 'store'])->middleware('permiso:configuracion_contable,crear_plan_cuentas');

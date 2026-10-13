@@ -7,6 +7,7 @@ import type { ModuleListPageProps } from '../props/module-list-page-props';
 /** El título va al encabezado fijo del layout (`PageBreadcrumb`); la tarjeta conserva el contador y las acciones. */
 export const ModuleListPage: FC<ModuleListPageProps> = ({
     pageTitle,
+    breadcrumbTrail,
     successMessage,
     onDismissSuccess,
     errorMessage,
@@ -18,7 +19,7 @@ export const ModuleListPage: FC<ModuleListPageProps> = ({
     children,
 }) => (
     <div className="flex min-h-full flex-col pb-6">
-        <PageBreadcrumb pageTitle={pageTitle} />
+        <PageBreadcrumb pageTitle={pageTitle} trail={breadcrumbTrail} />
 
         {successMessage && (
             <div className="mb-6">

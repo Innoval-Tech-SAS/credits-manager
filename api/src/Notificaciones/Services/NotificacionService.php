@@ -7,6 +7,7 @@ use App\Notificaciones\Events\NotificacionCreada;
 use App\Notificaciones\Models\Notificacion;
 use App\Notificaciones\Repositories\NotificacionRepository;
 use App\Usuarios\Models\Usuario;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -49,6 +50,11 @@ class NotificacionService
             'data' => $this->notificaciones->recientesDelUsuario($usuario->id, self::LIMITE_RECIENTES),
             'no_leidas' => $this->notificaciones->contarNoLeidas($usuario->id),
         ];
+    }
+
+    public function listarPaginadas(Usuario $usuario, ?string $tipo, ?string $leida, int $porPagina, int $pagina): LengthAwarePaginator
+    {
+        return $this->notificaciones->paginar($usuario->id, $tipo, $leida, $porPagina, $pagina);
     }
 
     public function marcarLeida(int $id, Usuario $usuario): Notificacion
