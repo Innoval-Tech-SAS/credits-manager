@@ -23,6 +23,7 @@
         <env name="APP_KEY" value="base64:QDseaZCKciQSLrWLSWqDS39BvfhnZ4czfn24OujvJ6I="/>
         <env name="APP_LOCALE" value="es"/>
         <env name="APP_FALLBACK_LOCALE" value="es"/>
+        <env name="APP_TIMEZONE" value="America/Bogota"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
