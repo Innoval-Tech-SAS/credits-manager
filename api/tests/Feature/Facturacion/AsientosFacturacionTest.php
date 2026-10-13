@@ -5,6 +5,7 @@ namespace Tests\Feature\Facturacion;
 use App\Contabilidad\Enums\EventoContable;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\ReglaContabilizacion;
+use App\Facturacion\Enums\TipoConceptoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
@@ -104,5 +105,29 @@ class AsientosFacturacionTest extends TestCase
         $this->assertSame(5000, $asientoDebito->total_debito->centavos());
         $this->assertTrue($asientoDebito->total_debito->igualA($asientoDebito->total_credito));
         $this->assertSame($reglaDebito->cuenta_debito_id, $asientoDebito->lineas->firstWhere(fn ($l) => $l->debito->esPositivo())->cuenta_id);
+    }
+
+    public function test_la_nota_credito_reversa_el_iva_proporcionalmente(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba(['responsable_iva' => true]);
+        $this->actingAsAdmin($empresa);
+        $this->crearReglasFacturacion();
+        $cuentaIva = $this->crearCuenta();
+        $this->crearParametrizacionConcepto(TipoConceptoFacturacion::OtrosGastos, ['tarifa_iva' => 19, 'cuenta_iva_id' => $cuentaIva->id]);
+
+        $factura = $this->postJson(self::BASE.'/documentos/'.$this->borrador('1000')['id'].'/emitir')->assertOk()->json('documento');
+        $linea = $factura['lineas'][0]['id'];
+
+        // IVA de la factura: 1000 * 19% = 190. Crédito parcial de 500 (la mitad del bruto) debe reversar la mitad del IVA: 95.
+        $credito = $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'ajuste_precio', 'lineas' => [['linea_origen_id' => $linea, 'valor' => '500']],
+        ])->assertStatus(201)->json('documento');
+
+        $asientoCredito = $this->asientoDe($credito['id']);
+        $lineaIva = $asientoCredito->lineas->firstWhere(fn ($l) => $l->cuenta_id === $cuentaIva->id);
+
+        $this->assertNotNull($lineaIva, 'La nota crédito debe generar una línea de reversa del IVA.');
+        $this->assertSame(9500, $lineaIva->debito->centavos());
+        $this->assertTrue($asientoCredito->total_debito->igualA($asientoCredito->total_credito));
     }
 }

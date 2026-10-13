@@ -104,11 +104,67 @@ class AsientosFacturacionService
         return $acumulado;
     }
 
-    public function contabilizarNota(DocumentoFacturacion $nota, Dinero $total): Comprobante
+    /**
+     * `$bruto` es la suma de `valor` de las líneas de la nota (sin impuestos); el IVA/retenciones prorrateados que
+     * `DocumentoFacturacionService::lineasDeNotaCredito/lineasDeNotaDebito` ya dejaron en cada línea se leen de
+     * `$nota->lineas` (debe venir cargada). Nota crédito reversa lo que la emisión causó: su regla ya tiene los
+     * roles débito/crédito invertidos respecto a `FacturaEmision` (débito = ingreso, crédito = CxC — ver el
+     * comentario de `EventoContable`), así que el IVA (crédito en la emisión) entra en débito y las retenciones
+     * (débito en la emisión) entran en crédito. Nota débito mantiene los mismos roles y signos que la emisión:
+     * aumenta CxC/ingreso/IVA en la misma dirección, no los reversa.
+     */
+    public function contabilizarNota(DocumentoFacturacion $nota, Dinero $bruto): Comprobante
     {
-        $evento = $nota->tipo === TipoDocumentoFacturacion::NotaCredito ? EventoContable::NotaCreditoFactura : EventoContable::NotaDebitoFactura;
+        $esNotaCredito = $nota->tipo === TipoDocumentoFacturacion::NotaCredito;
+        $evento = $esNotaCredito ? EventoContable::NotaCreditoFactura : EventoContable::NotaDebitoFactura;
+        $regla = $this->reglaActiva($evento);
+        $parametrizaciones = $this->parametrizacionesConcepto->paraEmpresa($nota->empresa_id);
 
-        return $this->contabilizar($evento, $nota, $total, $nota->fecha->toDateString(), "{$nota->tipo->etiqueta()} {$nota->numero}", 'facturacion', $nota->id);
+        $totalIva = $nota->lineas->reduce(fn (Dinero $acumulado, $linea) => $acumulado->sumar($linea->valor_iva), Dinero::cero());
+        $totalRetencion = $nota->lineas->reduce(
+            fn (Dinero $acumulado, $linea) => $acumulado->sumar($linea->valor_retefuente)->sumar($linea->valor_reteica)->sumar($linea->valor_reteiva),
+            Dinero::cero(),
+        );
+        $neto = $bruto->sumar($totalIva)->restar($totalRetencion);
+
+        $lineasComprobante = $esNotaCredito
+            ? [
+                ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $bruto, 'credito' => 0],
+                ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $neto],
+            ]
+            : [
+                ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $neto, 'credito' => 0],
+                ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $bruto],
+            ];
+
+        foreach ($this->desglosePorCuenta($nota, $parametrizaciones, 'valor_iva', 'cuenta_iva_id') as $cuentaId => $valor) {
+            $lineasComprobante[] = $esNotaCredito
+                ? ['cuenta_id' => $cuentaId, 'debito' => $valor, 'credito' => 0]
+                : ['cuenta_id' => $cuentaId, 'debito' => 0, 'credito' => $valor];
+        }
+
+        foreach ([
+            'valor_retefuente' => 'cuenta_retefuente_id',
+            'valor_reteica' => 'cuenta_reteica_id',
+            'valor_reteiva' => 'cuenta_reteiva_id',
+        ] as $campoValor => $campoCuenta) {
+            foreach ($this->desglosePorCuenta($nota, $parametrizaciones, $campoValor, $campoCuenta) as $cuentaId => $valor) {
+                $lineasComprobante[] = $esNotaCredito
+                    ? ['cuenta_id' => $cuentaId, 'debito' => 0, 'credito' => $valor]
+                    : ['cuenta_id' => $cuentaId, 'debito' => $valor, 'credito' => 0];
+            }
+        }
+
+        return $this->comprobantes->crearComprobante(
+            $regla->tipo_comprobante_id,
+            $nota->fecha->toDateString(),
+            $lineasComprobante,
+            "{$nota->tipo->etiqueta()} {$nota->numero}",
+            'facturacion',
+            $nota->id,
+            null,
+            $nota->cliente?->tercero_id,
+        );
     }
 
     /** El cobro se asienta contra el documento (la factura), no contra la fila del cobro, que aún no existe al contabilizar. */
