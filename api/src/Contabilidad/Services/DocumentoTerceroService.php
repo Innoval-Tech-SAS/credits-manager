@@ -33,14 +33,25 @@ class DocumentoTerceroService
         protected EmisorAuditoria $auditoria,
     ) {}
 
-    /** Anula (soft delete) un documento que nunca llegó a tener aplicaciones — el llamador ya validó eso. */
+    /**
+     * Anula un documento que nunca llegó a tener aplicaciones vigentes — el llamador ya validó eso. Marca
+     * `estado: Anulado` en vez de soft-delete: la fila sigue visible en los listados generales de cartera
+     * (los que filtran por saldo pendiente ya excluyen por `estado`, no por soft-delete, así que no cambian).
+     */
     public function anular(DocumentoTercero $documento): bool
     {
-        $anulado = $this->documentos->eliminar($documento);
+        $anteriores = $this->auditoria->instantanea($documento);
+        $documento = $this->documentos->actualizar($documento, ['estado' => EstadoDocumentoTercero::Anulado]);
 
-        $this->auditoria->registrarEliminacion(AuditoriaConstants::MODULO_CONTABILIDAD, "Documento {$documento->numero_documento} anulado", $documento, accion: AccionAuditoria::Anular);
+        $this->auditoria->registrarModificacion(
+            AuditoriaConstants::MODULO_CONTABILIDAD,
+            "Documento {$documento->numero_documento} anulado",
+            $documento,
+            $anteriores,
+            accion: AccionAuditoria::Anular,
+        );
 
-        return $anulado;
+        return true;
     }
 
     public function pendientesPorTercero(Tercero $tercero, NaturalezaDocumento $naturaleza)
@@ -249,6 +260,41 @@ class DocumentoTerceroService
 
             return $bloqueado;
         });
+    }
+
+    /**
+     * Árbol de trazabilidad de un documento: el documento raíz y, debajo, cada aplicación que lo abonó o lo
+     * canceló, en el orden en que ocurrieron, con el saldo resultante después de cada una — igual al ejemplo
+     * de la sección 6.6.2 (CC → CE parcial → CE final).
+     *
+     * @return array{documento: DocumentoTercero, pasos: list<array{id: int, modulo_aplicacion: string, aplicacion_id: int, valor_aplicado: Dinero, fecha: string, reversado_en: ?string, saldo_resultante: Dinero}>}
+     */
+    public function trazabilidad(DocumentoTercero $documento): array
+    {
+        $saldo = $documento->valor_original;
+        $pasos = [];
+
+        foreach ($this->aplicaciones->deDocumento($documento->id) as $aplicacion) {
+            // Convención de incrementarValor(): valor_aplicado negativo = aumenta el saldo (nota débito, reversa).
+            $saldo = $aplicacion->valor_aplicado->esPositivo()
+                ? $saldo->restar($aplicacion->valor_aplicado)
+                : $saldo->sumar($aplicacion->valor_aplicado->absoluto());
+
+            $pasos[] = [
+                'id' => $aplicacion->id,
+                'modulo_aplicacion' => $aplicacion->modulo_aplicacion,
+                'aplicacion_id' => $aplicacion->aplicacion_id,
+                'valor_aplicado' => $aplicacion->valor_aplicado,
+                'fecha' => $aplicacion->fecha->toDateString(),
+                'reversado_en' => $aplicacion->reversado_en,
+                'saldo_resultante' => $saldo,
+            ];
+        }
+
+        return [
+            'documento' => $documento->load('tercero'),
+            'pasos' => $pasos,
+        ];
     }
 
     private function estadoPorSaldo(Dinero $saldo, Dinero $valorOriginal): EstadoDocumentoTercero

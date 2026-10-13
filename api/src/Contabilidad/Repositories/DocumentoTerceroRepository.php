@@ -131,6 +131,7 @@ class DocumentoTerceroRepository extends BaseRepository
             'pendiente' => $consulta->where('estado', EstadoDocumentoTercero::Pendiente)->where($noVencido),
             'abonado_parcial' => $consulta->where('estado', EstadoDocumentoTercero::AbonadoParcial)->where($noVencido),
             'cancelado' => $consulta->where('estado', EstadoDocumentoTercero::Cancelado),
+            'anulado' => $consulta->where('estado', EstadoDocumentoTercero::Anulado),
             default => null,
         };
 

@@ -3,6 +3,7 @@
 namespace App\Contabilidad\Controllers;
 
 use App\Contabilidad\Enums\NaturalezaDocumento;
+use App\Contabilidad\Models\DocumentoTercero;
 use App\Contabilidad\Services\AccesoCarteraTerceros;
 use App\Contabilidad\Services\DocumentoTerceroService;
 use App\Http\Controllers\Controller;
@@ -26,5 +27,12 @@ class DocumentoTerceroController extends Controller
         return response()->json([
             'documentos' => $this->documentoTerceroService->pendientesPorTercero($tercero, $naturaleza),
         ]);
+    }
+
+    public function trazabilidad(DocumentoTercero $documentoTercero, Request $peticion): JsonResponse
+    {
+        $this->acceso->exigir($peticion->user(), $documentoTercero->naturaleza, $documentoTercero->tercero_id);
+
+        return response()->json($this->documentoTerceroService->trazabilidad($documentoTercero));
     }
 }

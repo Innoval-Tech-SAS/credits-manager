@@ -11,7 +11,7 @@ export type ApiCarteraDocument = {
     valor_original: string;
     abonado: string;
     saldo: string;
-    estado: 'pendiente' | 'abonado_parcial' | 'cancelado' | 'vencido';
+    estado: 'pendiente' | 'abonado_parcial' | 'cancelado' | 'vencido' | 'anulado';
     tercero: { id: number; nombre: string; tipo_documento: string; numero_documento: string };
     plan_cuenta: { id: number; codigo: string; nombre: string } | null;
     modulo_origen: string | null;

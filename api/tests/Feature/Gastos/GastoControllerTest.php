@@ -344,7 +344,7 @@ class GastoControllerTest extends TestCase
         $this->assertDatabaseMissing('gastos', ['numero_documento' => 'FAC-108']);
     }
 
-    public function test_anula_un_gasto_sin_cruces_reversa_el_comprobante_y_elimina_el_documento(): void
+    public function test_anula_un_gasto_sin_cruces_reversa_el_comprobante_y_anula_el_documento(): void
     {
         $this->actingAsAdmin();
         $this->crearValorUvt();
@@ -365,7 +365,7 @@ class GastoControllerTest extends TestCase
         $respuesta->assertStatus(204);
         $this->assertSoftDeleted('gastos', ['id' => $gastoId]);
         $this->assertDatabaseHas('comprobantes', ['id' => $comprobanteId, 'estado' => EstadoComprobante::Anulado->value]);
-        $this->assertDatabaseMissing('documentos_tercero', ['modulo_origen' => 'gastos', 'origen_id' => $gastoId, 'borrado_en' => null]);
+        $this->assertDatabaseHas('documentos_tercero', ['modulo_origen' => 'gastos', 'origen_id' => $gastoId, 'estado' => 'anulado', 'borrado_en' => null]);
     }
 
     public function test_gasto_inexistente_devuelve_404(): void
