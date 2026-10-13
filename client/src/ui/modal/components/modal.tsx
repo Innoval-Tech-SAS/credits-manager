@@ -43,7 +43,7 @@ export const Modal: FC<ModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-99999 flex items-center justify-center overflow-y-auto p-4">
-            <div className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]" onClick={onClose} />
+            <div className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px] dark:bg-gray-900/50" onClick={onClose} />
 
             <div
                 ref={modalRef}
