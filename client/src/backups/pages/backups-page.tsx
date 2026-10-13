@@ -18,7 +18,7 @@ export const BackupsPage: FC = () => {
                 {user?.isSuperAdmin && (
                     <BackupDownloadCard
                         title="Base de datos completa"
-                        description="Todas las empresas, con su estructura. Las contraseñas y los tokens de sesión no se incluyen."
+                        description="Todas las empresas. No incluye contraseñas."
                         buttonLabel="Descargar base completa"
                         icon={<DatabaseBackup className="size-5" />}
                         endpoint="/respaldos/base"
@@ -38,7 +38,7 @@ export const BackupsPage: FC = () => {
                 )}
 
                 {!user?.isSuperAdmin && user?.role !== 'admin' && (
-                    <Alert variant="danger" title="Sin acceso" message="Solo el administrador de la empresa o el superadmin pueden descargar respaldos." />
+                    <Alert variant="danger" title="Sin acceso" message="Solo el administrador de la empresa puede descargar respaldos." />
                 )}
             </div>
         </div>

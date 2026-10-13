@@ -43,7 +43,7 @@ export const EmailTestSendModal: FC<EmailTestSendModalProps> = ({ tipo, onClose 
                 <div>
                     <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">Probar la configuración</h2>
                     <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        Envía un correo de prueba con la configuración guardada. No muestra credenciales.
+                        Envía un correo de prueba con la configuración guardada.
                     </p>
                 </div>
 

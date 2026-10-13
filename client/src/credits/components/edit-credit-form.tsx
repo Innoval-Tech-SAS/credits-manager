@@ -157,8 +157,7 @@ export const EditCreditForm: FC<EditCreditFormProps> = ({ credito }) => {
                 </div>
 
                 <p className="text-sm text-gray-500 md:col-span-3 dark:text-gray-400">
-                    Al guardar se regeneran las cuotas con las nuevas condiciones. El crédito aún no se desembolsa, así que no hay efecto
-                    contable. El cambio queda en la bitácora con los valores anteriores, los nuevos y el motivo.
+                    Al guardar se recalculan las cuotas con las nuevas condiciones.
                 </p>
 
                 <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:justify-end md:col-span-3 dark:border-gray-800">

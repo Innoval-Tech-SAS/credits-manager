@@ -1,7 +1,7 @@
 import type { AuditBackupReason, AuditBackupStatus } from '../types/api-audit-backup-entry';
 
 export const AUDIT_BACKUP_REASON_LABELS: Record<AuditBackupReason, string> = {
-    redis_no_disponible: 'Redis no disponible',
+    redis_no_disponible: 'Servicio de auditoría no disponible',
     evento_invalido: 'Evento inválido',
     payload_invalido: 'Mensaje inválido',
     error_insercion: 'Error al insertar',

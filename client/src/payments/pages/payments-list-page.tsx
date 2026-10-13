@@ -137,7 +137,7 @@ export const PaymentsListPage: FC = () => {
             <MotivoModal
                 isOpen={pagoAReversar !== null}
                 title={`Reversar el pago #${pagoAReversar?.id ?? ''}`}
-                description="El pago no se borra: se reversa con un movimiento compensatorio. Las cuotas recuperan lo aplicado, el recibo queda anulado con su número y el asiento de recaudo se reversa. Indique el motivo."
+                description="Las cuotas recuperarán lo aplicado y el recibo quedará anulado. Indique el motivo."
                 confirmLabel="Reversar pago"
                 isSubmitting={isReversing}
                 onClose={() => setPagoAReversar(null)}

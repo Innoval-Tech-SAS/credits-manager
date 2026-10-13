@@ -106,7 +106,7 @@ export const EmailReminderModal: FC<EmailReminderModalProps> = ({ clienteId, cuo
 
                 {sent && (
                     <div className="rounded-lg border border-success-500 bg-success-50 px-4 py-3 text-sm text-success-600 dark:border-success-800 dark:bg-success-500/10 dark:text-success-400">
-                        Correo en cola. El resultado aparece en el historial del cliente.
+                        El correo se está enviando. El resultado aparecerá en el historial del cliente.
                     </div>
                 )}
 

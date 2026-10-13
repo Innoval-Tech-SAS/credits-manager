@@ -41,11 +41,11 @@ export const AuditRecoveryPage: FC = () => {
             const result = await sendRequest<ApiAuditRecoveryResult>('/auditoria/respaldo/recuperar', { method: 'POST', body });
 
             if (result.fallidos > 0) {
-                setErrorMessage(`No se pudieron recuperar ${result.fallidos} evento(s): Redis sigue sin responder.`);
+                setErrorMessage(`No se pudieron recuperar ${result.fallidos} evento(s). Intenta de nuevo en unos minutos.`);
             }
 
             if (result.recuperados > 0) {
-                setSuccessMessage(`${result.recuperados} evento(s) reenviados a la cola de auditoría. El listener los insertará en instantes.`);
+                setSuccessMessage(`${result.recuperados} evento(s) recuperados. Aparecerán en la bitácora en unos instantes.`);
             }
 
             setTimeout(refetch, REFRESH_DELAY_MS);
@@ -65,7 +65,7 @@ export const AuditRecoveryPage: FC = () => {
             onDismissSuccess={() => setSuccessMessage(null)}
             errorMessage={errorMessage ?? error}
             onDismissError={() => setErrorMessage(null)}
-            countLabel={`${totalItems} ${totalItems === 1 ? 'entrada en el log de respaldo' : 'entradas en el log de respaldo'}`}
+            countLabel={`${totalItems} ${totalItems === 1 ? 'evento' : 'eventos'}`}
             toolbar={
                 <>
                     <Button iconOnly variant="outline" startIcon={<ArrowLeft className="size-4" />} onClick={() => navigate('/auditoria')}>
@@ -100,23 +100,18 @@ export const AuditRecoveryPage: FC = () => {
                     onConfirm={() => void recover({ todos: true }, null)}
                     variant="warning"
                     title="Recuperar todos los pendientes"
-                    description="Se reenviarán a la cola de auditoría todos los eventos del log de respaldo que aún no están en la bitácora, conservando su fecha, autor y empresa originales. Es seguro repetirlo: un evento nunca se inserta dos veces."
+                    description="Los eventos pendientes se agregarán a la bitácora con su fecha, autor y empresa originales."
                     confirmLabel="Recuperar"
                     isConfirming={isRecoveringAll}
                 />
             }
         >
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                Aquí aparecen los eventos que no llegaron a la bitácora (Redis caído, evento inválido o error al insertar). Solo el superadmin ve este panel, porque el
-                log reúne eventos de todas las empresas.
-            </p>
-
             <DataTable
                 columns={buildAuditBackupTableColumns((entry) => entry.evento_id && void recover({ evento_ids: [entry.evento_id] }, entry.evento_id), recoveringId)}
                 rows={items}
                 getRowKey={(row) => `${row.evento_id ?? 'sin-id'}-${row.registrado_en}`}
                 loading={isLoading}
-                emptyMessage="No hay entradas en el log de respaldo para el estado seleccionado."
+                emptyMessage="No hay eventos para el estado seleccionado."
                 maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
