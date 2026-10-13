@@ -7,7 +7,7 @@ Exportación genérica y **asíncrona** a XLSX/CSV. No conoce ningún dominio: c
 1. `POST /<reporte>/exportar` → el controlador llama a `ExportacionService::solicitar(fuente, formato, usuario)`.
 2. Se autoriza (`fuente->autorizadoPara`), se cuenta (`totalFilas`, máx. **1 048 575**: el límite de Excel, con el encabezado) y se rechaza con **422** si se pasa.
 3. Se crea la fila en `exportaciones`, se audita (`exportar`) y se encola `ProcesarExportacionJob` en la conexión `redis`, cola `exportaciones` (no depende de `QUEUE_CONNECTION`). Responde **202**.
-4. El servicio `exportaciones-worker` escribe el archivo en streaming (memoria constante) en el volumen `exportaciones_data` (`/var/exportaciones`, **no** montado en nginx) y notifica al solicitante por WebSocket.
+4. El supervisor de Horizon para la cola `exportaciones` (`api/config/horizon.php`) escribe el archivo en streaming (memoria constante) en el volumen `exportaciones_data` (`/var/exportaciones`, **no** montado en nginx) y notifica al solicitante por WebSocket.
 5. `GET /exportaciones/{id}/descargar` (solo el solicitante; otro usuario → 404) sirve el archivo y audita la descarga.
 
 Mantenimiento: `php artisan exportaciones:limpiar --dias=7` borra archivos vencidos y archiva el registro. Lo programa el servicio `scheduler` del compose todos los días a las 03:00 (hora de Bogotá).
