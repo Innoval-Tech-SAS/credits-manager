@@ -2,6 +2,7 @@
 
 namespace Tests\Concerns;
 
+use App\Contabilidad\Repositories\TipoDocumentoNegocioRepository;
 use App\Empresas\Models\Empresa;
 use App\Geografia\Models\Estado;
 use App\Geografia\Models\Municipio;
@@ -22,7 +23,7 @@ trait ActsAsAdmin
         static $contador = 0;
         $contador++;
 
-        return Empresa::create(array_merge([
+        $empresa = Empresa::create(array_merge([
             'nombre_empresa' => "Empresa de prueba {$contador}",
             'nit' => "90000000{$contador}-0",
             'digito_verificacion' => '0',
@@ -31,6 +32,12 @@ trait ActsAsAdmin
             'telefono' => '3000000000',
             'correo' => "empresa{$contador}@example.com",
         ], $overrides));
+
+        // Igual que EmpresaService::crearEmpresaConAdmin: sin esto, validarOperacion() de TipoDocumentoNegocioService
+        // rechazaría cualquier factura/recibo/egreso/causación de los tests por no encontrar el catálogo sembrado.
+        app(TipoDocumentoNegocioRepository::class)->crearPorDefectoParaEmpresa($empresa->id);
+
+        return $empresa;
     }
 
     /** Un único municipio compartido por todas las empresas de prueba: el catálogo es global. */

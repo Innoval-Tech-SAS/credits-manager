@@ -4,6 +4,7 @@ namespace App\Empresas\Services;
 
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Contabilidad\Repositories\TipoDocumentoNegocioRepository;
 use App\Empresas\Constants\EmpresaConstants;
 use App\Empresas\Models\Empresa;
 use App\Empresas\Repositories\EmpresaRepository;
@@ -24,6 +25,7 @@ class EmpresaService
     public function __construct(
         protected EmpresaRepository $empresas,
         protected ParametrizacionConceptoFacturacionRepository $parametrizacionesConcepto,
+        protected TipoDocumentoNegocioRepository $tiposDocumentoNegocio,
         protected ActividadEconomicaRepository $actividadesEconomicas,
         protected EmisorAuditoria $auditoria,
     ) {}
@@ -71,6 +73,7 @@ class EmpresaService
             ]);
 
             $this->parametrizacionesConcepto->crearPorDefectoParaEmpresa($empresa->id);
+            $this->tiposDocumentoNegocio->crearPorDefectoParaEmpresa($empresa->id);
 
             if (! empty($datos['actividad_economica_codigo'])) {
                 $actividadEconomica = $this->actividadesEconomicas->crear([

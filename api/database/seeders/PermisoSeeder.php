@@ -35,6 +35,7 @@ class PermisoSeeder extends Seeder
         'configuracion_contable' => [
             'listar_plan_cuentas', 'crear_plan_cuentas', 'editar_plan_cuentas',
             'listar_tipos_comprobante', 'crear_tipos_comprobante', 'editar_tipos_comprobante', 'eliminar_tipos_comprobante',
+            'listar_tipos_documento_negocio', 'editar_tipos_documento_negocio',
             'listar_centros_costo', 'crear_centros_costo', 'editar_centros_costo', 'eliminar_centros_costo',
             'configurar', 'listar_periodos', 'cerrar_periodo', 'reabrir_periodo',
         ],

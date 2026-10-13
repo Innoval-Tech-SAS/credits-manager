@@ -374,6 +374,10 @@ return [
         'gasto' => [
             'tiene_cruces_registrados' => 'No se puede anular un gasto con pagos (cruces) registrados. Reversa primero los egresos asociados antes de anularlo.',
         ],
+        'tipo_documento_negocio' => [
+            'inactivo' => 'El tipo de documento «:codigo» está desactivado en el catálogo de tipos de documento de negocio. Actívalo en Contabilidad antes de continuar.',
+            'operacion_no_permitida' => 'El catálogo de tipos de documento de negocio no permite esta operación para «:codigo». Revisa su configuración en Contabilidad.',
+        ],
         'extracto_bancario' => [
             'cuenta_no_coincide' => 'El número de cuenta del archivo no coincide con la cuenta bancaria seleccionada.',
             'periodo_ya_cargado' => 'Ya existe un extracto cargado para esta cuenta y este período.',

@@ -23,6 +23,7 @@ use App\Contabilidad\Controllers\ReglaContabilizacionController;
 use App\Contabilidad\Controllers\ReporteContableController;
 use App\Contabilidad\Controllers\SolicitudReaperturaPeriodoController;
 use App\Contabilidad\Controllers\TipoComprobanteController;
+use App\Contabilidad\Controllers\TipoDocumentoNegocioController;
 use App\Correo\Controllers\ConfiguracionCorreoController;
 use App\Correo\Controllers\PlantillaCorreoController;
 use App\Correo\Controllers\RecordatorioCorreoController;
@@ -259,6 +260,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/tipos-comprobante/{tipoComprobante}', [TipoComprobanteController::class, 'show'])->middleware('algun_permiso:configuracion_contable.listar_tipos_comprobante,configuracion_contable.editar_tipos_comprobante');
     Route::patch('/contabilidad/tipos-comprobante/{tipoComprobante}', [TipoComprobanteController::class, 'update'])->middleware('permiso:configuracion_contable,editar_tipos_comprobante');
     Route::delete('/contabilidad/tipos-comprobante/{tipoComprobante}', [TipoComprobanteController::class, 'destroy'])->middleware('permiso:configuracion_contable,eliminar_tipos_comprobante');
+
+    Route::get('/contabilidad/tipos-documento-negocio', [TipoDocumentoNegocioController::class, 'index'])->middleware('algun_permiso:'.implode(',', ContabilidadConstants::CONSULTA_TIPOS_DOCUMENTO_NEGOCIO));
+    Route::patch('/contabilidad/tipos-documento-negocio/{tipoDocumentoNegocio}', [TipoDocumentoNegocioController::class, 'update'])->middleware('permiso:configuracion_contable,editar_tipos_documento_negocio');
 
     Route::get('/contabilidad/centros-costo', [CentroCostoController::class, 'index'])->middleware('algun_permiso:'.implode(',', ContabilidadConstants::CONSULTA_CENTROS_COSTO));
     Route::post('/contabilidad/centros-costo', [CentroCostoController::class, 'store'])->middleware('permiso:configuracion_contable,crear_centros_costo');

@@ -5,8 +5,10 @@ namespace App\Facturacion\Services;
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Contabilidad\Enums\CodigoDocumentoNegocio;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Services\DocumentoTerceroService;
+use App\Contabilidad\Services\TipoDocumentoNegocioService;
 use App\Core\Consecutivos\Services\ConsecutivoDocumentoService;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
@@ -63,6 +65,7 @@ class DocumentoFacturacionService
         protected ConsecutivoDocumentoService $consecutivos,
         protected AsientosFacturacionService $asientos,
         protected DocumentoTerceroService $documentosTercero,
+        protected TipoDocumentoNegocioService $tiposDocumentoNegocio,
         protected EmpresaService $empresas,
         protected GeneradorPdf $generador,
         protected EmisorAuditoria $auditoria,
@@ -235,6 +238,8 @@ class DocumentoFacturacionService
             $emitido = $this->emitir($bloqueado, $usuario);
             $totales = $this->totales($this->conLineas($emitido));
             $asiento = $this->asientos->contabilizarEmision($emitido, $totales);
+
+            $this->tiposDocumentoNegocio->validarOperacion($emitido->empresa_id, CodigoDocumentoNegocio::FacturaVenta, creaSaldo: true, cruzaSaldo: false);
 
             $documentoTercero = $this->documentosTercero->crearDocumento(
                 $emitido->cliente->tercero,
@@ -488,6 +493,7 @@ class DocumentoFacturacionService
         $this->lineas->crearParaDocumento($nota, $lineasNota);
 
         $emitida = $this->emitir($nota, $usuario);
+        $this->conLineas($emitida);
         $valorNota = $this->sumaLineas($emitida);
         $asiento = $this->asientos->contabilizarNota($emitida, $valorNota);
         $emitida->update(['comprobante_id' => $asiento->id]);
@@ -500,6 +506,8 @@ class DocumentoFacturacionService
                 $valorAAplicar = $valorNota->menorEntre($factura->documentoTercero->saldo);
 
                 if ($valorAAplicar->esPositivo()) {
+                    $this->tiposDocumentoNegocio->validarOperacion($emitida->empresa_id, CodigoDocumentoNegocio::NotaCredito, creaSaldo: false, cruzaSaldo: true);
+
                     $this->documentosTercero->aplicarValor(
                         $factura->cliente->tercero,
                         NaturalezaDocumento::PorCobrar,
@@ -510,6 +518,8 @@ class DocumentoFacturacionService
                     );
                 }
             } else {
+                $this->tiposDocumentoNegocio->validarOperacion($emitida->empresa_id, CodigoDocumentoNegocio::NotaDebito, creaSaldo: false, cruzaSaldo: true);
+
                 $this->documentosTercero->incrementarValor(
                     $factura->documentoTercero,
                     $valorNota,
@@ -556,9 +566,11 @@ class DocumentoFacturacionService
 
     /**
      * Líneas de una nota crédito: cada una apunta a una línea de la factura y consume de su saldo. El consumo dentro de
-     * esta misma nota también cuenta, por si dos líneas apuntan a la misma.
+     * esta misma nota también cuenta, por si dos líneas apuntan a la misma. El IVA/retenciones de la línea origen se
+     * prorratean por `valor / valor de la línea origen`, para que el asiento de la nota (`AsientosFacturacionService`)
+     * pueda reversarlos igual que la factura los causó, en vez de dejarlos fuera del asiento.
      *
-     * @return list<array{linea_origen_id: int, concepto: string, descripcion: string, valor: Dinero}>
+     * @return list<array{linea_origen_id: int, concepto: string, descripcion: string, valor: Dinero, tipo_concepto: ?TipoConceptoFacturacion, valor_iva: Dinero, valor_retefuente: Dinero, valor_reteica: Dinero, valor_reteiva: Dinero}>
      */
     private function lineasDeNotaCredito(DocumentoFacturacion $factura, array $lineas): array
     {
@@ -584,28 +596,57 @@ class DocumentoFacturacionService
                 'concepto' => $lineaOrigen->concepto,
                 'descripcion' => $lineaOrigen->descripcion,
                 'valor' => $valor,
+                ...$this->prorratearImpuestos($lineaOrigen, $valor),
             ];
         }
 
         return $resultado;
     }
 
-    /** @return list<array{linea_origen_id: ?int, concepto: string, descripcion: string, valor: Dinero, tasa_mora: ?string, dias_mora: ?int, base_mora: ?Dinero}> */
+    /** @return list<array{linea_origen_id: ?int, concepto: string, descripcion: string, valor: Dinero, tasa_mora: ?string, dias_mora: ?int, base_mora: ?Dinero, tipo_concepto: ?TipoConceptoFacturacion, valor_iva: Dinero, valor_retefuente: Dinero, valor_reteica: Dinero, valor_reteiva: Dinero}> */
     private function lineasDeNotaDebito(DocumentoFacturacion $origen, array $lineas): array
     {
         return array_map(function (array $entrada) use ($origen) {
-            $lineaOrigenId = isset($entrada['linea_origen_id']) ? $this->lineaDeDocumento($origen, (int) $entrada['linea_origen_id'])->id : null;
+            $lineaOrigen = isset($entrada['linea_origen_id']) ? $this->lineaDeDocumento($origen, (int) $entrada['linea_origen_id']) : null;
+            $valor = Dinero::desdePesos($entrada['valor']);
 
             return [
-                'linea_origen_id' => $lineaOrigenId,
+                'linea_origen_id' => $lineaOrigen?->id,
                 'concepto' => $entrada['concepto'],
                 'descripcion' => $entrada['descripcion'],
-                'valor' => Dinero::desdePesos($entrada['valor']),
+                'valor' => $valor,
                 'tasa_mora' => $entrada['tasa_mora'] ?? null,
                 'dias_mora' => $entrada['dias_mora'] ?? null,
                 'base_mora' => isset($entrada['base_mora']) ? Dinero::desdePesos($entrada['base_mora']) : null,
+                ...($lineaOrigen ? $this->prorratearImpuestos($lineaOrigen, $valor) : [
+                    'tipo_concepto' => null,
+                    'valor_iva' => Dinero::cero(),
+                    'valor_retefuente' => Dinero::cero(),
+                    'valor_reteica' => Dinero::cero(),
+                    'valor_reteiva' => Dinero::cero(),
+                ]),
             ];
         }, $lineas);
+    }
+
+    /**
+     * Prorratea el IVA/retenciones de la línea origen por `valor / valor de la línea origen`, para que la línea de
+     * la nota lleve una porción proporcional de cada impuesto — sin esto, `AsientosFacturacionService::contabilizarNota`
+     * no tenía forma de reversarlos ni de aumentarlos, y la nota solo afectaba la cuenta de CxC/ingreso.
+     *
+     * @return array{tipo_concepto: ?TipoConceptoFacturacion, valor_iva: Dinero, valor_retefuente: Dinero, valor_reteica: Dinero, valor_reteiva: Dinero}
+     */
+    private function prorratearImpuestos(LineaDocumentoFacturacion $lineaOrigen, Dinero $valor): array
+    {
+        $tasa = $valor->aFloat() / $lineaOrigen->valor->aFloat();
+
+        return [
+            'tipo_concepto' => $lineaOrigen->tipo_concepto,
+            'valor_iva' => $lineaOrigen->valor_iva->multiplicarPorTasa($tasa),
+            'valor_retefuente' => $lineaOrigen->valor_retefuente->multiplicarPorTasa($tasa),
+            'valor_reteica' => $lineaOrigen->valor_reteica->multiplicarPorTasa($tasa),
+            'valor_reteiva' => $lineaOrigen->valor_reteiva->multiplicarPorTasa($tasa),
+        ];
     }
 
     private function lineaDeDocumento(DocumentoFacturacion $documento, int $lineaId): LineaDocumentoFacturacion

@@ -5,10 +5,12 @@ namespace App\Egresos\Services;
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Contabilidad\Enums\CodigoDocumentoNegocio;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Repositories\AplicacionDocumentoRepository;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Contabilidad\Services\DocumentoTerceroService;
+use App\Contabilidad\Services\TipoDocumentoNegocioService;
 use App\Core\Consecutivos\Enums\TipoDocumentoConsecutivo;
 use App\Core\Consecutivos\Services\ConsecutivoDocumentoService;
 use App\Core\Dinero\Dinero;
@@ -36,6 +38,7 @@ class EgresoService
         protected EgresoRepository $egresos,
         protected TerceroRepository $terceros,
         protected DocumentoTerceroService $documentosTercero,
+        protected TipoDocumentoNegocioService $tiposDocumentoNegocio,
         protected ComprobanteService $comprobantes,
         protected ConsecutivoDocumentoService $consecutivos,
         protected EmisorAuditoria $auditoria,
@@ -156,6 +159,8 @@ class EgresoService
             );
 
             $egreso = $this->egresos->actualizar($egreso, ['comprobante_id' => $comprobante->id]);
+
+            $this->tiposDocumentoNegocio->validarOperacion($tercero->empresa_id, CodigoDocumentoNegocio::ComprobanteEgreso, creaSaldo: false, cruzaSaldo: true);
 
             $this->documentosTercero->aplicarValor(
                 $tercero,

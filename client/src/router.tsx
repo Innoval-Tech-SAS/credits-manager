@@ -50,6 +50,7 @@ const AuxiliariesPage = lazyPage(() => import('./accounting/pages/auxiliaries-pa
 const OpeningReconciliationPage = lazyPage(() => import('./accounting/pages/opening-reconciliation-page'), 'OpeningReconciliationPage');
 const VoucherDetailPage = lazyPage(() => import('./accounting/pages/voucher-detail-page'), 'VoucherDetailPage');
 const VoucherTypesPage = lazyPage(() => import('./accounting/pages/voucher-types-page'), 'VoucherTypesPage');
+const BusinessDocumentTypesPage = lazyPage(() => import('./accounting/pages/business-document-types-page'), 'BusinessDocumentTypesPage');
 const VouchersListPage = lazyPage(() => import('./accounting/pages/vouchers-list-page'), 'VouchersListPage');
 const AuditLogPage = lazyPage(() => import('./audit/pages/audit-log-page'), 'AuditLogPage');
 const AuditRecoveryPage = lazyPage(() => import('./audit/pages/audit-recovery-page'), 'AuditRecoveryPage');
@@ -567,6 +568,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="configuracion_contable" accion="editar_tipos_comprobante">
                                 <EditVoucherTypePage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/tipos-documento-negocio',
+                        element: (
+                            <RequireModulePermission modulo="configuracion_contable" accion="listar_tipos_documento_negocio">
+                                <BusinessDocumentTypesPage />
                             </RequireModulePermission>
                         ),
                     },

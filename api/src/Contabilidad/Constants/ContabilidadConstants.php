@@ -30,6 +30,10 @@ class ContabilidadConstants
         'conciliacion.conciliar',
     ];
 
+    public const CONSULTA_TIPOS_DOCUMENTO_NEGOCIO = [
+        'configuracion_contable.listar_tipos_documento_negocio', 'configuracion_contable.editar_tipos_documento_negocio',
+    ];
+
     public const CONSULTA_CENTROS_COSTO = [
         'configuracion_contable.listar_centros_costo', 'configuracion_contable.crear_centros_costo',
         'configuracion_contable.editar_centros_costo', 'contabilidad.crear_manual', 'gastos.crear',

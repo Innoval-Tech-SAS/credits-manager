@@ -7,6 +7,7 @@ use App\Contabilidad\Enums\EstadoComprobante;
 use App\Contabilidad\Enums\EventoContable;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\ReglaContabilizacion;
+use App\Contabilidad\Models\TipoDocumentoNegocio;
 use App\Empresas\Models\Empresa;
 use App\Facturacion\Models\CobroFacturacion;
 use App\Recibos\Models\ReciboCaja;
@@ -103,6 +104,16 @@ class CobrosFacturacionTest extends TestCase
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/cobros', ['fecha' => '2026-10-05', 'valor' => '10', 'medio' => 'efectivo'])->assertStatus(404);
         $this->postJson(self::BASE.'/cobros/'.$cobro['id'].'/reversar', ['motivo' => 'Otra empresa'])->assertStatus(404);
         $this->get(self::BASE.'/cobros/'.$cobro['id'].'/recibo/pdf')->assertStatus(404);
+    }
+
+    public function test_no_registra_un_cobro_si_el_catalogo_desactiva_rc(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $factura = $this->factura();
+
+        TipoDocumentoNegocio::where('empresa_id', $admin->empresa_id)->where('codigo', 'RC')->update(['activo' => false]);
+
+        $this->cobrar($factura)->assertStatus(422)->assertJsonValidationErrors('documento');
     }
 
     public function test_rechaza_un_cobro_mayor_al_saldo_y_datos_invalidos(): void
