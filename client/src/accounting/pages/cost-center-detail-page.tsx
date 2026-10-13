@@ -4,6 +4,7 @@ import { useParams } from 'react-router';
 import { useResource } from '../../shared/hooks/use-resource';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { DetailSkeletonBody } from '@ui/skeleton/components/detail-skeleton-body';
+import { CostCenterMovementsTable } from '../components/cost-center-movements-table';
 import type { ApiCostCenter } from '../types/api-cost-center';
 
 export const CostCenterDetailPage: FC = () => {
@@ -53,6 +54,13 @@ export const CostCenterDetailPage: FC = () => {
                                     {centro.tiene_movimientos_asociados ? 'Sí' : 'No'}
                                 </p>
                             </div>
+                        </div>
+
+                        <div className="mt-6">
+                            <p className="mb-3 text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+                                Movimientos
+                            </p>
+                            <CostCenterMovementsTable centroId={centro.id} />
                         </div>
                     </>
                 )}

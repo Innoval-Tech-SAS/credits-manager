@@ -34,6 +34,18 @@ class CentroCostoController extends Controller
         ]]);
     }
 
+    public function movimientos(Request $peticion, CentroCosto $centro): JsonResponse
+    {
+        $movimientos = $this->centros->movimientos(
+            $centro,
+            (int) $peticion->user()->empresa_id,
+            $peticion->integer('per_page', 10),
+            $peticion->integer('page', 1),
+        );
+
+        return response()->json($movimientos);
+    }
+
     public function store(CrearCentroCostoRequest $peticion): JsonResponse
     {
         $centro = $this->centros->crear($peticion->validated());

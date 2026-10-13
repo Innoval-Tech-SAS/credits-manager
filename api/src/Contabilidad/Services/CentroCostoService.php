@@ -6,6 +6,8 @@ use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Contabilidad\Models\CentroCosto;
 use App\Contabilidad\Repositories\CentroCostoRepository;
+use App\Contabilidad\Support\NumeroComprobante;
+use App\Core\Dinero\Dinero;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 
@@ -34,6 +36,26 @@ class CentroCostoService
     public function tieneMovimientosAsociados(CentroCosto $centro): bool
     {
         return $this->centros->tieneMovimientosAsociados($centro->id);
+    }
+
+    public function movimientos(CentroCosto $centro, int $empresaId, int $porPagina, int $pagina): LengthAwarePaginator
+    {
+        $movimientos = $this->centros->paginarMovimientos($empresaId, $centro->id, max(1, min(100, $porPagina)), max(1, $pagina));
+
+        $movimientos->getCollection()->transform(fn (object $fila) => [
+            'id' => "{$fila->tipo}-{$fila->id}",
+            'tipo' => $fila->tipo,
+            'fecha' => $fila->fecha,
+            'documento' => $fila->tipo === 'gasto'
+                ? $fila->numero_documento
+                : NumeroComprobante::formatear($fila->tipo_codigo, $fila->ciclo_numeracion ?? '', (int) $fila->consecutivo),
+            'descripcion' => $fila->descripcion,
+            'debito' => Dinero::desdeCentavos((int) $fila->debito)->aDecimalString(),
+            'credito' => Dinero::desdeCentavos((int) $fila->credito)->aDecimalString(),
+            'estado' => $fila->estado,
+        ]);
+
+        return $movimientos;
     }
 
     public function editar(CentroCosto $centro, array $datos): CentroCosto

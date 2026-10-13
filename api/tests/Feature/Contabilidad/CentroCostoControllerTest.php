@@ -228,4 +228,77 @@ class CentroCostoControllerTest extends TestCase
         $respuesta->assertStatus(404);
         $this->assertDatabaseHas('centros_costo', ['id' => $centroAjeno->id, 'borrado_en' => null]);
     }
+
+    public function test_lista_los_movimientos_del_centro_de_costo(): void
+    {
+        $this->actingAsAdmin();
+        $centro = $this->crearCentroCosto();
+        $tipoGasto = $this->crearTipoGasto();
+        $parametrizacion = $this->crearParametrizacion($tipoGasto);
+
+        Gasto::create([
+            'tipo_gasto_id' => $tipoGasto->id,
+            'centro_costo_id' => $centro->id,
+            'fecha' => '2026-02-10',
+            'numero_documento' => 'FAC-900',
+            'concepto' => 'Gasto de prueba',
+            'valor_bruto' => 100000,
+            'valor_neto' => 100000,
+            'parametrizacion_tipo_gasto_id' => $parametrizacion->id,
+        ]);
+
+        $debito = $this->crearCuenta();
+        $credito = $this->crearCuenta();
+        $this->postJson('/api/v1/contabilidad/comprobantes', [
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-02-12',
+            'concepto' => 'Comprobante de prueba',
+            'lineas' => [
+                ['cuenta_id' => $debito->id, 'debito' => 50, 'credito' => 0, 'centro_costo_id' => $centro->id, 'descripcion' => 'Línea débito'],
+                ['cuenta_id' => $credito->id, 'debito' => 0, 'credito' => 50, 'descripcion' => 'Línea crédito'],
+            ],
+        ])->assertCreated();
+
+        $respuesta = $this->getJson("/api/v1/contabilidad/centros-costo/{$centro->id}/movimientos");
+
+        $respuesta->assertStatus(200)->assertJsonCount(2, 'data');
+        $tipos = collect($respuesta->json('data'))->pluck('tipo')->sort()->values();
+        $this->assertSame(['asiento', 'gasto'], $tipos->all());
+
+        $movimientoGasto = collect($respuesta->json('data'))->firstWhere('tipo', 'gasto');
+        $this->assertSame('FAC-900', $movimientoGasto['documento']);
+        $this->assertSame('1000.00', $movimientoGasto['debito']);
+    }
+
+    public function test_un_centro_sin_movimientos_responde_la_lista_vacia(): void
+    {
+        $this->actingAsAdmin();
+        $centro = $this->crearCentroCosto();
+
+        $respuesta = $this->getJson("/api/v1/contabilidad/centros-costo/{$centro->id}/movimientos");
+
+        $respuesta->assertStatus(200)->assertJsonCount(0, 'data');
+    }
+
+    public function test_sin_autenticar_no_puede_ver_movimientos(): void
+    {
+        $this->getJson('/api/v1/contabilidad/centros-costo/1/movimientos')->assertStatus(401);
+    }
+
+    public function test_un_centro_de_costo_inexistente_responde_404_al_ver_movimientos(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->getJson('/api/v1/contabilidad/centros-costo/999999/movimientos')->assertStatus(404);
+    }
+
+    public function test_un_admin_no_puede_ver_movimientos_de_un_centro_de_costo_de_otra_empresa(): void
+    {
+        $this->actingAsAdmin();
+        $centroAjeno = $this->crearCentroCosto();
+
+        $this->actingAsAdmin();
+
+        $this->getJson("/api/v1/contabilidad/centros-costo/{$centroAjeno->id}/movimientos")->assertStatus(404);
+    }
 }
