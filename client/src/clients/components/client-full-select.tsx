@@ -19,6 +19,7 @@ export const ClientFullSelect: FC<ClientFullSelectProps> = ({ id, selected, onSe
         <Select
             id={id}
             name={id}
+            key={selected?.id ?? 'none'}
             options={options}
             placeholder={isLoading ? 'Cargando clientes…' : 'Selecciona un cliente…'}
             defaultValue={selected ? String(selected.id) : ''}

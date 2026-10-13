@@ -47,6 +47,13 @@ export const NotasCreditoListPage: FC = () => {
         setPage(1);
     };
 
+    // La factura origen depende del cliente seleccionado: si cambia el cliente, el filtro de factura queda obsoleto.
+    const alCambiarCliente = (nuevoCliente: ApiClient | null) => {
+        setCliente(nuevoCliente);
+        setFactura('');
+        setPage(1);
+    };
+
     const mensaje = (location.state as { message?: string } | null)?.message ?? null;
 
     return (
@@ -79,7 +86,7 @@ export const NotasCreditoListPage: FC = () => {
         >
             <InvoiceNoteFilters
                 cliente={cliente}
-                onClienteChange={alCambiarFiltro(setCliente)}
+                onClienteChange={alCambiarCliente}
                 estado={estado}
                 onEstadoChange={alCambiarFiltro(setEstado)}
                 desde={desde}
