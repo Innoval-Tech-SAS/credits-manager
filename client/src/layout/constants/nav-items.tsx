@@ -1,4 +1,5 @@
 import {
+    Activity,
     ArchiveRestore,
     Banknote,
     DatabaseBackup,
@@ -61,6 +62,7 @@ export const SUPERADMIN_NAV_ITEMS: NavItem[] = [
         ],
     },
     { name: "Respaldos", icon: DatabaseBackup, path: "/respaldos" },
+    { name: "Salud del sistema", icon: Activity, path: "/monitoreo" },
 ];
 
 export const NAV_ITEMS: NavItem[] = [
