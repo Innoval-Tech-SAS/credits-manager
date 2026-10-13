@@ -173,7 +173,7 @@ podman tag localhost/credits-manager-api:$ANTERIOR   localhost/credits-manager-a
 podman tag localhost/credits-manager-nginx:$ANTERIOR localhost/credits-manager-nginx:latest
 podman compose up -d --force-recreate --no-deps \
   auditoria-listener exportaciones-worker importaciones-worker conciliacion-worker \
-  correos-worker scheduler reverb api nginx
+  correos-worker scheduler monitor reverb api nginx
 echo $ANTERIOR > /var/lib/credits-manager/desplegado
 ```
 
