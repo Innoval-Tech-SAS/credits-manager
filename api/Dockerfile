@@ -18,7 +18,8 @@ RUN apk add --no-cache icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo
     && docker-php-ext-configure gd --with-jpeg \
     && docker-php-ext-install pdo_mysql mbstring bcmath intl zip opcache pcntl gd \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
-    && pecl install redis \
+    && pecl channel-update pecl.php.net \
+    && pecl install redis-6.3.0 \
     && docker-php-ext-enable redis \
     && apk del .build-deps
 
