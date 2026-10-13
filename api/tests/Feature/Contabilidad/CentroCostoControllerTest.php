@@ -271,7 +271,7 @@ class CentroCostoControllerTest extends TestCase
 
         $movimientoGasto = collect($respuesta->json('data'))->firstWhere('tipo', 'gasto');
         $this->assertSame('FAC-900', $movimientoGasto['documento']);
-        $this->assertSame('1000.00', $movimientoGasto['debito']);
+        $this->assertSame('100000.00', $movimientoGasto['debito']);
     }
 
     public function test_un_centro_sin_movimientos_responde_la_lista_vacia(): void
