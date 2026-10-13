@@ -8,6 +8,7 @@ use App\Empresas\Constants\EmpresaConstants;
 use App\Empresas\Models\Empresa;
 use App\Empresas\Repositories\EmpresaRepository;
 use App\Facturacion\Repositories\ParametrizacionConceptoFacturacionRepository;
+use App\Gastos\Repositories\ActividadEconomicaRepository;
 use App\Usuarios\Constants\UsuarioConstants;
 use App\Usuarios\Models\Permiso;
 use App\Usuarios\Models\Rol;
@@ -23,6 +24,7 @@ class EmpresaService
     public function __construct(
         protected EmpresaRepository $empresas,
         protected ParametrizacionConceptoFacturacionRepository $parametrizacionesConcepto,
+        protected ActividadEconomicaRepository $actividadesEconomicas,
         protected EmisorAuditoria $auditoria,
     ) {}
 
@@ -70,6 +72,17 @@ class EmpresaService
 
             $this->parametrizacionesConcepto->crearPorDefectoParaEmpresa($empresa->id);
 
+            if (! empty($datos['actividad_economica_codigo'])) {
+                $actividadEconomica = $this->actividadesEconomicas->crear([
+                    'empresa_id' => $empresa->id,
+                    'codigo' => $datos['actividad_economica_codigo'],
+                    'nombre' => $datos['actividad_economica_nombre'],
+                    'activo' => true,
+                ]);
+
+                $empresa = $this->empresas->actualizar($empresa, ['actividad_economica_id' => $actividadEconomica->id]);
+            }
+
             $rolAdmin = $this->crearRolesBase($empresa)[UsuarioConstants::ROL_ADMIN];
 
             Usuario::create([
@@ -87,7 +100,7 @@ class EmpresaService
                 "Empresa {$empresa->nombre_empresa} creada con su administrador {$datos['admin_usuario']}",
                 'empresa',
                 $empresa->id,
-                nuevos: $empresa->only(['nombre_empresa', 'nit', 'digito_verificacion', 'direccion', 'municipio_id', 'telefono', 'correo']) + ['admin_usuario' => strtolower($datos['admin_usuario'])],
+                nuevos: $empresa->only(['nombre_empresa', 'nit', 'digito_verificacion', 'direccion', 'municipio_id', 'actividad_economica_id', 'telefono', 'correo']) + ['admin_usuario' => strtolower($datos['admin_usuario'])],
             );
 
             return $this->conMunicipio($empresa);

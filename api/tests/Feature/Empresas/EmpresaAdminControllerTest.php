@@ -57,6 +57,41 @@ class EmpresaAdminControllerTest extends TestCase
         $this->assertDatabaseHas('roles', ['nombre' => 'admin', 'empresa_id' => $respuesta->json('empresa.id')]);
     }
 
+    public function test_superadmin_crea_una_empresa_con_su_primera_actividad_economica(): void
+    {
+        $this->actingAsSuperAdmin();
+        $this->seed(PermisoSeeder::class);
+
+        $datos = $this->datosEmpresaValidos() + [
+            'actividad_economica_codigo' => '6820',
+            'actividad_economica_nombre' => 'Actividades inmobiliarias',
+        ];
+
+        $respuesta = $this->postJson('/api/v1/empresas', $datos);
+
+        $respuesta->assertStatus(201);
+        $empresaId = $respuesta->json('empresa.id');
+        $this->assertSame('6820', $respuesta->json('empresa.actividad_economica.codigo'));
+        $this->assertDatabaseHas('actividades_economicas', [
+            'empresa_id' => $empresaId,
+            'codigo' => '6820',
+            'nombre' => 'Actividades inmobiliarias',
+        ]);
+    }
+
+    public function test_actividad_economica_requiere_codigo_y_nombre_juntos(): void
+    {
+        $this->actingAsSuperAdmin();
+        $this->seed(PermisoSeeder::class);
+
+        $datos = $this->datosEmpresaValidos() + ['actividad_economica_codigo' => '6820'];
+
+        $respuesta = $this->postJson('/api/v1/empresas', $datos);
+
+        $respuesta->assertStatus(422);
+        $respuesta->assertJsonValidationErrors(['actividad_economica_nombre']);
+    }
+
     public function test_superadmin_lista_y_edita_empresas(): void
     {
         $this->actingAsSuperAdmin();
