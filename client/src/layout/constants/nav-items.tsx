@@ -1,4 +1,5 @@
 import {
+    Activity,
     ArchiveRestore,
     Banknote,
     DatabaseBackup,
@@ -49,6 +50,7 @@ import { IMPORT_PERMISSIONS } from "../../imports/constants/import-types";
 import type { NavItem } from "../types/nav-item";
 
 export const SUPERADMIN_NAV_ITEMS: NavItem[] = [
+    { name: "Inicio", icon: House, path: "/" },
     { name: "Empresas", icon: Building2, path: "/empresas" },
     { name: "Municipios", icon: MapPin, path: "/geografia/municipios" },
     {
@@ -60,6 +62,7 @@ export const SUPERADMIN_NAV_ITEMS: NavItem[] = [
         ],
     },
     { name: "Respaldos", icon: DatabaseBackup, path: "/respaldos" },
+    { name: "Salud del sistema", icon: Activity, path: "/monitoreo" },
 ];
 
 export const NAV_ITEMS: NavItem[] = [

@@ -7,12 +7,22 @@ use App\Auditoria\Commands\EstadoAuditoriaCommand;
 use App\Exportacion\Commands\LimpiarExportacionesCommand;
 use App\Importacion\Commands\LimpiarImportacionesCommand;
 use App\Metas\Commands\EvaluarMetasCommand;
+use App\Monitoreo\Commands\PublicarMonitoreoCommand;
+use App\Monitoreo\Listeners\LatidoScheduler;
+use App\Monitoreo\Listeners\LatidoTrabajadores;
+use App\Monitoreo\Services\RegistroLatidos;
 use App\ObligacionesTributarias\Commands\EvaluarAlertasObligacionesCommand;
 use App\Redis\Contracts\RedisClienteInterface;
 use App\Redis\Services\RedisCliente;
 use App\Respaldos\Commands\EjecutarRespaldoCommand;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Http\Request;
+use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
+use Illuminate\Queue\Events\Looping;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -25,6 +35,8 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(RedisClienteInterface::class, RedisCliente::class);
+        // Una instancia por proceso: recuerda cuándo escribió el último latido para no escribir en cada vuelta del worker.
+        $this->app->singleton(RegistroLatidos::class);
     }
 
     /**
@@ -32,7 +44,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->commands([EscucharAuditoriaCommand::class, EstadoAuditoriaCommand::class, LimpiarExportacionesCommand::class, LimpiarImportacionesCommand::class, EvaluarMetasCommand::class, EjecutarRespaldoCommand::class, EvaluarAlertasObligacionesCommand::class]);
+        $this->commands([EscucharAuditoriaCommand::class, EstadoAuditoriaCommand::class, LimpiarExportacionesCommand::class, LimpiarImportacionesCommand::class, EvaluarMetasCommand::class, EjecutarRespaldoCommand::class, EvaluarAlertasObligacionesCommand::class, PublicarMonitoreoCommand::class]);
+
+        Event::listen(Looping::class, [LatidoTrabajadores::class, 'enEspera']);
+        Event::listen(JobProcessing::class, [LatidoTrabajadores::class, 'alEmpezar']);
+        Event::listen([JobProcessed::class, JobFailed::class], [LatidoTrabajadores::class, 'alTerminar']);
+        Event::listen(CommandStarting::class, LatidoScheduler::class);
 
         RateLimiter::for('login', function (Request $peticion) {
             $usuario = Str::lower((string) $peticion->input('usuario'));

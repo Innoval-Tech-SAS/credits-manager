@@ -188,6 +188,27 @@ services:
       - ${RESPALDOS_ORIGEN:-respaldos_data}:/var/respaldos
     restart: unless-stopped
 
+  # Panel de salud del superadmin: cada 5 s, y solo si alguien lo está mirando, publica por Reverb el
+  # estado del servidor, los servicios y las colas. El volumen de respaldos va en solo lectura: solo
+  # se usa para medir el disco del servidor, donde viven los volúmenes.
+  monitor:
+    image: localhost/credits-manager-api:latest
+    container_name: credits-manager-monitor
+    entrypoint: ["php", "artisan", "monitoreo:publicar"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 10s
+    environment: *api-worker-env
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_storage:/var/www/html/storage
+      - ${RESPALDOS_ORIGEN:-respaldos_data}:/var/respaldos:ro
+    restart: unless-stopped
+
   # Servidor WebSocket (Laravel Reverb). El navegador entra por nginx (wss://api.ddasolucionescredicias.tech/app).
   reverb:
     image: localhost/credits-manager-api:latest

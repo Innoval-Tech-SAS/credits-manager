@@ -26,6 +26,7 @@ Navegador ──HTTPS──▶ nginx ──┬── /            SPA React (bui
 | `importaciones-worker` | misma imagen | Valida y escribe las importaciones históricas. |
 | `correos-worker` | misma imagen | Envía recordatorios de cobranza por correo. |
 | `scheduler` | misma imagen | Tareas programadas de Laravel. **Una sola instancia.** |
+| `monitor` | misma imagen | Panel de salud del superadmin (`/monitoreo`): cada 5 s, y solo si alguien lo mira, publica por Reverb el estado del servidor (leído de `/proc`), los servicios y las colas. Monta `respaldos_data` en solo lectura para medir el disco. |
 | `reverb` | misma imagen | Servidor WebSocket para notificaciones en tiempo real. |
 | `nginx` | construida desde `nginx/` | Sirve la SPA y hace de proxy a `api` y `reverb`. Termina HTTPS. |
 
@@ -122,7 +123,7 @@ podman compose build
 # 4. Recrear los servicios de la aplicación (podman-compose no recrea con `up -d` si solo cambió la imagen)
 podman compose up -d --force-recreate --no-deps \
   auditoria-listener exportaciones-worker importaciones-worker conciliacion-worker \
-  correos-worker scheduler reverb api nginx
+  correos-worker scheduler monitor reverb api nginx
 
 # 5. Migrar la base
 podman compose exec api php artisan migrate --force

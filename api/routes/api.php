@@ -56,6 +56,7 @@ use App\Metas\Controllers\AlertaMetaController;
 use App\Metas\Controllers\CierreMetaController;
 use App\Metas\Controllers\ConfiguracionMetaController;
 use App\Metas\Controllers\MetaController;
+use App\Monitoreo\Controllers\MonitoreoController;
 use App\Notificaciones\Controllers\NotificacionController;
 use App\ObligacionesTributarias\Controllers\AlertaObligacionTributariaController;
 use App\ObligacionesTributarias\Controllers\ObligacionTributariaController;
@@ -102,6 +103,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/respaldos/base', [DescargaBaseController::class, 'base'])->middleware('superadmin');
     Route::get('/respaldos/empresa', [DescargaBaseController::class, 'empresa'])->middleware('admin');
+
+    Route::get('/monitoreo/estado', [MonitoreoController::class, 'estado'])->middleware('superadmin');
+    Route::get('/monitoreo/respaldos', [MonitoreoController::class, 'respaldos'])->middleware('superadmin');
+    Route::get('/monitoreo/trabajos-fallidos', [MonitoreoController::class, 'trabajosFallidos'])->middleware('superadmin');
+    Route::post('/monitoreo/trabajos-fallidos/{uuid}/reintentar', [MonitoreoController::class, 'reintentar'])->middleware('superadmin')->whereUuid('uuid');
 
     Route::get('/exportaciones', [ExportacionController::class, 'index']);
     Route::get('/exportaciones/{exportacion}/descargar', [ExportacionController::class, 'descargar'])->whereNumber('exportacion');

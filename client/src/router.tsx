@@ -54,6 +54,7 @@ const VouchersListPage = lazyPage(() => import('./accounting/pages/vouchers-list
 const AuditLogPage = lazyPage(() => import('./audit/pages/audit-log-page'), 'AuditLogPage');
 const AuditRecoveryPage = lazyPage(() => import('./audit/pages/audit-recovery-page'), 'AuditRecoveryPage');
 const BackupsPage = lazyPage(() => import('./backups/pages/backups-page'), 'BackupsPage');
+const SystemHealthPage = lazyPage(() => import('./monitoring/pages/system-health-page'), 'SystemHealthPage');
 const CalendarPage = lazyPage(() => import('./calendar/pages/calendar-page'), 'CalendarPage');
 const TaxObligationsPage = lazyPage(() => import('./tax-obligations/pages/tax-obligations-page'), 'TaxObligationsPage');
 const CreateEconomicActivityPage = lazyPage(() => import('./expenses/pages/create-economic-activity-page'), 'CreateEconomicActivityPage');
@@ -424,6 +425,14 @@ const routes: RouteObject[] = [
                     {
                         path: 'respaldos',
                         element: <BackupsPage />,
+                    },
+                    {
+                        path: 'monitoreo',
+                        element: (
+                            <RequireSuperAdmin>
+                                <SystemHealthPage />
+                            </RequireSuperAdmin>
+                        ),
                     },
                     {
                         path: 'roles',
