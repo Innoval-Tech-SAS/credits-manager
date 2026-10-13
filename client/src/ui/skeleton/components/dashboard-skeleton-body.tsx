@@ -1,11 +1,13 @@
 import type { FC } from 'react';
 
 import type { SkeletonBodyProps } from '../props/skeleton-body-props';
+import { MoraCardSkeleton } from './mora-card-skeleton';
 import { SkeletonBar } from './skeleton-bar';
 import { SkeletonStatus } from './skeleton-status';
 import { StatCardSkeleton } from './stat-card-skeleton';
 
-const TARJETAS = 4;
+const TARJETAS_CON_TENDENCIA = 3;
+const TARJETAS_SIN_TENDENCIA = 4;
 const PAGOS = 4;
 
 /** Alturas de las columnas del histórico: dibujan un gráfico de barras en vez de líneas horizontales. */
@@ -17,11 +19,21 @@ const ALTURAS_HISTORICO = ['h-1/3', 'h-1/2', 'h-2/5', 'h-3/5', 'h-1/2', 'h-4/5',
  */
 export const DashboardSkeletonBody: FC<SkeletonBodyProps> = ({ announce }) => (
     <SkeletonStatus announce={announce} className="flex flex-1 flex-col">
+        {/* Dos filas, como `DashboardMetricCards`: las que llevan insignia de tendencia aparte de las de solo conteo,
+            para que ninguna quede estirada con espacio vacío igualando la altura de la otra fila. */}
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-3">
+            {Array.from({ length: TARJETAS_CON_TENDENCIA }, (_, indice) => (
+                <StatCardSkeleton key={indice} conTendencia />
+            ))}
+        </div>
+
         <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-4">
-            {Array.from({ length: TARJETAS }, (_, indice) => (
+            {Array.from({ length: TARJETAS_SIN_TENDENCIA }, (_, indice) => (
                 <StatCardSkeleton key={indice} />
             ))}
         </div>
+
+        <MoraCardSkeleton />
 
         <div className="mb-6 grid grid-cols-1 gap-4 md:gap-6 xl:grid-cols-12">
             <div className="rounded-2xl border border-gray-200 bg-white p-5 md:p-6 xl:col-span-7 dark:border-gray-800 dark:bg-white/3">
