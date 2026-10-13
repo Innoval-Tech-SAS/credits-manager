@@ -541,7 +541,6 @@ return [
         // Facturación
         'credito_id' => 'crédito',
         'fecha_vencimiento' => 'fecha de vencimiento',
-        'nota_debito_tope' => 'tope de la nota débito',
         'prefijo' => 'prefijo',
         'numero_inicial' => 'número inicial',
         'motivo_codigo' => 'motivo',
