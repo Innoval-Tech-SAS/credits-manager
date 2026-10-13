@@ -85,12 +85,39 @@ class ReporteEmpleadorExportarTest extends TestCase
         return $filas;
     }
 
-    /** Descomprime los flujos del PDF para poder buscar el texto dibujado. */
+    /**
+     * Descomprime los flujos del PDF y reconstruye el texto dibujado a partir de los operadores `Tj`/`TJ`: dompdf
+     * puede partir una palabra en varios fragmentos dentro de un mismo `TJ` por kerning (más probable con tildes,
+     * como en «Relación»), así que los fragmentos de un mismo operador se pegan sin separador en vez de buscar
+     * bytes crudos en el flujo completo.
+     */
     private function textoDe(string $pdf): string
     {
         preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $pdf, $flujos);
+        $contenido = collect($flujos[1])->map(fn (string $flujo) => @gzuncompress($flujo) ?: '')->implode("\n");
 
-        return collect($flujos[1])->map(fn (string $flujo) => @gzuncompress($flujo) ?: '')->implode("\n");
+        $partes = [];
+
+        preg_match_all('/\(((?:\\\\.|[^()\\\\])*)\)\s*Tj/s', $contenido, $simples);
+        foreach ($simples[1] as $cadena) {
+            $partes[] = $this->desescaparPdf($cadena);
+        }
+
+        preg_match_all('/\[((?:\\\\.|[^\[\]\\\\])*)\]\s*TJ/s', $contenido, $arreglos);
+        foreach ($arreglos[1] as $arreglo) {
+            preg_match_all('/\((?:\\\\.|[^()\\\\])*\)/s', $arreglo, $grupos);
+            $partes[] = collect($grupos[0])
+                ->map(fn (string $grupo) => $this->desescaparPdf(substr($grupo, 1, -1)))
+                ->implode('');
+        }
+
+        return implode(' ', $partes);
+    }
+
+    /** Quita el escape PDF de paréntesis y backslash dentro de una cadena literal `(...)`. */
+    private function desescaparPdf(string $cadena): string
+    {
+        return preg_replace('/\\\\([()\\\\])/', '$1', $cadena) ?? $cadena;
     }
 
     public function test_sin_autenticar_recibe_401(): void
