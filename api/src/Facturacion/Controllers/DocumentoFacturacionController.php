@@ -92,7 +92,7 @@ class DocumentoFacturacionController extends Controller
     public function nota(EmitirNotaRequest $peticion, DocumentoFacturacion $documento): JsonResponse
     {
         $tipo = TipoDocumentoFacturacion::from($peticion->validated('tipo'));
-        $accion = $tipo === TipoDocumentoFacturacion::NotaCredito ? 'anular_nota_credito' : 'anular_nota_debito';
+        $accion = $tipo === TipoDocumentoFacturacion::NotaCredito ? 'emitir_nota_credito' : 'emitir_nota_debito';
 
         if (! $peticion->user()->tienePermiso('facturacion', $accion)) {
             abort(403, 'No tienes permiso para realizar esta acción.');
