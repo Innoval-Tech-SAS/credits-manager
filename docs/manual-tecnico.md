@@ -103,6 +103,8 @@ Resumen (detalle en [respaldos y restauración](respaldos.md)):
 
 ## 5. Procedimiento de despliegue
 
+El despliegue normal es automático: merge a `main` → CI → aprobación en GitHub → `scripts/deploy.sh` en el servidor. Ver [CI/CD](ci-cd.md). Los pasos de abajo son lo que hace el script y sirven como procedimiento manual de respaldo.
+
 Aplicar cada versión de `main` con este orden. **El respaldo previo es obligatorio antes de tocar la base.**
 
 ```bash
@@ -116,8 +118,10 @@ podman compose exec --user www-data api php artisan respaldos:ejecutar --manual
 # 3. Reconstruir las imágenes cambiadas
 podman compose build
 
-# 4. Recrear los servicios
-podman compose up -d
+# 4. Recrear los servicios de la aplicación (podman-compose no recrea con `up -d` si solo cambió la imagen)
+podman compose up -d --force-recreate --no-deps \
+  auditoria-listener exportaciones-worker importaciones-worker conciliacion-worker \
+  correos-worker scheduler reverb api nginx
 
 # 5. Migrar la base
 podman compose exec api php artisan migrate --force

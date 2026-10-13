@@ -2,7 +2,8 @@ certs/
 certbot/www/
 .env
 .claude
-.github
+.github/*
+!.github/workflows/
 .agents
 .vscode/
 .pnpm-store/

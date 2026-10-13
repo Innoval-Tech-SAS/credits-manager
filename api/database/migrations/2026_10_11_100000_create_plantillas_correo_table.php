@@ -32,7 +32,7 @@ return new class extends Migration
             $table->softDeletes('borrado_en');
 
             $table->string('clave_predeterminada', 60)
-                ->storedAs("IF(es_predeterminada AND borrado_en IS NULL, CONCAT(empresa_id, '-', tipo), NULL)")
+                ->storedAs("CASE WHEN es_predeterminada AND borrado_en IS NULL THEN CONCAT(empresa_id, '-', tipo) END")
                 ->nullable();
             $table->unique('clave_predeterminada');
             $table->index(['empresa_id', 'tipo']);
