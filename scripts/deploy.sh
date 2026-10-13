@@ -44,6 +44,9 @@ al_salir() {
 trap al_salir EXIT
 trap 'log "Falló el comando de la línea $LINENO."' ERR
 
+# Sin `9>&-`, conmon y los contenedores que arranca podman heredan el descriptor del candado y lo
+# mantienen tomado mientras vivan: todo despliegue posterior fallaría con "ya hay un despliegue en curso".
+podman() { command podman "$@" 9>&-; }
 compose() { podman compose "$@"; }
 artisan() { compose exec -T --user www-data api php artisan "$@"; }
 
