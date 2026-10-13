@@ -70,7 +70,7 @@ class DocumentoFacturacionService
 
     /**
      * @param  list<TipoDocumentoFacturacion>  $tipos
-     * @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo: ?string}  $filtros
+     * @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo_codigo: ?string}  $filtros
      */
     public function listar(array $tipos, array $filtros, bool $conSaldo, int $porPagina, int $pagina): LengthAwarePaginator
     {
@@ -313,7 +313,7 @@ class DocumentoFacturacionService
 
         $motivo = $motivoDetalle ?? $this->etiquetaMotivo($tipo, $motivoCodigo);
 
-        return DB::transaction(function () use ($origen, $tipo, $motivo, $fechaVencimiento, $lineas, $usuario) {
+        return DB::transaction(function () use ($origen, $tipo, $motivoCodigo, $motivo, $fechaVencimiento, $lineas, $usuario) {
             // Bloquear el origen: dos notas o cobros simultáneos sobre la misma factura se serializan y no acreditan dos veces el mismo saldo.
             $bloqueado = $this->documentos->bloquear($origen->id);
             $this->exigirEmitido($bloqueado);
@@ -322,7 +322,7 @@ class DocumentoFacturacionService
                 ? $this->lineasDeNotaCredito($bloqueado, $lineas)
                 : $this->lineasDeNotaDebito($bloqueado, $lineas);
 
-            return $this->crearNota($bloqueado, $tipo, $motivo, $lineasNota, $usuario, fechaVencimiento: $fechaVencimiento);
+            return $this->crearNota($bloqueado, $tipo, $motivoCodigo, $motivo, $lineasNota, $usuario, fechaVencimiento: $fechaVencimiento);
         });
     }
 
@@ -365,7 +365,7 @@ class DocumentoFacturacionService
                 }
             }
 
-            $this->crearNota($bloqueado, TipoDocumentoFacturacion::NotaCredito, $motivo, $this->lineasDeNotaCredito($bloqueado, $porLinea), $usuario, anulacion: true);
+            $this->crearNota($bloqueado, TipoDocumentoFacturacion::NotaCredito, MotivoNotaCredito::Anulacion->value, $motivo, $this->lineasDeNotaCredito($bloqueado, $porLinea), $usuario, anulacion: true);
 
             return $this->conLineas($bloqueado->refresh());
         });
@@ -463,7 +463,7 @@ class DocumentoFacturacionService
      * documento por cobrar (no puede quedar en saldo negativo) y queda como saldo a favor del cliente, visible en
      * `totales()`, sin cruzarlo automáticamente — eso lo hace el usuario desde Anticipos si decide devolverlo.
      */
-    private function crearNota(DocumentoFacturacion $origen, TipoDocumentoFacturacion $tipo, string $motivo, array $lineasNota, Usuario $usuario, bool $anulacion = false, ?string $fechaVencimiento = null): DocumentoFacturacion
+    private function crearNota(DocumentoFacturacion $origen, TipoDocumentoFacturacion $tipo, string $motivoCodigo, string $motivo, array $lineasNota, Usuario $usuario, bool $anulacion = false, ?string $fechaVencimiento = null): DocumentoFacturacion
     {
         if ($origen->tipo === TipoDocumentoFacturacion::Factura) {
             $totales = $this->totales($origen);
@@ -481,6 +481,7 @@ class DocumentoFacturacionService
             'cliente_id' => $origen->cliente_id,
             'credito_id' => $origen->credito_id,
             'documento_origen_id' => $origen->id,
+            'motivo_codigo' => $motivoCodigo,
             'motivo' => $motivo,
         ]);
 

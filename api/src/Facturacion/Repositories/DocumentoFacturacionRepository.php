@@ -21,7 +21,7 @@ class DocumentoFacturacionRepository extends BaseRepository
 
     /**
      * @param  list<TipoDocumentoFacturacion>  $tipos
-     * @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo: ?string}  $filtros
+     * @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo_codigo: ?string}  $filtros
      */
     public function paginar(array $tipos, array $filtros, int $porPagina, int $pagina): LengthAwarePaginator
     {
@@ -34,7 +34,7 @@ class DocumentoFacturacionRepository extends BaseRepository
         return $consulta->paginate(perPage: $porPagina, page: $pagina);
     }
 
-    /** @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo: ?string}  $filtros */
+    /** @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo_codigo: ?string}  $filtros */
     private function filtrar(Builder $consulta, array $tipos, array $filtros): Builder
     {
         return $consulta
@@ -45,7 +45,7 @@ class DocumentoFacturacionRepository extends BaseRepository
             ->when($filtros['hasta'], fn (Builder $q) => $q->whereDate('fecha', '<=', $filtros['hasta']))
             // El origen es la misma tabla (self-relation): `EmpresaScope` ya la filtra por empresa en ambos lados.
             ->when($filtros['factura'], fn (Builder $q) => $q->whereHas('origen', fn (Builder $o) => $o->where('numero', 'like', '%'.$filtros['factura'].'%')))
-            ->when($filtros['motivo'], fn (Builder $q) => $q->where('motivo', 'like', '%'.$filtros['motivo'].'%'));
+            ->when($filtros['motivo_codigo'], fn (Builder $q) => $q->where('motivo_codigo', $filtros['motivo_codigo']));
     }
 
     /** Bloquea la fila: dos notas simultáneas sobre la misma factura no pueden acreditar el mismo saldo dos veces. */

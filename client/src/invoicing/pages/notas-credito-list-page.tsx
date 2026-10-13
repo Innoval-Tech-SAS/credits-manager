@@ -38,7 +38,7 @@ export const NotasCreditoListPage: FC = () => {
         desde,
         hasta,
         factura,
-        motivo,
+        motivo_codigo: motivo,
     });
 
     // Cada filtro vuelve a la primera página: una página vacía tras filtrar no tiene sentido.
@@ -85,6 +85,7 @@ export const NotasCreditoListPage: FC = () => {
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
         >
             <InvoiceNoteFilters
+                tipo="nota_credito"
                 cliente={cliente}
                 onClienteChange={alCambiarCliente}
                 estado={estado}

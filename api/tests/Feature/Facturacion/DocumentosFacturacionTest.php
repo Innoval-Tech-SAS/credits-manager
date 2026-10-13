@@ -374,12 +374,12 @@ class DocumentosFacturacionTest extends TestCase
         $facturaFebrero = $this->postJson(self::BASE.'/'.$borradorFebrero['id'].'/emitir')->assertOk()->json('documento');
 
         $notaSobreEnero = $this->postJson(self::BASE.'/'.$facturaEnero['id'].'/notas', [
-            'tipo' => 'nota_credito', 'motivo_codigo' => 'otros', 'motivo_detalle' => 'Ajuste solicitado por el cliente',
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'ajuste_precio', 'motivo_detalle' => null,
             'lineas' => [['linea_origen_id' => $facturaEnero['lineas'][0]['id'], 'valor' => '100']],
         ])->assertStatus(201)->json('documento');
 
         $this->postJson(self::BASE.'/'.$facturaFebrero['id'].'/notas', [
-            'tipo' => 'nota_credito', 'motivo_codigo' => 'otros', 'motivo_detalle' => 'Devolución parcial de mercancía',
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'devolucion', 'motivo_detalle' => null,
             'lineas' => [['linea_origen_id' => $facturaFebrero['lineas'][0]['id'], 'valor' => '100']],
         ])->assertStatus(201);
 
@@ -389,8 +389,8 @@ class DocumentosFacturacionTest extends TestCase
         $porFactura = $this->getJson(self::BASE.'?tipo=nota_credito&factura='.urlencode($facturaEnero['numero']))->assertOk();
         $this->assertSame([$notaSobreEnero['id']], collect($porFactura->json('data'))->pluck('id')->all());
 
-        $porMotivo = $this->getJson(self::BASE.'?tipo=nota_credito&motivo=devolución')->assertOk();
-        $this->assertSame('Devolución parcial de mercancía', collect($porMotivo->json('data'))->first()['motivo']);
+        $porMotivo = $this->getJson(self::BASE.'?tipo=nota_credito&motivo_codigo=devolucion')->assertOk();
+        $this->assertSame('Devolución', collect($porMotivo->json('data'))->first()['motivo']);
         $this->assertCount(1, $porMotivo->json('data'));
     }
 

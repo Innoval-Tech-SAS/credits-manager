@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * El total no se guarda: sale de las líneas. Las invariantes de número, origen y valor están en la base
  * (ver la migración de documentos); los montos acumulados los controla DocumentoFacturacionService.
  */
-#[Fillable(['tipo', 'estado', 'consecutivo', 'numero', 'fecha', 'fecha_vencimiento', 'cliente_id', 'credito_id', 'documento_origen_id', 'motivo', 'emitido_en', 'emitido_por', 'comprobante_id', 'documento_tercero_id'])]
+#[Fillable(['tipo', 'estado', 'consecutivo', 'numero', 'fecha', 'fecha_vencimiento', 'cliente_id', 'credito_id', 'documento_origen_id', 'motivo_codigo', 'motivo', 'emitido_en', 'emitido_por', 'comprobante_id', 'documento_tercero_id'])]
 class DocumentoFacturacion extends BaseModel
 {
     use PerteneceAEmpresa;
