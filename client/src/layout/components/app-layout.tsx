@@ -6,6 +6,7 @@ import { PageHeaderProvider } from '@ui/breadcrumb/components/page-header-provid
 import { SidebarProvider } from '@ui/sidebar/components/sidebar-provider';
 import { PageSkeleton } from '@ui/skeleton/components/page-skeleton';
 import { useSidebar } from '@ui/sidebar/hooks/use-sidebar';
+import { useAuth } from '../../auth/hooks/use-auth';
 import { NotificationsProvider } from '../../notifications/components/notifications-provider';
 import { AppHeader } from './app-header';
 import { AppPageHeader } from './app-page-header';
@@ -13,6 +14,7 @@ import { AppSidebar } from './app-sidebar';
 
 const LayoutContent: FC = () => {
     const { isExpanded, isHovered, isMobileOpen, closeMobileSidebar } = useSidebar();
+    const { user } = useAuth();
     const { pathname } = useLocation();
     const scrollerRef = useRef<HTMLDivElement>(null);
     const anchoContenido = pathname === '/' ? '' : 'max-w-(--breakpoint-2xl)';
@@ -25,7 +27,7 @@ const LayoutContent: FC = () => {
         <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 print:h-auto print:overflow-visible print:bg-white">
             {isMobileOpen && (
                 <div
-                    className="fixed inset-x-0 top-19 bottom-0 z-40 bg-gray-400/50 backdrop-blur-[32px] lg:hidden print:hidden"
+                    className="fixed inset-x-0 top-19 bottom-0 z-40 bg-gray-400/50 backdrop-blur-[32px] lg:hidden dark:bg-gray-900/50 print:hidden"
                     onClick={closeMobileSidebar}
                     aria-hidden="true"
                 />
@@ -59,7 +61,7 @@ const LayoutContent: FC = () => {
                             {/* Un único ítem de grid aunque la página devuelva un fragmento; `min-w-0` evita que una tabla ancha lo desborde. */}
                             <div className="min-w-0">
                                 {/* `key` por ruta: cada página nueva monta su propio límite y muestra el esqueleto mientras llega su código. */}
-                                <Suspense key={pathname} fallback={<PageSkeleton />}>
+                                <Suspense key={pathname} fallback={<PageSkeleton esSuperAdmin={user?.isSuperAdmin ?? false} />}>
                                     <Outlet />
                                 </Suspense>
                             </div>
