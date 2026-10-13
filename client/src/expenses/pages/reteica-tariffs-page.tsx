@@ -5,7 +5,7 @@ import { FileText } from 'lucide-react';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { useResource } from '../../shared/hooks/use-resource';
 import { usePermission } from '../../auth/hooks/use-permission';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { formatDateEs } from '../../shared/utils/format-date-es';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
@@ -27,11 +27,7 @@ export const ReteicaTariffsPage: FC = () => {
             onDismissSuccess={() => setSuccessMessage(null)}
             countLabel={`${tarifas.length} ${tarifas.length === 1 ? 'tarifa registrada' : 'tarifas registradas'}`}
             toolbar={
-                canCreate && (
-                    <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/tarifas-reteica/crear')}>
-                        Crear tarifa
-                    </Button>
-                )
+                canCreate && <CreateButton label="tarifa" icon={<FileText className="size-4" />} onClick={() => navigate('/gastos/tarifas-reteica/crear')} />
             }
         >
             <DataTable

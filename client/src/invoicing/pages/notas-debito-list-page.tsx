@@ -1,11 +1,12 @@
 import type { FC } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { Eye, FileText, HandCoins, Settings } from 'lucide-react';
+import { Eye, HandCoins, ReceiptText, Settings } from 'lucide-react';
 
 import { usePermission } from '../../auth/hooks/use-permission';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { DataTable } from '@ui/table/components/data-table';
 import { Pagination } from '@ui/table/components/pagination';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
@@ -15,7 +16,8 @@ import type { ApiInvoice } from '../types/api-invoice';
 export const NotasDebitoListPage: FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const canCreate = usePermission('facturacion', 'crear');
+    // Mismo permiso que habilita el tipo "nota débito" en el formulario de emisión (ver `invoice-note-form.tsx`).
+    const puedeCrear = usePermission('facturacion', 'emitir_nota_debito');
     const canRegisterPayment = usePermission('facturacion', 'registrar_cobro');
     const puedeConfigurar = usePermission('facturacion', 'configurar');
 
@@ -40,10 +42,12 @@ export const NotasDebitoListPage: FC = () => {
                             Cobro múltiple
                         </Button>
                     )}
-                    {canCreate && (
-                        <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/facturacion/crear')}>
-                            Nueva factura
-                        </Button>
+                    {puedeCrear && (
+                        <CreateButton
+                            label="nota débito"
+                            icon={<ReceiptText className="size-4" />}
+                            onClick={() => navigate('/facturacion/notas/crear?tipo=nota_debito')}
+                        />
                     )}
                 </>
             }

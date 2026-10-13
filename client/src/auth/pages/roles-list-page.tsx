@@ -6,7 +6,7 @@ import { Search, ShieldCheck } from 'lucide-react';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -83,9 +83,7 @@ export const RolesListPage: FC = () => {
                         />
                     </div>
 
-                    <Button collapseBelow="md" startIcon={<ShieldCheck className="size-4" />} onClick={() => navigate('/roles/crear')}>
-                        Crear rol
-                    </Button>
+                    <CreateButton label="rol" icon={<ShieldCheck className="size-4" />} onClick={() => navigate('/roles/crear')} />
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}

@@ -6,6 +6,7 @@ import { usePermission } from '../../auth/hooks/use-permission';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { DataTable } from '@ui/table/components/data-table';
 import { Pagination } from '@ui/table/components/pagination';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
@@ -45,11 +46,7 @@ export const FacturasListPage: FC = () => {
                             Cobro múltiple
                         </Button>
                     )}
-                    {canCreate && (
-                        <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/facturacion/crear')}>
-                            Nueva factura
-                        </Button>
-                    )}
+                    {canCreate && <CreateButton label="factura" icon={<FileText className="size-4" />} onClick={() => navigate('/facturacion/crear')} />}
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}

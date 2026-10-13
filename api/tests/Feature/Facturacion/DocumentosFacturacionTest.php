@@ -361,7 +361,7 @@ class DocumentosFacturacionTest extends TestCase
         ]);
         DB::table('rol_permiso')->insert([
             'rol_id' => $rol->id,
-            'permiso_id' => DB::table('permisos')->where('modulo', 'facturacion')->where('accion', 'anular_nota_credito')->value('id'),
+            'permiso_id' => DB::table('permisos')->where('modulo', 'facturacion')->where('accion', 'emitir_nota_credito')->value('id'),
             'creado_en' => now(),
             'ultima_actualizacion' => now(),
         ]);

@@ -39,8 +39,8 @@ export const InvoiceDetailPage: FC = () => {
 
     const puedeCrear = usePermission('facturacion', 'crear');
     const puedeAnular = usePermission('facturacion', 'anular');
-    const puedeNotaCredito = usePermission('facturacion', 'anular_nota_credito');
-    const puedeNotaDebito = usePermission('facturacion', 'anular_nota_debito');
+    const puedeNotaCredito = usePermission('facturacion', 'emitir_nota_credito');
+    const puedeNotaDebito = usePermission('facturacion', 'emitir_nota_debito');
     const puedeRegistrarCobro = usePermission('facturacion', 'registrar_cobro');
     const puedeReversarCobro = usePermission('facturacion', 'reversar_cobro');
     const puedeImprimir = usePermission('facturacion', 'imprimir');

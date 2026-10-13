@@ -4,7 +4,7 @@ import { Eye, FileInput, Search } from 'lucide-react';
 
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { ActionButton } from '@ui/action-button/components/action-button';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
@@ -36,9 +36,7 @@ export const ImportsPage: FC = () => {
                         />
                     </div>
 
-                    <Button collapseBelow="md" startIcon={<FileInput className="size-4" />} onClick={() => navigate('/importaciones/nueva')}>
-                        Nueva importación
-                    </Button>
+                    <CreateButton label="importación" icon={<FileInput className="size-4" />} onClick={() => navigate('/importaciones/nueva')} />
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}

@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router';
 import { Navigate, createBrowserRouter } from 'react-router';
 
+import { CREATE_NOTE_PERMISSIONS } from './invoicing/constants/create-note-permissions';
 import { INVOICE_DETAIL_PERMISSIONS } from './invoicing/constants/invoice-detail-permissions';
 import { IMPORT_PERMISSIONS } from './imports/constants/import-types';
 import { LoginPage } from './auth/pages/login-page';
@@ -72,6 +73,7 @@ const ExpenseTypesPage = lazyPage(() => import('./expenses/pages/expense-types-p
 const ExpensesListPage = lazyPage(() => import('./expenses/pages/expenses-list-page'), 'ExpensesListPage');
 const ConceptTaxSettingsPage = lazyPage(() => import('./invoicing/pages/concept-tax-settings-page'), 'ConceptTaxSettingsPage');
 const CreateInvoicePage = lazyPage(() => import('./invoicing/pages/create-invoice-page'), 'CreateInvoicePage');
+const CreateNotePage = lazyPage(() => import('./invoicing/pages/create-note-page'), 'CreateNotePage');
 const CreateMultiplePaymentPage = lazyPage(() => import('./invoicing/pages/create-multiple-payment-page'), 'CreateMultiplePaymentPage');
 const InvoiceDetailPage = lazyPage(() => import('./invoicing/pages/invoice-detail-page'), 'InvoiceDetailPage');
 const InvoiceSequencesPage = lazyPage(() => import('./invoicing/pages/invoice-sequences-page'), 'InvoiceSequencesPage');
@@ -778,6 +780,14 @@ const routes: RouteObject[] = [
                             <RequireModulePermission modulo="facturacion" accion="crear">
                                 <CreateInvoicePage />
                             </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'facturacion/notas/crear',
+                        element: (
+                            <RequireAnyPermission permisos={CREATE_NOTE_PERMISSIONS}>
+                                <CreateNotePage />
+                            </RequireAnyPermission>
                         ),
                     },
                     {

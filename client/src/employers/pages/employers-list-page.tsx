@@ -7,7 +7,7 @@ import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource'
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { usePermission } from '../../auth/hooks/use-permission';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -84,11 +84,7 @@ export const EmployersListPage: FC = () => {
                         />
                     </div>
 
-                    {canCreate && (
-                        <Button collapseBelow="md" startIcon={<Briefcase className="size-4" />} onClick={() => navigate('/empleadores/crear')}>
-                            Crear empleador
-                        </Button>
-                    )}
+                    {canCreate && <CreateButton label="empleador" icon={<Briefcase className="size-4" />} onClick={() => navigate('/empleadores/crear')} />}
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}

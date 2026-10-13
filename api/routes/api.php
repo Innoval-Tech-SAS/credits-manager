@@ -332,7 +332,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'update'])->middleware('permiso:facturacion,crear');
     Route::delete('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'destroy'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/documentos/{documento}/emitir', [DocumentoFacturacionController::class, 'emitir'])->middleware('permiso:facturacion,emitir');
-    // El permiso depende del tipo de nota (en el body, no en la ruta): el Controller exige anular_nota_credito/anular_nota_debito.
+    // El permiso depende del tipo de nota (en el body, no en la ruta): el Controller exige emitir_nota_credito/emitir_nota_debito.
     Route::post('/facturacion/documentos/{documento}/notas', [DocumentoFacturacionController::class, 'nota']);
     Route::post('/facturacion/documentos/{documento}/anular', [DocumentoFacturacionController::class, 'anular'])->middleware('permiso:facturacion,anular');
     Route::post('/facturacion/documentos/{documento}/cobros', [CobroFacturacionController::class, 'store'])->middleware('permiso:facturacion,registrar_cobro');

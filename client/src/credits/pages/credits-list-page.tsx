@@ -8,7 +8,7 @@ import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource'
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { usePermission } from '../../auth/hooks/use-permission';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -100,11 +100,7 @@ export const CreditsListPage: FC = () => {
                         }}
                     />
 
-                    {canCreate && (
-                        <Button collapseBelow="md" startIcon={<CreditCard className="size-4" />} onClick={() => navigate('/creditos/crear')}>
-                            Nuevo crédito
-                        </Button>
-                    )}
+                    {canCreate && <CreateButton label="crédito" icon={<CreditCard className="size-4" />} onClick={() => navigate('/creditos/crear')} />}
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}

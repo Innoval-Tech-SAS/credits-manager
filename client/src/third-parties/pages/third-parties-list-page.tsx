@@ -7,6 +7,7 @@ import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource'
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { Select } from '@ui/forms/components/select';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -74,11 +75,7 @@ export const ThirdPartiesListPage: FC = () => {
                         </Button>
                     )}
 
-                    {canCreate && (
-                        <Button collapseBelow="md" startIcon={<UserPlus className="size-4" />} onClick={() => navigate('/terceros/crear')}>
-                            Crear tercero
-                        </Button>
-                    )}
+                    {canCreate && <CreateButton label="tercero" icon={<UserPlus className="size-4" />} onClick={() => navigate('/terceros/crear')} />}
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}

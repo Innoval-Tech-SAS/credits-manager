@@ -6,7 +6,7 @@ import { useLocationSuccessMessage } from '../../shared/hooks/use-location-succe
 import { useResource } from '../../shared/hooks/use-resource';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { ActionButton } from '@ui/action-button/components/action-button';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
 import type { EconomicActivitiesListLocationState } from '../types/economic-activities-list-location-state';
@@ -29,9 +29,7 @@ export const EconomicActivitiesPage: FC = () => {
             countLabel={`${actividades.length} ${actividades.length === 1 ? 'actividad registrada' : 'actividades registradas'}`}
             toolbar={
                 canCreate && (
-                    <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/actividades-economicas/crear')}>
-                        Crear actividad económica
-                    </Button>
+                    <CreateButton label="actividad económica" icon={<FileText className="size-4" />} onClick={() => navigate('/gastos/actividades-economicas/crear')} />
                 )
             }
         >

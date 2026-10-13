@@ -6,6 +6,7 @@ import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource'
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
@@ -55,9 +56,7 @@ export const VouchersListPage: FC = () => {
                             >
                                 Causar con concepto
                             </Button>
-                            <Button collapseBelow="md" startIcon={<FilePlus2 className="size-4" />} onClick={() => navigate('/contabilidad/comprobantes/crear')}>
-                                Nuevo comprobante manual
-                            </Button>
+                            <CreateButton label="comprobante manual" icon={<FilePlus2 className="size-4" />} onClick={() => navigate('/contabilidad/comprobantes/crear')} />
                         </>
                     )}
                 </>

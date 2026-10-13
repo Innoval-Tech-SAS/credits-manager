@@ -131,7 +131,7 @@ export const AuxiliariesPage: FC = () => {
                     </div>
 
                     <div className="custom-scrollbar overflow-x-auto">
-                        <table className="w-full min-w-[640px] text-left text-sm">
+                        <table className="w-full min-w-160 text-left text-sm">
                             <thead>
                                 <tr className="border-b border-gray-100 dark:border-gray-800">
                                     {CABECERAS.map((cabecera) => (
