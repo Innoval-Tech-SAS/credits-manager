@@ -264,6 +264,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/centros-costo', [CentroCostoController::class, 'index'])->middleware('algun_permiso:'.implode(',', ContabilidadConstants::CONSULTA_CENTROS_COSTO));
     Route::post('/contabilidad/centros-costo', [CentroCostoController::class, 'store'])->middleware('permiso:configuracion_contable,crear_centros_costo');
     Route::get('/contabilidad/centros-costo/{centro}', [CentroCostoController::class, 'show'])->middleware('algun_permiso:configuracion_contable.listar_centros_costo,configuracion_contable.editar_centros_costo');
+    Route::get('/contabilidad/centros-costo/{centro}/movimientos', [CentroCostoController::class, 'movimientos'])->middleware('algun_permiso:configuracion_contable.listar_centros_costo,configuracion_contable.editar_centros_costo');
     Route::patch('/contabilidad/centros-costo/{centro}', [CentroCostoController::class, 'update'])->middleware('permiso:configuracion_contable,editar_centros_costo');
     Route::delete('/contabilidad/centros-costo/{centro}', [CentroCostoController::class, 'destroy'])->middleware('permiso:configuracion_contable,eliminar_centros_costo');
 
