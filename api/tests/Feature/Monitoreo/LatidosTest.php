@@ -20,6 +20,8 @@ class LatidosTest extends TestCase
         $job = Mockery::mock(Job::class);
         $job->shouldReceive('getQueue')->andReturn($cola);
         $job->shouldReceive('resolveName')->andReturn('App\\Exportacion\\Jobs\\ProcesarExportacionJob');
+        // Laravel también escucha JobProcessing (ContextServiceProvider) y lee el payload del job.
+        $job->shouldReceive('payload')->andReturn([]);
 
         return $job;
     }

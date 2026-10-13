@@ -79,11 +79,13 @@ class PanelMonitoreoTest extends TestCase
         $respuesta->assertJsonPath('servidor.cpu.nucleos', 2)
             ->assertJsonPath('servidor.memoria.total_bytes', 8000000 * 1024)
             ->assertJsonPath('servidor.memoria.usada_bytes', 2000000 * 1024)
-            ->assertJsonPath('servidor.memoria.porcentaje', 25.0)
             ->assertJsonPath('servidor.memoria.swap_usada_bytes', 500000 * 1024)
             ->assertJsonPath('servidor.carga', [0.52, 0.48, 0.4])
             ->assertJsonPath('servidor.encendido_segundos', 93784)
             ->assertJsonStructure(['servidor' => ['disco' => ['total_bytes', 'usado_bytes', 'porcentaje']], 'servicios', 'colas', 'auditoria', 'generado_en']);
+
+        // JSON no distingue 25.0 de 25: se compara por valor, no por tipo.
+        $this->assertEquals(25.0, $respuesta->json('servidor.memoria.porcentaje'));
     }
 
     public function test_un_servicio_sin_latido_sale_caido_y_uno_ocupado_muestra_su_trabajo(): void
