@@ -48,6 +48,7 @@ const PostingRulesPage = lazyPage(() => import('./accounting/pages/posting-rules
 const TrialBalancePage = lazyPage(() => import('./accounting/pages/trial-balance-page'), 'TrialBalancePage');
 const AuxiliariesPage = lazyPage(() => import('./accounting/pages/auxiliaries-page'), 'AuxiliariesPage');
 const OpeningReconciliationPage = lazyPage(() => import('./accounting/pages/opening-reconciliation-page'), 'OpeningReconciliationPage');
+const ClosingControlsPage = lazyPage(() => import('./accounting/pages/closing-controls-page'), 'ClosingControlsPage');
 const VoucherDetailPage = lazyPage(() => import('./accounting/pages/voucher-detail-page'), 'VoucherDetailPage');
 const VoucherTypesPage = lazyPage(() => import('./accounting/pages/voucher-types-page'), 'VoucherTypesPage');
 const BusinessDocumentTypesPage = lazyPage(() => import('./accounting/pages/business-document-types-page'), 'BusinessDocumentTypesPage');
@@ -736,6 +737,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="informes_contables" accion="listar_conciliacion_apertura">
                                 <OpeningReconciliationPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/controles-cierre',
+                        element: (
+                            <RequireModulePermission modulo="informes_contables" accion="listar_controles_cierre">
+                                <ClosingControlsPage />
                             </RequireModulePermission>
                         ),
                     },
