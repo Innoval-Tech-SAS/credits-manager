@@ -249,7 +249,7 @@ class CentroCostoControllerTest extends TestCase
 
         $debito = $this->crearCuenta();
         $credito = $this->crearCuenta();
-        $this->postJson('/api/v1/contabilidad/comprobantes', [
+        $comprobante = $this->postJson('/api/v1/contabilidad/comprobantes', [
             'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
             'fecha' => '2026-02-12',
             'concepto' => 'Comprobante de prueba',
@@ -257,7 +257,11 @@ class CentroCostoControllerTest extends TestCase
                 ['cuenta_id' => $debito->id, 'debito' => 50, 'credito' => 0, 'centro_costo_id' => $centro->id, 'descripcion' => 'Línea débito'],
                 ['cuenta_id' => $credito->id, 'debito' => 0, 'credito' => 50, 'descripcion' => 'Línea crédito'],
             ],
-        ])->assertCreated();
+        ])->assertCreated()->json('comprobante.id');
+
+        // Un comprobante manual nace en borrador: solo cuenta como movimiento (EfectoContable) tras contabilizarse.
+        $this->postJson("/api/v1/contabilidad/comprobantes/{$comprobante}/revisar")->assertOk();
+        $this->postJson("/api/v1/contabilidad/comprobantes/{$comprobante}/contabilizar")->assertOk();
 
         $respuesta = $this->getJson("/api/v1/contabilidad/centros-costo/{$centro->id}/movimientos");
 
