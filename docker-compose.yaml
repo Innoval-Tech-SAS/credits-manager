@@ -113,7 +113,7 @@ services:
 
   # Valida y escribe las importaciones históricas (cola `importaciones`). Worker propio: una carga grande no retrasa exportaciones.
   importaciones-worker:
-    image: credits-manager-api:latest
+    image: localhost/credits-manager-api:latest
     container_name: credits-manager-importaciones-worker
     entrypoint: ["php", "artisan", "queue:work", "redis", "--queue=importaciones", "--timeout=3600", "--tries=1", "--sleep=1"]
     user: www-data
@@ -132,7 +132,7 @@ services:
 
   # Valida y carga los extractos bancarios (cola `conciliacion`). Worker propio: un archivo mal formado no debe retrasar importaciones ni exportaciones.
   conciliacion-worker:
-    image: credits-manager-api:latest
+    image: localhost/credits-manager-api:latest
     container_name: credits-manager-conciliacion-worker
     entrypoint: ["php", "artisan", "queue:work", "redis", "--queue=conciliacion", "--timeout=300", "--tries=1", "--sleep=1"]
     user: www-data
@@ -151,7 +151,7 @@ services:
 
   # Envía los recordatorios de cobranza por correo (cola `correos`). Worker propio: un SMTP lento no retrasa importaciones ni exportaciones.
   correos-worker:
-    image: credits-manager-api:latest
+    image: localhost/credits-manager-api:latest
     container_name: credits-manager-correos-worker
     entrypoint: ["php", "artisan", "queue:work", "redis", "--queue=correos", "--timeout=120", "--tries=1", "--sleep=1"]
     user: www-data
@@ -288,6 +288,7 @@ services:
         VITE_REVERB_HOST: ${VITE_REVERB_HOST}
         VITE_REVERB_PORT: ${VITE_REVERB_PORT}
         VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME}
+    image: localhost/credits-manager-nginx:latest
     container_name: credits-manager-nginx
     environment:
       TZ: America/Bogota
