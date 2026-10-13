@@ -6,7 +6,7 @@ import { useLocationSuccessMessage } from '../../shared/hooks/use-location-succe
 import { useResource } from '../../shared/hooks/use-resource';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { ActionButton } from '@ui/action-button/components/action-button';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
 import { BANK_ACCOUNT_STATUS_BADGE_CLASSES } from '../constants/bank-account-status-badge-classes';
@@ -30,9 +30,7 @@ export const BankAccountsPage: FC = () => {
             countLabel={`${cuentas.length} ${cuentas.length === 1 ? 'cuenta registrada' : 'cuentas registradas'}`}
             toolbar={
                 canCreate && (
-                    <Button collapseBelow="md" startIcon={<Landmark className="size-4" />} onClick={() => navigate('/conciliacion/cuentas-bancarias/crear')}>
-                        Crear cuenta bancaria
-                    </Button>
+                    <CreateButton label="cuenta bancaria" icon={<Landmark className="size-4" />} onClick={() => navigate('/conciliacion/cuentas-bancarias/crear')} />
                 )
             }
         >

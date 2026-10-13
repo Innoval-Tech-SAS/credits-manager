@@ -6,7 +6,7 @@ import { MapPin, Pencil } from 'lucide-react';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { ActionButton } from '@ui/action-button/components/action-button';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
 import { Pagination } from '@ui/table/components/pagination';
@@ -50,11 +50,7 @@ export const MunicipalitiesAdminPage: FC = () => {
                     : 'Elige un país y un departamento para ver sus municipios'
             }
             pagination={stateId ? <Pagination page={page} totalPages={totalPages} onPageChange={setPage} /> : undefined}
-            toolbar={
-                <Button collapseBelow="md" startIcon={<MapPin className="size-4" />} onClick={() => navigate('/geografia/municipios/crear')}>
-                    Agregar municipio
-                </Button>
-            }
+            toolbar={<CreateButton label="municipio" icon={<MapPin className="size-4" />} onClick={() => navigate('/geografia/municipios/crear')} />}
             modals={
                 editing && <EditMunicipalityModal municipality={editing} onClose={() => setEditing(null)} onSaved={handleSaved} />
             }

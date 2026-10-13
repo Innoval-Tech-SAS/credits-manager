@@ -8,7 +8,7 @@ import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { useAuth } from '../hooks/use-auth';
 import { usePermission } from '../hooks/use-permission';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { ChangePasswordModal } from '../components/change-password-modal';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
@@ -105,11 +105,7 @@ export const UsersListPage: FC = () => {
                         />
                     </div>
 
-                    {canCreate && (
-                        <Button collapseBelow="md" startIcon={<UserPlus className="size-4" />} onClick={() => navigate('/usuarios/crear')}>
-                            Crear usuario
-                        </Button>
-                    )}
+                    {canCreate && <CreateButton label="usuario" icon={<UserPlus className="size-4" />} onClick={() => navigate('/usuarios/crear')} />}
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}

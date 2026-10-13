@@ -8,7 +8,7 @@ import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource'
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { usePermission } from '../../auth/hooks/use-permission';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { Select } from '@ui/forms/components/select';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
@@ -159,11 +159,7 @@ export const ClientsListPage: FC = () => {
                         }}
                     />
 
-                    {canCreate && (
-                        <Button collapseBelow="md" startIcon={<UserPlus className="size-4" />} onClick={() => navigate('/clientes/crear')}>
-                            Crear cliente
-                        </Button>
-                    )}
+                    {canCreate && <CreateButton label="cliente" icon={<UserPlus className="size-4" />} onClick={() => navigate('/clientes/crear')} />}
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}

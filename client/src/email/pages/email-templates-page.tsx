@@ -8,7 +8,7 @@ import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { Alert } from '@ui/alert/components/alert';
 import { ActionButton } from '@ui/action-button/components/action-button';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { DataTable } from '@ui/table/components/data-table';
@@ -94,9 +94,7 @@ export const EmailTemplatesPage: FC = () => {
                                 : 'Mensajes de envío de facturas, notas crédito y notas débito.'}
                         </p>
                     </div>
-                    <Button startIcon={<Plus className="size-4" />} onClick={() => navigate(`/plantillas-correo/${tipo}/crear`)}>
-                        Nueva plantilla
-                    </Button>
+                    <CreateButton label="plantilla" icon={<Plus className="size-4" />} onClick={() => navigate(`/plantillas-correo/${tipo}/crear`)} />
                 </div>
 
                 <DataTable<ApiPlantillaCorreo>

@@ -8,7 +8,7 @@ import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { ActionButton } from '@ui/action-button/components/action-button';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -82,11 +82,7 @@ export const ChartOfAccountsPage: FC = () => {
                         />
                     </div>
 
-                    {canCreate && (
-                        <Button collapseBelow="md" startIcon={<ListTree className="size-4" />} onClick={() => navigate('/contabilidad/plan-cuentas/crear')}>
-                            Crear cuenta
-                        </Button>
-                    )}
+                    {canCreate && <CreateButton label="cuenta" icon={<ListTree className="size-4" />} onClick={() => navigate('/contabilidad/plan-cuentas/crear')} />}
                 </>
             }
             modals={

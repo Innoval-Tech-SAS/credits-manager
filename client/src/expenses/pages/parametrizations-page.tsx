@@ -7,7 +7,7 @@ import { useLocationSuccessMessage } from '../../shared/hooks/use-location-succe
 import { useResource } from '../../shared/hooks/use-resource';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { formatDateEs } from '../../shared/utils/format-date-es';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -50,9 +50,7 @@ export const ParametrizationsPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/parametrizaciones/crear')}>
-                            Crear parametrización
-                        </Button>
+                        <CreateButton label="parametrización" icon={<FileText className="size-4" />} onClick={() => navigate('/gastos/parametrizaciones/crear')} />
                     )}
                 </>
             }

@@ -8,7 +8,7 @@ import { useLocationSuccessMessage } from '../../shared/hooks/use-location-succe
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { ActionButton } from '@ui/action-button/components/action-button';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -92,9 +92,7 @@ export const VoucherTypesPage: FC = () => {
                     </div>
 
                     {canCreate && (
-                        <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/contabilidad/tipos-comprobante/crear')}>
-                            Crear tipo de comprobante
-                        </Button>
+                        <CreateButton label="tipo de comprobante" icon={<FileText className="size-4" />} onClick={() => navigate('/contabilidad/tipos-comprobante/crear')} />
                     )}
                 </>
             }

@@ -8,7 +8,7 @@ import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { ActionButton } from '@ui/action-button/components/action-button';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
@@ -75,11 +75,7 @@ export const ExpenseTypesPage: FC = () => {
             onDismissError={() => setError(null)}
             countLabel={`${tiposGasto.length} ${tiposGasto.length === 1 ? 'tipo registrado' : 'tipos registrados'}`}
             toolbar={
-                canCreate && (
-                    <Button collapseBelow="md" startIcon={<FileText className="size-4" />} onClick={() => navigate('/gastos/tipos-gasto/crear')}>
-                        Crear tipo de gasto
-                    </Button>
-                )
+                canCreate && <CreateButton label="tipo de gasto" icon={<FileText className="size-4" />} onClick={() => navigate('/gastos/tipos-gasto/crear')} />
             }
             modals={
                 <>

@@ -4,7 +4,7 @@ import { Building2, Search } from 'lucide-react';
 
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
-import { Button } from '@ui/button/components/button';
+import { CreateButton } from '@ui/button/components/create-button';
 import { Input } from '@ui/forms/components/input';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
@@ -42,9 +42,7 @@ export const CompaniesListPage: FC = () => {
                         />
                     </div>
 
-                    <Button collapseBelow="md" startIcon={<Building2 className="size-4" />} onClick={() => navigate('/empresas/crear')}>
-                        Crear empresa
-                    </Button>
+                    <CreateButton label="empresa" icon={<Building2 className="size-4" />} onClick={() => navigate('/empresas/crear')} />
                 </>
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
