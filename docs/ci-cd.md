@@ -183,3 +183,16 @@ echo $ANTERIOR > /var/lib/credits-manager/desplegado
 
 - Los workers reciben `SIGTERM`. Un job que esté corriendo (una exportación larga, por ejemplo) se corta y queda fallido (`--tries=1`), así que el usuario debe volver a lanzarlo. Conviene desplegar fuera de horas de uso.
 - Si el despliegue coincide con las tareas de la madrugada (00:05–03:15), la tarea se reintenta al día siguiente. Mejor no hacer merge a `main` en esa franja: cada merge despliega.
+
+### 3.3. "ya hay un despliegue en curso"
+
+GitHub ya evita dos despliegues a la vez (`concurrency: deploy-production`), así que este error casi siempre es un candado huérfano. Para ver quién lo tiene:
+
+```bash
+for p in /proc/[0-9]*; do
+  [ "$(readlink $p/fd/9 2>/dev/null)" = /run/lock/credits-manager-deploy.lock ] && tr '\0' ' ' < $p/cmdline && echo
+done
+```
+
+- Si aparece `credits-manager-deploy`, hay un despliegue real corriendo: esperar a que termine.
+- Si solo aparecen procesos `conmon`, el candado está huérfano: las versiones de `deploy.sh` anteriores al arreglo `9>&-` dejaban que los contenedores heredaran el descriptor del candado. Borrar el archivo lo libera para el siguiente despliegue sin tocar los contenedores (`rm /run/lock/credits-manager-deploy.lock`). Después, relanzar el despliegue fallido desde GitHub (*Re-run jobs*).
