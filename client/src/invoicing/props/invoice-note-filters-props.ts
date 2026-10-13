@@ -1,6 +1,7 @@
 import type { ApiClient } from '../../clients/types/api-client';
 
 export type InvoiceNoteFiltersProps = {
+    tipo: 'nota_credito' | 'nota_debito';
     cliente: ApiClient | null;
     onClienteChange: (cliente: ApiClient | null) => void;
     estado: string;

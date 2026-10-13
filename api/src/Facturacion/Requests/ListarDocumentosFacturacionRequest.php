@@ -3,6 +3,8 @@
 namespace App\Facturacion\Requests;
 
 use App\Facturacion\Enums\EstadoDocumentoFacturacion;
+use App\Facturacion\Enums\MotivoNotaCredito;
+use App\Facturacion\Enums\MotivoNotaDebito;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -24,7 +26,10 @@ class ListarDocumentosFacturacionRequest extends FormRequest
             'desde' => ['nullable', 'date_format:Y-m-d'],
             'hasta' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:desde'],
             'factura' => ['nullable', 'string', 'max:30'],
-            'motivo' => ['nullable', 'string', 'max:255'],
+            'motivo_codigo' => ['nullable', Rule::in(array_unique([
+                ...array_column(MotivoNotaCredito::cases(), 'value'),
+                ...array_column(MotivoNotaDebito::cases(), 'value'),
+            ]))],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
             'page' => ['nullable', 'integer', 'min:1'],
         ];

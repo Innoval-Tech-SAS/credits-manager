@@ -37,7 +37,7 @@ class DocumentoFacturacionController extends Controller
                 'desde' => $peticion->validated('desde'),
                 'hasta' => $peticion->validated('hasta'),
                 'factura' => $peticion->validated('factura'),
-                'motivo' => $peticion->validated('motivo'),
+                'motivo_codigo' => $peticion->validated('motivo_codigo'),
             ],
             $peticion->boolean('con_saldo'),
             $peticion->integer('per_page', 10),

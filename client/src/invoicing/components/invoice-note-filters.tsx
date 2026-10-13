@@ -7,13 +7,14 @@ import type { PaginatedResponse } from '../../shared/types/paginated-response';
 import { formatDateEs } from '../../shared/utils/format-date-es';
 import { Button } from '@ui/button/components/button';
 import { DatePicker } from '@ui/forms/components/date-picker';
-import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
+import { NOTE_CREDIT_REASON_OPTIONS, NOTE_DEBIT_REASON_OPTIONS } from '../constants/invoice-note-reasons';
 import type { InvoiceNoteFiltersProps } from '../props/invoice-note-filters-props';
 import type { ApiInvoice } from '../types/api-invoice';
 
 export const InvoiceNoteFilters: FC<InvoiceNoteFiltersProps> = ({
+    tipo,
     cliente,
     onClienteChange,
     estado,
@@ -33,6 +34,7 @@ export const InvoiceNoteFilters: FC<InvoiceNoteFiltersProps> = ({
     const opcionesFactura = (data?.data ?? [])
         .filter((documento) => documento.numero)
         .map((documento) => ({ value: documento.numero as string, label: `${documento.numero} — ${formatDateEs(documento.fecha)}` }));
+    const opcionesMotivo = tipo === 'nota_credito' ? NOTE_CREDIT_REASON_OPTIONS : NOTE_DEBIT_REASON_OPTIONS;
 
     return (
         <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/3">
@@ -66,12 +68,15 @@ export const InvoiceNoteFilters: FC<InvoiceNoteFiltersProps> = ({
                 </div>
                 <div>
                     <Label htmlFor="nota-motivo">Motivo</Label>
-                    <Input
+                    <Select
                         id="nota-motivo"
                         name="nota-motivo"
-                        placeholder="Buscar en el motivo"
-                        value={motivo}
-                        onChange={(event) => onMotivoChange(event.target.value)}
+                        key={`motivo-${tipo}`}
+                        options={opcionesMotivo}
+                        placeholder="Todos"
+                        placeholderSelectable
+                        defaultValue={motivo}
+                        onChange={onMotivoChange}
                     />
                 </div>
                 <div>
