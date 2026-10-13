@@ -31,20 +31,28 @@ export function useSystemHealth() {
         setHistory((current) => appendUsageSample(current, snapshot));
     }, []);
 
-    const fetchSnapshot = useCallback(async () => {
-        lastFetchAt.current = Date.now();
-
-        try {
-            receive(await sendRequest<ApiSystemHealth>('/monitoreo/estado'));
-            setError(null);
-        } catch (caught) {
-            setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
-        }
-    }, [receive, sendRequest]);
-
     useEffect(() => {
+        let isCancelled = false;
         const startedAt = Date.now();
         const echo = createEcho();
+
+        // El estado solo cambia dentro de los callbacks de la promesa, nunca de forma síncrona en el efecto.
+        const fetchSnapshot = () => {
+            lastFetchAt.current = Date.now();
+
+            sendRequest<ApiSystemHealth>('/monitoreo/estado')
+                .then((snapshot) => {
+                    if (!isCancelled) {
+                        receive(snapshot);
+                        setError(null);
+                    }
+                })
+                .catch((caught: unknown) => {
+                    if (!isCancelled) {
+                        setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
+                    }
+                });
+        };
 
         echo.private(CHANNEL)
             .listen('.estado.actualizado', (event: { estado: ApiSystemHealth }) => {
@@ -54,7 +62,7 @@ export function useSystemHealth() {
             })
             .error(() => setLiveStatus('sin_conexion'));
 
-        void fetchSnapshot();
+        fetchSnapshot();
 
         const timer = window.setInterval(() => {
             const now = Date.now();
@@ -67,16 +75,17 @@ export function useSystemHealth() {
             setLiveStatus('sin_conexion');
 
             if (now - lastFetchAt.current >= FALLBACK_POLL_MS) {
-                void fetchSnapshot();
+                fetchSnapshot();
             }
         }, CHECK_INTERVAL_MS);
 
         return () => {
+            isCancelled = true;
             window.clearInterval(timer);
             echo.leave(CHANNEL);
             echo.disconnect();
         };
-    }, [fetchSnapshot, receive]);
+    }, [receive, sendRequest]);
 
     return { health, history, liveStatus, error };
 }
