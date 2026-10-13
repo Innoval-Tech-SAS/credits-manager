@@ -71,7 +71,11 @@ class EmpresaAdminControllerTest extends TestCase
 
         $respuesta->assertStatus(201);
         $empresaId = $respuesta->json('empresa.id');
-        $this->assertSame('6820', $respuesta->json('empresa.actividad_economica.codigo'));
+        $this->assertNotNull($respuesta->json('empresa.actividad_economica_id'));
+        $this->assertDatabaseHas('empresas', [
+            'id' => $empresaId,
+            'actividad_economica_id' => $respuesta->json('empresa.actividad_economica_id'),
+        ]);
         $this->assertDatabaseHas('actividades_economicas', [
             'empresa_id' => $empresaId,
             'codigo' => '6820',
