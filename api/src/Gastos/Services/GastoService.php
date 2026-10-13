@@ -7,10 +7,12 @@ use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Causacion\Repositories\TipoGastoRepository;
 use App\Causacion\Services\CausacionService;
+use App\Contabilidad\Enums\CodigoDocumentoNegocio;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Models\AplicacionDocumento;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Contabilidad\Services\DocumentoTerceroService;
+use App\Contabilidad\Services\TipoDocumentoNegocioService;
 use App\Core\Dinero\Dinero;
 use App\Documentos\Services\ArchivoAdjuntoService;
 use App\Exportacion\Enums\FormatoExportacion;
@@ -39,6 +41,7 @@ class GastoService
         protected CausacionService $causacion,
         protected ComprobanteService $comprobantes,
         protected DocumentoTerceroService $documentosTercero,
+        protected TipoDocumentoNegocioService $tiposDocumentoNegocio,
         protected EmisorAuditoria $auditoria,
         protected ExportacionService $exportaciones,
         protected ArchivoAdjuntoService $archivos,
@@ -122,6 +125,8 @@ class GastoService
 
             $documentoTercero = null;
             if ($tercero) {
+                $this->tiposDocumentoNegocio->validarOperacion($gasto->empresa_id, CodigoDocumentoNegocio::ComprobanteCausacion, creaSaldo: true, cruzaSaldo: false);
+
                 $documentoTercero = $this->documentosTercero->crearDocumento(
                     $tercero,
                     NaturalezaDocumento::PorPagar,

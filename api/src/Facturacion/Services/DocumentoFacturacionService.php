@@ -5,8 +5,10 @@ namespace App\Facturacion\Services;
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Contabilidad\Enums\CodigoDocumentoNegocio;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Services\DocumentoTerceroService;
+use App\Contabilidad\Services\TipoDocumentoNegocioService;
 use App\Core\Consecutivos\Services\ConsecutivoDocumentoService;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
@@ -63,6 +65,7 @@ class DocumentoFacturacionService
         protected ConsecutivoDocumentoService $consecutivos,
         protected AsientosFacturacionService $asientos,
         protected DocumentoTerceroService $documentosTercero,
+        protected TipoDocumentoNegocioService $tiposDocumentoNegocio,
         protected EmpresaService $empresas,
         protected GeneradorPdf $generador,
         protected EmisorAuditoria $auditoria,
@@ -235,6 +238,8 @@ class DocumentoFacturacionService
             $emitido = $this->emitir($bloqueado, $usuario);
             $totales = $this->totales($this->conLineas($emitido));
             $asiento = $this->asientos->contabilizarEmision($emitido, $totales);
+
+            $this->tiposDocumentoNegocio->validarOperacion($emitido->empresa_id, CodigoDocumentoNegocio::FacturaVenta, creaSaldo: true, cruzaSaldo: false);
 
             $documentoTercero = $this->documentosTercero->crearDocumento(
                 $emitido->cliente->tercero,
@@ -500,6 +505,8 @@ class DocumentoFacturacionService
                 $valorAAplicar = $valorNota->menorEntre($factura->documentoTercero->saldo);
 
                 if ($valorAAplicar->esPositivo()) {
+                    $this->tiposDocumentoNegocio->validarOperacion($emitida->empresa_id, CodigoDocumentoNegocio::NotaCredito, creaSaldo: false, cruzaSaldo: true);
+
                     $this->documentosTercero->aplicarValor(
                         $factura->cliente->tercero,
                         NaturalezaDocumento::PorCobrar,
@@ -510,6 +517,8 @@ class DocumentoFacturacionService
                     );
                 }
             } else {
+                $this->tiposDocumentoNegocio->validarOperacion($emitida->empresa_id, CodigoDocumentoNegocio::NotaDebito, creaSaldo: false, cruzaSaldo: true);
+
                 $this->documentosTercero->incrementarValor(
                     $factura->documentoTercero,
                     $valorNota,

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Facturacion;
 
+use App\Contabilidad\Models\TipoDocumentoNegocio;
 use App\Creditos\Models\Credito;
 use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
@@ -69,6 +70,19 @@ class DocumentosFacturacionTest extends TestCase
 
         $this->getJson(self::BASE)->assertStatus(403);
         $this->postJson(self::BASE, ['credito_id' => 1, 'lineas' => $this->lineas()])->assertStatus(403);
+    }
+
+    public function test_no_emite_una_factura_si_el_catalogo_desactiva_fv(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $credito = $this->credito();
+        $borrador = $this->borrador($credito);
+
+        TipoDocumentoNegocio::where('empresa_id', $admin->empresa_id)->where('codigo', 'FV')->update(['activo' => false]);
+
+        $this->postJson(self::BASE.'/'.$borrador['id'].'/emitir')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('documento');
     }
 
     public function test_crea_un_borrador_desde_un_credito_desembolsado_sin_numero(): void

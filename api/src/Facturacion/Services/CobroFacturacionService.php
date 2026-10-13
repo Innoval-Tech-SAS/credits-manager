@@ -5,9 +5,11 @@ namespace App\Facturacion\Services;
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Contabilidad\Enums\CodigoDocumentoNegocio;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Contabilidad\Services\DocumentoTerceroService;
+use App\Contabilidad\Services\TipoDocumentoNegocioService;
 use App\Core\Dinero\Dinero;
 use App\Facturacion\Enums\EstadoDocumentoFacturacion;
 use App\Facturacion\Enums\MedioCobroFacturacion;
@@ -39,6 +41,7 @@ class CobroFacturacionService
         protected AsientosFacturacionService $asientos,
         protected ComprobanteService $comprobantes,
         protected DocumentoTerceroService $documentosTercero,
+        protected TipoDocumentoNegocioService $tiposDocumentoNegocio,
         protected ReciboCajaService $recibos,
         protected EmisorAuditoria $auditoria,
     ) {}
@@ -133,6 +136,8 @@ class CobroFacturacionService
         $this->recibos->emitirParaCobro($cobro, $asiento);
 
         if ($bloqueada->documento_tercero_id) {
+            $this->tiposDocumentoNegocio->validarOperacion($bloqueada->empresa_id, CodigoDocumentoNegocio::ReciboCaja, creaSaldo: false, cruzaSaldo: true);
+
             $this->documentosTercero->aplicarValor(
                 $bloqueada->cliente->tercero,
                 NaturalezaDocumento::PorCobrar,

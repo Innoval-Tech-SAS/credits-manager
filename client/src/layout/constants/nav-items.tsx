@@ -25,6 +25,7 @@ import {
     House,
     Landmark,
     Layers,
+    ListChecks,
     ListTree,
     MapPin,
     Percent,
@@ -212,6 +213,13 @@ export const NAV_ITEMS: NavItem[] = [
                 icon: Settings2,
                 moduleKey: "configuracion_contable",
                 action: "listar_tipos_comprobante",
+            },
+            {
+                name: "Naturaleza de Documentos",
+                path: "/contabilidad/tipos-documento-negocio",
+                icon: ListChecks,
+                moduleKey: "configuracion_contable",
+                action: "listar_tipos_documento_negocio",
             },
             {
                 name: "Centros de Costo",
