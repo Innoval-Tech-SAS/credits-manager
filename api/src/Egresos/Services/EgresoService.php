@@ -26,8 +26,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Pago de documentos por pagar (Gastos/proveedores). Agrupa las aplicaciones por la cuenta PUC de cada documento
- * para que un mismo egreso pueda pagar documentos de cuentas distintas (p. ej. 2205 y 2335) con un solo comprobante.
+ * Pago de documentos por pagar (Gastos/proveedores). Cada documento aplicado genera su propia línea de débito
+ * (con su documento cruce y vencimiento), aunque dos documentos compartan la misma cuenta PUC: nunca se suman
+ * en una sola línea, para no perder la trazabilidad factura-por-factura del comprobante.
  */
 class EgresoService
 {
@@ -69,7 +70,7 @@ class EgresoService
                 ]);
             }
 
-            $lineasPorCuenta = [];
+            $lineasDocumentos = [];
             $valorTotal = Dinero::cero();
             $totalDescuento = Dinero::cero();
 
@@ -97,7 +98,13 @@ class EgresoService
                     ]);
                 }
 
-                $lineasPorCuenta[$documento->plan_cuenta_id] = ($lineasPorCuenta[$documento->plan_cuenta_id] ?? Dinero::cero())->sumar($valor);
+                $lineasDocumentos[] = [
+                    'cuenta_id' => $documento->plan_cuenta_id,
+                    'documento_cruce' => $documento->numero_documento,
+                    'fecha_vencimiento' => $documento->fecha_vencimiento?->toDateString(),
+                    'debito' => $valor,
+                    'credito' => 0,
+                ];
                 $valorTotal = $valorTotal->sumar($valor);
                 $totalDescuento = $totalDescuento->sumar($descuento);
             }
@@ -129,11 +136,7 @@ class EgresoService
 
             $this->archivos->subir($egreso, $soporte);
 
-            $lineasComprobante = [];
-
-            foreach ($lineasPorCuenta as $cuentaId => $valorCuenta) {
-                $lineasComprobante[] = ['cuenta_id' => $cuentaId, 'debito' => $valorCuenta, 'credito' => 0];
-            }
+            $lineasComprobante = $lineasDocumentos;
 
             $lineasComprobante[] = ['cuenta_id' => $datos['cuenta_caja_id'], 'debito' => 0, 'credito' => $valorCaja];
 
