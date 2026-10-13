@@ -181,13 +181,14 @@ class SeparacionModulosContablesTest extends TestCase
             ['GET', '/api/v1/contabilidad/estados-financieros', ['informes_contables.listar_estados_financieros'], []],
             ['GET', '/api/v1/contabilidad/auxiliares', ['informes_contables.listar_auxiliares'], []],
             ['GET', '/api/v1/contabilidad/conciliacion-apertura', ['informes_contables.listar_conciliacion_apertura'], []],
-            ['POST', '/api/v1/contabilidad/libro-diario/exportar', ['informes_contables.exportar'], []],
+            ['POST', '/api/v1/contabilidad/libro-diario/exportar', ['informes_contables.exportar_libro_diario'], []],
             ['POST', '/api/v1/contabilidad/libro-diario/exportar', ['informes_contables.listar_libro_diario'], []],
-            ['POST', '/api/v1/contabilidad/libro-mayor/exportar', ['informes_contables.exportar'], []],
+            // Se exporta como mayor o como caja y bancos: con cualquiera de los dos permisos basta.
+            ['POST', '/api/v1/contabilidad/libro-mayor/exportar', ['informes_contables.exportar_libro_mayor', 'informes_contables.exportar_caja_bancos'], []],
             ['POST', '/api/v1/contabilidad/libro-mayor/exportar', $libroMayor, []],
-            ['POST', '/api/v1/contabilidad/balance-prueba/exportar', ['informes_contables.exportar'], []],
+            ['POST', '/api/v1/contabilidad/balance-prueba/exportar', ['informes_contables.exportar_balance_prueba'], []],
             ['POST', '/api/v1/contabilidad/balance-prueba/exportar', ['informes_contables.listar_balance_prueba'], []],
-            ['POST', '/api/v1/contabilidad/estados-financieros/exportar', ['informes_contables.exportar'], []],
+            ['POST', '/api/v1/contabilidad/estados-financieros/exportar', ['informes_contables.exportar_estados_financieros'], []],
             ['POST', '/api/v1/contabilidad/estados-financieros/exportar', ['informes_contables.listar_estados_financieros'], []],
 
             ['GET', '/api/v1/gastos/actividades-economicas', GastosConstants::CONSULTA_ACTIVIDADES_ECONOMICAS, []],
