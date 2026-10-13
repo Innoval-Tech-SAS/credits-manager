@@ -5,6 +5,7 @@ namespace Tests\Feature\Facturacion;
 use App\Contabilidad\Enums\EventoContable;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\ReglaContabilizacion;
+use App\Empresas\Models\Empresa;
 use App\Facturacion\Enums\TipoConceptoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -33,6 +34,16 @@ class AsientosFacturacionTest extends TestCase
             'credito_id' => $credito->id,
             'lineas' => [['concepto' => 'INTERES.AMORT.ADM', 'descripcion' => 'Interés administrativo', 'valor' => $valor, 'tipo_concepto' => 'otros_gastos']],
         ])->assertStatus(201)->json('documento');
+    }
+
+    /** Aprueba una nota crédito pendiente con una persona distinta de quien la solicitó (7.1.2), y deja a esa persona como usuario autenticado. */
+    private function aprobarNotaCredito(array $notaPendiente, Empresa $empresa): array
+    {
+        $this->actingAsRolConPermisos('aprobador_nc', [
+            'facturacion.aprobar_nota_credito', 'facturacion.listar_facturas', 'facturacion.listar_notas_credito',
+        ], $empresa);
+
+        return $this->postJson(self::BASE.'/documentos/'.$notaPendiente['id'].'/aprobar')->assertOk()->json('documento');
     }
 
     private function asientoDe(int $documentoId): Comprobante
@@ -80,17 +91,22 @@ class AsientosFacturacionTest extends TestCase
 
     public function test_nota_credito_y_nota_debito_generan_asientos_cuadrados_con_su_regla(): void
     {
-        $this->actingAsAdmin();
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->actingAsAdmin($empresa);
         $this->crearReglasFacturacion();
         $factura = $this->postJson(self::BASE.'/documentos/'.$this->borrador('1000')['id'].'/emitir')->assertOk()->json('documento');
         $linea = $factura['lineas'][0]['id'];
 
-        $credito = $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
+        $pendiente = $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
             'tipo' => 'nota_credito', 'motivo_codigo' => 'ajuste_precio', 'lineas' => [['linea_origen_id' => $linea, 'valor' => '200']],
         ])->assertStatus(201)->json('documento');
+        $credito = $this->aprobarNotaCredito($pendiente, $empresa);
 
+        // El aprobador de la nota crédito queda como usuario actual: se retoma como admin para la nota débito.
+        $this->actingAsAdmin($empresa);
         $debito = $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'fecha_vencimiento' => '2026-12-01',
+            'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],
         ])->assertStatus(201)->json('documento');
 
         $asientoCredito = $this->asientoDe($credito['id']);
@@ -119,9 +135,10 @@ class AsientosFacturacionTest extends TestCase
         $linea = $factura['lineas'][0]['id'];
 
         // IVA de la factura: 1000 * 19% = 190. Crédito parcial de 500 (la mitad del bruto) debe reversar la mitad del IVA: 95.
-        $credito = $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
+        $pendiente = $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
             'tipo' => 'nota_credito', 'motivo_codigo' => 'ajuste_precio', 'lineas' => [['linea_origen_id' => $linea, 'valor' => '500']],
         ])->assertStatus(201)->json('documento');
+        $credito = $this->aprobarNotaCredito($pendiente, $empresa);
 
         $asientoCredito = $this->asientoDe($credito['id']);
         $lineaIva = $asientoCredito->lineas->firstWhere(fn ($l) => $l->cuenta_id === $cuentaIva->id);

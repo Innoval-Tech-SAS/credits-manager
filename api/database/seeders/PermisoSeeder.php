@@ -61,8 +61,8 @@ class PermisoSeeder extends Seeder
         'auditoria' => ['listar', 'exportar_bitacora'],
         'facturacion' => [
             'listar_facturas', 'listar_notas_credito', 'listar_notas_debito', 'crear', 'emitir', 'anular', 'emitir_nota_credito',
-            'emitir_nota_debito', 'imprimir', 'enviar', 'configurar', 'modificar_valores_sugeridos', 'registrar_cobro',
-            'reversar_cobro',
+            'aprobar_nota_credito', 'emitir_nota_debito', 'imprimir', 'enviar', 'configurar', 'modificar_valores_sugeridos',
+            'registrar_cobro', 'reversar_cobro',
         ],
         'importaciones' => [
             'importar_clientes', 'importar_creditos', 'importar_plan_cuotas', 'importar_pagos', 'importar_saldos_iniciales',

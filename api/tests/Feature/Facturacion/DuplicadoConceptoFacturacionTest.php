@@ -93,6 +93,44 @@ class DuplicadoConceptoFacturacionTest extends TestCase
         ])->assertStatus(201);
     }
 
+    public function test_no_se_puede_facturar_dos_veces_el_mismo_concepto_manual_en_el_mismo_mes(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
+        $credito = $this->crearCredito($this->crearCliente());
+        $lineaManual = ['concepto' => 'Cobranza extrajudicial', 'descripcion' => 'Gestión de cobranza', 'valor' => '50', 'tipo_concepto' => 'otros_gastos'];
+
+        $primero = $this->postJson(self::BASE, [
+            'fecha' => '2026-03-10', 'cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id,
+            'lineas' => [$lineaManual],
+        ])->assertStatus(201)->json('documento');
+        $this->postJson(self::BASE.'/'.$primero['id'].'/emitir')->assertOk();
+
+        $this->postJson(self::BASE, [
+            'fecha' => '2026-03-20', 'cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id,
+            'lineas' => [$lineaManual],
+        ])->assertStatus(422)->assertJsonValidationErrors('lineas');
+    }
+
+    public function test_el_mismo_concepto_manual_en_otro_mes_si_se_puede_facturar(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
+        $credito = $this->crearCredito($this->crearCliente());
+        $lineaManual = ['concepto' => 'Cobranza extrajudicial', 'descripcion' => 'Gestión de cobranza', 'valor' => '50', 'tipo_concepto' => 'otros_gastos'];
+
+        $primero = $this->postJson(self::BASE, [
+            'fecha' => '2026-03-10', 'cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id,
+            'lineas' => [$lineaManual],
+        ])->assertStatus(201)->json('documento');
+        $this->postJson(self::BASE.'/'.$primero['id'].'/emitir')->assertOk();
+
+        $this->postJson(self::BASE, [
+            'fecha' => '2026-04-05', 'cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id,
+            'lineas' => [$lineaManual],
+        ])->assertStatus(201);
+    }
+
     public function test_una_nota_credito_parcial_no_libera_el_combo(): void
     {
         $this->actingAsAdmin();

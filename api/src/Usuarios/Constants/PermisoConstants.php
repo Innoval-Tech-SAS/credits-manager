@@ -193,6 +193,7 @@ class PermisoConstants
         'facturacion.emitir' => 'Emitir facturas',
         'facturacion.anular' => 'Anular facturas',
         'facturacion.emitir_nota_credito' => 'Emitir notas crédito',
+        'facturacion.aprobar_nota_credito' => 'Aprobar notas crédito pendientes',
         'facturacion.emitir_nota_debito' => 'Emitir notas débito',
         'facturacion.imprimir' => 'Descargar PDF de facturas y recibos',
         'facturacion.enviar' => 'Reenviar facturas por correo',

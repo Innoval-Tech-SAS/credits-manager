@@ -41,6 +41,16 @@ class AnulacionFacturacionTest extends TestCase
         return $this->postJson(self::BASE.'/documentos/'.$borrador['id'].'/emitir')->assertOk()->json('documento');
     }
 
+    /** Aprueba una nota crédito pendiente con una persona distinta de quien la solicitó (7.1.2), y deja a esa persona como usuario autenticado. */
+    private function aprobarNotaCredito(array $notaPendiente, Empresa $empresa): array
+    {
+        $this->actingAsRolConPermisos('aprobador_nc', [
+            'facturacion.aprobar_nota_credito', 'facturacion.listar_facturas', 'facturacion.listar_notas_credito',
+        ], $empresa);
+
+        return $this->postJson(self::BASE.'/documentos/'.$notaPendiente['id'].'/aprobar')->assertOk()->json('documento');
+    }
+
     public function test_sin_autenticar_y_sin_permiso_no_anula(): void
     {
         $this->postJson(self::BASE.'/documentos/1/anular', ['motivo' => 'x'])->assertStatus(401);
@@ -117,7 +127,7 @@ class AnulacionFacturacionTest extends TestCase
 
         $this->postJson(self::BASE.'/cobros/'.$cobro['id'].'/reversar', ['motivo' => 'Se reversa el cobro'])->assertOk();
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar',
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'fecha_vencimiento' => '2026-12-01',
             'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],
         ])->assertStatus(201);
 
@@ -133,23 +143,26 @@ class AnulacionFacturacionTest extends TestCase
 
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/anular', ['motivo' => 'Segunda vez'])->assertStatus(422)->assertJsonValidationErrors('documento');
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar',
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'fecha_vencimiento' => '2026-12-01',
             'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],
         ])->assertStatus(422)->assertJsonValidationErrors('documento');
     }
 
     public function test_una_nota_credito_tras_un_cobro_parcial_puede_dejar_saldo_a_favor_pero_no_excede_la_linea(): void
     {
-        $this->actingAsAdmin();
+        $empresa = $this->crearEmpresaDePrueba();
+        $admin = $this->actingAsAdmin($empresa);
         $factura = $this->factura('1000');
         $linea = $factura['lineas'][0]['id'];
 
         $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/cobros', ['fecha' => '2026-10-05', 'valor' => '300', 'medio' => 'efectivo'])->assertStatus(201);
 
         // La línea tiene 1000 por acreditar: una nota de 800 no la excede, aunque ya solo quedaban 700 por cobrar.
-        $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
+        $pendiente = $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
             'tipo' => 'nota_credito', 'motivo_codigo' => 'rebaja_descuento', 'lineas' => [['linea_origen_id' => $linea, 'valor' => '800']],
-        ])->assertStatus(201);
+        ])->assertStatus(201)->json('documento');
+        $this->aprobarNotaCredito($pendiente, $empresa);
+        $this->actingAs($admin, 'sanctum');
 
         $detalle = $this->getJson(self::BASE.'/documentos/'.$factura['id'])->assertOk();
 

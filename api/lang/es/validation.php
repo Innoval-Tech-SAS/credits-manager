@@ -222,6 +222,8 @@ return [
             'cobro_ya_reversado' => 'Este cobro ya fue reversado.',
             'concepto_ya_facturado' => 'Ya existe una factura emitida para «:concepto» de esta cuota.',
             'tercero_fiscal_incompleto' => 'Al tercero le faltan datos fiscales obligatorios para emitir la factura.',
+            'no_pendiente_aprobacion' => 'Esta nota crédito no está pendiente de aprobación.',
+            'aprobador_igual_solicitante' => 'La nota crédito la debe aprobar una persona distinta de quien la solicitó.',
         ],
         'reversa' => [
             'estado_credito' => 'Solo se pueden reversar pagos de créditos desembolsados o pagados.',
