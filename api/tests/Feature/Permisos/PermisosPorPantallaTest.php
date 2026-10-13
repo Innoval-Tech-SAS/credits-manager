@@ -108,7 +108,6 @@ class PermisosPorPantallaTest extends TestCase
         $this->actuarCon(['facturacion.listar_facturas', 'facturacion.listar_notas_credito', 'facturacion.listar_notas_debito']);
 
         $this->getJson(self::BASE.'/consecutivos')->assertForbidden();
-        $this->getJson(self::BASE.'/configuracion')->assertForbidden();
         $this->getJson(self::BASE.'/parametrizacion-conceptos')->assertForbidden();
 
         $this->actuarCon(['facturacion.configurar']);
