@@ -88,6 +88,32 @@ ssh -i /root/deploy_key deploy@127.0.0.1 hola
 
 El puerto SSH (22) debe aceptar conexiones desde internet, porque los runners de GitHub no tienen IP fija.
 
+### 2.2.1. Servidor: lectura del repositorio sin contraseña
+
+El script hace `git fetch` como root sin nadie que escriba un token, así que el servidor necesita su propia **deploy key** de solo lectura:
+
+```bash
+ssh-keygen -t ed25519 -N '' -C 'servidor-produccion-lectura' -f /root/.ssh/github_credits_manager
+cat >> /root/.ssh/config <<'EOF'
+Host github.com
+  IdentityFile /root/.ssh/github_credits_manager
+  IdentitiesOnly yes
+EOF
+chmod 600 /root/.ssh/config
+ssh-keyscan -t ed25519 github.com >> /root/.ssh/known_hosts
+cat /root/.ssh/github_credits_manager.pub
+```
+
+En GitHub: **Settings → Deploy keys → Add deploy key**, título `servidor produccion (solo lectura)`, pega la llave pública y **deja sin marcar** *Allow write access*. Luego:
+
+```bash
+ssh -T git@github.com     # "Hi Innoval-Tech-SAS/credits-manager! You've successfully authenticated…"
+git -C /root/repositories/credits-manager remote set-url origin git@github.com:Innoval-Tech-SAS/credits-manager.git
+git -C /root/repositories/credits-manager fetch origin
+```
+
+Con esto `origin` queda de solo lectura en el servidor. Para subir una rama desde aquí, usa la URL HTTPS con tu token: `git push https://github.com/Innoval-Tech-SAS/credits-manager.git <rama>`.
+
 ### 2.3. GitHub: environment y secretos
 
 En `github.com/Innoval-Tech-SAS/credits-manager` → **Settings → Environments → New environment** → `PROD`:
