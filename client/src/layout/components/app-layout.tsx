@@ -17,7 +17,6 @@ const LayoutContent: FC = () => {
     const { user } = useAuth();
     const { pathname } = useLocation();
     const scrollerRef = useRef<HTMLDivElement>(null);
-    const anchoContenido = pathname === '/' ? '' : 'max-w-(--breakpoint-2xl)';
 
     useEffect(() => {
         scrollerRef.current?.scrollTo(0, 0);
@@ -45,12 +44,12 @@ const LayoutContent: FC = () => {
                 </div>
                 <PageHeaderProvider>
                     {/* Fuera del scroller: el título, Volver y la ruta de migas quedan fijos y solo hace scroll el contenido. */}
-                    <div className={`mx-auto w-full shrink-0 ${anchoContenido} px-4 pt-4 pb-4 md:px-6 md:pt-6 md:pb-6 print:hidden`}>
+                    <div className="w-full shrink-0 px-4 pt-4 pb-4 md:px-6 md:pt-6 md:pb-6 print:hidden">
                         <AppPageHeader />
                     </div>
                     <div
                         ref={scrollerRef}
-                        className={`custom-scrollbar mx-auto w-full ${anchoContenido} min-h-0 flex-1 overflow-y-auto print:overflow-visible`}
+                        className="custom-scrollbar w-full min-h-0 flex-1 overflow-y-auto print:overflow-visible"
                     >
                         {/* `min-h-full` (nunca `h-full` ni flex-1/min-h-0): mide al menos el alto visible y
                             crece con su contenido, así el `pb-6` de cada página sigue contando en el
