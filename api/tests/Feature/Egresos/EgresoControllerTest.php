@@ -9,6 +9,7 @@ use App\Gastos\Models\Gasto;
 use App\Gastos\Services\GastoService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
@@ -182,6 +183,67 @@ class EgresoControllerTest extends TestCase
             'debito' => 0,
             'credito' => 5000,
         ]);
+    }
+
+    public function test_dos_documentos_de_la_misma_cuenta_generan_lineas_separadas_con_su_documento_cruce(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearValorUvt();
+        $tercero = $this->crearTerceroFiscal();
+        $tipoGasto = $this->crearTipoGasto();
+        $parametrizacion = $this->crearParametrizacion($tipoGasto);
+
+        $gastoUno = app(GastoService::class)->causar([
+            'tipo_gasto_id' => $tipoGasto->id,
+            'tercero_id' => $tercero->id,
+            'centro_costo_id' => $this->crearCentroCosto()->id,
+            'fecha' => '2026-01-15',
+            'numero_documento' => 'FC-020',
+            'concepto' => 'Compra de insumos 1',
+            'valor_bruto' => '1000',
+        ])->fresh(['documentoTercero']);
+        $gastoDos = app(GastoService::class)->causar([
+            'tipo_gasto_id' => $tipoGasto->id,
+            'tercero_id' => $tercero->id,
+            'centro_costo_id' => $this->crearCentroCosto()->id,
+            'fecha' => '2026-01-16',
+            'numero_documento' => 'FC-021',
+            'concepto' => 'Compra de insumos 2',
+            'valor_bruto' => '500',
+        ])->fresh(['documentoTercero']);
+
+        $datos = [
+            'tercero_id' => $tercero->id,
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-20',
+            'medio_pago' => 'transferencia',
+            'cuenta_caja_id' => $this->crearCuenta()->id,
+            'concepto' => 'Pago de las compras',
+            'soporte' => UploadedFile::fake()->create('soporte.pdf', 200, 'application/pdf'),
+            'aplicaciones' => [
+                ['documento_tercero_id' => $gastoUno->documento_tercero_id, 'valor' => '1000'],
+                ['documento_tercero_id' => $gastoDos->documento_tercero_id, 'valor' => '500'],
+            ],
+        ];
+
+        $respuesta = $this->postJson(self::BASE, $datos)->assertStatus(201);
+        $comprobanteId = $respuesta->json('egreso.comprobante_id');
+
+        $this->assertDatabaseHas('asientos_contables', [
+            'comprobante_id' => $comprobanteId,
+            'cuenta_id' => $parametrizacion->cuenta_cxp_id,
+            'documento_cruce' => 'FC-020',
+            'debito' => 100000,
+            'credito' => 0,
+        ]);
+        $this->assertDatabaseHas('asientos_contables', [
+            'comprobante_id' => $comprobanteId,
+            'cuenta_id' => $parametrizacion->cuenta_cxp_id,
+            'documento_cruce' => 'FC-021',
+            'debito' => 50000,
+            'credito' => 0,
+        ]);
+        $this->assertSame(3, DB::table('asientos_contables')->where('comprobante_id', $comprobanteId)->count());
     }
 
     public function test_rechaza_un_descuento_mayor_o_igual_al_valor_aplicado(): void
