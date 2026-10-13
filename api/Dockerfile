@@ -1,8 +1,12 @@
+# syntax=docker/dockerfile:1
 FROM docker.io/library/composer:2 AS vendor
 WORKDIR /app
 
+ENV COMPOSER_CACHE_DIR=/tmp/composer-cache
+
 COPY composer.json composer.lock* ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
+RUN --mount=type=cache,target=/tmp/composer-cache \
+    composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-reqs
 
 COPY . .
 RUN composer dump-autoload --optimize --no-dev

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM docker.io/library/node:22-alpine AS client-builder
 WORKDIR /app
 
@@ -16,7 +17,8 @@ ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
 RUN corepack enable && corepack prepare pnpm@11.13.0 --activate
 
 COPY client/package.json client/pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 COPY client/ .
 RUN pnpm run build
