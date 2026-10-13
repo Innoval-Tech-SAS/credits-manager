@@ -19,9 +19,9 @@ import type { ApiInvoiceNoteCreditReason, ApiInvoiceNoteDebitReason } from '../t
 type NoteKind = 'nota_credito' | 'nota_debito';
 
 /** Abre el formulario en un modal; se monta solo al abrir, para partir siempre de un estado limpio. */
-export const InvoiceNoteForm: FC<InvoiceNoteFormProps> = ({ isOpen, documento, onClose, onEmitida, onError }) => (
+export const InvoiceNoteForm: FC<InvoiceNoteFormProps> = ({ isOpen, documento, tipoInicial, onClose, onEmitida, onError }) => (
     <Modal isOpen={isOpen} onClose={onClose} size="lg">
-        {isOpen && <FormularioNota documento={documento} onClose={onClose} onEmitida={onEmitida} onError={onError} />}
+        {isOpen && <FormularioNota documento={documento} tipoInicial={tipoInicial} onClose={onClose} onEmitida={onEmitida} onError={onError} />}
     </Modal>
 );
 
@@ -33,17 +33,18 @@ type FormularioNotaProps = Omit<InvoiceNoteFormProps, 'isOpen'>;
  * El motivo sale de la lista cerrada del tipo; «otros» pide el detalle en texto libre. La nota débito también
  * acepta su propia fecha de vencimiento y, si el motivo es «intereses», el soporte del cálculo por línea.
  */
-const FormularioNota: FC<FormularioNotaProps> = ({ documento, onClose, onEmitida, onError }) => {
+const FormularioNota: FC<FormularioNotaProps> = ({ documento, tipoInicial, onClose, onEmitida, onError }) => {
     const { sendRequest, isLoading } = useSendRequest();
 
-    const puedeNotaCredito = usePermission('facturacion', 'anular_nota_credito');
-    const puedeNotaDebito = usePermission('facturacion', 'anular_nota_debito');
+    const puedeNotaCredito = usePermission('facturacion', 'emitir_nota_credito');
+    const puedeNotaDebito = usePermission('facturacion', 'emitir_nota_debito');
 
     const tiposDelDocumento: NoteKind[] = documento.tipo === 'factura' ? ['nota_credito', 'nota_debito'] : ['nota_debito'];
     const tiposPermitidos = tiposDelDocumento.filter((tipoNota) => (tipoNota === 'nota_credito' ? puedeNotaCredito : puedeNotaDebito));
-    const [tipo, setTipo] = useState<NoteKind>(tiposPermitidos[0]);
+    const tipoPorDefecto = tipoInicial && tiposPermitidos.includes(tipoInicial) ? tipoInicial : tiposPermitidos[0];
+    const [tipo, setTipo] = useState<NoteKind>(tipoPorDefecto);
     const [motivoCodigo, setMotivoCodigo] = useState<ApiInvoiceNoteCreditReason | ApiInvoiceNoteDebitReason>(
-        tiposPermitidos[0] === 'nota_credito' ? NOTE_CREDIT_REASON_OPTIONS[0].value : NOTE_DEBIT_REASON_OPTIONS[0].value,
+        tipoPorDefecto === 'nota_credito' ? NOTE_CREDIT_REASON_OPTIONS[0].value : NOTE_DEBIT_REASON_OPTIONS[0].value,
     );
     const [motivoDetalle, setMotivoDetalle] = useState('');
     const [fechaVencimiento, setFechaVencimiento] = useState('');
