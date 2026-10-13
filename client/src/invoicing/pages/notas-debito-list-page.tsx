@@ -1,8 +1,10 @@
 import type { FC } from 'react';
+import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { Eye, HandCoins, ReceiptText, Settings } from 'lucide-react';
 
 import { usePermission } from '../../auth/hooks/use-permission';
+import type { ApiClient } from '../../clients/types/api-client';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { ActionButton } from '@ui/action-button/components/action-button';
 import { Button } from '@ui/button/components/button';
@@ -11,6 +13,7 @@ import { DataTable } from '@ui/table/components/data-table';
 import { Pagination } from '@ui/table/components/pagination';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { formatDateEs } from '../../shared/utils/format-date-es';
+import { InvoiceNoteFilters } from '../components/invoice-note-filters';
 import type { ApiInvoice } from '../types/api-invoice';
 
 export const NotasDebitoListPage: FC = () => {
@@ -21,7 +24,28 @@ export const NotasDebitoListPage: FC = () => {
     const canRegisterPayment = usePermission('facturacion', 'registrar_cobro');
     const puedeConfigurar = usePermission('facturacion', 'configurar');
 
-    const { items, isLoading, page, setPage, totalPages, totalItems } = usePaginatedResource<ApiInvoice>('/facturacion/documentos', { tipo: 'nota_debito' });
+    const [cliente, setCliente] = useState<ApiClient | null>(null);
+    const [estado, setEstado] = useState('');
+    const [desde, setDesde] = useState('');
+    const [hasta, setHasta] = useState('');
+    const [factura, setFactura] = useState('');
+    const [motivo, setMotivo] = useState('');
+
+    const { items, isLoading, page, setPage, totalPages, totalItems } = usePaginatedResource<ApiInvoice>('/facturacion/documentos', {
+        tipo: 'nota_debito',
+        cliente_id: cliente ? String(cliente.id) : '',
+        estado,
+        desde,
+        hasta,
+        factura,
+        motivo,
+    });
+
+    // Cada filtro vuelve a la primera página: una página vacía tras filtrar no tiene sentido.
+    const alCambiarFiltro = <T,>(aplicar: (valor: T) => void) => (valor: T) => {
+        aplicar(valor);
+        setPage(1);
+    };
 
     const mensaje = (location.state as { message?: string } | null)?.message ?? null;
 
@@ -53,6 +77,21 @@ export const NotasDebitoListPage: FC = () => {
             }
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
         >
+            <InvoiceNoteFilters
+                cliente={cliente}
+                onClienteChange={alCambiarFiltro(setCliente)}
+                estado={estado}
+                onEstadoChange={alCambiarFiltro(setEstado)}
+                desde={desde}
+                onDesdeChange={alCambiarFiltro(setDesde)}
+                hasta={hasta}
+                onHastaChange={alCambiarFiltro(setHasta)}
+                factura={factura}
+                onFacturaChange={alCambiarFiltro(setFactura)}
+                motivo={motivo}
+                onMotivoChange={alCambiarFiltro(setMotivo)}
+            />
+
             <DataTable
                 columns={[
                     { key: 'numero', label: 'Número', render: (row) => row.numero ?? 'Borrador' },
@@ -82,7 +121,7 @@ export const NotasDebitoListPage: FC = () => {
                 rows={items}
                 getRowKey={(row) => row.id}
                 loading={isLoading}
-                emptyMessage="Todavía no hay notas débito."
+                emptyMessage="No hay notas débito con esos filtros."
                 maxHeightClassName="max-h-[65vh]"
             />
         </ModuleListPage>
