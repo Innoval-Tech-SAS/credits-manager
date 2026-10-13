@@ -1,8 +1,9 @@
 import type { FC } from 'react';
 import { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
-import { Ban, Download, FileText, Mail, Send, Trash2, Wallet } from 'lucide-react';
+import { Ban, Check, Download, FileText, Mail, Send, Trash2, Wallet } from 'lucide-react';
 
+import { useAuth } from '../../auth/hooks/use-auth';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
 import { useResource } from '../../shared/hooks/use-resource';
@@ -36,6 +37,7 @@ export const InvoiceDetailPage: FC = () => {
     const location = useLocation();
     const { sendRequest, isLoading: enviando } = useSendRequest();
     const { download, isDownloading } = useDownloadFile();
+    const { user: usuario } = useAuth();
 
     const puedeCrear = usePermission('facturacion', 'crear');
     const puedeAnular = usePermission('facturacion', 'anular');
@@ -46,6 +48,7 @@ export const InvoiceDetailPage: FC = () => {
     const puedeImprimir = usePermission('facturacion', 'imprimir');
     const puedeEmitir = usePermission('facturacion', 'emitir');
     const puedeEnviar = usePermission('facturacion', 'enviar');
+    const puedeAprobarNotaCredito = usePermission('facturacion', 'aprobar_nota_credito');
 
     const { data, error, refetch } = useResource<ApiInvoiceDetail>(`/facturacion/documentos/${id}`);
 
@@ -79,12 +82,16 @@ export const InvoiceDetailPage: FC = () => {
 
     const { documento, totales, cobros } = data;
     const esBorrador = documento.estado === 'borrador';
+    const esPendienteAprobacion = documento.estado === 'pendiente_aprobacion';
+    const esEmitido = documento.estado === 'emitido';
     const esFactura = documento.tipo === 'factura';
     const situacion = totales.situacion;
-    const tituloDocumento = documento.numero ?? `${ETIQUETA_TIPO[documento.tipo]} en borrador`;
+    const tituloDocumento = documento.numero
+        ?? (esPendienteAprobacion ? `${ETIQUETA_TIPO[documento.tipo]} pendiente de aprobación` : `${ETIQUETA_TIPO[documento.tipo]} en borrador`);
     const puedeCobrar = esFactura && !esBorrador && puedeRegistrarCobro && (situacion === 'emitida' || situacion === 'parcialmente_pagada');
     const puedeAnularFactura = esFactura && !esBorrador && puedeAnular && situacion !== 'anulada';
-    const puedeEmitirNota = (esFactura && puedeNotaCredito) || puedeNotaDebito;
+    const puedeEmitirNota = ((esFactura && puedeNotaCredito) || puedeNotaDebito) && esEmitido;
+    const puedeAprobar = puedeAprobarNotaCredito && esPendienteAprobacion && documento.solicitado_por !== usuario?.id;
     // Con impuestos en cero (el caso de hoy) basta el total: no se les da más protagonismo visual del que ya tienen.
     const hayImpuestos = parseFloat(totales.total_iva ?? '0') > 0 || parseFloat(totales.total_retencion ?? '0') > 0;
 
@@ -92,6 +99,15 @@ export const InvoiceDetailPage: FC = () => {
         try {
             await sendRequest(`/facturacion/documentos/${documento.id}/emitir`, { method: 'POST' });
             informarExito('Factura emitida. Su número ya no cambia.');
+        } catch (caught) {
+            reportarError(caught);
+        }
+    };
+
+    const aprobarNotaCredito = async () => {
+        try {
+            await sendRequest(`/facturacion/documentos/${documento.id}/aprobar`, { method: 'POST' });
+            informarExito('Nota crédito aprobada y emitida con su número consecutivo.');
         } catch (caught) {
             reportarError(caught);
         }
@@ -180,6 +196,11 @@ export const InvoiceDetailPage: FC = () => {
                         <div className="flex flex-wrap items-center gap-3">
                             <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">{tituloDocumento}</h2>
                             {esFactura && situacion && <InvoiceSituationBadge situacion={situacion} />}
+                            {esPendienteAprobacion && (
+                                <span className="rounded-full bg-warning-50 px-2.5 py-0.5 text-xs font-medium text-warning-600 dark:bg-warning-500/10 dark:text-warning-400">
+                                    Pendiente de aprobación
+                                </span>
+                            )}
                         </div>
                         <p className="text-sm text-gray-500 dark:text-gray-400">
                             {ETIQUETA_TIPO[documento.tipo]} · {formatDateEs(documento.fecha)} · Cliente {documento.cliente?.tercero.nombre ?? '—'} · Crédito #{documento.credito_id}
@@ -217,7 +238,12 @@ export const InvoiceDetailPage: FC = () => {
                                 Anular factura
                             </Button>
                         )}
-                        {!esBorrador && puedeImprimir && (
+                        {puedeAprobar && (
+                            <Button startIcon={<Check className="size-4" />} disabled={enviando} onClick={() => void aprobarNotaCredito()}>
+                                Aprobar
+                            </Button>
+                        )}
+                        {esEmitido && puedeImprimir && (
                             <Button
                                 variant="outline"
                                 iconOnly
@@ -228,12 +254,12 @@ export const InvoiceDetailPage: FC = () => {
                                 {isDownloading ? 'Generando…' : 'Descargar PDF'}
                             </Button>
                         )}
-                        {!esBorrador && puedeEnviar && (
+                        {esEmitido && puedeEnviar && (
                             <Button variant="outline" iconOnly startIcon={<Mail className="size-4" />} disabled={enviando} onClick={() => void reenviarPorCorreo()}>
                                 Reenviar por correo
                             </Button>
                         )}
-                        {!esBorrador && puedeEmitirNota && (
+                        {puedeEmitirNota && (
                             <Button variant="outline" iconOnly startIcon={<FileText className="size-4" />} onClick={() => setNotaAbierta(true)}>
                                 Emitir nota
                             </Button>
@@ -248,7 +274,7 @@ export const InvoiceDetailPage: FC = () => {
                 )}
             </div>
 
-            {!esBorrador && <InvoiceDispatchesCard key={dispatchesVersion} documentoId={documento.id} canSend={puedeEnviar} />}
+            {esEmitido && <InvoiceDispatchesCard key={dispatchesVersion} documentoId={documento.id} canSend={puedeEnviar} />}
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                 <div className="mb-4 flex items-center justify-between">
@@ -349,7 +375,7 @@ export const InvoiceDetailPage: FC = () => {
                 </div>
             )}
 
-            {!esBorrador && puedeEmitirNota && (
+            {puedeEmitirNota && (
                 <InvoiceNoteForm
                     isOpen={notaAbierta}
                     documento={documento}

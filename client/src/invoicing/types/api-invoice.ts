@@ -28,7 +28,9 @@ export type ApiInvoiceLine = {
 export type ApiInvoice = {
     id: number;
     tipo: 'factura' | 'nota_credito' | 'nota_debito';
-    estado: 'borrador' | 'emitido';
+    /** `pendiente_aprobacion` es propio de la nota crédito manual (7.1.2): la solicitó alguien y falta que otra persona la apruebe. */
+    estado: 'borrador' | 'pendiente_aprobacion' | 'emitido';
+    solicitado_por: number | null;
     consecutivo: number | null;
     numero: string | null;
     fecha: string;

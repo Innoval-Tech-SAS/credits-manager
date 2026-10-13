@@ -85,6 +85,7 @@ export const InvoiceNoteFilters: FC<InvoiceNoteFiltersProps> = ({
                         id="nota-estado"
                         options={[
                             { value: 'borrador', label: 'Borrador' },
+                            ...(tipo === 'nota_credito' ? [{ value: 'pendiente_aprobacion', label: 'Pendiente de aprobación' }] : []),
                             { value: 'emitido', label: 'Emitido' },
                         ]}
                         placeholder="Todos"
