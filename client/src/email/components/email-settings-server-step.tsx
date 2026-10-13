@@ -15,7 +15,7 @@ export const EmailSettingsServerStep: FC<EmailSettingsServerStepProps> = ({ draf
             <Select id="driver" options={DRIVER_OPTIONS} defaultValue={draft.driver} onChange={(valor) => onChange({ driver: valor as EmailSettingsDraft['driver'] })} />
             {draft.driver === 'registro' && (
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                    No necesita servidor: los correos se escriben en el log de la aplicación. Úselo solo para pruebas.
+                    Los correos no se envían. Úselo solo para pruebas.
                 </p>
             )}
         </div>

@@ -243,7 +243,7 @@ export const InvoiceDetailPage: FC = () => {
 
                 {situacion === 'anulada' && (
                     <p className="mt-4 text-sm font-medium text-error-600 dark:text-error-500">
-                        Factura anulada: sus notas crédito cubren el total. El número se conserva y la nota queda asentada y enlazada a la factura.
+                        Factura anulada: sus notas crédito cubren el total.
                     </p>
                 )}
             </div>
