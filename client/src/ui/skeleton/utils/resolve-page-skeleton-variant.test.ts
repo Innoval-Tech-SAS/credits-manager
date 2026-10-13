@@ -38,4 +38,12 @@ describe('resolvePageSkeletonVariant', () => {
     it('ignora la barra final', () => {
         expect(resolvePageSkeletonVariant('/clientes/crear/')).toBe('form');
     });
+
+    it('el inicio de superadmin tiene su propia silueta, no la del dashboard completo', () => {
+        expect(resolvePageSkeletonVariant('/', true)).toBe('superadmin-home');
+    });
+
+    it('esSuperAdmin no cambia la silueta de otras rutas', () => {
+        expect(resolvePageSkeletonVariant('/clientes', true)).toBe('list');
+    });
 });

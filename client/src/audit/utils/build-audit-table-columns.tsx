@@ -43,7 +43,7 @@ export function buildAuditTableColumns(companies: ApiCompany[] | null, onView: (
             key: 'descripcion',
             label: 'Descripción',
             render: (event) => (
-                <span className="block max-w-xs truncate lg:max-w-md" title={event.descripcion}>
+                <span className="block max-w-40 truncate lg:max-w-72" title={event.descripcion}>
                     {event.descripcion}
                 </span>
             ),

@@ -33,9 +33,17 @@ const SEGMENTOS_DETALLE = new Set(['estado-cuenta', 'conciliar']);
 
 const ES_ID = /^(\d+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 
-/** Elige la silueta por la forma de la ruta, sin conocer la página: así el esqueleto se parece a lo que va a llegar. */
-export function resolvePageSkeletonVariant(pathname: string): PageSkeletonVariant {
+/**
+ * Elige la silueta por la forma de la ruta, sin conocer la página: así el esqueleto se parece a lo que va a llegar.
+ * `esSuperAdmin` solo importa en `/`: el inicio de superadmin es filtros + "elige una empresa", no el dashboard completo.
+ */
+export function resolvePageSkeletonVariant(pathname: string, esSuperAdmin = false): PageSkeletonVariant {
     const ruta = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+
+    if (ruta === '/' && esSuperAdmin) {
+        return 'superadmin-home';
+    }
+
     const regla = RUTAS.find(([patron]) => patron.test(ruta));
 
     if (regla) {

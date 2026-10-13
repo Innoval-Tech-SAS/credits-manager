@@ -10,9 +10,9 @@ export const StatCard: FC<StatCardProps> = ({ label, value, icon: Icon, accent =
             <Icon className="size-6" />
         </div>
 
-        <div className="mt-5 flex min-w-0 flex-1 flex-col justify-center">
+        <div className="mt-5 flex min-w-0 flex-col">
             <span className="text-sm text-gray-500 dark:text-gray-400">{label}</span>
-            <h4 className="mt-2 text-title-sm font-bold wrap-break-word text-gray-800 dark:text-white/90">{value}</h4>
+            <h4 className="mt-2 text-theme-xl font-bold wrap-break-word text-gray-800 dark:text-white/90">{value}</h4>
 
             {cambio && (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
