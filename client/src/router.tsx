@@ -55,6 +55,7 @@ const AuditLogPage = lazyPage(() => import('./audit/pages/audit-log-page'), 'Aud
 const AuditRecoveryPage = lazyPage(() => import('./audit/pages/audit-recovery-page'), 'AuditRecoveryPage');
 const BackupsPage = lazyPage(() => import('./backups/pages/backups-page'), 'BackupsPage');
 const CalendarPage = lazyPage(() => import('./calendar/pages/calendar-page'), 'CalendarPage');
+const TaxObligationsPage = lazyPage(() => import('./tax-obligations/pages/tax-obligations-page'), 'TaxObligationsPage');
 const CreateEconomicActivityPage = lazyPage(() => import('./expenses/pages/create-economic-activity-page'), 'CreateEconomicActivityPage');
 const CreateExpensePage = lazyPage(() => import('./expenses/pages/create-expense-page'), 'CreateExpensePage');
 const CreateExpenseTypePage = lazyPage(() => import('./expenses/pages/create-expense-type-page'), 'CreateExpenseTypePage');
@@ -110,6 +111,7 @@ const EmailTemplatesPage = lazyPage(() => import('./email/pages/email-templates-
 const CreateEmailTemplatePage = lazyPage(() => import('./email/pages/create-email-template-page'), 'CreateEmailTemplatePage');
 const EditEmailTemplatePage = lazyPage(() => import('./email/pages/edit-email-template-page'), 'EditEmailTemplatePage');
 const HomePage = lazyPage(() => import('./layout/pages/home-page'), 'HomePage');
+const NotificationsPage = lazyPage(() => import('./notifications/pages/notifications-page'), 'NotificationsPage');
 const CreditPaymentsPage = lazyPage(() => import('./payments/pages/credit-payments-page'), 'CreditPaymentsPage');
 const PaymentsListPage = lazyPage(() => import('./payments/pages/payments-list-page'), 'PaymentsListPage');
 const RegisterPaymentPage = lazyPage(() => import('./payments/pages/register-payment-page'), 'RegisterPaymentPage');
@@ -138,6 +140,7 @@ const routes: RouteObject[] = [
                 ),
                 children: [
                     { index: true, element: <HomePage /> },
+                    { path: 'notificaciones', element: <NotificationsPage /> },
                     {
                         path: 'metas',
                         element: (
@@ -159,6 +162,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="calendario" accion="listar">
                                 <CalendarPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'obligaciones-tributarias',
+                        element: (
+                            <RequireModulePermission modulo="obligaciones_tributarias" accion="listar">
+                                <TaxObligationsPage />
                             </RequireModulePermission>
                         ),
                     },

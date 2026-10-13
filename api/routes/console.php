@@ -32,6 +32,12 @@ Schedule::command('metas:evaluar')
     ->name('metas:evaluar')
     ->withoutOverlapping(30);
 
+/** Genera las alertas del calendario tributario por vencer, empresa por empresa (cada una con su `empresa_id` explícito). */
+Schedule::command('obligaciones_tributarias:evaluar-alertas')
+    ->dailyAt('06:00')
+    ->name('obligaciones_tributarias:evaluar-alertas')
+    ->withoutOverlapping(30);
+
 Schedule::command('importaciones:limpiar')
     ->dailyAt('03:15')
     ->name('importaciones:limpiar')

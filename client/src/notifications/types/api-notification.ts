@@ -8,9 +8,10 @@ export type NotificationType =
     | 'importacion_completada'
     | 'importacion_fallida'
     | 'extracto_bancario_cargado'
-    | 'extracto_bancario_rechazado';
+    | 'extracto_bancario_rechazado'
+    | 'obligacion_tributaria_por_vencer';
 
-/** Raw shape returned by `GET /notificaciones` (rows), `POST /notificaciones/{id}/leer` and pushed by the `.notificacion.creada` WebSocket event. */
+/** Raw shape returned by `GET /notificaciones` (rows), `GET /notificaciones/pagina`, `POST /notificaciones/{id}/leer` and pushed by the `.notificacion.creada` WebSocket event. */
 export type ApiNotification = {
     id: number;
     empresa_id: number | null;
@@ -25,6 +26,7 @@ export type ApiNotification = {
         periodo_id?: number;
         importacion_id?: number;
         extracto_bancario_id?: number;
+        obligacion_id?: number;
     } | null;
     leida_en: string | null;
     creado_en: string | null;

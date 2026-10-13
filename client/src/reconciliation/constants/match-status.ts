@@ -16,7 +16,7 @@ export const SUGGESTION_STATUS_LABELS: Record<ApiSugerenciaConciliacion['estado_
     exacto: 'Candidato exacto',
     duplicado: 'Varios candidatos',
     con_diferencia: 'Sin valor exacto',
-    sin_candidato: 'Sin candidato',
+    sin_candidato: 'Ninguno',
 };
 
 export const SUGGESTION_STATUS_BADGE_CLASSES: Record<ApiSugerenciaConciliacion['estado_sugerido'], string> = {

@@ -184,6 +184,10 @@ return [
             'distribucion_supera' => 'La distribución suma :suma y supera la meta de :meta.',
             'distribucion_incompleta' => 'La distribución debe sumar exactamente la meta de :meta.',
         ],
+        'obligaciones_tributarias' => [
+            'nombre_repetido' => 'Ya existe un tipo de obligación tributaria con este nombre.',
+            'periodo_repetido' => 'Ya existe esta obligación tributaria para el período.',
+        ],
         'correo' => [
             'sin_configurar' => 'La empresa no tiene configurado el servidor de correo.',
             'sin_plantilla' => 'La empresa no tiene una plantilla predeterminada para este tipo de correo.',

@@ -286,11 +286,11 @@ const AccionesMovimiento: FC<AccionesMovimientoProps> = ({ movimiento, seleccion
     }
 
     return (
-        <div className="flex flex-col items-start gap-2">
-            <Button size="sm" variant={seleccionado ? 'primary' : 'outline'} disabled={disabled} onClick={onSeleccionar}>
+        <div className="flex flex-col gap-2">
+            <Button size="sm" variant={seleccionado ? 'primary' : 'outline'} disabled={disabled} onClick={onSeleccionar} className="w-full">
                 {seleccionado ? 'Seleccionado' : 'Seleccionar'}
             </Button>
-            <Button size="sm" variant="outline" disabled={disabled} onClick={onEnviarAPuente}>
+            <Button size="sm" variant="outline" disabled={disabled} onClick={onEnviarAPuente} className="w-full">
                 Enviar a puente
             </Button>
         </div>

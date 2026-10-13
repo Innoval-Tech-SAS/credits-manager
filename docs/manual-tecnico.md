@@ -82,6 +82,7 @@ Las ejecuta el servicio `scheduler` (`schedule:work`), en hora de Bogotá. Defin
 | 03:00 | `exportaciones:limpiar` | Borra exportaciones vencidas. |
 | 03:15 | `importaciones:limpiar` | Borra importaciones vencidas. |
 | 23:55 | `metas:evaluar` | Evalúa las metas de cada empresa, cierra los períodos vencidos y genera alertas. |
+| 06:00 | `obligaciones_tributarias:evaluar-alertas` | Genera las alertas del calendario tributario por vencer de cada empresa. |
 
 Las tareas no se solapan (`withoutOverlapping`). Un fallo de `respaldos:ejecutar` deja un registro de error en `podman compose logs scheduler`.
 

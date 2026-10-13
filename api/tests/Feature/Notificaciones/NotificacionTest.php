@@ -26,8 +26,60 @@ class NotificacionTest extends TestCase
     public function test_sin_autenticar_recibe_401(): void
     {
         $this->getJson('/api/v1/notificaciones')->assertStatus(401);
+        $this->getJson('/api/v1/notificaciones/pagina')->assertStatus(401);
         $this->postJson('/api/v1/notificaciones/leer-todas')->assertStatus(401);
         $this->postJson('/api/v1/notificaciones/1/leer')->assertStatus(401);
+    }
+
+    public function test_pagina_las_propias_notificaciones(): void
+    {
+        $admin = $this->actingAsAdmin();
+        for ($i = 1; $i <= 12; $i++) {
+            $this->notificar($admin->id, $admin->empresa_id, "Notificación {$i}");
+        }
+
+        $primera = $this->getJson('/api/v1/notificaciones/pagina')->assertOk();
+        $primera->assertJsonCount(10, 'data')->assertJsonPath('total', 12)->assertJsonPath('last_page', 2);
+
+        $segunda = $this->getJson('/api/v1/notificaciones/pagina?page=2')->assertOk();
+        $segunda->assertJsonCount(2, 'data');
+    }
+
+    public function test_pagina_filtra_por_tipo_y_por_leida(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $leida = $this->notificar($admin->id, $admin->empresa_id, 'Exportación');
+        $this->postJson("/api/v1/notificaciones/{$leida}/leer")->assertOk();
+        app(NotificacionService::class)->notificar(
+            $admin->id,
+            $admin->empresa_id,
+            TipoNotificacion::ObligacionTributariaPorVencer,
+            'Obligación por vencer',
+            'Vence pronto.',
+            ['obligacion_id' => 7],
+        );
+
+        $porTipo = $this->getJson('/api/v1/notificaciones/pagina?tipo=obligacion_tributaria_por_vencer')->assertOk();
+        $porTipo->assertJsonCount(1, 'data')->assertJsonPath('data.0.titulo', 'Obligación por vencer');
+
+        $noLeidas = $this->getJson('/api/v1/notificaciones/pagina?leida=no_leidas')->assertOk();
+        $noLeidas->assertJsonCount(1, 'data')->assertJsonPath('data.0.titulo', 'Obligación por vencer');
+
+        $leidas = $this->getJson('/api/v1/notificaciones/pagina?leida=leidas')->assertOk();
+        $leidas->assertJsonCount(1, 'data')->assertJsonPath('data.0.titulo', 'Exportación');
+    }
+
+    public function test_pagina_no_incluye_notificaciones_de_otro_usuario_ni_de_otra_empresa(): void
+    {
+        $admin = $this->actingAsAdmin();
+        $companero = $this->actingAsAsesor(Empresa::find($admin->empresa_id));
+        $ajeno = $this->actingAsAdmin();
+        $this->notificar($ajeno->id, $ajeno->empresa_id);
+        $this->notificar($companero->id, $companero->empresa_id);
+
+        $this->actingAs($admin, 'sanctum');
+
+        $this->getJson('/api/v1/notificaciones/pagina')->assertOk()->assertJsonCount(0, 'data');
     }
 
     public function test_lista_las_propias_con_el_contador_de_no_leidas(): void

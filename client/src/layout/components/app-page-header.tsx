@@ -14,9 +14,9 @@ import { findNavBreadcrumb } from '../utils/find-nav-breadcrumb';
  * Desde `md` la ruta de migas muestra icono y nombre; en móvil y tablet solo el icono, con el nombre en el tooltip.
  */
 export const AppPageHeader: FC = () => {
-    const { title } = usePageHeader();
+    const { title, trail: trailOverride } = usePageHeader();
     const location = useLocation();
-    const trail = findNavBreadcrumb(location.pathname);
+    const trail = trailOverride ?? findNavBreadcrumb(location.pathname);
 
     return (
         <div className="flex flex-wrap items-center justify-between gap-3">

@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { AlertCircle, CircleCheck, LockOpen } from 'lucide-react';
+import { AlertCircle, CalendarClock, CircleCheck, LockOpen } from 'lucide-react';
 
 import type { NotificationType } from '../types/api-notification';
 
@@ -14,4 +14,5 @@ export const NOTIFICATION_TYPE_ICONS: Record<NotificationType, { Icon: LucideIco
     importacion_fallida: { Icon: AlertCircle, className: 'text-error-500' },
     extracto_bancario_cargado: { Icon: CircleCheck, className: 'text-success-500' },
     extracto_bancario_rechazado: { Icon: AlertCircle, className: 'text-error-500' },
+    obligacion_tributaria_por_vencer: { Icon: CalendarClock, className: 'text-warning-500' },
 };
