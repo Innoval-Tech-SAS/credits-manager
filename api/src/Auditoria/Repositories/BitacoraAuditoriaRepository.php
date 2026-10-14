@@ -75,6 +75,7 @@ class BitacoraAuditoriaRepository
 
                 $q->where(fn (Builder $q) => $q->where('autor_nombre', 'like', $patron)->orWhere('autor_usuario', 'like', $patron));
             })
+            ->when($filtros->autorUsuarioId, fn (Builder $q, int $id) => $q->where('usuario_id', $id))
             ->orderByDesc('fecha_hora')
             ->orderByDesc('id');
     }

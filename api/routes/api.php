@@ -103,6 +103,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/geografia/municipios/{municipio}', [MunicipioController::class, 'update'])->middleware('superadmin');
 
     Route::get('/auditoria/bitacora', [BitacoraAuditoriaController::class, 'index'])->middleware('permiso_o_superadmin:auditoria,listar');
+    Route::get('/auditoria/usuarios', [BitacoraAuditoriaController::class, 'usuarios'])->middleware('superadmin');
     Route::post('/auditoria/bitacora/exportar', [BitacoraAuditoriaController::class, 'exportar'])->middleware('exportacion:auditoria.bitacora');
     Route::get('/auditoria/respaldo', [RecuperacionAuditoriaController::class, 'index'])->middleware('superadmin');
     Route::post('/auditoria/respaldo/recuperar', [RecuperacionAuditoriaController::class, 'recuperar'])->middleware('superadmin');

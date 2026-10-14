@@ -8,4 +8,6 @@ export type DatePickerProps = {
     required?: boolean;
     disabled?: boolean;
     className?: string;
+    /** `md` (por defecto) es el tamaño de siempre; `sm` achica alto y relleno para barras de filtros densas. */
+    size?: 'sm' | 'md';
 };

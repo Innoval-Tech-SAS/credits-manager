@@ -5,7 +5,7 @@ export const EMPTY_AUDIT_FILTERS: AuditFilters = {
     hasta: '',
     modulo: '',
     accion: '',
-    autor: '',
+    autor_usuario_id: '',
     entidad: '',
     empresa_id: '',
 };

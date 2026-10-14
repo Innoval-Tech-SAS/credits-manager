@@ -5,18 +5,19 @@ import { DatePicker } from '@ui/forms/components/date-picker';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
-import { Search, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { AUDIT_ACTION_OPTIONS } from '../constants/audit-actions';
 import { AUDIT_MODULE_OPTIONS } from '../constants/audit-modules';
 import type { AuditFiltersProps } from '../props/audit-filters-props';
 
-export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChange, onReset, resetToken }) => (
+export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, users, onChange, onReset, resetToken }) => (
     <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <div>
             <Label htmlFor="audit-desde">Desde</Label>
             <DatePicker
                 key={`desde-${resetToken}`}
                 id="audit-desde"
+                size="sm"
                 value={filters.desde}
                 onChange={(value) => onChange({ desde: value })}
                 placeholder="Fecha inicial"
@@ -28,6 +29,7 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
             <DatePicker
                 key={`hasta-${resetToken}`}
                 id="audit-hasta"
+                size="sm"
                 value={filters.hasta}
                 onChange={(value) => onChange({ hasta: value })}
                 placeholder="Fecha final"
@@ -39,6 +41,7 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
             <Select
                 id="audit-modulo"
                 key={`modulo-${resetToken}`}
+                size="sm"
                 options={AUDIT_MODULE_OPTIONS}
                 placeholder="Todos los módulos"
                 placeholderSelectable
@@ -52,6 +55,7 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
             <Select
                 id="audit-accion"
                 key={`accion-${resetToken}`}
+                size="sm"
                 options={AUDIT_ACTION_OPTIONS}
                 placeholder="Todas las acciones"
                 placeholderSelectable
@@ -62,12 +66,15 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
 
         <div>
             <Label htmlFor="audit-autor">Autor</Label>
-            <Input
+            <Select
                 id="audit-autor"
-                placeholder="Nombre o usuario"
-                startIcon={<Search className="size-4" />}
-                value={filters.autor}
-                onChange={(event) => onChange({ autor: event.target.value })}
+                key={`autor-${resetToken}`}
+                size="sm"
+                options={users.map((user) => ({ value: String(user.id), label: user.empresa ? `${user.nombre} (${user.empresa})` : user.nombre }))}
+                placeholder="Todos los autores"
+                placeholderSelectable
+                defaultValue={filters.autor_usuario_id}
+                onChange={(value) => onChange({ autor_usuario_id: value })}
             />
         </div>
 
@@ -75,6 +82,7 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
             <Label htmlFor="audit-entidad">Entidad</Label>
             <Input
                 id="audit-entidad"
+                size="sm"
                 placeholder="Ej. credito, cliente, empresa"
                 value={filters.entidad}
                 onChange={(event) => onChange({ entidad: event.target.value })}
@@ -87,6 +95,7 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
                 <Select
                     id="audit-empresa"
                     key={`empresa-${resetToken}`}
+                    size="sm"
                     options={companies.map((company) => ({ value: String(company.id), label: company.nombre_empresa }))}
                     placeholder="Todas las empresas"
                     placeholderSelectable
@@ -97,7 +106,7 @@ export const AuditFilters: FC<AuditFiltersProps> = ({ filters, companies, onChan
         )}
 
         <div className="flex items-end">
-            <Button iconOnly variant="outline" startIcon={<X className="size-4" />} onClick={onReset}>
+            <Button size="sm" iconOnly variant="outline" startIcon={<X className="size-4" />} onClick={onReset}>
                 Limpiar filtros
             </Button>
         </div>

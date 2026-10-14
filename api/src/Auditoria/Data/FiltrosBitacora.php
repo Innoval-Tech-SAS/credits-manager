@@ -13,6 +13,7 @@ final readonly class FiltrosBitacora
         public ?string $modulo = null,
         public ?AccionAuditoria $accion = null,
         public ?string $autor = null,
+        public ?int $autorUsuarioId = null,
         public ?string $entidad = null,
         public ?int $empresaId = null,
     ) {}
@@ -28,6 +29,7 @@ final readonly class FiltrosBitacora
             modulo: $validados['modulo'] ?? null,
             accion: isset($validados['accion']) ? AccionAuditoria::from($validados['accion']) : null,
             autor: $validados['autor'] ?? null,
+            autorUsuarioId: isset($validados['autor_usuario_id']) ? (int) $validados['autor_usuario_id'] : null,
             entidad: $validados['entidad'] ?? null,
             empresaId: isset($validados['empresa_id']) ? (int) $validados['empresa_id'] : null,
         );
@@ -42,6 +44,7 @@ final readonly class FiltrosBitacora
             'modulo' => $this->modulo,
             'accion' => $this->accion?->value,
             'autor' => $this->autor,
+            'autor_usuario_id' => $this->autorUsuarioId,
             'entidad' => $this->entidad,
             'empresa_id' => $this->empresaId,
         ], fn ($valor) => $valor !== null);

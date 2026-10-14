@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 
+import { FIELD_SIZE_CLASSES } from '../constants/field-size-classes';
 import type { InputProps } from '../props/input-props';
 
 export const Input: FC<InputProps> = ({
@@ -25,8 +26,9 @@ export const Input: FC<InputProps> = ({
     startIcon,
     endIcon,
     pill = false,
+    size = 'md',
 }) => {
-    let inputClasses = `h-11 w-full border appearance-none py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${
+    let inputClasses = `${FIELD_SIZE_CLASSES[size]} w-full border appearance-none text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${
         pill ? 'rounded-xl' : 'rounded-lg'
     } ${startIcon ? 'pl-11' : 'pl-4'} ${endIcon ? 'pr-11' : 'pr-4'} ${className}`;
 
