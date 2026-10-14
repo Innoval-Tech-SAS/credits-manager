@@ -58,6 +58,8 @@ const AuditRecoveryPage = lazyPage(() => import('./audit/pages/audit-recovery-pa
 const BackupsPage = lazyPage(() => import('./backups/pages/backups-page'), 'BackupsPage');
 const SystemHealthPage = lazyPage(() => import('./monitoring/pages/system-health-page'), 'SystemHealthPage');
 const ScheduledTasksPage = lazyPage(() => import('./monitoring/pages/scheduled-tasks-page'), 'ScheduledTasksPage');
+const ActiveSessionsPage = lazyPage(() => import('./security/pages/active-sessions-page'), 'ActiveSessionsPage');
+const AccessHistoryPage = lazyPage(() => import('./security/pages/access-history-page'), 'AccessHistoryPage');
 const CalendarPage = lazyPage(() => import('./calendar/pages/calendar-page'), 'CalendarPage');
 const TaxObligationsPage = lazyPage(() => import('./tax-obligations/pages/tax-obligations-page'), 'TaxObligationsPage');
 const CreateEconomicActivityPage = lazyPage(() => import('./expenses/pages/create-economic-activity-page'), 'CreateEconomicActivityPage');
@@ -451,6 +453,22 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireSuperAdmin>
                                 <ScheduledTasksPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
+                        path: 'seguridad/sesiones',
+                        element: (
+                            <RequireSuperAdmin>
+                                <ActiveSessionsPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
+                        path: 'seguridad/accesos',
+                        element: (
+                            <RequireSuperAdmin>
+                                <AccessHistoryPage />
                             </RequireSuperAdmin>
                         ),
                     },

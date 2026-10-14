@@ -68,6 +68,8 @@ use App\Proveedores\Controllers\ProveedorController;
 use App\Recibos\Controllers\ReciboCajaController;
 use App\Respaldos\Controllers\DescargaBaseController;
 use App\Respaldos\Controllers\ResumenRespaldosController;
+use App\Seguridad\Controllers\AccesoController;
+use App\Seguridad\Controllers\SesionActivaController;
 use App\Terceros\Controllers\TerceroController;
 use App\Usuarios\Controllers\PermisoController;
 use App\Usuarios\Controllers\RolController;
@@ -104,6 +106,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auditoria/bitacora/exportar', [BitacoraAuditoriaController::class, 'exportar'])->middleware('exportacion:auditoria.bitacora');
     Route::get('/auditoria/respaldo', [RecuperacionAuditoriaController::class, 'index'])->middleware('superadmin');
     Route::post('/auditoria/respaldo/recuperar', [RecuperacionAuditoriaController::class, 'recuperar'])->middleware('superadmin');
+
+    Route::get('/seguridad/accesos', [AccesoController::class, 'index'])->middleware('superadmin');
+    Route::get('/seguridad/accesos/alerta', [AccesoController::class, 'alerta'])->middleware('superadmin');
+    Route::get('/seguridad/sesiones', [SesionActivaController::class, 'index'])->middleware('superadmin');
+    Route::delete('/seguridad/sesiones/empresa/{empresa}', [SesionActivaController::class, 'destroyEmpresa'])->middleware('superadmin');
+    Route::delete('/seguridad/sesiones/{sesion}', [SesionActivaController::class, 'destroy'])->middleware('superadmin');
 
     Route::get('/respaldos/base', [DescargaBaseController::class, 'base'])->middleware('superadmin');
     Route::get('/respaldos/empresa', [DescargaBaseController::class, 'empresa'])->middleware('admin');
