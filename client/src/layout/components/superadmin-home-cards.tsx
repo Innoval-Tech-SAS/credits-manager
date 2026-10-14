@@ -6,7 +6,7 @@ import { StatCard } from './stat-card';
 
 /** 6 tarjetas de plataforma, ninguna de datos de negocio, cada una lleva a su pantalla. */
 export const SuperadminHomeCards: FC<SuperadminHomeCardsProps> = ({ panel }) => (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
         <StatCard label="Logins fallidos (7 días)" value={String(panel.logins_fallidos_7_dias)} icon={KeyRound} to="/auditoria" />
 
         {/* Sin `to`: su pantalla (Seguridad) todavía no existe. Enlazar a /seguridad cuando esa fase se implemente. */}

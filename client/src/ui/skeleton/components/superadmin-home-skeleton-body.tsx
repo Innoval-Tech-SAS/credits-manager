@@ -14,7 +14,7 @@ const FILAS = 4;
  */
 export const SuperadminHomeSkeletonBody: FC<SkeletonBodyProps> = ({ announce }) => (
     <SkeletonStatus announce={announce} className="flex flex-1 flex-col">
-        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-3">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
             {Array.from({ length: TARJETAS }, (_, indice) => (
                 <StatCardSkeleton key={indice} />
             ))}
