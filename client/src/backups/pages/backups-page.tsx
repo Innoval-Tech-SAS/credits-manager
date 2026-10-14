@@ -22,16 +22,18 @@ export const BackupsPage: FC = () => {
             <div className="flex flex-1 flex-col gap-4 md:gap-6">
                 {user?.isSuperAdmin && (
                     <>
-                        <BackupDownloadCard
-                            title="Base de datos completa"
-                            description="Todas las empresas. No incluye contraseñas."
-                            buttonLabel="Descargar base completa"
-                            icon={<DatabaseBackup className="size-5" />}
-                            endpoint="/respaldos/base"
-                            fallbackFilename="base-completa.sql.gz"
-                        />
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
+                            <BackupDownloadCard
+                                title="Base de datos completa"
+                                description="Todas las empresas. No incluye contraseñas."
+                                buttonLabel="Descargar base completa"
+                                icon={<DatabaseBackup className="size-5" />}
+                                endpoint="/respaldos/base"
+                                fallbackFilename="base-completa.sql.gz"
+                            />
 
-                        <BackupActionCard onCompleted={refetch} />
+                            <BackupActionCard onCompleted={refetch} />
+                        </div>
 
                         <BackupsStatusCard status={status} error={statusError} />
                     </>
