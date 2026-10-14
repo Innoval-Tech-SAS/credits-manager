@@ -3,9 +3,11 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/** Mismo rol que ya emite notas crédito: contable. */
+/** Mismos roles que ya emiten notas crédito: admin y contable. */
 return new class extends Migration
 {
+    private const ROLES = ['admin', 'contable'];
+
     public function up(): void
     {
         DB::table('permisos')->updateOrInsert(
@@ -15,7 +17,7 @@ return new class extends Migration
 
         $permisoId = DB::table('permisos')->where('modulo', 'facturacion')->where('accion', 'aprobar_nota_credito')->value('id');
 
-        foreach (DB::table('roles')->where('nombre', 'contable')->pluck('id') as $rolId) {
+        foreach (DB::table('roles')->whereIn('nombre', self::ROLES)->pluck('id') as $rolId) {
             DB::table('rol_permiso')->insertOrIgnore([
                 'rol_id' => $rolId,
                 'permiso_id' => $permisoId,

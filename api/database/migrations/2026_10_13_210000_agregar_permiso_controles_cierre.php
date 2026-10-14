@@ -3,10 +3,10 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-/** Mismos roles que ya ven conciliación de apertura: contable, consulta y auditoría. */
+/** Mismos roles que ya ven conciliación de apertura: admin, contable, consulta y auditoría. */
 return new class extends Migration
 {
-    private const ROLES = ['contable', 'consulta', 'auditoria'];
+    private const ROLES = ['admin', 'contable', 'consulta', 'auditoria'];
 
     public function up(): void
     {
