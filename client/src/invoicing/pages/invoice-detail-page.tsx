@@ -380,9 +380,13 @@ export const InvoiceDetailPage: FC = () => {
                     isOpen={notaAbierta}
                     documento={documento}
                     onClose={() => setNotaAbierta(false)}
-                    onEmitida={() => {
+                    onEmitida={(tipoEmitido) => {
                         setNotaAbierta(false);
-                        informarExito('Nota emitida con su número consecutivo.');
+                        informarExito(
+                            tipoEmitido === 'nota_credito'
+                                ? 'Nota crédito solicitada. Queda pendiente de aprobación por otra persona.'
+                                : 'Nota emitida con su número consecutivo.',
+                        );
                     }}
                     onError={(texto) => {
                         setNotaAbierta(false);

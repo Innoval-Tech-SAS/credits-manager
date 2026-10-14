@@ -7,6 +7,6 @@ export type InvoiceNoteFormProps = {
     /** Tipo preseleccionado al abrir, si ya se conoce la intención (ej. se llega desde "Crear nota débito"). */
     tipoInicial?: 'nota_credito' | 'nota_debito';
     onClose: () => void;
-    onEmitida: () => void;
+    onEmitida: (tipo: 'nota_credito' | 'nota_debito') => void;
     onError: (mensaje: string) => void;
 };

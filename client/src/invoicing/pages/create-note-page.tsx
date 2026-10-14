@@ -107,8 +107,16 @@ export const CreateNotePage: FC = () => {
                     documento={documentoDetalle.documento}
                     tipoInicial={tipoInicial}
                     onClose={() => setDocumentoId(null)}
-                    onEmitida={() =>
-                        navigate(listaDestino, { replace: true, state: { message: 'Nota emitida con su número consecutivo.' } })
+                    onEmitida={(tipoEmitido) =>
+                        navigate(listaDestino, {
+                            replace: true,
+                            state: {
+                                message:
+                                    tipoEmitido === 'nota_credito'
+                                        ? 'Nota crédito solicitada. Queda pendiente de aprobación por otra persona.'
+                                        : 'Nota emitida con su número consecutivo.',
+                            },
+                        })
                     }
                     onError={(texto) => {
                         setDocumentoId(null);
