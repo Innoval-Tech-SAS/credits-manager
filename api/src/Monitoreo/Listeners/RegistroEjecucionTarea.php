@@ -32,13 +32,11 @@ class RegistroEjecucionTarea
 
     public function alFallar(ScheduledTaskFailed|ScheduledTaskSkipped $evento): void
     {
-        if ($evento instanceof ScheduledTaskFailed) {
-            $this->registrar($evento->task, 'error', now(), Str::limit($evento->exception->getMessage(), MonitoreoConstants::ERROR_MAXIMO_CARACTERES));
-
+        if ($evento instanceof ScheduledTaskSkipped) {
             return;
         }
 
-        $this->registrar($evento->task, 'omitida', now());
+        $this->registrar($evento->task, 'error', now(), Str::limit($evento->exception->getMessage(), MonitoreoConstants::ERROR_MAXIMO_CARACTERES));
     }
 
     private function registrar(Event $tarea, string $resultado, Carbon $iniciadoEn, ?string $error = null): void
