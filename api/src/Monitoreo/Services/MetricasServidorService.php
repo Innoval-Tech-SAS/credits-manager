@@ -17,6 +17,7 @@ class MetricasServidorService
             'memoria' => $this->memoria(),
             'carga' => $this->carga(),
             'disco' => $this->disco(),
+            'red' => $this->red(),
             'encendido_segundos' => $this->encendido(),
         ];
     }
@@ -120,6 +121,43 @@ class MetricasServidorService
             'usado_bytes' => (int) ($total - $libre),
             'porcentaje' => round(100 * ($total - $libre) / $total, 1),
         ];
+    }
+
+    /**
+     * Contador acumulado desde que la interfaz arrancó (no una tasa): el cliente calcula bytes/segundo
+     * comparando dos muestras consecutivas, igual que ya hace con el histórico de CPU/memoria.
+     *
+     * @return array{rx_bytes: int, tx_bytes: int}|null suma de todas las interfaces, sin contar loopback
+     */
+    private function red(): ?array
+    {
+        $contenido = $this->leer('net/dev');
+
+        if ($contenido === null) {
+            return null;
+        }
+
+        $rxBytes = 0;
+        $txBytes = 0;
+        $encontrada = false;
+
+        foreach (explode("\n", $contenido) as $linea) {
+            if (! preg_match('/^\s*([^:\s]+):\s*(.+)$/', $linea, $coincidencia) || $coincidencia[1] === 'lo') {
+                continue;
+            }
+
+            $valores = array_map('intval', preg_split('/\s+/', trim($coincidencia[2])));
+
+            if (count($valores) < 9) {
+                continue;
+            }
+
+            $rxBytes += $valores[0];
+            $txBytes += $valores[8];
+            $encontrada = true;
+        }
+
+        return $encontrada ? ['rx_bytes' => $rxBytes, 'tx_bytes' => $txBytes] : null;
     }
 
     private function encendido(): ?int

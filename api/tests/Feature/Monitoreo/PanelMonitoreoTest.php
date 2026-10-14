@@ -37,6 +37,8 @@ class PanelMonitoreoTest extends TestCase
         file_put_contents($this->procFalso.'/meminfo', "MemTotal:        8000000 kB\nMemFree:         1000000 kB\nMemAvailable:    6000000 kB\nSwapTotal:       2000000 kB\nSwapFree:        1500000 kB\n");
         file_put_contents($this->procFalso.'/loadavg', "0.52 0.48 0.40 1/234 5678\n");
         file_put_contents($this->procFalso.'/uptime', "93784.12 180000.00\n");
+        File::ensureDirectoryExists($this->procFalso.'/net');
+        file_put_contents($this->procFalso.'/net/dev', "Inter-|   Receive                                                |  Transmit\n face |bytes    packets errs drop fifo frame compressed multicast|bytes    packets errs drop fifo colls carrier compressed\n    lo:  1296      16    0    0    0     0          0         0     1296      16    0    0    0     0       0          0\n  eth0: 500000     400    0    0    0     0          0         0   300000     200    0    0    0     0       0          0\n");
 
         // Puertos cerrados en local: los servicios TCP salen caídos al instante, sin esperar DNS del compose.
         config([
@@ -82,6 +84,8 @@ class PanelMonitoreoTest extends TestCase
             ->assertJsonPath('servidor.memoria.swap_usada_bytes', 500000 * 1024)
             ->assertJsonPath('servidor.carga', [0.52, 0.48, 0.4])
             ->assertJsonPath('servidor.encendido_segundos', 93784)
+            ->assertJsonPath('servidor.red.rx_bytes', 500000)
+            ->assertJsonPath('servidor.red.tx_bytes', 300000)
             ->assertJsonStructure(['servidor' => ['disco' => ['total_bytes', 'usado_bytes', 'porcentaje']], 'servicios', 'colas', 'auditoria', 'generado_en']);
 
         // JSON no distingue 25.0 de 25: se compara por valor, no por tipo.

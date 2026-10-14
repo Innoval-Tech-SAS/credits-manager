@@ -6,6 +6,8 @@ export type ApiServerMetrics = {
     /** Carga promedio a 1, 5 y 15 minutos. */
     carga: number[] | null;
     disco: { total_bytes: number; usado_bytes: number; porcentaje: number } | null;
+    /** Contador acumulado desde que la interfaz arrancó (no una tasa), sumando todas las interfaces salvo loopback. */
+    red: { rx_bytes: number; tx_bytes: number } | null;
     encendido_segundos: number | null;
 };
 
