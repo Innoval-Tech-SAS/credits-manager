@@ -147,6 +147,18 @@ class BitacoraAuditoriaTest extends TestCase
         $this->assertSame([$objetivo->evento_id], $this->idsDe($respuesta->json()));
     }
 
+    public function test_filtra_por_autor_usuario_id(): void
+    {
+        $admin = $this->actingAsAdmin();
+
+        $objetivo = $this->crearEventoBitacora(['empresa_id' => $admin->empresa_id, 'usuario_id' => $admin->id]);
+        $this->crearEventoBitacora(['empresa_id' => $admin->empresa_id, 'usuario_id' => $admin->id + 999]);
+
+        $respuesta = $this->getJson(self::URL.'?autor_usuario_id='.$admin->id)->assertOk();
+
+        $this->assertSame([$objetivo->evento_id], $this->idsDe($respuesta->json()));
+    }
+
     public function test_el_rango_de_fechas_incluye_todo_el_dia_final(): void
     {
         $admin = $this->actingAsAdmin();

@@ -6,6 +6,7 @@ import 'flatpickr/dist/flatpickr.css';
 import monthSelectPlugin from 'flatpickr/dist/plugins/monthSelect';
 import 'flatpickr/dist/plugins/monthSelect/style.css';
 import { Calendar } from 'lucide-react';
+import { FIELD_SIZE_CLASSES } from '../constants/field-size-classes';
 import type { DatePickerProps } from '../props/date-picker-props';
 
 export const DatePicker: FC<DatePickerProps> = ({
@@ -18,6 +19,7 @@ export const DatePicker: FC<DatePickerProps> = ({
     required = false,
     disabled = false,
     className = '',
+    size = 'md',
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const instanceRef = useRef<flatpickr.Instance | null>(null);
@@ -63,7 +65,7 @@ export const DatePicker: FC<DatePickerProps> = ({
                 required={required}
                 disabled={disabled}
                 readOnly
-                className={`h-11 w-full rounded-lg border appearance-none py-2.5 pl-4 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:focus:border-brand-800 ${
+                className={`${FIELD_SIZE_CLASSES[size]} w-full rounded-lg border appearance-none pl-4 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:focus:border-brand-800 ${
                     disabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'
                 } ${className}`}
             />

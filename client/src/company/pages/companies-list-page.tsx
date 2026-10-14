@@ -21,7 +21,7 @@ export const CompaniesListPage: FC = () => {
     const { items, isLoading, page, setPage, totalPages, totalItems, search, setSearch } =
         usePaginatedResource<ApiCompany>('/empresas');
 
-    const columns = buildCompanyTableColumns();
+    const columns = buildCompanyTableColumns({ onVerDashboard: (empresa) => navigate(`/empresas/${empresa.id}/dashboard`) });
 
     return (
         <ModuleListPage

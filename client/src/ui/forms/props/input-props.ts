@@ -23,4 +23,6 @@ export type InputProps = {
     success?: boolean;
     error?: boolean;
     hint?: string;
+    /** `md` (por defecto) es el tamaño de siempre; `sm` achica alto y relleno para barras de filtros densas. */
+    size?: 'sm' | 'md';
 };

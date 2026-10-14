@@ -5,4 +5,6 @@ export const DASHBOARD_CHART_COLORS = {
     gastos: '#f79009',
     alDia: '#12b76a',
     vencida: '#f04438',
+    loginsExitosos: '#12b76a',
+    loginsFallidos: '#f04438',
 } as const;

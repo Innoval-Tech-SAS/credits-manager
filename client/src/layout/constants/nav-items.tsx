@@ -19,6 +19,7 @@ import {
     CreditCard,
     FileCheck,
     FileInput,
+    KeyRound,
     Mail,
     FileText,
     HandCoins,
@@ -28,6 +29,7 @@ import {
     ListChecks,
     ListTree,
     MapPin,
+    MonitorSmartphone,
     Percent,
     Receipt,
     ReceiptText,
@@ -55,15 +57,18 @@ export const SUPERADMIN_NAV_ITEMS: NavItem[] = [
     { name: "Empresas", icon: Building2, path: "/empresas" },
     { name: "Municipios", icon: MapPin, path: "/geografia/municipios" },
     {
-        name: "Auditoría",
+        name: "Seguridad",
         icon: ShieldCheck,
         subItems: [
             { name: "Bitácora", path: "/auditoria", icon: ScrollText },
             { name: "Recuperación", path: "/recuperacion-auditoria", icon: ArchiveRestore },
+            { name: "Sesiones", path: "/seguridad/sesiones", icon: MonitorSmartphone },
+            { name: "Accesos", path: "/seguridad/accesos", icon: KeyRound },
         ],
     },
     { name: "Respaldos", icon: DatabaseBackup, path: "/respaldos" },
     { name: "Salud del sistema", icon: Activity, path: "/monitoreo" },
+    { name: "Tareas programadas", icon: CalendarClock, path: "/tareas-programadas" },
 ];
 
 export const NAV_ITEMS: NavItem[] = [

@@ -21,6 +21,7 @@ class ListarBitacoraRequest extends FormRequest
             'modulo' => ['nullable', 'string', 'max:50'],
             'accion' => ['nullable', Rule::enum(AccionAuditoria::class)],
             'autor' => ['nullable', 'string', 'max:255'],
+            'autor_usuario_id' => ['nullable', 'integer', 'min:1'],
             'entidad' => ['nullable', 'string', 'max:60'],
             'empresa_id' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],

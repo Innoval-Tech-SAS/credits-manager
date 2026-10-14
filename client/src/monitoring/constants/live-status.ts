@@ -24,4 +24,6 @@ export const USAGE_HISTORY_SIZE = 60;
 export const USAGE_CHART_COLORS = {
     cpu: '#465FFF',
     memoria: '#12B76A',
+    redRecepcion: '#0BA5EC',
+    redEnvio: '#F79009',
 };

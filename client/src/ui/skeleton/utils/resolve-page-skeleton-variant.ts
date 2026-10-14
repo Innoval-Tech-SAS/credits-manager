@@ -6,10 +6,11 @@ import type { PageSkeletonVariant } from '../types/page-skeleton-variant';
  */
 const RUTAS: readonly (readonly [RegExp, PageSkeletonVariant])[] = [
     [/^\/$/, 'dashboard'],
+    [/^\/empresas\/[^/]+\/dashboard$/, 'dashboard'],
     [/^\/calendario$/, 'calendar'],
 
     // Fichas con tarjetas de métricas arriba.
-    [/^\/(cartera|metas)$/, 'summary'],
+    [/^\/(cartera|metas|respaldos)$/, 'summary'],
     [/^\/(clientes|creditos)\/(?!crear$)[^/]+$/, 'summary'],
     [/^\/pagos\/creditos\/[^/]+$/, 'summary'],
 

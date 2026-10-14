@@ -11,11 +11,13 @@ function snapshot(generadoEn: string, cpu: number): ApiSystemHealth {
             memoria: { total_bytes: 100, usada_bytes: 40, porcentaje: 40, swap_total_bytes: 0, swap_usada_bytes: 0 },
             carga: [0.5, 0.4, 0.3],
             disco: null,
+            red: null,
             encendido_segundos: 60,
         },
         servicios: [],
         colas: [],
         auditoria: { en_stream: 0, pendientes: 0 },
+        tareas_programadas: {},
         generado_en: generadoEn,
     };
 }

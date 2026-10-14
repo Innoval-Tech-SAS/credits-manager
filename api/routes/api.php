@@ -29,6 +29,7 @@ use App\Correo\Controllers\PlantillaCorreoController;
 use App\Correo\Controllers\RecordatorioCorreoController;
 use App\Creditos\Controllers\CreditoController;
 use App\Dashboard\Controllers\DashboardController;
+use App\Dashboard\Controllers\PanelSuperadminController;
 use App\Egresos\Controllers\EgresoController;
 use App\Empleadores\Controllers\EmpleadorController;
 use App\Empresas\Controllers\EmpresaAdminController;
@@ -57,6 +58,7 @@ use App\Metas\Controllers\CierreMetaController;
 use App\Metas\Controllers\ConfiguracionMetaController;
 use App\Metas\Controllers\MetaController;
 use App\Monitoreo\Controllers\MonitoreoController;
+use App\Monitoreo\Controllers\TareaProgramadaController;
 use App\Notificaciones\Controllers\NotificacionController;
 use App\ObligacionesTributarias\Controllers\AlertaObligacionTributariaController;
 use App\ObligacionesTributarias\Controllers\ObligacionTributariaController;
@@ -65,6 +67,9 @@ use App\Pagos\Controllers\PagoController;
 use App\Proveedores\Controllers\ProveedorController;
 use App\Recibos\Controllers\ReciboCajaController;
 use App\Respaldos\Controllers\DescargaBaseController;
+use App\Respaldos\Controllers\ResumenRespaldosController;
+use App\Seguridad\Controllers\AccesoController;
+use App\Seguridad\Controllers\SesionActivaController;
 use App\Terceros\Controllers\TerceroController;
 use App\Usuarios\Controllers\PermisoController;
 use App\Usuarios\Controllers\RolController;
@@ -88,6 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/empresa/logo', [EmpresaController::class, 'uploadLogo'])->middleware('admin');
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/panel-superadmin', [PanelSuperadminController::class, 'index'])->middleware('superadmin');
 
     Route::get('/geografia/paises', [PaisController::class, 'index']);
     Route::get('/geografia/estados', [EstadoController::class, 'index']);
@@ -97,17 +103,30 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/geografia/municipios/{municipio}', [MunicipioController::class, 'update'])->middleware('superadmin');
 
     Route::get('/auditoria/bitacora', [BitacoraAuditoriaController::class, 'index'])->middleware('permiso_o_superadmin:auditoria,listar');
+    Route::get('/auditoria/usuarios', [BitacoraAuditoriaController::class, 'usuarios'])->middleware('superadmin');
     Route::post('/auditoria/bitacora/exportar', [BitacoraAuditoriaController::class, 'exportar'])->middleware('exportacion:auditoria.bitacora');
     Route::get('/auditoria/respaldo', [RecuperacionAuditoriaController::class, 'index'])->middleware('superadmin');
     Route::post('/auditoria/respaldo/recuperar', [RecuperacionAuditoriaController::class, 'recuperar'])->middleware('superadmin');
 
+    Route::get('/seguridad/accesos', [AccesoController::class, 'index'])->middleware('superadmin');
+    Route::get('/seguridad/accesos/alerta', [AccesoController::class, 'alerta'])->middleware('superadmin');
+    Route::get('/seguridad/sesiones', [SesionActivaController::class, 'index'])->middleware('superadmin');
+    Route::delete('/seguridad/sesiones/empresa/{empresa}', [SesionActivaController::class, 'destroyEmpresa'])->middleware('superadmin');
+    Route::delete('/seguridad/sesiones/{sesion}', [SesionActivaController::class, 'destroy'])->middleware('superadmin');
+
     Route::get('/respaldos/base', [DescargaBaseController::class, 'base'])->middleware('superadmin');
     Route::get('/respaldos/empresa', [DescargaBaseController::class, 'empresa'])->middleware('admin');
+    Route::get('/respaldos/resumen', [ResumenRespaldosController::class, 'index'])->middleware('superadmin');
+    Route::post('/respaldos/ejecutar', [ResumenRespaldosController::class, 'ejecutar'])->middleware('superadmin');
 
     Route::get('/monitoreo/estado', [MonitoreoController::class, 'estado'])->middleware('superadmin');
     Route::get('/monitoreo/respaldos', [MonitoreoController::class, 'respaldos'])->middleware('superadmin');
     Route::get('/monitoreo/trabajos-fallidos', [MonitoreoController::class, 'trabajosFallidos'])->middleware('superadmin');
     Route::post('/monitoreo/trabajos-fallidos/{uuid}/reintentar', [MonitoreoController::class, 'reintentar'])->middleware('superadmin')->whereUuid('uuid');
+
+    Route::get('/tareas-programadas', [TareaProgramadaController::class, 'index'])->middleware('superadmin');
+    Route::patch('/tareas-programadas/{clave}', [TareaProgramadaController::class, 'update'])->middleware('superadmin');
+    Route::get('/tareas-programadas/{clave}/historial', [TareaProgramadaController::class, 'historial'])->middleware('superadmin');
 
     Route::get('/exportaciones', [ExportacionController::class, 'index']);
     Route::get('/exportaciones/{exportacion}/descargar', [ExportacionController::class, 'descargar'])->whereNumber('exportacion');

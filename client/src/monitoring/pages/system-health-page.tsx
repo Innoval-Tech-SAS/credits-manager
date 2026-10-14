@@ -8,6 +8,7 @@ import { BackupsStatusCard } from '../components/backups-status-card';
 import { FailedJobsCard } from '../components/failed-jobs-card';
 import { LiveIndicator } from '../components/live-indicator';
 import { QueuesCard } from '../components/queues-card';
+import { ScheduledTasksStatusCard } from '../components/scheduled-tasks-status-card';
 import { ServerMetricsCards } from '../components/server-metrics-cards';
 import { ServicesStatusCard } from '../components/services-status-card';
 import { UsageChartCard } from '../components/usage-chart-card';
@@ -55,6 +56,10 @@ export const SystemHealthPage: FC = () => {
                         <div className="xl:col-span-7">
                             <BackupsStatusCard status={backups} error={backupsError} />
                         </div>
+                    </div>
+
+                    <div className="mb-6">
+                        <ScheduledTasksStatusCard tareasProgramadas={health.tareas_programadas} />
                     </div>
                 </>
             )}

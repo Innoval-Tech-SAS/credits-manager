@@ -57,6 +57,9 @@ const AuditLogPage = lazyPage(() => import('./audit/pages/audit-log-page'), 'Aud
 const AuditRecoveryPage = lazyPage(() => import('./audit/pages/audit-recovery-page'), 'AuditRecoveryPage');
 const BackupsPage = lazyPage(() => import('./backups/pages/backups-page'), 'BackupsPage');
 const SystemHealthPage = lazyPage(() => import('./monitoring/pages/system-health-page'), 'SystemHealthPage');
+const ScheduledTasksPage = lazyPage(() => import('./monitoring/pages/scheduled-tasks-page'), 'ScheduledTasksPage');
+const ActiveSessionsPage = lazyPage(() => import('./security/pages/active-sessions-page'), 'ActiveSessionsPage');
+const AccessHistoryPage = lazyPage(() => import('./security/pages/access-history-page'), 'AccessHistoryPage');
 const CalendarPage = lazyPage(() => import('./calendar/pages/calendar-page'), 'CalendarPage');
 const TaxObligationsPage = lazyPage(() => import('./tax-obligations/pages/tax-obligations-page'), 'TaxObligationsPage');
 const CreateEconomicActivityPage = lazyPage(() => import('./expenses/pages/create-economic-activity-page'), 'CreateEconomicActivityPage');
@@ -107,6 +110,7 @@ const CreateCreditPage = lazyPage(() => import('./credits/pages/create-credit-pa
 const CreditDetailPage = lazyPage(() => import('./credits/pages/credit-detail-page'), 'CreditDetailPage');
 const CreditsListPage = lazyPage(() => import('./credits/pages/credits-list-page'), 'CreditsListPage');
 const CompaniesListPage = lazyPage(() => import('./company/pages/companies-list-page'), 'CompaniesListPage');
+const CompanyDashboardPage = lazyPage(() => import('./company/pages/company-dashboard-page'), 'CompanyDashboardPage');
 const CreateCompanyPage = lazyPage(() => import('./company/pages/create-company-page'), 'CreateCompanyPage');
 const EditCompanyPage = lazyPage(() => import('./company/pages/edit-company-page'), 'EditCompanyPage');
 const EmailSettingsPage = lazyPage(() => import('./email/pages/email-settings-page'), 'EmailSettingsPage');
@@ -393,6 +397,14 @@ const routes: RouteObject[] = [
                         ),
                     },
                     {
+                        path: 'empresas/:id/dashboard',
+                        element: (
+                            <RequireSuperAdmin>
+                                <CompanyDashboardPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
                         path: 'geografia/municipios',
                         element: (
                             <RequireSuperAdmin>
@@ -433,6 +445,30 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireSuperAdmin>
                                 <SystemHealthPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
+                        path: 'tareas-programadas',
+                        element: (
+                            <RequireSuperAdmin>
+                                <ScheduledTasksPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
+                        path: 'seguridad/sesiones',
+                        element: (
+                            <RequireSuperAdmin>
+                                <ActiveSessionsPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
+                        path: 'seguridad/accesos',
+                        element: (
+                            <RequireSuperAdmin>
+                                <AccessHistoryPage />
                             </RequireSuperAdmin>
                         ),
                     },

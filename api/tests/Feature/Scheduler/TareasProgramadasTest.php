@@ -7,6 +7,7 @@ use App\Creditos\Models\Cuota;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\AfirmaAuditoria;
 use Tests\Concerns\CreatesCreditFixtures;
@@ -88,5 +89,31 @@ class TareasProgramadasTest extends TestCase
 
         $this->assertSame(0, Cuota::where('estado', EstadoCuota::Vencida)->count());
         $this->assertSinEventosDeAuditoria('modificar', 'cartera');
+    }
+
+    public function test_al_correr_la_tarea_de_mora_queda_una_ejecucion_ok_en_el_historial(): void
+    {
+        $this->crearCuotasVencidasEnDosEmpresas();
+
+        $this->travelTo(now()->startOfDay()->addMinutes(5));
+        $this->artisan('schedule:run')->assertSuccessful();
+
+        $this->assertDatabaseHas('ejecuciones_tareas_programadas', [
+            'tarea_clave' => 'cuotas:actualizar-vencidas',
+            'resultado' => 'ok',
+        ]);
+    }
+
+    public function test_pausar_la_tarea_desde_la_tabla_evita_que_el_scheduler_la_corra(): void
+    {
+        $this->crearCuotasVencidasEnDosEmpresas();
+        DB::table('tareas_programadas')->where('clave', 'cuotas:actualizar-vencidas')->update(['activa' => false]);
+
+        $this->travelTo(now()->startOfDay()->addMinutes(5));
+        $this->artisan('schedule:run')->assertSuccessful();
+
+        $this->assertSame(0, Cuota::where('estado', EstadoCuota::Vencida)->count());
+        $this->assertSinEventosDeAuditoria('modificar', 'cartera');
+        $this->assertDatabaseMissing('ejecuciones_tareas_programadas', ['tarea_clave' => 'cuotas:actualizar-vencidas']);
     }
 }

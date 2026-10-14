@@ -3,7 +3,9 @@
 namespace App\Monitoreo\Services;
 
 use App\Monitoreo\Constants\MonitoreoConstants;
+use App\Monitoreo\Constants\TareaProgramadaConstants;
 use App\Monitoreo\Events\EstadoMonitoreoActualizado;
+use App\Monitoreo\Repositories\EjecucionTareaProgramadaRepository;
 use Illuminate\Broadcasting\Broadcasters\PusherBroadcaster;
 use Illuminate\Support\Facades\Broadcast;
 use Throwable;
@@ -18,6 +20,7 @@ class PanelMonitoreoService
         protected MetricasServidorService $metricas,
         protected EstadoServiciosService $servicios,
         protected EstadoColasService $colas,
+        protected EjecucionTareaProgramadaRepository $ejecucionesTareas,
     ) {}
 
     public function instantanea(): array
@@ -27,6 +30,7 @@ class PanelMonitoreoService
             'servicios' => $this->servicios->revisar(),
             'colas' => $this->colas->colas(),
             'auditoria' => $this->colas->auditoria(),
+            'tareas_programadas' => $this->ejecucionesTareas->ultimasPorClave(TareaProgramadaConstants::CLAVES),
             'generado_en' => now()->toIso8601String(),
         ];
     }

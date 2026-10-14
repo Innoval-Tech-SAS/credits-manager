@@ -25,7 +25,7 @@ export const RadialGaugeChart: FC<RadialGaugeChartProps> = ({ percentage, color,
                     value: {
                         offsetY: -40,
                         fontSize: '36px',
-                        fontWeight: 700,
+                        fontWeight: 600,
                         color: '#1D2939',
                         formatter: (val) => `${val.toFixed(0)}%`,
                     },

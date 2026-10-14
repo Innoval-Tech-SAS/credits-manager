@@ -4,7 +4,7 @@ export type AuditFilters = {
     hasta: string;
     modulo: string;
     accion: string;
-    autor: string;
+    autor_usuario_id: string;
     entidad: string;
     empresa_id: string;
 };

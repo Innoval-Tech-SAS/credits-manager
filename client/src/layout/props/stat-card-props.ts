@@ -9,4 +9,6 @@ export type StatCardProps = {
     icon: LucideIcon;
     accent?: StatCardAccent;
     cambio?: StatCardCambio;
+    /** Si viene, la tarjeta completa es un enlace a esta ruta. */
+    to?: string;
 };

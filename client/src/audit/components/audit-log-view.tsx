@@ -20,7 +20,7 @@ import { buildAuditTableColumns } from '../utils/build-audit-table-columns';
 import { AuditEventDetailModal } from './audit-event-detail-modal';
 import { AuditFilters } from './audit-filters';
 
-export const AuditLogView: FC<AuditLogViewProps> = ({ companies }) => {
+export const AuditLogView: FC<AuditLogViewProps> = ({ companies, users }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const canExport = canAccessAudit(user, 'exportar_bitacora');
@@ -83,7 +83,7 @@ export const AuditLogView: FC<AuditLogViewProps> = ({ companies }) => {
             pagination={<Pagination page={page} totalPages={totalPages} onPageChange={setPage} />}
             modals={<AuditEventDetailModal event={selectedEvent} companies={companies} onClose={() => setSelectedEvent(null)} />}
         >
-            <AuditFilters filters={draftFilters} companies={companies} onChange={handleFilterChange} onReset={handleReset} resetToken={resetToken} />
+            <AuditFilters filters={draftFilters} companies={companies} users={users} onChange={handleFilterChange} onReset={handleReset} resetToken={resetToken} />
 
             <DataTable
                 columns={buildAuditTableColumns(companies, setSelectedEvent)}
