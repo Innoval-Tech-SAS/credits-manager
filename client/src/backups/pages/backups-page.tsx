@@ -24,9 +24,9 @@ export const BackupsPage: FC = () => {
                     <>
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6">
                             <BackupDownloadCard
-                                title="Base de datos completa"
-                                description="Todas las empresas. No incluye contraseñas."
-                                buttonLabel="Descargar base completa"
+                                title="Base de datos"
+                                description="Exporta toda la informacion disponible en la DB.1"
+                                buttonLabel="Descargar"
                                 icon={<DatabaseBackup className="size-5" />}
                                 endpoint="/respaldos/base"
                                 fallbackFilename="base-completa.sql.gz"

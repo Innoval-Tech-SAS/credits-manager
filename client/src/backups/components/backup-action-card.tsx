@@ -27,20 +27,26 @@ export const BackupActionCard: FC<BackupActionCardProps> = ({ onCompleted }) => 
     };
 
     return (
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3 sm:p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
+        <section className="flex flex-1 flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/3">
+            <div className="flex items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-500 dark:bg-brand-500/15 dark:text-brand-400">
+                    <CloudUpload className="size-5" />
+                </span>
+
+                <div className="flex flex-col gap-1">
                     <h2 className="text-theme-xl font-semibold text-gray-800 dark:text-white/90">Respaldo manual</h2>
                     <p className="text-theme-sm text-gray-500 dark:text-gray-400">Crea una copia ahora mismo, sin esperar al ciclo automático.</p>
                 </div>
-
-                <Button className="w-full sm:w-auto" startIcon={<CloudUpload className="size-4" />} disabled={isLoading} onClick={() => void ejecutar()}>
-                    {isLoading ? 'Respaldando… puede tardar varios minutos' : 'Respaldar ahora'}
-                </Button>
             </div>
 
             {mensaje && <Alert variant="success" title="Listo" message={mensaje} onDismiss={() => setMensaje(null)} />}
             {error && <Alert variant="danger" title="No se pudo respaldar" message={error} onDismiss={() => setError(null)} />}
+
+            <div className="flex">
+                <Button className="w-full sm:w-auto" startIcon={<CloudUpload className="size-4" />} disabled={isLoading} onClick={() => void ejecutar()}>
+                    {isLoading ? 'Respaldando… puede tardar varios minutos' : 'Respaldar ahora'}
+                </Button>
+            </div>
         </section>
     );
 };
