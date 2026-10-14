@@ -789,7 +789,7 @@ class DocumentoFacturacionService
         $fecha = now('America/Bogota')->toDateString();
         $overrides = [];
 
-        $resultado = array_map(function (array $entrada) use ($empresa, $tercero, $parametrizaciones, $sugeridos, $yaFacturados, $fecha, $fechaDocumento, $usuario, &$overrides) {
+        $resultado = array_map(function (array $entrada) use ($credito, $empresa, $tercero, $parametrizaciones, $sugeridos, $yaFacturados, $fecha, $fechaDocumento, $usuario, &$overrides) {
             $tipoConcepto = TipoConceptoFacturacion::from($entrada['tipo_concepto']);
             $cuotaId = isset($entrada['cuota_id']) ? (int) $entrada['cuota_id'] : null;
             $valor = Dinero::desdePesos($entrada['valor']);
