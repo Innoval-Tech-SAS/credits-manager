@@ -8,11 +8,10 @@ export const StackedBarChart: FC<StackedBarChartProps> = ({ categories, series, 
     const formatear = valueFormatter ?? ((value: number) => value.toLocaleString('es-CO'));
 
     const options: ApexOptions = {
-        chart: { type: 'bar', fontFamily: 'Outfit, sans-serif', stacked: true, toolbar: { show: false } },
+        chart: { type: 'bar', fontFamily: 'Outfit, sans-serif', stacked: true, toolbar: { show: false }, zoom: { enabled: false } },
         colors: series.map((serie) => serie.color),
-        plotOptions: { bar: { borderRadius: 3, borderRadiusApplication: 'end', columnWidth: '55%' } },
+        plotOptions: { bar: { borderRadius: 10, borderRadiusApplication: 'end', borderRadiusWhenStacked: 'last', columnWidth: '39%' } },
         dataLabels: { enabled: false },
-        stroke: { show: true, width: 2, colors: ['transparent'] },
         xaxis: {
             categories,
             axisBorder: { show: false },
@@ -20,8 +19,17 @@ export const StackedBarChart: FC<StackedBarChartProps> = ({ categories, series, 
         },
         yaxis: { labels: { formatter: formatear }, ...(integerValues && { forceNiceScale: true, decimalsInFloat: 0 }) },
         grid: { yaxis: { lines: { show: true } } },
-        legend: { position: 'top', horizontalAlign: 'right', fontFamily: 'Outfit, sans-serif', markers: { size: 6 } },
-        tooltip: { y: { formatter: formatear } },
+        fill: { opacity: 1 },
+        legend: {
+            position: 'top',
+            horizontalAlign: 'right',
+            fontFamily: 'Outfit, sans-serif',
+            fontSize: '14px',
+            fontWeight: 400,
+            markers: { size: 5, shape: 'circle', strokeWidth: 0 },
+            itemMargin: { horizontal: 10, vertical: 0 },
+        },
+        tooltip: { x: { show: false }, y: { formatter: formatear } },
     };
 
     return <Chart type="bar" height={height} series={series.map(({ name, data }) => ({ name, data }))} options={options} />;

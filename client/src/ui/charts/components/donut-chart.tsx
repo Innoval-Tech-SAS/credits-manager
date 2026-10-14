@@ -17,7 +17,7 @@ export const DonutChart: FC<DonutChartProps> = ({
         chart: { type: 'donut', fontFamily: 'Outfit, sans-serif' },
         labels,
         colors,
-        stroke: { show: false },
+        stroke: { show: false, width: 4, colors: ['transparent'] },
         dataLabels: { enabled: false },
         states: {
             hover: { filter: { type: 'none' } },
@@ -30,12 +30,17 @@ export const DonutChart: FC<DonutChartProps> = ({
             position: 'bottom',
             horizontalAlign: 'center',
             fontFamily: 'Outfit, sans-serif',
-            markers: { size: 6 },
+            fontSize: '14px',
+            fontWeight: 400,
+            markers: { size: 6, shape: 'circle', strokeWidth: 0 },
+            itemMargin: { horizontal: 10, vertical: 6 },
         },
         plotOptions: {
             pie: {
+                expandOnClick: false,
                 donut: {
-                    size: '72%',
+                    size: '65%',
+                    background: 'transparent',
                     labels: {
                         show: true,
                         name: { show: true, fontSize: '13px' },
