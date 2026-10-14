@@ -92,7 +92,7 @@ class AsientosFacturacionTest extends TestCase
     public function test_nota_credito_y_nota_debito_generan_asientos_cuadrados_con_su_regla(): void
     {
         $empresa = $this->crearEmpresaDePrueba();
-        $this->actingAsAdmin($empresa);
+        $admin = $this->actingAsAdmin($empresa);
         $this->crearReglasFacturacion();
         $factura = $this->postJson(self::BASE.'/documentos/'.$this->borrador('1000')['id'].'/emitir')->assertOk()->json('documento');
         $linea = $factura['lineas'][0]['id'];
@@ -102,8 +102,8 @@ class AsientosFacturacionTest extends TestCase
         ])->assertStatus(201)->json('documento');
         $credito = $this->aprobarNotaCredito($pendiente, $empresa);
 
-        // El aprobador de la nota crédito queda como usuario actual: se retoma como admin para la nota débito.
-        $this->actingAsAdmin($empresa);
+        // El aprobador de la nota crédito queda como usuario actual: se retoma al mismo admin para la nota débito.
+        $this->actingAs($admin, 'sanctum');
         $debito = $this->postJson(self::BASE.'/documentos/'.$factura['id'].'/notas', [
             'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'fecha_vencimiento' => '2026-12-01',
             'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],

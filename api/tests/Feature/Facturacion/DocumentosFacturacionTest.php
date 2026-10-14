@@ -27,6 +27,9 @@ class DocumentosFacturacionTest extends TestCase
 
     private const BASE = '/api/v1/facturacion/documentos';
 
+    /** @var array<int, Usuario> aprobador de nota crédito ya creado por empresa: `Rol::create` no admite dos roles del mismo nombre en una empresa. */
+    private array $aprobadoresNc = [];
+
     private function credito(): Credito
     {
         $this->crearReglasFacturacion();
@@ -56,12 +59,18 @@ class DocumentosFacturacionTest extends TestCase
      * Aprueba una nota crédito pendiente con una persona distinta de quien la solicitó (7.1.2) — sin esto, la nota
      * se queda en `pendiente_aprobacion`, sin número ni efecto sobre el saldo de la factura. Deja al aprobador como
      * usuario autenticado: si el test sigue operando como el solicitante original, hay que volver a `actingAs()`.
+     * El aprobador se crea una sola vez por empresa y se reutiliza: `Rol::create` no admite dos roles con el mismo
+     * nombre en la misma empresa, y un test puede aprobar más de una nota.
      */
     private function aprobarNotaCredito(array $notaPendiente, Empresa $empresa): array
     {
-        $this->actingAsRolConPermisos('aprobador_nc', [
-            'facturacion.aprobar_nota_credito', 'facturacion.listar_facturas', 'facturacion.listar_notas_credito',
-        ], $empresa);
+        if (! isset($this->aprobadoresNc[$empresa->id])) {
+            $this->aprobadoresNc[$empresa->id] = $this->actingAsRolConPermisos('aprobador_nc', [
+                'facturacion.aprobar_nota_credito', 'facturacion.listar_facturas', 'facturacion.listar_notas_credito',
+            ], $empresa);
+        }
+
+        $this->actingAs($this->aprobadoresNc[$empresa->id], 'sanctum');
 
         return $this->postJson(self::BASE.'/'.$notaPendiente['id'].'/aprobar')->assertOk()->json('documento');
     }
