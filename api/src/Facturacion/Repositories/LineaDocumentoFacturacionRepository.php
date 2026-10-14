@@ -9,6 +9,7 @@ use App\Facturacion\Enums\TipoConceptoFacturacion;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Models\LineaDocumentoFacturacion;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -113,6 +114,9 @@ class LineaDocumentoFacturacionRepository extends BaseRepository
      */
     public function conceptoManualYaFacturado(int $empresaId, int $creditoId, TipoConceptoFacturacion $tipoConcepto, string $concepto, string $fecha): bool
     {
+        $inicioMes = Carbon::parse($fecha)->startOfMonth()->toDateString();
+        $finMes = Carbon::parse($fecha)->endOfMonth()->toDateString();
+
         return DB::table('lineas_documento_facturacion as l')
             ->join('documentos_facturacion as d', fn ($join) => $join->on('d.id', '=', 'l.documento_id')->on('d.empresa_id', '=', 'l.empresa_id'))
             ->where('l.empresa_id', $empresaId)
@@ -124,8 +128,7 @@ class LineaDocumentoFacturacionRepository extends BaseRepository
             ->whereNull('l.cuota_id')
             ->where('l.tipo_concepto', $tipoConcepto->value)
             ->where('l.concepto', $concepto)
-            ->whereRaw('YEAR(d.fecha) = YEAR(?)', [$fecha])
-            ->whereRaw('MONTH(d.fecha) = MONTH(?)', [$fecha])
+            ->whereBetween('d.fecha', [$inicioMes, $finMes])
             ->exists();
     }
 
