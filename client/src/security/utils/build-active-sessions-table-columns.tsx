@@ -4,23 +4,13 @@ import { ActionButton } from '@ui/action-button/components/action-button';
 import { formatDateTimeEs } from '../../shared/utils/format-datetime-es';
 import type { ApiActiveSession } from '../types/api-active-session';
 import { isMobileUserAgent } from './is-mobile-user-agent';
+import { parseBrowserName } from './parse-browser-name';
 
 export function buildActiveSessionsTableColumns(
     onViewDetail: (session: ApiActiveSession) => void,
     onClose: (session: ApiActiveSession) => void,
 ): DataTableColumn<ApiActiveSession>[] {
     return [
-        {
-            key: 'dispositivo',
-            label: 'Dispositivo',
-            render: (session) => (
-                <ActionButton
-                    icon={isMobileUserAgent(session.user_agent) ? <Smartphone className="size-5" /> : <Monitor className="size-5" />}
-                    label="Ver detalle del dispositivo"
-                    onClick={() => onViewDetail(session)}
-                />
-            ),
-        },
         {
             key: 'usuario',
             label: 'Usuario',
@@ -38,11 +28,22 @@ export function buildActiveSessionsTableColumns(
         },
         { key: 'ip_address', label: 'IP', render: (session) => session.ip_address ?? '—' },
         {
+            key: 'dispositivo',
+            label: 'Dispositivo',
+            render: (session) => (
+                <ActionButton
+                    icon={isMobileUserAgent(session.user_agent) ? <Smartphone className="size-5" /> : <Monitor className="size-5" />}
+                    label="Ver detalle del dispositivo"
+                    onClick={() => onViewDetail(session)}
+                />
+            ),
+        },
+        {
             key: 'user_agent',
             label: 'Navegador',
             render: (session) => (
-                <span className="block max-w-72 truncate text-xs text-gray-500 lg:max-w-md dark:text-gray-400" title={session.user_agent ?? undefined}>
-                    {session.user_agent ?? '—'}
+                <span className="whitespace-nowrap text-sm text-gray-700 dark:text-gray-300" title={session.user_agent ?? undefined}>
+                    {parseBrowserName(session.user_agent)}
                 </span>
             ),
         },

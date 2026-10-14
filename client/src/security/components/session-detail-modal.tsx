@@ -5,6 +5,7 @@ import { Modal } from '@ui/modal/components/modal';
 import { formatDateTimeEs } from '../../shared/utils/format-datetime-es';
 import type { SessionDetailModalProps } from '../props/session-detail-modal-props';
 import { isMobileUserAgent } from '../utils/is-mobile-user-agent';
+import { parseBrowserName } from '../utils/parse-browser-name';
 
 export const SessionDetailModal: FC<SessionDetailModalProps> = ({ session, onClose }) => (
     <Modal isOpen={session !== null} onClose={onClose} size="sm">
@@ -41,7 +42,8 @@ export const SessionDetailModal: FC<SessionDetailModalProps> = ({ session, onClo
 
                     <div>
                         <dt className="text-theme-xs font-medium text-gray-500 dark:text-gray-400">Navegador</dt>
-                        <dd className="mt-1 text-sm wrap-break-word text-gray-800 dark:text-white/90">{session.user_agent ?? '—'}</dd>
+                        <dd className="mt-1 text-sm font-medium text-gray-800 dark:text-white/90">{parseBrowserName(session.user_agent)}</dd>
+                        <dd className="mt-1 text-xs wrap-break-word text-gray-500 dark:text-gray-400">{session.user_agent ?? '—'}</dd>
                     </div>
 
                     <div>
