@@ -1,23 +1,14 @@
 import type { FC } from 'react';
 
-import { FieldSkeleton } from './field-skeleton';
-import { SkeletonBar } from './skeleton-bar';
+import { StatCardSkeleton } from './stat-card-skeleton';
 
-const FILTROS = 3;
+const TARJETAS = 6;
 
-/** Silueta del inicio de superadmin: filtros (sin asesor ni cliente, el superadmin no los tiene) y el mensaje de "elige una empresa". */
+/** Silueta del inicio de superadmin: las 6 tarjetas de plataforma del panel propio (ver `SuperadminHomeCards`). */
 export const SuperadminHomePageSkeleton: FC = () => (
-    <div className="flex flex-1 flex-col">
-        <div className="mb-6 rounded-2xl border border-gray-200 bg-white p-5 md:p-6 dark:border-gray-800 dark:bg-white/3">
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(14rem,1fr))] gap-4">
-                {Array.from({ length: FILTROS }, (_, indice) => (
-                    <FieldSkeleton key={indice} />
-                ))}
-            </div>
-        </div>
-
-        <div className="flex items-center justify-center rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
-            <SkeletonBar className="h-4 w-64" />
-        </div>
+    <div className="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 xl:grid-cols-3">
+        {Array.from({ length: TARJETAS }, (_, indice) => (
+            <StatCardSkeleton key={indice} />
+        ))}
     </div>
 );

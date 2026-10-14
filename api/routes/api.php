@@ -29,6 +29,7 @@ use App\Correo\Controllers\PlantillaCorreoController;
 use App\Correo\Controllers\RecordatorioCorreoController;
 use App\Creditos\Controllers\CreditoController;
 use App\Dashboard\Controllers\DashboardController;
+use App\Dashboard\Controllers\PanelSuperadminController;
 use App\Egresos\Controllers\EgresoController;
 use App\Empleadores\Controllers\EmpleadorController;
 use App\Empresas\Controllers\EmpresaAdminController;
@@ -89,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/empresa/logo', [EmpresaController::class, 'uploadLogo'])->middleware('admin');
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/panel-superadmin', [PanelSuperadminController::class, 'index'])->middleware('superadmin');
 
     Route::get('/geografia/paises', [PaisController::class, 'index']);
     Route::get('/geografia/estados', [EstadoController::class, 'index']);

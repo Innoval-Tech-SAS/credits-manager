@@ -4,8 +4,6 @@ import { useState } from 'react';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useAuth } from '../../auth/hooks/use-auth';
 import { usePermission } from '../../auth/hooks/use-permission';
-import type { PaginatedResponse } from '../../shared/types/paginated-response';
-import type { ApiCompany } from '../../company/types/api-company';
 import { periodoActual } from '../../goals/utils/periodo-meta';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
 import { DashboardSkeletonBody } from '@ui/skeleton/components/dashboard-skeleton-body';
@@ -15,13 +13,26 @@ import { DashboardMetricCards } from '../components/dashboard-metric-cards';
 import { DashboardHistoricoCard } from '../components/dashboard-historico-card';
 import { DashboardCarteraCard } from '../components/dashboard-cartera-card';
 import { PagosDelDiaCard } from '../components/pagos-del-dia-card';
+import { SuperadminHomeCards } from '../components/superadmin-home-cards';
 import type { ApiDashboardSummary } from '../types/api-dashboard-summary';
 import type { DashboardFiltrosValor } from '../types/dashboard-filtros-valor';
 import { buildDashboardEndpoint } from '../utils/build-dashboard-endpoint';
 
 export const HomePage: FC = () => {
     const { user } = useAuth();
-    const esSuperAdmin = user?.isSuperAdmin ?? false;
+
+    return user?.isSuperAdmin ? <SuperadminHome /> : <CompanyHome />;
+};
+
+/** Panel propio del superadmin: tarjetas de plataforma, nunca datos de negocio de una empresa. */
+const SuperadminHome: FC = () => (
+    <div className="flex min-h-full flex-col pb-6">
+        <PageBreadcrumb pageTitle="Inicio" />
+        <SuperadminHomeCards />
+    </div>
+);
+
+const CompanyHome: FC = () => {
     const puedeRegistrarPago = usePermission('pagos', 'crear');
     const puedeVerClientes = usePermission('clientes', 'listar');
     const puedeAsignarAsesor = usePermission('clientes', 'crear');
@@ -34,9 +45,8 @@ export const HomePage: FC = () => {
         estado: null,
     });
 
-    const endpoint = buildDashboardEndpoint(filtros, esSuperAdmin);
+    const endpoint = buildDashboardEndpoint(filtros, false);
     const { data: resumen, error } = useResource<ApiDashboardSummary>(endpoint);
-    const { data: empresas } = useResource<PaginatedResponse<ApiCompany>>(esSuperAdmin ? '/empresas?per_page=100' : null);
 
     const handleFiltrosChange = (cambios: Partial<DashboardFiltrosValor>) => {
         setFiltros((anterior) => ({ ...anterior, ...cambios }));
@@ -48,14 +58,6 @@ export const HomePage: FC = () => {
                 <div className="rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400">
                     {error}
                 </div>
-            );
-        }
-
-        if (endpoint === null) {
-            return (
-                <p className="rounded-2xl border border-gray-200 bg-white p-6 text-center text-sm text-gray-500 dark:border-gray-800 dark:bg-white/3 dark:text-gray-400">
-                    Elige una empresa para ver su dashboard.
-                </p>
             );
         }
 
@@ -81,7 +83,7 @@ export const HomePage: FC = () => {
                     </div>
                 )}
 
-                {!esSuperAdmin && <GoalsDashboardSection />}
+                <GoalsDashboardSection />
 
                 <DashboardHistoricoCard historico={resumen.historico} />
             </>
@@ -95,7 +97,7 @@ export const HomePage: FC = () => {
             <DashboardFilters
                 filtros={filtros}
                 onChange={handleFiltrosChange}
-                empresas={esSuperAdmin ? (empresas?.data ?? []) : null}
+                empresas={null}
                 mostrarAsesor={puedeAsignarAsesor}
                 mostrarCliente={puedeVerClientes}
             />
