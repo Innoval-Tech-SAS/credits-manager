@@ -1,11 +1,26 @@
 import type { DataTableColumn } from '@ui/table/props/data-table-props';
-import { LogOut } from 'lucide-react';
+import { LogOut, Monitor, Smartphone } from 'lucide-react';
 import { ActionButton } from '@ui/action-button/components/action-button';
 import { formatDateTimeEs } from '../../shared/utils/format-datetime-es';
 import type { ApiActiveSession } from '../types/api-active-session';
+import { isMobileUserAgent } from './is-mobile-user-agent';
 
-export function buildActiveSessionsTableColumns(onClose: (session: ApiActiveSession) => void): DataTableColumn<ApiActiveSession>[] {
+export function buildActiveSessionsTableColumns(
+    onViewDetail: (session: ApiActiveSession) => void,
+    onClose: (session: ApiActiveSession) => void,
+): DataTableColumn<ApiActiveSession>[] {
     return [
+        {
+            key: 'dispositivo',
+            label: 'Dispositivo',
+            render: (session) => (
+                <ActionButton
+                    icon={isMobileUserAgent(session.user_agent) ? <Smartphone className="size-5" /> : <Monitor className="size-5" />}
+                    label="Ver detalle del dispositivo"
+                    onClick={() => onViewDetail(session)}
+                />
+            ),
+        },
         {
             key: 'usuario',
             label: 'Usuario',

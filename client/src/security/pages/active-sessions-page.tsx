@@ -8,6 +8,7 @@ import { ModuleListPage } from '@ui/module/components/module-list-page';
 import { DataTable } from '@ui/table/components/data-table';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { SessionDetailModal } from '../components/session-detail-modal';
 import type { ApiActiveSession } from '../types/api-active-session';
 import { buildActiveSessionsTableColumns } from '../utils/build-active-sessions-table-columns';
 
@@ -15,6 +16,7 @@ export const ActiveSessionsPage: FC = () => {
     const { data, error, isLoading, refetch } = useResource<{ sesiones: ApiActiveSession[] }>('/seguridad/sesiones');
     const { sendRequest, isLoading: isClosing } = useSendRequest();
 
+    const [sessionToView, setSessionToView] = useState<ApiActiveSession | null>(null);
     const [sessionToClose, setSessionToClose] = useState<ApiActiveSession | null>(null);
     const [companyToClose, setCompanyToClose] = useState('');
     const [confirmingCompany, setConfirmingCompany] = useState(false);
@@ -100,6 +102,8 @@ export const ActiveSessionsPage: FC = () => {
             }
             modals={
                 <>
+                    <SessionDetailModal session={sessionToView} onClose={() => setSessionToView(null)} />
+
                     <ConfirmModal
                         isOpen={sessionToClose !== null}
                         onClose={() => setSessionToClose(null)}
@@ -123,7 +127,10 @@ export const ActiveSessionsPage: FC = () => {
             }
         >
             <DataTable
-                columns={buildActiveSessionsTableColumns((session) => setSessionToClose(session))}
+                columns={buildActiveSessionsTableColumns(
+                    (session) => setSessionToView(session),
+                    (session) => setSessionToClose(session),
+                )}
                 rows={sessions}
                 getRowKey={(session) => session.id}
                 loading={isLoading}
