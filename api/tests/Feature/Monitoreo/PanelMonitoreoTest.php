@@ -86,10 +86,27 @@ class PanelMonitoreoTest extends TestCase
             ->assertJsonPath('servidor.encendido_segundos', 93784)
             ->assertJsonPath('servidor.red.rx_bytes', 500000)
             ->assertJsonPath('servidor.red.tx_bytes', 300000)
-            ->assertJsonStructure(['servidor' => ['disco' => ['total_bytes', 'usado_bytes', 'porcentaje']], 'servicios', 'colas', 'auditoria', 'generado_en']);
+            ->assertJsonStructure([
+                'servidor' => ['disco' => ['total_bytes', 'usado_bytes', 'porcentaje']],
+                'servicios', 'colas', 'auditoria', 'tareas_programadas', 'generado_en',
+            ]);
 
         // JSON no distingue 25.0 de 25: se compara por valor, no por tipo.
         $this->assertEquals(25.0, $respuesta->json('servidor.memoria.porcentaje'));
+    }
+
+    public function test_estado_trae_la_ultima_ejecucion_de_cada_tarea_programada(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        DB::table('ejecuciones_tareas_programadas')->insert([
+            ['tarea_clave' => 'metas:evaluar', 'iniciado_en' => now()->subDay(), 'finalizado_en' => now()->subDay(), 'resultado' => 'ok', 'error' => null],
+            ['tarea_clave' => 'metas:evaluar', 'iniciado_en' => now(), 'finalizado_en' => now(), 'resultado' => 'error', 'error' => 'Falló'],
+        ]);
+
+        $respuesta = $this->getJson('/api/v1/monitoreo/estado')->assertOk();
+
+        $respuesta->assertJsonPath('tareas_programadas.metas:evaluar.resultado', 'error');
     }
 
     public function test_un_servicio_sin_latido_sale_caido_y_uno_ocupado_muestra_su_trabajo(): void

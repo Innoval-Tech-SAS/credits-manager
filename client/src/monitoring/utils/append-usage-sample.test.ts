@@ -17,6 +17,7 @@ function snapshot(generadoEn: string, cpu: number): ApiSystemHealth {
         servicios: [],
         colas: [],
         auditoria: { en_stream: 0, pendientes: 0 },
+        tareas_programadas: {},
         generado_en: generadoEn,
     };
 }

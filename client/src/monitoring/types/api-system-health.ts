@@ -1,3 +1,4 @@
+import type { ResultadoEjecucionTarea } from './api-tarea-programada';
 import type { ServiceStatus } from './service-status';
 
 export type ApiServerMetrics = {
@@ -32,5 +33,7 @@ export type ApiSystemHealth = {
     servicios: ApiServiceState[];
     colas: ApiQueueState[];
     auditoria: { en_stream: number | null; pendientes: number | null };
+    /** Solo trae las claves con al menos una ejecución; las que nunca han corrido no aparecen. */
+    tareas_programadas: Partial<Record<string, { resultado: ResultadoEjecucionTarea; finalizado_en: string }>>;
     generado_en: string;
 };
