@@ -184,6 +184,9 @@ return [
             'distribucion_supera' => 'La distribución suma :suma y supera la meta de :meta.',
             'distribucion_incompleta' => 'La distribución debe sumar exactamente la meta de :meta.',
         ],
+        'tareas_programadas' => [
+            'no_pausable' => 'El respaldo automático no se puede pausar; solo se puede cambiar su hora.',
+        ],
         'obligaciones_tributarias' => [
             'nombre_repetido' => 'Ya existe un tipo de obligación tributaria con este nombre.',
             'periodo_repetido' => 'Ya existe esta obligación tributaria para el período.',

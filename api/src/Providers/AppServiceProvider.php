@@ -10,6 +10,7 @@ use App\Metas\Commands\EvaluarMetasCommand;
 use App\Monitoreo\Commands\PublicarMonitoreoCommand;
 use App\Monitoreo\Listeners\LatidoScheduler;
 use App\Monitoreo\Listeners\LatidoTrabajadores;
+use App\Monitoreo\Listeners\RegistroEjecucionTarea;
 use App\Monitoreo\Services\RegistroLatidos;
 use App\ObligacionesTributarias\Commands\EvaluarAlertasObligacionesCommand;
 use App\Redis\Contracts\RedisClienteInterface;
@@ -17,6 +18,9 @@ use App\Redis\Services\RedisCliente;
 use App\Respaldos\Commands\EjecutarRespaldoCommand;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Events\CommandStarting;
+use Illuminate\Console\Events\ScheduledTaskFailed;
+use Illuminate\Console\Events\ScheduledTaskFinished;
+use Illuminate\Console\Events\ScheduledTaskSkipped;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
@@ -50,6 +54,8 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(JobProcessing::class, [LatidoTrabajadores::class, 'alEmpezar']);
         Event::listen([JobProcessed::class, JobFailed::class], [LatidoTrabajadores::class, 'alTerminar']);
         Event::listen(CommandStarting::class, LatidoScheduler::class);
+        Event::listen(ScheduledTaskFinished::class, [RegistroEjecucionTarea::class, 'alTerminar']);
+        Event::listen([ScheduledTaskSkipped::class, ScheduledTaskFailed::class], [RegistroEjecucionTarea::class, 'alFallar']);
 
         RateLimiter::for('login', function (Request $peticion) {
             $usuario = Str::lower((string) $peticion->input('usuario'));

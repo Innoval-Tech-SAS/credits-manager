@@ -64,6 +64,7 @@ export const SUPERADMIN_NAV_ITEMS: NavItem[] = [
     },
     { name: "Respaldos", icon: DatabaseBackup, path: "/respaldos" },
     { name: "Salud del sistema", icon: Activity, path: "/monitoreo" },
+    { name: "Tareas programadas", icon: CalendarClock, path: "/tareas-programadas" },
 ];
 
 export const NAV_ITEMS: NavItem[] = [

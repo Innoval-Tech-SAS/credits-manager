@@ -57,6 +57,7 @@ const AuditLogPage = lazyPage(() => import('./audit/pages/audit-log-page'), 'Aud
 const AuditRecoveryPage = lazyPage(() => import('./audit/pages/audit-recovery-page'), 'AuditRecoveryPage');
 const BackupsPage = lazyPage(() => import('./backups/pages/backups-page'), 'BackupsPage');
 const SystemHealthPage = lazyPage(() => import('./monitoring/pages/system-health-page'), 'SystemHealthPage');
+const ScheduledTasksPage = lazyPage(() => import('./monitoring/pages/scheduled-tasks-page'), 'ScheduledTasksPage');
 const CalendarPage = lazyPage(() => import('./calendar/pages/calendar-page'), 'CalendarPage');
 const TaxObligationsPage = lazyPage(() => import('./tax-obligations/pages/tax-obligations-page'), 'TaxObligationsPage');
 const CreateEconomicActivityPage = lazyPage(() => import('./expenses/pages/create-economic-activity-page'), 'CreateEconomicActivityPage');
@@ -442,6 +443,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireSuperAdmin>
                                 <SystemHealthPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
+                        path: 'tareas-programadas',
+                        element: (
+                            <RequireSuperAdmin>
+                                <ScheduledTasksPage />
                             </RequireSuperAdmin>
                         ),
                     },
