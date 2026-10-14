@@ -55,7 +55,7 @@ class TareasProgramadasAdminTest extends TestCase
             ->assertJsonPath('tarea.clave', 'metas:evaluar')
             ->assertJsonPath('tarea.activa', false);
 
-        $this->assertDatabaseHas('tareas_programadas', ['clave' => 'metas:evaluar', 'hora' => '22:30:00', 'activa' => false]);
+        $this->assertDatabaseHas('tareas_programadas', ['clave' => 'metas:evaluar', 'hora' => '22:30', 'activa' => 0]);
 
         $eventos = $this->eventosDeAuditoria(AccionAuditoria::Modificar->value, 'tareas_programadas');
         $this->assertCount(1, $eventos);
@@ -70,7 +70,7 @@ class TareasProgramadasAdminTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('activa');
 
-        $this->assertDatabaseHas('tareas_programadas', ['clave' => 'respaldos:ejecutar', 'hora' => '01:00:00', 'activa' => true]);
+        $this->assertDatabaseHas('tareas_programadas', ['clave' => 'respaldos:ejecutar', 'hora' => '01:00', 'activa' => 1]);
     }
 
     public function test_actualizar_rechaza_una_hora_con_formato_invalido(): void
