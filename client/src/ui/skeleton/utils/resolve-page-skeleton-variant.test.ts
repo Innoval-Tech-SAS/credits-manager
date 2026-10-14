@@ -8,6 +8,7 @@ describe('resolvePageSkeletonVariant', () => {
         ['/calendario', 'calendar'],
         ['/cartera', 'summary'],
         ['/metas', 'summary'],
+        ['/respaldos', 'summary'],
         ['/clientes/12', 'summary'],
         ['/creditos/7', 'summary'],
         ['/pagos/creditos/7', 'summary'],
@@ -30,7 +31,6 @@ describe('resolvePageSkeletonVariant', () => {
         ['/clientes', 'list'],
         ['/empresas', 'list'],
         ['/geografia/municipios', 'list'],
-        ['/respaldos', 'list'],
     ] as const)('%s → %s', (pathname, esperado) => {
         expect(resolvePageSkeletonVariant(pathname)).toBe(esperado);
     });

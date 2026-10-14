@@ -67,6 +67,7 @@ use App\Pagos\Controllers\PagoController;
 use App\Proveedores\Controllers\ProveedorController;
 use App\Recibos\Controllers\ReciboCajaController;
 use App\Respaldos\Controllers\DescargaBaseController;
+use App\Respaldos\Controllers\ResumenRespaldosController;
 use App\Terceros\Controllers\TerceroController;
 use App\Usuarios\Controllers\PermisoController;
 use App\Usuarios\Controllers\RolController;
@@ -106,6 +107,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/respaldos/base', [DescargaBaseController::class, 'base'])->middleware('superadmin');
     Route::get('/respaldos/empresa', [DescargaBaseController::class, 'empresa'])->middleware('admin');
+    Route::get('/respaldos/resumen', [ResumenRespaldosController::class, 'index'])->middleware('superadmin');
+    Route::post('/respaldos/ejecutar', [ResumenRespaldosController::class, 'ejecutar'])->middleware('superadmin');
 
     Route::get('/monitoreo/estado', [MonitoreoController::class, 'estado'])->middleware('superadmin');
     Route::get('/monitoreo/respaldos', [MonitoreoController::class, 'respaldos'])->middleware('superadmin');

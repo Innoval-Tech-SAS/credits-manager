@@ -10,7 +10,7 @@ const RUTAS: readonly (readonly [RegExp, PageSkeletonVariant])[] = [
     [/^\/calendario$/, 'calendar'],
 
     // Fichas con tarjetas de métricas arriba.
-    [/^\/(cartera|metas)$/, 'summary'],
+    [/^\/(cartera|metas|respaldos)$/, 'summary'],
     [/^\/(clientes|creditos)\/(?!crear$)[^/]+$/, 'summary'],
     [/^\/pagos\/creditos\/[^/]+$/, 'summary'],
 
