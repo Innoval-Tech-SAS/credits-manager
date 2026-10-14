@@ -64,6 +64,30 @@ class PanelSuperadminTest extends TestCase
             ->assertJsonPath('ultimo_respaldo.alerta', $respaldoEsperado['alerta']);
     }
 
+    public function test_el_panel_trae_la_tendencia_de_logins_y_las_empresas_recientes(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $empresaVieja = $this->crearEmpresaDePrueba();
+        DB::table('empresas')->where('id', $empresaVieja->id)->update(['creado_en' => now()->subDays(30)]);
+        $empresaReciente = $this->crearEmpresaDePrueba();
+
+        $this->loginFallido(now());
+        $this->loginExitoso(now());
+        $this->loginFallido(now()->subDays(20)); // fuera de la ventana de 14 días
+
+        $respuesta = $this->getJson('/api/v1/panel-superadmin')->assertOk();
+
+        $tendencia = $respuesta->json('tendencia_logins');
+        $this->assertCount(14, $tendencia);
+        $this->assertSame(now()->toDateString(), $tendencia[13]['fecha']);
+        $this->assertSame(1, $tendencia[13]['exitosos']);
+        $this->assertSame(1, $tendencia[13]['fallidos']);
+        $this->assertSame(0, $tendencia[0]['exitosos'] + $tendencia[0]['fallidos']);
+
+        $respuesta->assertJsonPath('empresas_recientes.0.id', $empresaReciente->id);
+    }
+
     private function loginFallido(\DateTimeInterface $fechaHora): void
     {
         BitacoraAuditoria::query()->create([
@@ -72,6 +96,19 @@ class PanelSuperadminTest extends TestCase
             'modulo' => 'auth',
             'accion' => 'login_fallido',
             'descripcion' => 'Intento de acceso fallido.',
+            'fecha_hora' => $fechaHora,
+            'creado_en' => now(),
+        ]);
+    }
+
+    private function loginExitoso(\DateTimeInterface $fechaHora): void
+    {
+        BitacoraAuditoria::query()->create([
+            'evento_id' => (string) Str::uuid(),
+            'empresa_id' => null,
+            'modulo' => 'auth',
+            'accion' => 'login',
+            'descripcion' => 'Inicio de sesión.',
             'fecha_hora' => $fechaHora,
             'creado_en' => now(),
         ]);

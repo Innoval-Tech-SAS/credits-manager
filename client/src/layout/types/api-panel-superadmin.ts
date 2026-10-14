@@ -9,4 +9,6 @@ export type ApiPanelSuperadmin = {
         alerta: boolean;
     };
     errores_tareas_mes: number;
+    tendencia_logins: { fecha: string; exitosos: number; fallidos: number }[];
+    empresas_recientes: { id: number; nombre_empresa: string; creado_en: string | null }[];
 };

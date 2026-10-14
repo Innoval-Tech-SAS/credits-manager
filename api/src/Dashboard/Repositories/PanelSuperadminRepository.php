@@ -6,6 +6,7 @@ use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Models\BitacoraAuditoria;
 use App\Empresas\Models\Empresa;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -39,5 +40,22 @@ class PanelSuperadminRepository
     public function contarEmpresasActivas(): int
     {
         return Empresa::query()->count();
+    }
+
+    /** @return Collection<int, BitacoraAuditoria> filas con `fecha`/`accion`/`total`, una por día y acción con al menos un evento. */
+    public function tendenciaLoginsPorDia(CarbonInterface $desde): Collection
+    {
+        return BitacoraAuditoria::query()
+            ->selectRaw('DATE(fecha_hora) as fecha, accion, COUNT(*) as total')
+            ->whereIn('accion', [AccionAuditoria::Login->value, AccionAuditoria::LoginFallido->value])
+            ->where('fecha_hora', '>=', $desde)
+            ->groupBy('fecha', 'accion')
+            ->get();
+    }
+
+    /** @return Collection<int, Empresa> */
+    public function empresasRecientes(int $limite): Collection
+    {
+        return Empresa::query()->latest('creado_en')->limit($limite)->get(['id', 'nombre_empresa', 'creado_en']);
     }
 }
