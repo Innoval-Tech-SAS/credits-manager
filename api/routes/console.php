@@ -18,10 +18,14 @@ Artisan::command('inspire', function () {
  * lanza un `schedule:run` nuevo cada minuto (`ScheduleWorkCommand::work()`), así que un cambio en la
  * tabla aplica en menos de un minuto sin reiniciar nada.
  */
-$horarios = app(ProgramacionTareasService::class)->horariosVigentes();
+$servicioProgramacion = app(ProgramacionTareasService::class);
 
-$horaDe = fn (string $clave) => substr($horarios[$clave]['hora'] ?? TareaProgramadaConstants::HORAS_POR_DEFECTO[$clave], 0, 5);
-$activaDe = fn (string $clave) => $horarios[$clave]['activa'] ?? true;
+$horaDe = fn (string $clave) => substr(
+    $servicioProgramacion->horariosVigentes()[$clave]['hora'] ?? TareaProgramadaConstants::HORAS_POR_DEFECTO[$clave],
+    0,
+    5,
+);
+$activaDe = fn (string $clave) => $servicioProgramacion->horariosVigentes()[$clave]['activa'] ?? true;
 
 /**
  * Marca la mora de todas las empresas una vez al día, sin sesión. Las llamadas a
