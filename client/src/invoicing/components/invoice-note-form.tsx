@@ -87,7 +87,7 @@ const FormularioNota: FC<FormularioNotaProps> = ({ documento, tipoInicial, onClo
                     lineas,
                 },
             });
-            onEmitida();
+            onEmitida(tipo);
         } catch (caught) {
             onError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         }

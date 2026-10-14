@@ -2,10 +2,13 @@
 
 namespace Tests\Feature\Facturacion;
 
+use App\Empresas\Models\Empresa;
+use App\Usuarios\Models\Usuario;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesAuditoriaFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
 use Tests\Concerns\CreatesFacturacionFixtures;
 use Tests\TestCase;
@@ -17,6 +20,7 @@ use Tests\TestCase;
 class BackfillDocumentoTerceroFacturasMigracionTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesAuditoriaFixtures;
     use CreatesCreditFixtures;
     use CreatesFacturacionFixtures;
     use RefreshDatabase;
@@ -57,8 +61,18 @@ class BackfillDocumentoTerceroFacturasMigracionTest extends TestCase
         $motivoCodigo = $tipo === 'nota_credito' ? 'ajuste_precio' : 'cambio_valor';
 
         return $this->postJson(self::BASE.'/documentos/'.$documento['id'].'/notas', [
-            'tipo' => $tipo, 'motivo_codigo' => $motivoCodigo, 'lineas' => [$linea],
+            'tipo' => $tipo, 'motivo_codigo' => $motivoCodigo, 'fecha_vencimiento' => '2026-12-01', 'lineas' => [$linea],
         ])->assertStatus(201)->json('documento');
+    }
+
+    /** Aprueba una nota crédito pendiente con una persona distinta de quien la solicitó (7.1.2), y vuelve a dejar a `$admin` como usuario autenticado. */
+    private function aprobarNotaCredito(array $notaPendiente, Empresa $empresa, Usuario $admin): array
+    {
+        $this->actingAsRolConPermisos('aprobador_nc', ['facturacion.aprobar_nota_credito'], $empresa);
+        $aprobada = $this->postJson(self::BASE.'/documentos/'.$notaPendiente['id'].'/aprobar')->assertOk()->json('documento');
+        $this->actingAs($admin, 'sanctum');
+
+        return $aprobada;
     }
 
     /** @return array{documento: array<string, mixed>, aplicaciones: list<array<string, mixed>>} */
@@ -87,7 +101,8 @@ class BackfillDocumentoTerceroFacturasMigracionTest extends TestCase
 
     public function test_reconstruye_el_mismo_documento_que_el_flujo_actual(): void
     {
-        $this->actingAsAdmin();
+        $empresa = $this->crearEmpresaDePrueba();
+        $admin = $this->actingAsAdmin($empresa);
         $this->crearReglasFacturacion();
 
         $sinMovimientos = $this->factura('1000');
@@ -99,6 +114,7 @@ class BackfillDocumentoTerceroFacturasMigracionTest extends TestCase
 
         $conNotas = $this->factura('1000');
         $notaCredito = $this->nota($conNotas, 'nota_credito', ['linea_origen_id' => $conNotas['lineas'][0]['id'], 'valor' => '400']);
+        $notaCredito = $this->aprobarNotaCredito($notaCredito, $empresa, $admin);
         $this->nota($conNotas, 'nota_debito', ['concepto' => 'MORA', 'descripcion' => 'Gastos de cobranza', 'valor' => '50']);
         $this->nota($notaCredito, 'nota_debito', ['concepto' => 'MORA', 'descripcion' => 'Corrige la nota', 'valor' => '20']);
 

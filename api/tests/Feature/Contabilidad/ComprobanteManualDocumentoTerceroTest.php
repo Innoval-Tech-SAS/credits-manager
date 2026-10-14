@@ -320,7 +320,7 @@ class ComprobanteManualDocumentoTerceroTest extends TestCase
         $this->postJson(self::BASE."/{$comprobanteId}/reversar", ['motivo' => 'Causación duplicada por error'])
             ->assertStatus(201);
 
-        $this->assertSoftDeleted('documentos_tercero', ['id' => $documento->id]);
+        $this->assertDatabaseHas('documentos_tercero', ['id' => $documento->id, 'estado' => 'anulado', 'borrado_en' => null]);
     }
 
     public function test_no_se_puede_reversar_una_causacion_que_ya_tiene_un_pago_de_otro_comprobante(): void

@@ -4,6 +4,7 @@ namespace Tests\Feature\Facturacion;
 
 use App\Contabilidad\Models\TipoDocumentoNegocio;
 use App\Creditos\Models\Credito;
+use App\Empresas\Models\Empresa;
 use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,6 +26,9 @@ class DocumentosFacturacionTest extends TestCase
     use RefreshDatabase;
 
     private const BASE = '/api/v1/facturacion/documentos';
+
+    /** @var array<int, Usuario> aprobador de nota crédito ya creado por empresa: `Rol::create` no admite dos roles del mismo nombre en una empresa. */
+    private array $aprobadoresNc = [];
 
     private function credito(): Credito
     {
@@ -49,6 +53,26 @@ class DocumentosFacturacionTest extends TestCase
         return $this->postJson(self::BASE, ['cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id, 'lineas' => $this->lineas($valores)])
             ->assertStatus(201)
             ->json('documento');
+    }
+
+    /**
+     * Aprueba una nota crédito pendiente con una persona distinta de quien la solicitó (7.1.2) — sin esto, la nota
+     * se queda en `pendiente_aprobacion`, sin número ni efecto sobre el saldo de la factura. Deja al aprobador como
+     * usuario autenticado: si el test sigue operando como el solicitante original, hay que volver a `actingAs()`.
+     * El aprobador se crea una sola vez por empresa y se reutiliza: `Rol::create` no admite dos roles con el mismo
+     * nombre en la misma empresa, y un test puede aprobar más de una nota.
+     */
+    private function aprobarNotaCredito(array $notaPendiente, Empresa $empresa): array
+    {
+        if (! isset($this->aprobadoresNc[$empresa->id])) {
+            $this->aprobadoresNc[$empresa->id] = $this->actingAsRolConPermisos('aprobador_nc', [
+                'facturacion.aprobar_nota_credito', 'facturacion.listar_facturas', 'facturacion.listar_notas_credito',
+            ], $empresa);
+        }
+
+        $this->actingAs($this->aprobadoresNc[$empresa->id], 'sanctum');
+
+        return $this->postJson(self::BASE.'/'.$notaPendiente['id'].'/aprobar')->assertOk()->json('documento');
     }
 
     private function factura(Credito $credito, array $valores = ['1000']): array
@@ -120,7 +144,14 @@ class DocumentosFacturacionTest extends TestCase
         $credito = $this->credito();
 
         $primera = $this->factura($credito);
-        $segunda = $this->factura($credito);
+
+        // Concepto distinto al de factura(): el mismo crédito ya factura ese concepto este mes (8.2), este test solo
+        // quiere comprobar la numeración consecutiva, no el duplicado.
+        $borradorSegunda = $this->postJson(self::BASE, [
+            'cliente_id' => $credito->cliente_id, 'credito_id' => $credito->id,
+            'lineas' => [['concepto' => 'OTROS.GASTOS.COBRANZA', 'descripcion' => 'Gastos de cobranza', 'valor' => '1000', 'tipo_concepto' => 'otros_gastos']],
+        ])->assertStatus(201)->json('documento');
+        $segunda = $this->postJson(self::BASE.'/'.$borradorSegunda['id'].'/emitir')->assertOk()->json('documento');
 
         $this->assertSame(1, $primera['consecutivo']);
         $this->assertSame('F 1', $primera['numero']);
@@ -154,7 +185,8 @@ class DocumentosFacturacionTest extends TestCase
 
     public function test_nota_credito_no_acredita_mas_que_lo_que_queda_de_la_linea_y_anula_la_factura(): void
     {
-        $this->actingAsAdmin();
+        $empresa = $this->crearEmpresaDePrueba();
+        $admin = $this->actingAsAdmin($empresa);
         $factura = $this->factura($this->credito(), ['1000']);
         $lineaId = $factura['lineas'][0]['id'];
 
@@ -163,23 +195,32 @@ class DocumentosFacturacionTest extends TestCase
             'lineas' => [['linea_origen_id' => $lineaId, 'valor' => '600']],
         ])->assertStatus(201);
 
-        $this->assertSame('NC 1', $primera->json('documento.numero'));
+        $this->assertSame('pendiente_aprobacion', $primera->json('documento.estado'));
+        $this->assertNull($primera->json('documento.numero'));
 
+        $primeraAprobada = $this->aprobarNotaCredito($primera->json('documento'), $empresa);
+        $this->assertSame('NC 1', $primeraAprobada['numero']);
+        $this->actingAs($admin, 'sanctum');
+
+        // Ya acreditados 600 de 1000: una segunda nota de 500 sobre la misma línea se pasaría del saldo que queda.
         $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
             'tipo' => 'nota_credito', 'motivo_codigo' => 'ajuste_precio',
             'lineas' => [['linea_origen_id' => $lineaId, 'valor' => '500']],
         ])->assertStatus(422)->assertJsonValidationErrors('lineas');
 
-        $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
+        $tercera = $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
             'tipo' => 'nota_credito', 'motivo_codigo' => 'anulacion',
             'lineas' => [['linea_origen_id' => $lineaId, 'valor' => '400']],
-        ])->assertStatus(201);
+        ])->assertStatus(201)->json('documento');
+
+        $this->aprobarNotaCredito($tercera, $empresa);
+        $this->actingAs($admin, 'sanctum');
 
         $detalle = $this->getJson(self::BASE.'/'.$factura['id'])->assertOk();
 
         $this->assertTrue($detalle->json('totales.anulada'));
         $this->assertSame('0.00', $detalle->json('totales.saldo'));
-        $this->assertEventoAuditoria('anular', 'facturacion', 'documento_facturacion', $primera->json('documento.id'));
+        $this->assertEventoAuditoria('anular', 'facturacion', 'documento_facturacion', $primeraAprobada['id']);
     }
 
     public function test_nota_credito_exige_una_linea_de_su_factura(): void
@@ -199,13 +240,67 @@ class DocumentosFacturacionTest extends TestCase
         ])->assertStatus(422)->assertJsonValidationErrors('lineas.0.linea_origen_id');
     }
 
+    public function test_el_mismo_usuario_no_puede_aprobar_su_propia_nota_credito(): void
+    {
+        $this->actingAsAdmin();
+        $factura = $this->factura($this->credito(), ['1000']);
+        $lineaId = $factura['lineas'][0]['id'];
+
+        $pendiente = $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'devolucion',
+            'lineas' => [['linea_origen_id' => $lineaId, 'valor' => '100']],
+        ])->assertStatus(201)->json('documento');
+
+        $this->postJson(self::BASE.'/'.$pendiente['id'].'/aprobar')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('documento');
+
+        $this->assertDatabaseHas('documentos_facturacion', ['id' => $pendiente['id'], 'estado' => 'pendiente_aprobacion']);
+    }
+
+    public function test_sin_permiso_de_aprobar_no_puede_aprobar(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->actingAsAdmin($empresa);
+        $factura = $this->factura($this->credito(), ['1000']);
+        $lineaId = $factura['lineas'][0]['id'];
+
+        $pendiente = $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'devolucion',
+            'lineas' => [['linea_origen_id' => $lineaId, 'valor' => '100']],
+        ])->assertStatus(201)->json('documento');
+
+        $this->actingAsRolConPermisos('solo_lectura_nc', ['facturacion.listar_notas_credito'], $empresa);
+
+        $this->postJson(self::BASE.'/'.$pendiente['id'].'/aprobar')->assertStatus(403);
+    }
+
+    public function test_no_se_puede_aprobar_dos_veces_la_misma_nota_credito(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->actingAsAdmin($empresa);
+        $factura = $this->factura($this->credito(), ['1000']);
+        $lineaId = $factura['lineas'][0]['id'];
+
+        $pendiente = $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
+            'tipo' => 'nota_credito', 'motivo_codigo' => 'devolucion',
+            'lineas' => [['linea_origen_id' => $lineaId, 'valor' => '100']],
+        ])->assertStatus(201)->json('documento');
+
+        $this->aprobarNotaCredito($pendiente, $empresa);
+
+        $this->postJson(self::BASE.'/'.$pendiente['id'].'/aprobar')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('documento');
+    }
+
     public function test_nota_debito_sobre_la_factura_con_concepto_libre(): void
     {
         $this->actingAsAdmin();
         $factura = $this->factura($this->credito(), ['1000']);
 
         $nota = $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar',
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'fecha_vencimiento' => '2026-12-01',
             'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Gastos de cobranza', 'valor' => '50']],
         ])->assertStatus(201);
 
@@ -223,7 +318,7 @@ class DocumentosFacturacionTest extends TestCase
 
         // A diferencia de la nota crédito (limitada al valor de la factura), la nota débito no tiene tope: solo exige soporte.
         $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar',
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'fecha_vencimiento' => '2026-12-01',
             'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Gastos de cobranza', 'valor' => '50000000']],
         ])->assertStatus(201);
     }
@@ -281,17 +376,21 @@ class DocumentosFacturacionTest extends TestCase
 
     public function test_nota_credito_sobre_factura_ya_pagada_deja_saldo_a_favor_en_vez_de_bloquear(): void
     {
-        $this->actingAsAdmin();
+        $empresa = $this->crearEmpresaDePrueba();
+        $admin = $this->actingAsAdmin($empresa);
         $factura = $this->factura($this->credito(), ['1000']);
         $lineaId = $factura['lineas'][0]['id'];
 
         $this->postJson(self::BASE.'/'.$factura['id'].'/cobros', ['fecha' => now()->toDateString(), 'valor' => '1000', 'medio' => 'transferencia'])
             ->assertCreated();
 
-        $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
+        $pendiente = $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
             'tipo' => 'nota_credito', 'motivo_codigo' => 'devolucion',
             'lineas' => [['linea_origen_id' => $lineaId, 'valor' => '300']],
-        ])->assertStatus(201);
+        ])->assertStatus(201)->json('documento');
+
+        $this->aprobarNotaCredito($pendiente, $empresa);
+        $this->actingAs($admin, 'sanctum');
 
         $detalle = $this->getJson(self::BASE.'/'.$factura['id'])->assertOk();
 
@@ -326,7 +425,7 @@ class DocumentosFacturacionTest extends TestCase
         ])->assertStatus(422)->assertJsonValidationErrors(['lineas.0.tasa_mora', 'lineas.0.dias_mora', 'lineas.0.base_mora']);
 
         $nota = $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_debito', 'motivo_codigo' => 'intereses',
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'intereses', 'fecha_vencimiento' => '2026-12-01',
             'lineas' => [[
                 'concepto' => 'MORA', 'descripcion' => 'Intereses de mora', 'valor' => '50',
                 'tasa_mora' => '2.5', 'dias_mora' => 20, 'base_mora' => '1000',
@@ -368,7 +467,7 @@ class DocumentosFacturacionTest extends TestCase
         ])->assertStatus(201);
 
         $this->postJson(self::BASE.'/'.$factura['id'].'/notas', [
-            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar',
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'fecha_vencimiento' => '2026-12-01',
             'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Gastos', 'valor' => '50']],
         ])->assertStatus(403);
     }

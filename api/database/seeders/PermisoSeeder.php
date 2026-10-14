@@ -41,7 +41,7 @@ class PermisoSeeder extends Seeder
         ],
         'informes_contables' => [
             'listar_libro_diario', 'listar_libro_mayor', 'listar_caja_bancos', 'listar_balance_prueba',
-            'listar_estados_financieros', 'listar_auxiliares', 'listar_conciliacion_apertura',
+            'listar_estados_financieros', 'listar_auxiliares', 'listar_conciliacion_apertura', 'listar_controles_cierre',
             'exportar_libro_diario', 'exportar_libro_mayor', 'exportar_caja_bancos', 'exportar_balance_prueba',
             'exportar_estados_financieros', 'exportar_auxiliares', 'imprimir',
         ],
@@ -61,8 +61,8 @@ class PermisoSeeder extends Seeder
         'auditoria' => ['listar', 'exportar_bitacora'],
         'facturacion' => [
             'listar_facturas', 'listar_notas_credito', 'listar_notas_debito', 'crear', 'emitir', 'anular', 'emitir_nota_credito',
-            'emitir_nota_debito', 'imprimir', 'enviar', 'configurar', 'modificar_valores_sugeridos', 'registrar_cobro',
-            'reversar_cobro',
+            'aprobar_nota_credito', 'emitir_nota_debito', 'imprimir', 'enviar', 'configurar', 'modificar_valores_sugeridos',
+            'registrar_cobro', 'reversar_cobro',
         ],
         'importaciones' => [
             'importar_clientes', 'importar_creditos', 'importar_plan_cuotas', 'importar_pagos', 'importar_saldos_iniciales',

@@ -260,4 +260,37 @@ class DocumentoTerceroServiceTest extends TestCase
 
         $servicio->incrementarValor($documento, Dinero::cero(), 'facturacion_nota', 2);
     }
+
+    public function test_anular_marca_el_documento_como_anulado_sin_borrarlo(): void
+    {
+        $this->actingAsAdmin();
+        $tercero = $this->crearTercero();
+        $servicio = app(DocumentoTerceroService::class);
+        $documento = $servicio->crearDocumento($tercero, NaturalezaDocumento::PorPagar, 'factura_compra', 'FC-001', '2026-01-15', 'Compra', Dinero::desdePesos(1000), 'facturas', 1);
+
+        $servicio->anular($documento);
+
+        $this->assertSame(EstadoDocumentoTercero::Anulado, $documento->fresh()->estado);
+        $this->assertTrue($documento->fresh()->saldo->esCero(), 'Un documento anulado no deja nada pendiente.');
+        $this->assertDatabaseHas('documentos_tercero', ['id' => $documento->id, 'estado' => 'anulado', 'saldo' => 0, 'borrado_en' => null]);
+    }
+
+    public function test_trazabilidad_devuelve_el_arbol_con_el_saldo_resultante_de_cada_aplicacion(): void
+    {
+        $this->actingAsAdmin();
+        $tercero = $this->crearTercero();
+        $servicio = app(DocumentoTerceroService::class);
+        $documento = $servicio->crearDocumento($tercero, NaturalezaDocumento::PorPagar, 'causacion', 'CC-000125', '2026-10-08', 'Honorarios', Dinero::desdePesos(10418400), 'gastos', 1);
+
+        $servicio->aplicarValor($tercero, NaturalezaDocumento::PorPagar, [['documento_tercero_id' => $documento->id, 'valor' => 5000000]], 'egresos', 1, '2026-10-20');
+        $servicio->aplicarValor($tercero, NaturalezaDocumento::PorPagar, [['documento_tercero_id' => $documento->id, 'valor' => 5418400]], 'egresos', 2, '2026-11-04');
+
+        $resultado = $servicio->trazabilidad($documento->fresh());
+
+        $this->assertSame($documento->id, $resultado['documento']->id);
+        $this->assertCount(2, $resultado['pasos']);
+        $this->assertEquals(5418400, $resultado['pasos'][0]['saldo_resultante']->aFloat());
+        $this->assertEquals(0, $resultado['pasos'][1]['saldo_resultante']->aFloat());
+        $this->assertSame('egresos', $resultado['pasos'][0]['modulo_aplicacion']);
+    }
 }

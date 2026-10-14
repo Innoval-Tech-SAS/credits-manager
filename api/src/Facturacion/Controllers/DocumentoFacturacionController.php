@@ -117,6 +117,13 @@ class DocumentoFacturacionController extends Controller
         return response()->json($this->documentos->detalle($nota), 201);
     }
 
+    public function aprobar(Request $peticion, DocumentoFacturacion $documento): JsonResponse
+    {
+        $nota = $this->documentos->aprobarNotaCredito($documento, $peticion->user());
+
+        return response()->json($this->documentos->detalle($nota));
+    }
+
     public function anular(MotivoAccionFacturacionRequest $peticion, DocumentoFacturacion $documento): JsonResponse
     {
         $anulada = $this->documentos->anular($documento, $peticion->validated('motivo'), $peticion->user());

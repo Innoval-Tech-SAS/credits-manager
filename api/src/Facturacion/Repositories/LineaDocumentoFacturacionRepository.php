@@ -5,9 +5,11 @@ namespace App\Facturacion\Repositories;
 use App\Core\Base\BaseRepository;
 use App\Core\Dinero\Dinero;
 use App\Facturacion\Enums\EstadoDocumentoFacturacion;
+use App\Facturacion\Enums\TipoConceptoFacturacion;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
 use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Models\LineaDocumentoFacturacion;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -103,6 +105,31 @@ class LineaDocumentoFacturacionRepository extends BaseRepository
             ->whereNotNull('l.cuota_id')
             ->whereNotNull('l.tipo_concepto')
             ->get(['d.id as documento_id', 'l.cuota_id', 'l.tipo_concepto']);
+    }
+
+    /**
+     * Duplicado de una línea manual (sin `cuota_id`): mismo crédito, mismo tipo de concepto, mismo texto de
+     * concepto, en una factura emitida (no anulada) cuya fecha cae en el mismo mes/año que `$fecha` — no hay otro
+     * campo de "período" disponible para una línea libre (8.2, ver `DocumentoFacturacionService::prepararLineas`).
+     */
+    public function conceptoManualYaFacturado(int $empresaId, int $creditoId, TipoConceptoFacturacion $tipoConcepto, string $concepto, string $fecha): bool
+    {
+        $inicioMes = Carbon::parse($fecha)->startOfMonth()->toDateString();
+        $finMes = Carbon::parse($fecha)->endOfMonth()->toDateString();
+
+        return DB::table('lineas_documento_facturacion as l')
+            ->join('documentos_facturacion as d', fn ($join) => $join->on('d.id', '=', 'l.documento_id')->on('d.empresa_id', '=', 'l.empresa_id'))
+            ->where('l.empresa_id', $empresaId)
+            ->where('d.credito_id', $creditoId)
+            ->where('d.tipo', TipoDocumentoFacturacion::Factura->value)
+            ->where('d.estado', EstadoDocumentoFacturacion::Emitido->value)
+            ->whereNull('d.borrado_en')
+            ->whereNull('l.borrado_en')
+            ->whereNull('l.cuota_id')
+            ->where('l.tipo_concepto', $tipoConcepto->value)
+            ->where('l.concepto', $concepto)
+            ->whereBetween('d.fecha', [$inicioMes, $finMes])
+            ->exists();
     }
 
     /** Centavos ya acreditados sobre una línea de factura por notas crédito emitidas. Va con la empresa explícita. */

@@ -244,6 +244,49 @@ class AsientoContableRepository extends BaseRepository
     }
 
     /**
+     * Asientos de caja/bancos de egresos y cobros contabilizados en el rango que todavía no tienen una marca de
+     * conciliación vigente — "cada egreso y cada recibo deben aparecer en el extracto" (6.6.3). Mismo patrón de
+     * `whereNotExists` que `candidatosConciliables()`, pero por prefijo de cuenta y módulo de origen, no por una
+     * sola cuenta: ver `ControlesCierreService`.
+     *
+     * @param  list<string>  $prefijosCuenta
+     * @param  list<string>  $modulosOrigen
+     */
+    public function sinConciliarPorModuloOrigen(int $empresaId, array $prefijosCuenta, array $modulosOrigen, string $desde, string $hasta): Collection
+    {
+        return $this->consultaAuxiliar($empresaId, null, null)
+            ->whereBetween('comprobantes.fecha', [$desde, $hasta])
+            ->whereIn('comprobantes.modulo_origen', $modulosOrigen)
+            ->where(function (Builder $query) use ($prefijosCuenta) {
+                foreach ($prefijosCuenta as $prefijo) {
+                    $query->orWhere('plan_cuentas.codigo', 'like', "{$prefijo}%");
+                }
+            })
+            ->whereNotExists(function (QueryBuilder $consulta) {
+                $consulta->selectRaw('1')
+                    ->from('marcas_conciliacion as mc')
+                    ->whereColumn('mc.asiento_contable_id', 'asientos_contables.id')
+                    ->where('mc.tipo', 'conciliado')
+                    ->whereNotExists(function (QueryBuilder $reversa) {
+                        $reversa->selectRaw('1')->from('marcas_conciliacion as r')->whereColumn('r.marca_origen_id', 'mc.id');
+                    });
+            })
+            ->orderBy('comprobantes.fecha')
+            ->select([
+                'asientos_contables.id',
+                'comprobantes.id as comprobante_id',
+                'comprobantes.fecha',
+                'comprobantes.consecutivo',
+                'comprobantes.modulo_origen',
+                'comprobantes.origen_id',
+                'plan_cuentas.codigo as cuenta_codigo',
+                'asientos_contables.debito',
+                'asientos_contables.credito',
+            ])
+            ->get();
+    }
+
+    /**
      * Saldo previo al rango por cuenta, en centavos. Devuelve también los datos de la cuenta para las cuentas que solo
      * tienen saldo anterior y ningún movimiento dentro del rango.
      */

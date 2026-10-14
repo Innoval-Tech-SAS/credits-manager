@@ -148,7 +148,7 @@ class DocumentoFacturacionService
                 'credito_id' => $credito->id,
             ]);
 
-            $this->lineas->sincronizar($documento, $this->prepararLineas($credito, $lineas, $usuario));
+            $this->lineas->sincronizar($documento, $this->prepararLineas($credito, $lineas, $usuario, $documento->fecha->toDateString()));
 
             $this->auditoria->registrar(
                 AccionAuditoria::Crear,
@@ -183,7 +183,7 @@ class DocumentoFacturacionService
             /** @var Credito $credito */
             $credito = $this->creditos->buscarPorIdOFallar($bloqueado->credito_id);
 
-            $this->lineas->sincronizar($bloqueado, $this->prepararLineas($credito, $lineas, $usuario));
+            $this->lineas->sincronizar($bloqueado, $this->prepararLineas($credito, $lineas, $usuario, $bloqueado->fecha->toDateString()));
 
             $this->auditoria->registrar(
                 AccionAuditoria::Modificar,
@@ -327,7 +327,86 @@ class DocumentoFacturacionService
                 ? $this->lineasDeNotaCredito($bloqueado, $lineas)
                 : $this->lineasDeNotaDebito($bloqueado, $lineas);
 
+            // La nota crédito manual (no la de anular(), ver su propio comentario) requiere aprobación de otra
+            // persona antes de emitirse (7.1.2): queda pendiente y recién se contabiliza en aprobarNotaCredito().
+            if ($tipo === TipoDocumentoFacturacion::NotaCredito) {
+                return $this->solicitarNotaCredito($bloqueado, $motivoCodigo, $motivo, $lineasNota, $usuario);
+            }
+
             return $this->crearNota($bloqueado, $tipo, $motivoCodigo, $motivo, $lineasNota, $usuario, fechaVencimiento: $fechaVencimiento);
+        });
+    }
+
+    /**
+     * Nota crédito pedida por `$usuario`, pendiente de que OTRA persona la apruebe (7.1.2) — a diferencia de
+     * `crearNota()`, no consume consecutivo ni genera asiento o cruce todavía: eso lo hace `aprobarNotaCredito()`.
+     */
+    private function solicitarNotaCredito(DocumentoFacturacion $origen, string $motivoCodigo, string $motivo, array $lineasNota, Usuario $usuario): DocumentoFacturacion
+    {
+        $nota = $this->documentos->crear([
+            'tipo' => TipoDocumentoFacturacion::NotaCredito,
+            'estado' => EstadoDocumentoFacturacion::PendienteAprobacion,
+            'fecha' => now('America/Bogota')->toDateString(),
+            'cliente_id' => $origen->cliente_id,
+            'credito_id' => $origen->credito_id,
+            'documento_origen_id' => $origen->id,
+            'motivo_codigo' => $motivoCodigo,
+            'motivo' => $motivo,
+            'solicitado_por' => $usuario->id,
+        ]);
+
+        $this->lineas->crearParaDocumento($nota, $lineasNota);
+
+        $this->auditoria->registrar(
+            AccionAuditoria::Crear,
+            AuditoriaConstants::MODULO_FACTURACION,
+            "Nota crédito sobre {$origen->numero} solicitada, pendiente de aprobación",
+            'documento_facturacion',
+            $nota->id,
+            nuevos: ['origen' => $origen->numero, 'motivo' => $motivo],
+            autor: $usuario,
+        );
+
+        return $this->conLineas($nota);
+    }
+
+    /**
+     * Aprueba una nota crédito pendiente: la emite, la asienta y la cruza contra la factura — exige un aprobador
+     * distinto de quien la solicitó (7.1.2). No aplica a la nota crédito que genera `anular()`: esa sigue siendo
+     * inmediata, es una acción ya deliberada del usuario sobre su propio documento.
+     */
+    public function aprobarNotaCredito(DocumentoFacturacion $nota, Usuario $aprobador): DocumentoFacturacion
+    {
+        if ($nota->estado !== EstadoDocumentoFacturacion::PendienteAprobacion) {
+            throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.no_pendiente_aprobacion')]);
+        }
+
+        if ($nota->solicitado_por === $aprobador->id) {
+            throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.aprobador_igual_solicitante')]);
+        }
+
+        return DB::transaction(function () use ($nota, $aprobador) {
+            $bloqueada = $this->documentos->bloquear($nota->id);
+
+            if ($bloqueada->estado !== EstadoDocumentoFacturacion::PendienteAprobacion) {
+                throw ValidationException::withMessages(['documento' => __('validation.custom.facturacion.no_pendiente_aprobacion')]);
+            }
+
+            /** @var DocumentoFacturacion $origen */
+            $origen = $this->documentos->bloquear($bloqueada->documento_origen_id);
+            $this->exigirEmitido($origen);
+
+            $conLineas = $this->conLineas($bloqueada);
+
+            // Entre la solicitud y la aprobación pudo aprobarse OTRA nota crédito sobre la misma línea de factura:
+            // el bloqueo del origen de arriba serializa esto con cualquier aprobación concurrente, pero hay que
+            // volver a validar contra el saldo YA acreditado ahora, no contra el que había al solicitar.
+            $this->revalidarLineasDeNotaCredito($conLineas);
+
+            // La fecha contable es la de la aprobación, no la de la solicitud — pudo pasar tiempo entre una y otra.
+            $conLineas->update(['fecha' => now('America/Bogota')->toDateString()]);
+
+            return $this->finalizarNota($conLineas, $origen, TipoDocumentoFacturacion::NotaCredito, $bloqueada->motivo, $aprobador);
         });
     }
 
@@ -492,6 +571,15 @@ class DocumentoFacturacionService
 
         $this->lineas->crearParaDocumento($nota, $lineasNota);
 
+        return $this->finalizarNota($nota, $origen, $tipo, $motivo, $usuario, $anulacion);
+    }
+
+    /**
+     * Emite, asienta y cruza la nota contra la factura origen — lo que `crearNota()` hace de inmediato para nota
+     * débito y para la anulación, y lo que `aprobarNotaCredito()` hace al aprobar una nota crédito pendiente.
+     */
+    private function finalizarNota(DocumentoFacturacion $nota, DocumentoFacturacion $origen, TipoDocumentoFacturacion $tipo, string $motivo, Usuario $usuario, bool $anulacion = false): DocumentoFacturacion
+    {
         $emitida = $this->emitir($nota, $usuario);
         $this->conLineas($emitida);
         $valorNota = $this->sumaLineas($emitida);
@@ -546,6 +634,28 @@ class DocumentoFacturacionService
         );
 
         return $this->conLineas($emitida);
+    }
+
+    /**
+     * Entre que se solicita una nota crédito y se aprueba, otra nota sobre la misma línea pudo aprobarse primero
+     * (el límite original lo validó `lineasDeNotaCredito()` contra el saldo de ESE momento). Vuelve a comprobar
+     * cada línea contra lo que de verdad queda acreditable ahora, con el origen ya bloqueado por el llamador.
+     */
+    private function revalidarLineasDeNotaCredito(DocumentoFacturacion $nota): void
+    {
+        foreach ($nota->lineas as $linea) {
+            if ($linea->linea_origen_id === null) {
+                continue;
+            }
+
+            $lineaOrigen = $linea->origen;
+            $acreditado = Dinero::desdeCentavos($this->lineas->acreditado($nota->empresa_id, $lineaOrigen->id));
+            $restante = $lineaOrigen->valor->restar($acreditado);
+
+            if ($linea->valor->mayorQue($restante)) {
+                throw ValidationException::withMessages(['lineas' => __('validation.custom.facturacion.excede_saldo', ['concepto' => $lineaOrigen->concepto])]);
+            }
+        }
     }
 
     private function emitir(DocumentoFacturacion $documento, Usuario $usuario): DocumentoFacturacion
@@ -663,11 +773,13 @@ class DocumentoFacturacionService
     /**
      * Valida duplicados y el permiso de modificar un valor sugerido, calcula IVA/retenciones por línea (motor
      * fiscal) y deja las líneas listas para `LineaDocumentoFacturacionRepository`. Se recalcula siempre con la
-     * parametrización vigente: solo lo que ya quedó emitido es inmutable.
+     * parametrización vigente: solo lo que ya quedó emitido es inmutable. `$fechaDocumento` es la fecha real del
+     * documento (puede quedar atrás, a diferencia de la fecha fija que usa el motor fiscal más abajo): solo se usa
+     * para decidir el "mismo período" de una línea manual sin `cuota_id` (8.2).
      *
      * @return list<array<string, mixed>>
      */
-    private function prepararLineas(Credito $credito, array $lineas, Usuario $usuario): array
+    private function prepararLineas(Credito $credito, array $lineas, Usuario $usuario, string $fechaDocumento): array
     {
         $empresa = $this->empresaRepositorio->buscarPorIdOFallar($credito->empresa_id);
         $tercero = $credito->cliente->tercero;
@@ -677,7 +789,7 @@ class DocumentoFacturacionService
         $fecha = now('America/Bogota')->toDateString();
         $overrides = [];
 
-        $resultado = array_map(function (array $entrada) use ($empresa, $tercero, $parametrizaciones, $sugeridos, $yaFacturados, $fecha, $usuario, &$overrides) {
+        $resultado = array_map(function (array $entrada) use ($credito, $empresa, $tercero, $parametrizaciones, $sugeridos, $yaFacturados, $fecha, $fechaDocumento, $usuario, &$overrides) {
             $tipoConcepto = TipoConceptoFacturacion::from($entrada['tipo_concepto']);
             $cuotaId = isset($entrada['cuota_id']) ? (int) $entrada['cuota_id'] : null;
             $valor = Dinero::desdePesos($entrada['valor']);
@@ -699,6 +811,11 @@ class DocumentoFacturacionService
 
                     $overrides[] = ['concepto' => $entrada['concepto'], 'sugerido' => $sugerido['valor'], 'nuevo' => $valor->aDecimalString()];
                 }
+            } elseif ($this->lineas->conceptoManualYaFacturado($credito->empresa_id, $credito->id, $tipoConcepto, $entrada['concepto'], $fechaDocumento)) {
+                // Línea libre (sin cuota_id): no hay otro campo de "período" disponible, se usa el mes/año de la factura (8.2).
+                throw ValidationException::withMessages([
+                    'lineas' => __('validation.custom.facturacion.concepto_ya_facturado', ['concepto' => $entrada['concepto']]),
+                ]);
             }
 
             $impuestos = $this->motorFiscal->evaluar($valor, $empresa, $tercero, $parametrizaciones->get($tipoConcepto->value), $fecha);

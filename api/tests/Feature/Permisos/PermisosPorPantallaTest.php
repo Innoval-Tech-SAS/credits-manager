@@ -56,7 +56,8 @@ class PermisosPorPantallaTest extends TestCase
             'tipo' => 'nota_credito', 'motivo_codigo' => 'ajuste_precio', 'lineas' => [['linea_origen_id' => $factura['lineas'][0]['id'], 'valor' => '200']],
         ])->assertCreated()->json('documento');
         $notaDebito = $this->postJson(self::BASE."/documentos/{$factura['id']}/notas", [
-            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],
+            'tipo' => 'nota_debito', 'motivo_codigo' => 'gastos_por_cobrar', 'fecha_vencimiento' => '2026-12-01',
+            'lineas' => [['concepto' => 'MORA', 'descripcion' => 'Mora', 'valor' => '50']],
         ])->assertCreated()->json('documento');
 
         return ['factura' => $factura, 'nota_credito' => $notaCredito, 'nota_debito' => $notaDebito];

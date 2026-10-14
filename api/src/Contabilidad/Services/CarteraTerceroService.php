@@ -78,7 +78,8 @@ class CarteraTerceroService
     {
         $corte = Carbon::parse($fechaCorte);
         $diasDesdeVencimiento = $this->diasDesdeVencimiento($documento->fecha_vencimiento, $corte);
-        $vencido = $documento->estado !== EstadoDocumentoTercero::Cancelado && $diasDesdeVencimiento !== null && $diasDesdeVencimiento > 0;
+        $cerrado = in_array($documento->estado, [EstadoDocumentoTercero::Cancelado, EstadoDocumentoTercero::Anulado], true);
+        $vencido = ! $cerrado && $diasDesdeVencimiento !== null && $diasDesdeVencimiento > 0;
 
         return [
             'id' => $documento->id,

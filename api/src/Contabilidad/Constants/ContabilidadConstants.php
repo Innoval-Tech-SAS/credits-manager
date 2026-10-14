@@ -11,6 +11,11 @@ class ContabilidadConstants
     /** Caja y bancos son las cuentas de la clase 11 del PUC: la pantalla es el libro mayor limitado a ellas. */
     public const PREFIJO_CUENTAS_CAJA_BANCOS = '11';
 
+    /** Prefijos PUC que usan los controles de cierre mensual (6.6.3): CxC (deudoras) y CxP (acreedoras) por edades. */
+    public const PREFIJOS_CUENTAS_POR_COBRAR = ['1305'];
+
+    public const PREFIJOS_CUENTAS_POR_PAGAR = ['2205', '2335'];
+
     /**
      * Catálogos que otras operaciones consultan para elegir un valor (`algun_permiso`): basta con uno de estos
      * permisos. Administrarlos (crear, editar, eliminar) sigue exigiendo el permiso de su pantalla.

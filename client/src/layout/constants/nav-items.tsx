@@ -392,6 +392,13 @@ export const NAV_ITEMS: NavItem[] = [
                 action: "listar_auxiliares",
             },
             {
+                name: "Controles de Cierre",
+                path: "/contabilidad/controles-cierre",
+                icon: ShieldCheck,
+                moduleKey: "informes_contables",
+                action: "listar_controles_cierre",
+            },
+            {
                 name: "Conciliación de Apertura",
                 path: "/contabilidad/conciliacion-apertura",
                 icon: GitCompare,

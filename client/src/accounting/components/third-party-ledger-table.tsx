@@ -2,7 +2,7 @@ import type { FC } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
-import { ArrowRightCircle, Wallet } from 'lucide-react';
+import { ArrowRightCircle, GitBranch, Wallet } from 'lucide-react';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { usePaginatedResource } from '../../shared/hooks/use-paginated-resource';
 import { useResource } from '../../shared/hooks/use-resource';
@@ -21,6 +21,7 @@ import { ToggleSwitchInput } from '@ui/forms/components/toggle-switch-input';
 import { DataTable } from '@ui/table/components/data-table';
 import { Pagination } from '@ui/table/components/pagination';
 import { CarteraAgingStrip } from './cartera-aging-strip';
+import { DocumentTraceabilityModal } from './document-traceability-modal';
 import { RegisterOutflowModal } from './register-outflow-modal';
 import { DOCUMENT_STATUS_BADGE_CLASSES, DOCUMENT_STATUS_LABELS } from '../constants/document-status-badge-classes';
 import type { ApiCarteraDocument, ApiCarteraEdades } from '../types/api-cartera-document';
@@ -33,6 +34,7 @@ const ESTADO_OPTIONS = [
     { value: 'abonado_parcial', label: 'Abonado parcial' },
     { value: 'vencido', label: 'Vencido' },
     { value: 'cancelado', label: 'Pagado' },
+    { value: 'anulado', label: 'Anulado' },
 ];
 
 export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturaleza }) => {
@@ -47,6 +49,7 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
     const [fechaCorte, setFechaCorte] = useState(hoyBogota());
     const [seleccionPago, setSeleccionPago] = useState<Record<number, ApiCarteraDocument>>({});
     const [egresoModalAbierto, setEgresoModalAbierto] = useState(false);
+    const [documentoTrazabilidad, setDocumentoTrazabilidad] = useState<number | null>(null);
     const [mensaje, setMensaje] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
@@ -154,7 +157,7 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                                               key: 'seleccion',
                                               label: '',
                                               render: (documento: ApiCarteraDocument) =>
-                                                  Number(documento.saldo) <= 0 ? null : (
+                                                  Number(documento.saldo) <= 0 || documento.estado === 'anulado' ? null : (
                                                       <Checkbox
                                                           ariaLabel={`Seleccionar documento ${documento.numero_documento}`}
                                                           checked={documento.id in seleccionPago}
@@ -207,27 +210,37 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                                 {
                                     key: 'acciones',
                                     label: 'Acciones',
-                                    render: (documento) =>
-                                        Number(documento.saldo) <= 0 ? null : naturaleza === 'por_pagar' ? (
-                                            puedeRegistrarEgreso && (
-                                                <ActionButton
-                                                    icon={<Wallet className="size-5" />}
-                                                    label="Pagar"
-                                                    onClick={() => {
-                                                        setSeleccionPago({ [documento.id]: documento });
-                                                        setEgresoModalAbierto(true);
-                                                    }}
-                                                />
-                                            )
-                                        ) : (
-                                            documento.modulo_origen === 'facturacion' && (
-                                                <ActionButton
-                                                    icon={<ArrowRightCircle className="size-5" />}
-                                                    label="Ver factura"
-                                                    onClick={() => verDocumentoOrigen(documento)}
-                                                />
-                                            )
-                                        ),
+                                    render: (documento) => (
+                                        <div className="flex items-center gap-1">
+                                            {Number(documento.saldo) > 0 &&
+                                                documento.estado !== 'anulado' &&
+                                                (naturaleza === 'por_pagar' ? (
+                                                    puedeRegistrarEgreso && (
+                                                        <ActionButton
+                                                            icon={<Wallet className="size-5" />}
+                                                            label="Pagar"
+                                                            onClick={() => {
+                                                                setSeleccionPago({ [documento.id]: documento });
+                                                                setEgresoModalAbierto(true);
+                                                            }}
+                                                        />
+                                                    )
+                                                ) : (
+                                                    documento.modulo_origen === 'facturacion' && (
+                                                        <ActionButton
+                                                            icon={<ArrowRightCircle className="size-5" />}
+                                                            label="Ver factura"
+                                                            onClick={() => verDocumentoOrigen(documento)}
+                                                        />
+                                                    )
+                                                ))}
+                                            <ActionButton
+                                                icon={<GitBranch className="size-5" />}
+                                                label="Ver trazabilidad"
+                                                onClick={() => setDocumentoTrazabilidad(documento.id)}
+                                            />
+                                        </div>
+                                    ),
                                 },
                             ]}
                             rows={items}
@@ -272,6 +285,14 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                         refetchEdades();
                     }}
                     onError={setError}
+                />
+            )}
+
+            {documentoTrazabilidad !== null && (
+                <DocumentTraceabilityModal
+                    documentoTerceroId={documentoTrazabilidad}
+                    isOpen
+                    onClose={() => setDocumentoTrazabilidad(null)}
                 />
             )}
         </div>

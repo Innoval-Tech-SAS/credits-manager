@@ -36,4 +36,14 @@ class AplicacionDocumentoRepository extends BaseRepository
             ->whereNull('reversado_en')
             ->exists();
     }
+
+    /** Todas las aplicaciones de un documento (vigentes y reversadas), en el orden en que ocurrieron — para armar el árbol de trazabilidad. */
+    public function deDocumento(int $documentoTerceroId): Collection
+    {
+        return $this->consulta()
+            ->where('documento_tercero_id', $documentoTerceroId)
+            ->orderBy('fecha')
+            ->orderBy('id')
+            ->get();
+    }
 }

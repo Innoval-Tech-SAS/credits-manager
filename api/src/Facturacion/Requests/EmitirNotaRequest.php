@@ -30,7 +30,9 @@ class EmitirNotaRequest extends FormRequest
             'tipo' => ['required', Rule::in(['nota_credito', 'nota_debito'])],
             'motivo_codigo' => ['required', Rule::in(array_column($motivos, 'value'))],
             'motivo_detalle' => [$this->esOtros() ? 'required' : 'nullable', 'string', 'max:500'],
-            'fecha_vencimiento' => ['nullable', 'date'],
+            // El mayor valor de una nota débito debe quedar con vencimiento para entrar al cobro (7.2.2); la nota
+            // crédito no lo usa (ver DocumentoFacturacionService::crearNota), así que ahí se queda opcional.
+            'fecha_vencimiento' => [$esCredito ? 'nullable' : 'required', 'date'],
             'lineas' => ['required', 'array', 'min:1'],
             'lineas.*.linea_origen_id' => [
                 $esCredito ? 'required' : 'nullable',
