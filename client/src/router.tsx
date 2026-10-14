@@ -107,6 +107,7 @@ const CreateCreditPage = lazyPage(() => import('./credits/pages/create-credit-pa
 const CreditDetailPage = lazyPage(() => import('./credits/pages/credit-detail-page'), 'CreditDetailPage');
 const CreditsListPage = lazyPage(() => import('./credits/pages/credits-list-page'), 'CreditsListPage');
 const CompaniesListPage = lazyPage(() => import('./company/pages/companies-list-page'), 'CompaniesListPage');
+const CompanyDashboardPage = lazyPage(() => import('./company/pages/company-dashboard-page'), 'CompanyDashboardPage');
 const CreateCompanyPage = lazyPage(() => import('./company/pages/create-company-page'), 'CreateCompanyPage');
 const EditCompanyPage = lazyPage(() => import('./company/pages/edit-company-page'), 'EditCompanyPage');
 const EmailSettingsPage = lazyPage(() => import('./email/pages/email-settings-page'), 'EmailSettingsPage');
@@ -389,6 +390,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireSuperAdmin>
                                 <CreateCompanyPage />
+                            </RequireSuperAdmin>
+                        ),
+                    },
+                    {
+                        path: 'empresas/:id/dashboard',
+                        element: (
+                            <RequireSuperAdmin>
+                                <CompanyDashboardPage />
                             </RequireSuperAdmin>
                         ),
                     },

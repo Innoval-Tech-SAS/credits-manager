@@ -1,4 +1,4 @@
-/** Raw shape returned by `GET /empresa`, `GET /empresas` (rows), `GET /empresas/{id}`, `POST /empresas` and `PATCH /empresas/{id}`. */
+/** Raw shape returned by `GET /empresas` (rows); `GET /empresa`, `GET /empresas/{id}`, `POST /empresas` y `PATCH /empresas/{id}` la envuelven en `{ empresa: ApiCompany }`. */
 export type ApiCompany = {
     id: number;
     nombre_empresa: string;
