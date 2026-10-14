@@ -157,7 +157,7 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                                               key: 'seleccion',
                                               label: '',
                                               render: (documento: ApiCarteraDocument) =>
-                                                  Number(documento.saldo) <= 0 ? null : (
+                                                  Number(documento.saldo) <= 0 || documento.estado === 'anulado' ? null : (
                                                       <Checkbox
                                                           ariaLabel={`Seleccionar documento ${documento.numero_documento}`}
                                                           checked={documento.id in seleccionPago}
@@ -213,6 +213,7 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                                     render: (documento) => (
                                         <div className="flex items-center gap-1">
                                             {Number(documento.saldo) > 0 &&
+                                                documento.estado !== 'anulado' &&
                                                 (naturaleza === 'por_pagar' ? (
                                                     puedeRegistrarEgreso && (
                                                         <ActionButton

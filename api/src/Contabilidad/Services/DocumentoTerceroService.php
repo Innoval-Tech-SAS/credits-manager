@@ -37,11 +37,13 @@ class DocumentoTerceroService
      * Anula un documento que nunca llegó a tener aplicaciones vigentes — el llamador ya validó eso. Marca
      * `estado: Anulado` en vez de soft-delete: la fila sigue visible en los listados generales de cartera
      * (los que filtran por saldo pendiente ya excluyen por `estado`, no por soft-delete, así que no cambian).
+     * El saldo también queda en cero: un documento anulado no deja nada pendiente por cobrar o pagar,
+     * igual que uno cancelado.
      */
     public function anular(DocumentoTercero $documento): bool
     {
         $anteriores = $this->auditoria->instantanea($documento);
-        $documento = $this->documentos->actualizar($documento, ['estado' => EstadoDocumentoTercero::Anulado]);
+        $documento = $this->documentos->actualizar($documento, ['estado' => EstadoDocumentoTercero::Anulado, 'saldo' => Dinero::cero()]);
 
         $this->auditoria->registrarModificacion(
             AuditoriaConstants::MODULO_CONTABILIDAD,

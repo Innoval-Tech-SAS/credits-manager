@@ -271,7 +271,8 @@ class DocumentoTerceroServiceTest extends TestCase
         $servicio->anular($documento);
 
         $this->assertSame(EstadoDocumentoTercero::Anulado, $documento->fresh()->estado);
-        $this->assertDatabaseHas('documentos_tercero', ['id' => $documento->id, 'estado' => 'anulado', 'borrado_en' => null]);
+        $this->assertTrue($documento->fresh()->saldo->esCero(), 'Un documento anulado no deja nada pendiente.');
+        $this->assertDatabaseHas('documentos_tercero', ['id' => $documento->id, 'estado' => 'anulado', 'saldo' => 0, 'borrado_en' => null]);
     }
 
     public function test_trazabilidad_devuelve_el_arbol_con_el_saldo_resultante_de_cada_aplicacion(): void
