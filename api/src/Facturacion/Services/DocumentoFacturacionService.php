@@ -13,6 +13,7 @@ use App\Core\Consecutivos\Services\ConsecutivoDocumentoService;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Models\Credito;
+use App\Creditos\Models\Cuota;
 use App\Creditos\Repositories\CreditoRepository;
 use App\Creditos\Repositories\CuotaRepository;
 use App\Empresas\Models\Empresa;
@@ -125,6 +126,43 @@ class DocumentoFacturacionService
             'valor' => $cuota->valor_interes->aDecimalString(),
             'fecha_vencimiento' => $cuota->fecha_vencimiento->toDateString(),
         ]];
+    }
+
+    /**
+     * Valor real de cada combo cuota/concepto (capital, interés corriente, otros gastos) de las cuotas pendientes
+     * o vencidas del crédito, para detectar si una línea de factura se apartó de él (8.1 — exige
+     * `facturacion.modificar_valores_sugeridos`). A diferencia de `conceptosSugeridos()`, que solo precarga la
+     * primera cuota y su interés para el formulario, aquí hace falta el valor de referencia de CUALQUIER combo que
+     * el usuario pueda enviar en `lineas`, no solo el que se sugiere por defecto.
+     *
+     * @return Collection<string, Dinero>
+     */
+    private function valoresDeReferenciaPorCuota(Credito $credito): Collection
+    {
+        $yaFacturados = array_flip($this->combosVigentes($credito));
+        $referencias = [];
+
+        foreach ($this->cuotas->pendientesOrdenadas($credito->id) as $cuota) {
+            foreach ($this->componentesDeCuota($cuota) as [$tipoConcepto, $valor]) {
+                $clave = "{$cuota->id}|{$tipoConcepto->value}";
+
+                if ($valor->esPositivo() && ! isset($yaFacturados[$clave])) {
+                    $referencias[$clave] = $valor;
+                }
+            }
+        }
+
+        return collect($referencias);
+    }
+
+    /** @return list<array{0: TipoConceptoFacturacion, 1: Dinero}> */
+    private function componentesDeCuota(Cuota $cuota): array
+    {
+        return [
+            [TipoConceptoFacturacion::Capital, $cuota->valor_capital],
+            [TipoConceptoFacturacion::InteresCorriente, $cuota->valor_interes],
+            [TipoConceptoFacturacion::OtrosGastos, $cuota->valor_otros_gastos],
+        ];
     }
 
     /**
@@ -786,12 +824,12 @@ class DocumentoFacturacionService
         $empresa = $this->empresaRepositorio->buscarPorIdOFallar($credito->empresa_id);
         $tercero = $credito->cliente->tercero;
         $parametrizaciones = $this->parametrizacionesConcepto->paraEmpresa($credito->empresa_id);
-        $sugeridos = collect($this->conceptosSugeridos($credito->id))->keyBy(fn (array $s) => "{$s['cuota_id']}|{$s['tipo_concepto']}");
+        $referencias = $this->valoresDeReferenciaPorCuota($credito);
         $yaFacturados = array_flip($this->combosVigentes($credito));
         $fecha = now('America/Bogota')->toDateString();
         $overrides = [];
 
-        $resultado = array_map(function (array $entrada) use ($credito, $empresa, $tercero, $parametrizaciones, $sugeridos, $yaFacturados, $fecha, $fechaDocumento, $usuario, &$overrides) {
+        $resultado = array_map(function (array $entrada) use ($credito, $empresa, $tercero, $parametrizaciones, $referencias, $yaFacturados, $fecha, $fechaDocumento, $usuario, &$overrides) {
             $tipoConcepto = TipoConceptoFacturacion::from($entrada['tipo_concepto']);
             $cuotaId = isset($entrada['cuota_id']) ? (int) $entrada['cuota_id'] : null;
             $valor = Dinero::desdePesos($entrada['valor']);
@@ -805,13 +843,13 @@ class DocumentoFacturacionService
                     ]);
                 }
 
-                $sugerido = $sugeridos->get($clave);
+                $referencia = $referencias->get($clave);
 
-                if ($sugerido !== null && ! $valor->igualA(Dinero::desdePesos($sugerido['valor']))) {
+                if ($referencia !== null && ! $valor->igualA($referencia)) {
                     // Permiso, no regla de negocio del contenido: igual que ImportacionService::generarAsiento, se corta con 403.
                     abort_unless($usuario->tienePermiso('facturacion', 'modificar_valores_sugeridos'), 403, 'No tienes permiso para realizar esta acción.');
 
-                    $overrides[] = ['concepto' => $entrada['concepto'], 'sugerido' => $sugerido['valor'], 'nuevo' => $valor->aDecimalString()];
+                    $overrides[] = ['concepto' => $entrada['concepto'], 'sugerido' => $referencia->aDecimalString(), 'nuevo' => $valor->aDecimalString()];
                 }
             } elseif ($this->lineas->conceptoManualYaFacturado($credito->empresa_id, $credito->id, $tipoConcepto, $entrada['concepto'], $fechaDocumento)) {
                 // Línea libre (sin cuota_id): no hay otro campo de "período" disponible, se usa el mes/año de la factura (8.2).
