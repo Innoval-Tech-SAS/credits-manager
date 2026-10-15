@@ -74,9 +74,11 @@ class FacturarInteresesPagadosTest extends TestCase
         $credito = $this->credito();
         $cuota = $this->crearCuota($credito, ['estado' => EstadoCuota::Pendiente, 'valor_interes' => 30]);
 
+        // El `Rule::exists` del Request solo valida que la cuota exista y pertenezca al crédito, no su estado:
+        // "no pagada" lo rechaza el Service, con la clave `cuota_ids` sin índice (no `cuota_ids.0`).
         $this->postJson(self::BASE, ['credito_id' => $credito->id, 'cuota_ids' => [$cuota->id]])
             ->assertStatus(422)
-            ->assertJsonValidationErrors('cuota_ids.0');
+            ->assertJsonValidationErrors('cuota_ids');
     }
 
     public function test_una_cuota_de_otro_credito_responde_422(): void
