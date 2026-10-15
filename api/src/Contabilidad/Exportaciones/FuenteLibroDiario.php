@@ -51,6 +51,7 @@ final class FuenteLibroDiario implements FuenteExportable
             new ColumnaExportable('cuenta_codigo', 'Cuenta'),
             new ColumnaExportable('cuenta_nombre', 'Nombre de la cuenta'),
             new ColumnaExportable('descripcion', 'Descripción'),
+            new ColumnaExportable('tercero', 'Tercero'),
             new ColumnaExportable('debito', 'Débito', TipoColumna::Monetario),
             new ColumnaExportable('credito', 'Crédito', TipoColumna::Monetario),
         ];
@@ -67,6 +68,7 @@ final class FuenteLibroDiario implements FuenteExportable
                 'cuenta_codigo' => $movimiento->cuenta_codigo,
                 'cuenta_nombre' => $movimiento->cuenta_nombre,
                 'descripcion' => $movimiento->descripcion,
+                'tercero' => $movimiento->tercero,
                 'debito' => $movimiento->debito,
                 'credito' => $movimiento->credito,
             ];
@@ -80,6 +82,7 @@ final class FuenteLibroDiario implements FuenteExportable
             'cuenta_codigo' => null,
             'cuenta_nombre' => 'Totales',
             'descripcion' => null,
+            'tercero' => null,
             'debito' => Dinero::desdeCentavos($totales['debitos']),
             'credito' => Dinero::desdeCentavos($totales['creditos']),
         ];

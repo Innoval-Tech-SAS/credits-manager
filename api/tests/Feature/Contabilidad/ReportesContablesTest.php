@@ -51,6 +51,26 @@ class ReportesContablesTest extends TestCase
         $this->assertCount(0, $fuera->json('movimientos'));
     }
 
+    public function test_libro_diario_incluye_el_nombre_del_tercero_de_la_linea(): void
+    {
+        $this->actingAsAdmin();
+        $tipo = $this->crearTipoComprobante();
+        $caja = $this->crearCuenta(['tipo' => TipoCuenta::Activo]);
+        $cxp = $this->crearCuenta(['naturaleza' => NaturalezaCuenta::Credito, 'tipo' => TipoCuenta::Pasivo]);
+        $tercero = $this->crearTercero(['nombre' => 'Proveedor de prueba']);
+
+        app(ComprobanteService::class)->crearComprobante($tipo->id, '2026-01-15', [
+            ['cuenta_id' => $caja->id, 'debito' => 100, 'credito' => 0],
+            ['cuenta_id' => $cxp->id, 'debito' => 0, 'credito' => 100, 'tercero_id' => $tercero->id],
+        ], 'Causación con tercero');
+
+        $respuesta = $this->getJson('/api/v1/contabilidad/libro-diario?desde=2026-01-01&hasta=2026-01-31')->assertOk();
+
+        $movimientos = collect($respuesta->json('movimientos'));
+        $this->assertSame($tercero->nombre, $movimientos->firstWhere('cuenta_codigo', $cxp->codigo)['tercero']);
+        $this->assertNull($movimientos->firstWhere('cuenta_codigo', $caja->codigo)['tercero']);
+    }
+
     public function test_libro_mayor_calcula_el_saldo_inicial_y_los_movimientos(): void
     {
         $this->actingAsAdmin();

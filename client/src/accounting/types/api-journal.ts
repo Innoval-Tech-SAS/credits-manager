@@ -10,6 +10,7 @@ export type ApiJournalEntry = {
     descripcion: string | null;
     debito: string;
     credito: string;
+    tercero: string | null;
 };
 
 /** Raw shape returned by `GET /contabilidad/libro-diario`. */

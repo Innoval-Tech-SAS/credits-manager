@@ -58,6 +58,7 @@ class AsientoContableRepository extends BaseRepository
             ->join('comprobantes', 'comprobantes.id', '=', 'asientos_contables.comprobante_id')
             ->join('tipos_comprobante', 'tipos_comprobante.id', '=', 'comprobantes.tipo_comprobante_id')
             ->join('plan_cuentas', 'plan_cuentas.id', '=', 'asientos_contables.cuenta_id')
+            ->leftJoin('terceros', 'terceros.id', '=', 'asientos_contables.tercero_id')
             ->where('comprobantes.empresa_id', $empresaId)
             ->where(EfectoContable::condicion())
             ->whereBetween('comprobantes.fecha', [$desde, $hasta]);
@@ -79,6 +80,7 @@ class AsientoContableRepository extends BaseRepository
                 'asientos_contables.descripcion',
                 'asientos_contables.debito',
                 'asientos_contables.credito',
+                'terceros.nombre as tercero',
             ]);
     }
 
