@@ -159,8 +159,10 @@ class CentroCostoControllerTest extends TestCase
     {
         $this->actingAsAdmin();
         $centro = $this->crearCentroCosto();
-        $debito = $this->crearCuenta();
-        $credito = $this->crearCuenta();
+        // Códigos explícitos: el contador por defecto de crearCuenta() puede caer en un prefijo real de
+        // cartera (1305/2205/2335) y esta prueba no tiene nada que ver con eso.
+        $debito = $this->crearCuenta(['codigo' => '910001']);
+        $credito = $this->crearCuenta(['codigo' => '910002']);
 
         $this->postJson('/api/v1/contabilidad/comprobantes', [
             'tipo_comprobante_id' => $this->crearTipoComprobante()->id,

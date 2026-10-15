@@ -357,7 +357,7 @@ class ComprobanteService
         foreach ($comprobante->lineas as $linea) {
             $cuenta = $linea->cuenta;
 
-            if (! $cuenta->exige_tercero || ! $cuenta->exige_documento_cruce || empty($linea->documento_cruce)) {
+            if (! $cuenta->esCarteraDeTerceros() || empty($linea->documento_cruce)) {
                 continue;
             }
 
@@ -476,11 +476,15 @@ class ComprobanteService
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.centro_costo_requerido')]);
             }
 
-            if ($cuenta->exige_tercero && empty($linea['tercero_id'] ?? $terceroId)) {
+            // La cartera de terceros exige tercero y documento cruce aunque la cuenta no tenga las flags marcadas
+            // (nacen en false): de lo contrario `procesarDocumentosTerceroAlContabilizar()` la saltaría en silencio.
+            $esCarteraDeTerceros = $cuenta->esCarteraDeTerceros();
+
+            if (($cuenta->exige_tercero || $esCarteraDeTerceros) && empty($linea['tercero_id'] ?? $terceroId)) {
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.tercero_requerido')]);
             }
 
-            if ($cuenta->exige_documento_cruce && empty($linea['documento_cruce'])) {
+            if (($cuenta->exige_documento_cruce || $esCarteraDeTerceros) && empty($linea['documento_cruce'])) {
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.documento_cruce_requerido')]);
             }
 

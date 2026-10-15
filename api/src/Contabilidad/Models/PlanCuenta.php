@@ -2,6 +2,7 @@
 
 namespace App\Contabilidad\Models;
 
+use App\Contabilidad\Constants\ContabilidadConstants;
 use App\Contabilidad\Enums\NaturalezaCuenta;
 use App\Contabilidad\Enums\TipoCuenta;
 use App\Core\Base\BaseModel;
@@ -53,5 +54,27 @@ class PlanCuenta extends BaseModel
     public function cuentasHijas(): HasMany
     {
         return $this->hasMany(PlanCuenta::class, 'cuenta_padre_id');
+    }
+
+    /**
+     * Cartera de terceros: cuentas marcadas `exige_tercero` + `exige_documento_cruce`, o cuyo código cae en los
+     * prefijos de CxC/CxP del PUC aunque nadie haya marcado las flags (las cuentas nacen sin marcar). Evita que
+     * una 1305/2205/2335 sin configurar se salte en silencio el motor de `DocumentoTercero`.
+     */
+    public function esCarteraDeTerceros(): bool
+    {
+        if ($this->exige_tercero && $this->exige_documento_cruce) {
+            return true;
+        }
+
+        $prefijos = [...ContabilidadConstants::PREFIJOS_CUENTAS_POR_COBRAR, ...ContabilidadConstants::PREFIJOS_CUENTAS_POR_PAGAR];
+
+        foreach ($prefijos as $prefijo) {
+            if (str_starts_with($this->codigo, $prefijo)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

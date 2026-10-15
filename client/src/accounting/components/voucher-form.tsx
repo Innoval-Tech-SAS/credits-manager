@@ -2,28 +2,33 @@ import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
+import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { formatDateEs } from '../../shared/utils/format-date-es';
+import { formatMoney } from '../../shared/utils/format-money';
 import { ThirdPartySelector } from '../../third-parties/components/third-party-selector';
 import type { ApiThirdParty } from '../../third-parties/types/api-third-party';
+import type { ApiInvoice } from '../../invoicing/types/api-invoice';
+import { VoucherFormLineRow } from './voucher-form-line-row';
 import { Button } from '@ui/button/components/button';
 import { DatePicker } from '@ui/forms/components/date-picker';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { Plus, Trash2, Save } from 'lucide-react';
+import { Plus, Save } from 'lucide-react';
 import type { VoucherFormProps } from '../props/voucher-form-props';
 import type { ApiVoucher } from '../types/api-voucher';
 import type { VoucherFormLine } from '../types/voucher-form-line';
 
 let nextLineKey = 1;
 
-function nuevaLinea(): VoucherFormLine {
+function nuevaLinea(tercero: ApiThirdParty | null = null): VoucherFormLine {
     return {
         key: nextLineKey++,
         cuenta_id: '',
         centro_costo_id: '',
-        tercero: null,
+        tercero,
         documento_cruce: '',
         fecha_vencimiento: '',
         descripcion: '',
@@ -46,6 +51,11 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    const { data: facturasData, isLoading: isLoadingFacturas } = useResource<{ data: ApiInvoice[] }>(
+        tercero ? `/facturacion/documentos?tipo=factura&estado=emitido&tercero_id=${tercero.id}&con_saldo=1&per_page=10` : null,
+    );
+    const facturas = facturasData?.data ?? [];
+
     const cuentaOptions = cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }));
     const centroCostoOptions = centrosCosto.map((centro) => ({ value: String(centro.id), label: `${centro.codigo} - ${centro.nombre}` }));
     const tipoOptions = tipos.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }));
@@ -60,7 +70,13 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
         setLineas((actuales) => actuales.map((linea) => (linea.key === key ? { ...linea, ...cambios } : linea)));
     };
 
-    const agregarLinea = () => setLineas((actuales) => [...actuales, nuevaLinea()]);
+    const seleccionarTercero = (nuevoTercero: ApiThirdParty) => {
+        setTercero(nuevoTercero);
+        // Solo precarga las líneas que todavía no tienen un tercero propio: no pisa lo que el usuario ya eligió.
+        setLineas((actuales) => actuales.map((linea) => (linea.tercero ? linea : { ...linea, tercero: nuevoTercero })));
+    };
+
+    const agregarLinea = () => setLineas((actuales) => [...actuales, nuevaLinea(tercero)]);
 
     const eliminarLinea = (key: number) => {
         setLineas((actuales) => (actuales.length > 2 ? actuales.filter((linea) => linea.key !== key) : actuales));
@@ -148,6 +164,14 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                     </div>
 
                     <div>
+                        <Label htmlFor="tercero">Tercero</Label>
+                        <ThirdPartySelector id="tercero" selected={tercero} onSelect={seleccionarTercero} onClear={() => setTercero(null)} />
+                        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                            Por defecto de las líneas que no tengan uno propio.
+                        </p>
+                    </div>
+
+                    <div>
                         <Label htmlFor="documento-soporte">Documento soporte</Label>
                         <Input
                             id="documento-soporte"
@@ -156,15 +180,41 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                             onChange={(event) => setDocumentoSoporte(event.target.value)}
                         />
                     </div>
-
-                    <div>
-                        <Label htmlFor="tercero">Tercero (opcional)</Label>
-                        <ThirdPartySelector id="tercero" selected={tercero} onSelect={setTercero} onClear={() => setTercero(null)} />
-                        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                            Tercero por defecto de las líneas que no tengan uno propio.
-                        </p>
-                    </div>
                 </div>
+
+                {tercero && (isLoadingFacturas || facturas.length > 0) && (
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/3">
+                        <p className="mb-3 text-xs font-medium tracking-wide text-gray-400 uppercase dark:text-gray-500">
+                            Facturas de {tercero.nombre}
+                        </p>
+
+                        {isLoadingFacturas && <p className="text-sm text-gray-500 dark:text-gray-400">Buscando facturas…</p>}
+
+                        {!isLoadingFacturas && (
+                            <div className="flex flex-wrap gap-2">
+                                {facturas.map((factura) => (
+                                    <button
+                                        key={factura.id}
+                                        type="button"
+                                        onClick={() => setDocumentoSoporte(factura.numero ?? '')}
+                                        title="Usar como documento soporte"
+                                        className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:border-brand-300 hover:bg-brand-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-brand-800 dark:hover:bg-brand-500/10"
+                                    >
+                                        <span>{factura.numero ?? '—'}</span>
+                                        <span className="text-gray-400 dark:text-gray-500">·</span>
+                                        <span className="text-gray-500 dark:text-gray-400">{formatDateEs(factura.fecha)}</span>
+                                        {factura.saldo !== undefined && (
+                                            <>
+                                                <span className="text-gray-400 dark:text-gray-500">·</span>
+                                                <span className="text-gray-500 dark:text-gray-400">{formatMoney(factura.saldo)}</span>
+                                            </>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div>
                     <Label htmlFor="concepto">Concepto</Label>
@@ -198,77 +248,16 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                             </thead>
                             <tbody>
                                 {lineas.map((linea) => (
-                                    <tr key={linea.key} className="border-b border-gray-100 dark:border-gray-800">
-                                        <td className="px-4 py-2">
-                                            <Select
-                                                options={cuentaOptions}
-                                                placeholder="--"
-                                                defaultValue={linea.cuenta_id}
-                                                onChange={(value) => actualizarLinea(linea.key, { cuenta_id: value })}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <Select
-                                                options={centroCostoOptions}
-                                                placeholder="--"
-                                                defaultValue={linea.centro_costo_id}
-                                                onChange={(value) => actualizarLinea(linea.key, { centro_costo_id: value })}
-                                            />
-                                        </td>
-                                        <td className="min-w-50 px-4 py-2">
-                                            <ThirdPartySelector
-                                                id={`tercero-${linea.key}`}
-                                                selected={linea.tercero}
-                                                onSelect={(thirdParty) => actualizarLinea(linea.key, { tercero: thirdParty })}
-                                                onClear={() => actualizarLinea(linea.key, { tercero: null })}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <Input
-                                                value={linea.documento_cruce}
-                                                onChange={(event) => actualizarLinea(linea.key, { documento_cruce: event.target.value })}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <DatePicker
-                                                id={`vencimiento-${linea.key}`}
-                                                value={linea.fecha_vencimiento}
-                                                onChange={(value) => actualizarLinea(linea.key, { fecha_vencimiento: value })}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <Input
-                                                value={linea.descripcion}
-                                                onChange={(event) => actualizarLinea(linea.key, { descripcion: event.target.value })}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <Input
-                                                type="number"
-                                                step={0.01}
-                                                value={linea.debito}
-                                                onChange={(event) => actualizarLinea(linea.key, { debito: event.target.value })}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <Input
-                                                type="number"
-                                                step={0.01}
-                                                value={linea.credito}
-                                                onChange={(event) => actualizarLinea(linea.key, { credito: event.target.value })}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => eliminarLinea(linea.key)}
-                                                disabled={lineas.length <= 2}
-                                                className="text-gray-500 hover:text-error-500 disabled:cursor-not-allowed disabled:opacity-40 dark:text-gray-400 dark:hover:text-error-500"
-                                            >
-                                                <Trash2 className="size-4" />
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <VoucherFormLineRow
+                                        key={linea.key}
+                                        linea={linea}
+                                        cuentas={cuentas}
+                                        cuentaOptions={cuentaOptions}
+                                        centroCostoOptions={centroCostoOptions}
+                                        puedeEliminar={lineas.length > 2}
+                                        onActualizar={(cambios) => actualizarLinea(linea.key, cambios)}
+                                        onEliminar={() => eliminarLinea(linea.key)}
+                                    />
                                 ))}
                             </tbody>
                         </table>
@@ -289,7 +278,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                 <div className="flex justify-end border-t border-gray-100 pt-6 dark:border-gray-800">
                     <Button
                         type="submit"
-                        disabled={isSubmitting || !tipoComprobanteId || (esNumeracionManual && !consecutivo)}
+                        disabled={isSubmitting || !tipoComprobanteId || !tercero || (esNumeracionManual && !consecutivo)}
                         startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
                         endIcon={isSubmitting ? undefined : <Save className="size-4" />}
                     >

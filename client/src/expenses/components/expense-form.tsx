@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { ACCEPTED_DOCUMENT_TYPES } from '../../shared/constants/accepted-document-types';
+import { AdvancePendingNotice } from '../../advances/components/advance-pending-notice';
 import { MunicipalitySelector } from '../../geography/components/municipality-selector';
 import { ThirdPartySelector } from '../../third-parties/components/third-party-selector';
 import type { ApiThirdParty } from '../../third-parties/types/api-third-party';
@@ -109,6 +110,8 @@ export const ExpenseForm: FC<ExpenseFormProps> = ({ tiposGasto }) => {
                         <DatePicker id="fecha" name="fecha" required value={fecha} onChange={setFecha} />
                     </div>
                 </div>
+
+                <AdvancePendingNotice tercero={tercero} />
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>

@@ -64,6 +64,18 @@ class AislamientoEntreEmpresasTest extends TestCase
         ])->assertStatus(422)->assertJsonValidationErrors('lineas.0.cuota_id');
     }
 
+    public function test_no_se_puede_filtrar_el_listado_por_un_tercero_de_otra_empresa(): void
+    {
+        $this->actingAsAdmin();
+        $clienteAjeno = $this->crearCliente();
+
+        $this->actingAsAdmin();
+
+        $this->getJson(self::BASE.'?tercero_id='.$clienteAjeno->tercero_id)
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('tercero_id');
+    }
+
     public function test_un_admin_no_ve_facturas_de_otra_empresa_en_el_listado(): void
     {
         $this->actingAsAdmin();

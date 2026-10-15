@@ -20,6 +20,7 @@ export const DatePicker: FC<DatePickerProps> = ({
     disabled = false,
     className = '',
     size = 'md',
+    appendToBody = false,
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
     const instanceRef = useRef<flatpickr.Instance | null>(null);
@@ -33,7 +34,8 @@ export const DatePicker: FC<DatePickerProps> = ({
 
         instanceRef.current = flatpickr(inputRef.current, {
             mode: mode === 'month' ? 'single' : mode,
-            static: true,
+            static: !appendToBody,
+            appendTo: appendToBody ? document.body : undefined,
             monthSelectorType: 'static',
             dateFormat: mode === 'month' ? 'Y-m' : 'Y-m-d',
             defaultDate: value || undefined,
@@ -47,7 +49,7 @@ export const DatePicker: FC<DatePickerProps> = ({
             instanceRef.current = null;
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [mode]);
+    }, [mode, appendToBody]);
 
     useEffect(() => {
         if (instanceRef.current && (value ?? '') !== instanceRef.current.input.value) {

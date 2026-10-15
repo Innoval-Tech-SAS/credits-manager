@@ -75,6 +75,7 @@ class InformeContablePdfService
             'comprobante' => "{$movimiento->tipo}-{$movimiento->consecutivo}",
             'cuenta' => "{$movimiento->cuenta_codigo} {$movimiento->cuenta_nombre}",
             'descripcion' => $movimiento->descripcion,
+            'tercero' => $movimiento->tercero,
             'debito' => $movimiento->debito,
             'credito' => $movimiento->credito,
         ])->all();
@@ -86,12 +87,13 @@ class InformeContablePdfService
             fechasInforme: [new FechaDocumento('Desde', Carbon::parse($desde)), new FechaDocumento('Hasta', Carbon::parse($hasta))],
             tituloTabla: 'Movimientos',
             columnas: [
-                new ColumnaDocumento('fecha', 'Fecha', TipoColumnaDocumento::Fecha, 12),
-                new ColumnaDocumento('comprobante', 'Comprobante', TipoColumnaDocumento::Texto, 13),
-                new ColumnaDocumento('cuenta', 'Cuenta', TipoColumnaDocumento::Texto, 25),
-                new ColumnaDocumento('descripcion', 'Detalle', TipoColumnaDocumento::Texto, 20),
-                new ColumnaDocumento('debito', 'Débito', TipoColumnaDocumento::Monetario, 15),
-                new ColumnaDocumento('credito', 'Crédito', TipoColumnaDocumento::Monetario, 15),
+                new ColumnaDocumento('fecha', 'Fecha', TipoColumnaDocumento::Fecha, 10),
+                new ColumnaDocumento('comprobante', 'Comprobante', TipoColumnaDocumento::Texto, 12),
+                new ColumnaDocumento('cuenta', 'Cuenta', TipoColumnaDocumento::Texto, 20),
+                new ColumnaDocumento('descripcion', 'Detalle', TipoColumnaDocumento::Texto, 16),
+                new ColumnaDocumento('tercero', 'Tercero', TipoColumnaDocumento::Texto, 14),
+                new ColumnaDocumento('debito', 'Débito', TipoColumnaDocumento::Monetario, 14),
+                new ColumnaDocumento('credito', 'Crédito', TipoColumnaDocumento::Monetario, 14),
             ],
             filas: $filas,
             totales: [

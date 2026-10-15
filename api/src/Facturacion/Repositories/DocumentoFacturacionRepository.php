@@ -21,7 +21,7 @@ class DocumentoFacturacionRepository extends BaseRepository
 
     /**
      * @param  list<TipoDocumentoFacturacion>  $tipos
-     * @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo_codigo: ?string}  $filtros
+     * @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, tercero_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo_codigo: ?string}  $filtros
      */
     public function paginar(array $tipos, array $filtros, int $porPagina, int $pagina): LengthAwarePaginator
     {
@@ -34,13 +34,15 @@ class DocumentoFacturacionRepository extends BaseRepository
         return $consulta->paginate(perPage: $porPagina, page: $pagina);
     }
 
-    /** @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo_codigo: ?string}  $filtros */
+    /** @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, tercero_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo_codigo: ?string}  $filtros */
     private function filtrar(Builder $consulta, array $tipos, array $filtros): Builder
     {
         return $consulta
             ->whereIn('tipo', array_map(fn (TipoDocumentoFacturacion $tipo) => $tipo->value, $tipos))
             ->when($filtros['estado'], fn (Builder $q) => $q->where('estado', $filtros['estado']))
             ->when($filtros['cliente_id'], fn (Builder $q) => $q->where('cliente_id', $filtros['cliente_id']))
+            // `whereHas` consulta `clientes` con su propio `EmpresaScope`, no hace falta repetir `empresa_id` a mano.
+            ->when($filtros['tercero_id'] ?? null, fn (Builder $q) => $q->whereHas('cliente', fn (Builder $c) => $c->where('tercero_id', $filtros['tercero_id'])))
             ->when($filtros['desde'], fn (Builder $q) => $q->whereDate('fecha', '>=', $filtros['desde']))
             ->when($filtros['hasta'], fn (Builder $q) => $q->whereDate('fecha', '<=', $filtros['hasta']))
             // El origen es la misma tabla (self-relation): `EmpresaScope` ya la filtra por empresa en ambos lados.

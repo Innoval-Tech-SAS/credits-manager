@@ -34,6 +34,7 @@ class DocumentoFacturacionController extends Controller
             [
                 'estado' => $peticion->validated('estado') ? EstadoDocumentoFacturacion::from($peticion->validated('estado')) : null,
                 'cliente_id' => $peticion->integer('cliente_id') ?: null,
+                'tercero_id' => $peticion->integer('tercero_id') ?: null,
                 'desde' => $peticion->validated('desde'),
                 'hasta' => $peticion->validated('hasta'),
                 'factura' => $peticion->validated('factura'),

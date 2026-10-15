@@ -56,6 +56,7 @@ export const JournalPage: FC = () => {
                         { key: 'comp', label: 'Comp.', render: (row) => row.numero },
                         { key: 'cuenta', label: 'Cuenta', render: (row) => `${row.cuenta_codigo} ${row.cuenta_nombre}` },
                         { key: 'descripcion', label: 'Descripción', render: (row) => row.descripcion ?? '—' },
+                        { key: 'tercero', label: 'Tercero', render: (row) => row.tercero ?? '—' },
                         { key: 'debito', label: 'Débito', render: (row) => (parseFloat(row.debito) > 0 ? formatMoney(row.debito) : '') },
                         { key: 'credito', label: 'Crédito', render: (row) => (parseFloat(row.credito) > 0 ? formatMoney(row.credito) : '') },
                     ]}

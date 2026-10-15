@@ -31,6 +31,21 @@ class CausarConConceptoControllerTest extends TestCase
         ], $overrides));
     }
 
+    /** Cuenta de proveedores con código del prefijo PUC de CxP (2205xx) pero SIN las flags marcadas: nace así. */
+    private function cuentaCxpSinMarcas(array $overrides = []): PlanCuenta
+    {
+        static $contador = 0;
+        $contador++;
+
+        return $this->crearCuenta(array_merge([
+            'codigo' => "2205{$contador}",
+            'tipo' => TipoCuenta::Pasivo,
+            'naturaleza' => NaturalezaCuenta::Credito,
+            'exige_tercero' => false,
+            'exige_documento_cruce' => false,
+        ], $overrides));
+    }
+
     public function test_causa_un_concepto_con_tercero_y_al_contabilizar_crea_el_documento_tercero(): void
     {
         $this->actingAsAdmin();
@@ -71,6 +86,58 @@ class CausarConConceptoControllerTest extends TestCase
             'modulo_origen' => 'contabilidad_manual',
             'origen_id' => $comprobanteId,
         ]);
+    }
+
+    public function test_causa_un_concepto_con_cuenta_cxp_sin_marcas_pero_con_prefijo_de_cartera(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearValorUvt();
+        $tipoGasto = $this->crearTipoGasto();
+        $tercero = $this->crearTerceroFiscal();
+        $this->crearParametrizacion($tipoGasto, ['cuenta_cxp_id' => $this->cuentaCxpSinMarcas()->id]);
+
+        $respuesta = $this->postJson(self::BASE, [
+            'tipo_gasto_id' => $tipoGasto->id,
+            'tercero_id' => $tercero->id,
+            'fecha' => '2026-03-01',
+            'numero_documento' => 'FE-5011',
+            'concepto' => 'Honorarios marzo',
+            'valor_bruto' => 1000000,
+        ]);
+
+        $respuesta->assertStatus(201);
+        $comprobanteId = $respuesta->json('comprobante.id');
+
+        $this->postJson("/api/v1/contabilidad/comprobantes/{$comprobanteId}/revisar")->assertOk();
+        $this->postJson("/api/v1/contabilidad/comprobantes/{$comprobanteId}/contabilizar")->assertOk();
+
+        $this->assertDatabaseHas('documentos_tercero', [
+            'tercero_id' => $tercero->id,
+            'naturaleza' => 'por_pagar',
+            'numero_documento' => 'FE-5011',
+            'saldo' => 100000000,
+            'estado' => 'pendiente',
+            'modulo_origen' => 'contabilidad_manual',
+            'origen_id' => $comprobanteId,
+        ]);
+    }
+
+    public function test_cuenta_cxp_de_cartera_exige_tercero_aunque_el_tipo_de_gasto_no_lo_requiera(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearValorUvt();
+        $tipoGasto = $this->crearTipoGasto(['requiere_tercero' => false]);
+        $this->crearParametrizacion($tipoGasto, ['cuenta_cxp_id' => $this->cuentaCxpSinMarcas()->id]);
+
+        $respuesta = $this->postJson(self::BASE, [
+            'tipo_gasto_id' => $tipoGasto->id,
+            'fecha' => '2026-03-01',
+            'numero_documento' => 'FE-5012',
+            'valor_bruto' => 1000000,
+        ]);
+
+        $respuesta->assertStatus(422)->assertJsonValidationErrors('lineas');
+        $this->assertDatabaseCount('comprobantes', 0);
     }
 
     public function test_tipo_de_gasto_inexistente_falla(): void
