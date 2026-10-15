@@ -39,6 +39,16 @@ class CuotaRepository extends BaseRepository
             ->get();
     }
 
+    /** Lectura simple (sin lock): conceptos sugeridos de "facturar intereses pagados". */
+    public function pagadasOrdenadas(int $creditoId): Collection
+    {
+        return $this->consulta()
+            ->where('credito_id', $creditoId)
+            ->where('estado', EstadoCuota::Pagada)
+            ->orderBy('numero_cuota')
+            ->get();
+    }
+
     public function todasOrdenadasParaActualizar(int $creditoId): Collection
     {
         return $this->consulta()

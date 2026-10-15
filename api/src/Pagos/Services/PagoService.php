@@ -16,6 +16,7 @@ use App\Creditos\Services\OtrosGastosCalculator;
 use App\Exportacion\Enums\FormatoExportacion;
 use App\Exportacion\Models\Exportacion;
 use App\Exportacion\Services\ExportacionService;
+use App\Facturacion\Services\DocumentoFacturacionService;
 use App\Pagos\Enums\FormaPago;
 use App\Pagos\Exportaciones\FuentePagos;
 use App\Pagos\Models\Pago;
@@ -43,6 +44,7 @@ class PagoService
         protected ReciboCajaService $recibos,
         protected EmisorAuditoria $auditoria,
         protected ExportacionService $exportaciones,
+        protected DocumentoFacturacionService $documentosFacturacion,
     ) {}
 
     public function solicitarExportacion(Usuario $usuario, ?string $busqueda, ?string $mes, FormatoExportacion $formato): Exportacion
@@ -488,6 +490,12 @@ class PagoService
         // Una liquidación anticipada cierra cuotas sin detalle por cuota: no hay a qué devolverle el dinero, así que no se reversa.
         if (! $pago->detalles()->exists()) {
             throw ValidationException::withMessages(['pago' => __('validation.custom.reversa.sin_aplicacion')]);
+        }
+
+        // Si el interés de alguna cuota de este pago ya se facturó ("Facturar intereses pagados"), reversar el
+        // pago sin deshacer esa factura dejaría una cuota "sin pagar" con una factura de su interés ya emitida.
+        if ($this->documentosFacturacion->existeInteresFacturadoParaPagoDetalle($pago->detalles()->pluck('id')->all())) {
+            throw ValidationException::withMessages(['pago' => __('validation.custom.reversa.interes_ya_facturado')]);
         }
     }
 

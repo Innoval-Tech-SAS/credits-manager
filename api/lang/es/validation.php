@@ -227,12 +227,14 @@ return [
             'tercero_fiscal_incompleto' => 'Al tercero le faltan datos fiscales obligatorios para emitir la factura.',
             'no_pendiente_aprobacion' => 'Esta nota crédito no está pendiente de aprobación.',
             'aprobador_igual_solicitante' => 'La nota crédito la debe aprobar una persona distinta de quien la solicitó.',
+            'cuota_no_pagada_o_no_pertenece' => 'Alguna de las cuotas no está pagada o no pertenece a este crédito.',
         ],
         'reversa' => [
             'estado_credito' => 'Solo se pueden reversar pagos de créditos desembolsados o pagados.',
             'ya_reversado' => 'Este pago ya fue reversado.',
             'no_es_ultimo' => 'Solo se puede reversar el último pago aplicado del crédito. Reversa primero los pagos posteriores.',
             'sin_aplicacion' => 'Este pago no tiene cuotas aplicadas (por ejemplo, una liquidación anticipada) y no se puede reversar automáticamente.',
+            'interes_ya_facturado' => 'El interés de alguna cuota de este pago ya se facturó. Anula esa factura antes de reversar el pago.',
         ],
         'credito_origen_id' => [
             'pertenece_a_otro_cliente' => 'El crédito seleccionado no pertenece a este cliente.',

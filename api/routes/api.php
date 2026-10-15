@@ -383,6 +383,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/facturacion/documentos', [DocumentoFacturacionController::class, 'index'])->middleware('algun_permiso:'.implode(',', FacturacionConstants::CONSULTA_DOCUMENTOS));
     // Antes de la ruta con {documento}: si no, el binding intenta resolver "conceptos-sugeridos" como un id.
     Route::get('/facturacion/documentos/conceptos-sugeridos', [DocumentoFacturacionController::class, 'conceptosSugeridos'])->middleware('permiso:facturacion,crear');
+    Route::post('/facturacion/documentos/intereses-pagados', [DocumentoFacturacionController::class, 'facturarInteresesPagados'])->middleware('permiso:facturacion,crear');
     Route::post('/facturacion/documentos', [DocumentoFacturacionController::class, 'store'])->middleware('permiso:facturacion,crear');
     Route::get('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'show'])->middleware('algun_permiso:'.implode(',', FacturacionConstants::CONSULTA_DOCUMENTOS));
     Route::patch('/facturacion/documentos/{documento}', [DocumentoFacturacionController::class, 'update'])->middleware('permiso:facturacion,crear');

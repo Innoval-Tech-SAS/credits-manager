@@ -173,6 +173,17 @@ class AsientosFacturacionService
         return $this->contabilizar(EventoContable::CobroFactura, $factura, $valor, $fecha, "Cobro de factura {$factura->numero}", 'facturacion_cobro', $factura->id);
     }
 
+    /**
+     * Cruza una factura de intereses ya recaudados: debita la cuenta de pasivo donde quedó ese interés al pagarse
+     * (`RecaudoInteres`, reparametrizada para no reconocer ingreso en ese momento — ver
+     * `DocumentoFacturacionService::facturarInteresesPagados`) y acredita la misma cuenta CxC que debitó la
+     * emisión de esta factura, dejándola en cero sin tocar banco otra vez: el efectivo ya entró cuando se pagó.
+     */
+    public function contabilizarCruceInteresFacturado(DocumentoFacturacion $factura, Dinero $valor, string $fecha): Comprobante
+    {
+        return $this->contabilizar(EventoContable::CruceInteresFacturado, $factura, $valor, $fecha, "Cruce de interés ya recaudado contra la factura {$factura->numero}", 'facturacion_cruce_interes', $factura->id);
+    }
+
     /** Cuenta PUC que debita la emisión de la factura (la cuenta por cobrar): la misma que muestra la cartera por tercero. */
     public function cuentaCxcFactura(): int
     {

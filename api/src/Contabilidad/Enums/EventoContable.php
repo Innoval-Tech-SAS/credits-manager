@@ -18,6 +18,7 @@ enum EventoContable: string
     case NotaCreditoFactura = 'nota_credito_factura';
     case NotaDebitoFactura = 'nota_debito_factura';
     case CobroFactura = 'cobro_factura';
+    case CruceInteresFacturado = 'cruce_interes_facturado';
 
     public function etiqueta(): string
     {
@@ -30,6 +31,7 @@ enum EventoContable: string
             self::NotaCreditoFactura => 'Nota crédito sobre factura',
             self::NotaDebitoFactura => 'Nota débito sobre factura',
             self::CobroFactura => 'Cobro de factura',
+            self::CruceInteresFacturado => 'Cruce de interés ya recaudado contra factura',
         };
     }
 }

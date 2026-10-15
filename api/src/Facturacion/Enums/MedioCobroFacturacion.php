@@ -9,6 +9,7 @@ enum MedioCobroFacturacion: string
     case Consignacion = 'consignacion';
     case Cheque = 'cheque';
     case Tarjeta = 'tarjeta';
+    case InteresYaRecaudado = 'interes_ya_recaudado';
 
     public function etiqueta(): string
     {
@@ -18,6 +19,7 @@ enum MedioCobroFacturacion: string
             self::Consignacion => 'Consignación',
             self::Cheque => 'Cheque',
             self::Tarjeta => 'Tarjeta',
+            self::InteresYaRecaudado => 'Interés ya recaudado al pagar',
         };
     }
 }

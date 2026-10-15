@@ -21,19 +21,25 @@ use App\Empresas\Repositories\EmpresaRepository;
 use App\Empresas\Services\EmpresaService;
 use App\Facturacion\Documentos\FacturaPdf;
 use App\Facturacion\Enums\EstadoDocumentoFacturacion;
+use App\Facturacion\Enums\MedioCobroFacturacion;
 use App\Facturacion\Enums\MotivoNotaCredito;
 use App\Facturacion\Enums\MotivoNotaDebito;
+use App\Facturacion\Enums\MovimientoCobro;
 use App\Facturacion\Enums\SituacionFactura;
 use App\Facturacion\Enums\TipoConceptoFacturacion;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
+use App\Facturacion\Models\AplicacionInteresFacturado;
 use App\Facturacion\Models\DocumentoFacturacion;
 use App\Facturacion\Models\LineaDocumentoFacturacion;
+use App\Facturacion\Repositories\AplicacionInteresFacturadoRepository;
 use App\Facturacion\Repositories\CobroFacturacionRepository;
 use App\Facturacion\Repositories\DocumentoFacturacionRepository;
 use App\Facturacion\Repositories\LineaDocumentoFacturacionRepository;
 use App\Facturacion\Repositories\ParametrizacionConceptoFacturacionRepository;
 use App\Impresion\Data\PdfGenerado;
 use App\Impresion\Services\GeneradorPdf;
+use App\Pagos\Models\PagoDetalle;
+use App\Pagos\Services\AplicadorPagoPlan;
 use App\Terceros\Enums\TipoPersona;
 use App\Terceros\Models\Tercero;
 use App\Usuarios\Models\Usuario;
@@ -57,6 +63,7 @@ class DocumentoFacturacionService
         protected DocumentoFacturacionRepository $documentos,
         protected LineaDocumentoFacturacionRepository $lineas,
         protected CobroFacturacionRepository $cobros,
+        protected AplicacionInteresFacturadoRepository $aplicacionesInteresFacturado,
         protected CreditoRepository $creditos,
         protected CuotaRepository $cuotas,
         protected EmpresaRepository $empresaRepositorio,
@@ -91,41 +98,33 @@ class DocumentoFacturacionService
     }
 
     /**
-     * Concepto sugerido de un crédito para precargar la factura: solo el interés corriente de la primera cuota
-     * pendiente o vencida (la política de facturación es mensual, una cuota a la vez) — capital y otros gastos no
-     * se sugieren, se facturan aparte cuando el caso lo pida. Si ya se facturó ese interés en una factura emitida
-     * vigente, no sugiere nada. El usuario puede agregar manualmente más líneas (otra cuota, capital, otros
-     * gastos) si de verdad las necesita — ver el formulario de líneas del frontend. El interés de mora queda fuera
-     * a propósito: no está precalculado en la cuota y se agrega a mano, como ya se hace en nota débito.
+     * Conceptos sugeridos de un crédito para precargar "Facturar intereses pagados": el interés corriente de cada
+     * cuota ya pagada que todavía no se haya facturado — capital y otros gastos no se sugieren, no forman parte de
+     * ese flujo. El usuario elige cuáles de las sugeridas incluir en la factura (puede ser más de una, p. ej. si
+     * se acumularon varios meses sin facturar). El interés de mora queda fuera a propósito: no está precalculado
+     * en la cuota y se agrega a mano, como ya se hace en nota débito.
      *
-     * @return list<array{cuota_id: int, tipo_concepto: string, concepto: string, descripcion: string, valor: string, fecha_vencimiento: string}>
+     * @return list<array{cuota_id: int, tipo_concepto: string, concepto: string, descripcion: string, valor: string}>
      */
     public function conceptosSugeridos(int $creditoId): array
     {
         /** @var Credito $credito */
         $credito = $this->creditos->buscarPorIdOFallar($creditoId);
 
-        $cuota = $this->cuotas->pendientesOrdenadas($credito->id)->first();
-
-        if (! $cuota || ! $cuota->valor_interes->esPositivo()) {
-            return [];
-        }
-
         $tipoConcepto = TipoConceptoFacturacion::InteresCorriente;
         $yaFacturados = array_flip($this->combosVigentes($credito));
 
-        if (isset($yaFacturados["{$cuota->id}|{$tipoConcepto->value}"])) {
-            return [];
-        }
-
-        return [[
-            'cuota_id' => $cuota->id,
-            'tipo_concepto' => $tipoConcepto->value,
-            'concepto' => "{$tipoConcepto->etiqueta()} cuota {$cuota->numero_cuota}",
-            'descripcion' => "{$tipoConcepto->etiqueta()} de la cuota {$cuota->numero_cuota}, vence {$cuota->fecha_vencimiento->toDateString()}",
-            'valor' => $cuota->valor_interes->aDecimalString(),
-            'fecha_vencimiento' => $cuota->fecha_vencimiento->toDateString(),
-        ]];
+        return $this->cuotas->pagadasOrdenadas($credito->id)
+            ->filter(fn (Cuota $cuota) => $cuota->valor_interes->esPositivo() && ! isset($yaFacturados["{$cuota->id}|{$tipoConcepto->value}"]))
+            ->map(fn (Cuota $cuota) => [
+                'cuota_id' => $cuota->id,
+                'tipo_concepto' => $tipoConcepto->value,
+                'concepto' => "{$tipoConcepto->etiqueta()} cuota {$cuota->numero_cuota}",
+                'descripcion' => "{$tipoConcepto->etiqueta()} de la cuota {$cuota->numero_cuota}, ya pagada",
+                'valor' => $cuota->valor_interes->aDecimalString(),
+            ])
+            ->values()
+            ->all();
     }
 
     /**
@@ -269,46 +268,252 @@ class DocumentoFacturacionService
             $bloqueado = $this->documentos->bloquear($documento->id);
             $this->exigirBorrador($bloqueado);
 
-            if ($this->documentos->sumaLineas($bloqueado->id) <= 0) {
-                throw ValidationException::withMessages(['lineas' => __('validation.custom.facturacion.sin_lineas')]);
+            return $this->emitirDocumentoCreado($bloqueado, $usuario)['documento'];
+        });
+    }
+
+    /**
+     * Factura el interés de una o más cuotas ya pagadas que todavía no se habían facturado
+     * (`conceptosSugeridos()` ya solo ofrece estas). A diferencia de una factura manual normal, esta queda
+     * cobrada en la misma operación: el interés ya entró en efectivo cuando se pagó la cuota — el recaudo del
+     * pago lo dejó en una cuenta de pasivo ("intereses recaudados pendientes de facturar", reparametrizando
+     * `RecaudoInteres` para que ya no acredite el ingreso ahí — ver `AsientosFacturacionService::
+     * contabilizarCruceInteresFacturado`) en vez de reconocerlo como ingreso de una vez. Por eso el ingreso
+     * se reconoce aquí, al facturar (Dr CxC / Cr Ingreso de la emisión), y de inmediato se cruza contra esa
+     * cuenta de pasivo (Dr pasivo / Cr CxC), sin tocar banco otra vez ni emitir un recibo de caja nuevo.
+     *
+     * Cada línea queda enlazada al/los `pago_detalle` que cubrieron esa cuota (`AplicacionInteresFacturado`:
+     * puede ser más de uno si el interés se pagó en abonos sucesivos) — la trazabilidad que pide el negocio para
+     * poder ver, desde la factura, de qué pago(s) viene.
+     *
+     * @param  list<int>  $cuotaIds
+     */
+    public function facturarInteresesPagados(int $creditoId, array $cuotaIds, Usuario $usuario): DocumentoFacturacion
+    {
+        /** @var Credito $credito */
+        $credito = $this->creditos->buscarPorIdOFallar($creditoId);
+
+        $cuotas = $this->cuotas->pagadasOrdenadas($credito->id)->whereIn('id', $cuotaIds)->values();
+
+        if ($cuotas->count() !== count(array_unique($cuotaIds))) {
+            throw ValidationException::withMessages(['cuota_ids' => __('validation.custom.facturacion.cuota_no_pagada_o_no_pertenece')]);
+        }
+
+        $this->exigirTerceroFiscalCompleto($credito->cliente->tercero);
+
+        $tipoConcepto = TipoConceptoFacturacion::InteresCorriente;
+        $yaFacturados = array_flip($this->combosVigentes($credito));
+
+        $cuotasElegibles = $cuotas->filter(
+            fn (Cuota $cuota) => $cuota->valor_interes->esPositivo() && ! isset($yaFacturados["{$cuota->id}|{$tipoConcepto->value}"]),
+        )->values();
+
+        if ($cuotasElegibles->isEmpty()) {
+            throw ValidationException::withMessages(['cuota_ids' => __('validation.custom.facturacion.sin_lineas')]);
+        }
+
+        $empresa = $this->empresaRepositorio->buscarPorIdOFallar($credito->empresa_id);
+        $tercero = $credito->cliente->tercero;
+        $parametrizacion = $this->parametrizacionesConcepto->paraEmpresa($credito->empresa_id)->get($tipoConcepto->value);
+        $fecha = now('America/Bogota')->toDateString();
+
+        $lineas = $cuotasElegibles->map(function (Cuota $cuota) use ($empresa, $tercero, $parametrizacion, $fecha, $tipoConcepto) {
+            $impuestos = $this->motorFiscal->evaluar($cuota->valor_interes, $empresa, $tercero, $parametrizacion, $fecha);
+
+            return [
+                'cuota_id' => $cuota->id,
+                'tipo_concepto' => $tipoConcepto,
+                'concepto' => "{$tipoConcepto->etiqueta()} cuota {$cuota->numero_cuota}",
+                'descripcion' => "{$tipoConcepto->etiqueta()} de la cuota {$cuota->numero_cuota}, ya pagada",
+                'valor' => $cuota->valor_interes,
+                ...$impuestos,
+            ];
+        })->values()->all();
+
+        return DB::transaction(function () use ($credito, $cuotasElegibles, $lineas, $fecha, $usuario) {
+            $documento = $this->documentos->crear([
+                'tipo' => TipoDocumentoFacturacion::Factura,
+                'estado' => EstadoDocumentoFacturacion::Borrador,
+                'fecha' => $fecha,
+                'fecha_vencimiento' => $fecha,
+                'cliente_id' => $credito->cliente_id,
+                'credito_id' => $credito->id,
+            ]);
+
+            $this->lineas->sincronizar($documento, $lineas);
+
+            $bloqueado = $this->documentos->bloquear($documento->id);
+            ['documento' => $emitido, 'totales' => $totales] = $this->emitirDocumentoCreado($bloqueado, $usuario, 'intereses ya pagados');
+
+            $this->vincularPagoDetalle($emitido, $cuotasElegibles);
+            $this->cruzarContraInteresRecaudado($emitido, $totales['total'], $fecha, $usuario);
+
+            return $emitido;
+        });
+    }
+
+    /**
+     * Núcleo compartido de emitir un borrador ya con líneas: lo usan tanto `emitirFactura()` (factura manual)
+     * como `facturarInteresesPagados()` — numeración, asiento de emisión, validación de tipo de documento de
+     * negocio y creación del `DocumentoTercero` por cobrar son exactamente los mismos en ambos casos.
+     *
+     * @return array{documento: DocumentoFacturacion, totales: array}
+     */
+    private function emitirDocumentoCreado(DocumentoFacturacion $bloqueado, Usuario $usuario, ?string $origen = null): array
+    {
+        if ($this->documentos->sumaLineas($bloqueado->id) <= 0) {
+            throw ValidationException::withMessages(['lineas' => __('validation.custom.facturacion.sin_lineas')]);
+        }
+
+        $this->exigirTerceroFiscalCompleto($bloqueado->cliente->tercero);
+
+        $emitido = $this->emitir($bloqueado, $usuario);
+        $totales = $this->totales($this->conLineas($emitido));
+        $asiento = $this->asientos->contabilizarEmision($emitido, $totales);
+
+        $this->tiposDocumentoNegocio->validarOperacion($emitido->empresa_id, CodigoDocumentoNegocio::FacturaVenta, creaSaldo: true, cruzaSaldo: false);
+
+        $documentoTercero = $this->documentosTercero->crearDocumento(
+            $emitido->cliente->tercero,
+            NaturalezaDocumento::PorCobrar,
+            'factura',
+            $emitido->numero,
+            $emitido->fecha->toDateString(),
+            "Factura {$emitido->numero}",
+            $totales['total'],
+            'facturacion',
+            $emitido->id,
+            planCuentaId: $this->asientos->cuentaCxcFactura(),
+            fechaVencimiento: $emitido->fecha_vencimiento?->toDateString(),
+        );
+
+        $emitido->update(['comprobante_id' => $asiento->id, 'documento_tercero_id' => $documentoTercero->id]);
+
+        $descripcion = "Factura {$emitido->numero} emitida".($origen ? " ({$origen})" : '');
+
+        $this->auditoria->registrar(
+            AccionAuditoria::Crear,
+            AuditoriaConstants::MODULO_FACTURACION,
+            $descripcion,
+            'documento_facturacion',
+            $emitido->id,
+            nuevos: ['numero' => $emitido->numero, 'credito_id' => $emitido->credito_id, 'total' => $totales['total']->aDecimalString()],
+            autor: $usuario,
+        );
+
+        return ['documento' => $this->conLineas($emitido), 'totales' => $totales];
+    }
+
+    /**
+     * Enlaza cada línea de interés recién emitida con el/los `pago_detalle` que lo cubrieron, repartiendo el
+     * interés de cada `pago_detalle` de la cuota con la misma regla de prioridad de `AplicadorPagoPlan`
+     * (interés primero) aplicada de forma incremental — `pago_detalle` no guarda ese desglose por sí mismo.
+     *
+     * @param  Collection<int, Cuota>  $cuotas
+     */
+    private function vincularPagoDetalle(DocumentoFacturacion $emitido, Collection $cuotas): void
+    {
+        $lineasPorCuota = $emitido->lineas->keyBy('cuota_id');
+
+        foreach ($cuotas as $cuota) {
+            $linea = $lineasPorCuota->get($cuota->id);
+
+            if ($linea === null) {
+                continue;
             }
 
-            $this->exigirTerceroFiscalCompleto($bloqueado->cliente->tercero);
+            foreach ($this->interesPorPagoDetalle($cuota) as $entrada) {
+                AplicacionInteresFacturado::create([
+                    'linea_documento_facturacion_id' => $linea->id,
+                    'pago_detalle_id' => $entrada['pago_detalle_id'],
+                    'valor' => $entrada['valor'],
+                ]);
+            }
+        }
+    }
 
-            $emitido = $this->emitir($bloqueado, $usuario);
-            $totales = $this->totales($this->conLineas($emitido));
-            $asiento = $this->asientos->contabilizarEmision($emitido, $totales);
+    /**
+     * Cuánto del interés de la cuota aportó cada `pago_detalle` que la tocó, en el orden en que se aplicaron —
+     * `pago_detalle.valor_aplicado` es el total (capital+interés+otros) de ese abono, no su desglose; se deriva
+     * aplicando `AplicadorPagoPlan::desglosePagado()` sobre el acumulado antes y después de cada abono.
+     *
+     * @return list<array{pago_detalle_id: int, valor: Dinero}>
+     */
+    private function interesPorPagoDetalle(Cuota $cuota): array
+    {
+        $acumulado = Dinero::cero();
+        $resultado = [];
 
-            $this->tiposDocumentoNegocio->validarOperacion($emitido->empresa_id, CodigoDocumentoNegocio::FacturaVenta, creaSaldo: true, cruzaSaldo: false);
+        foreach (PagoDetalle::query()->where('cuota_id', $cuota->id)->orderBy('id')->get() as $detalle) {
+            $interesPrevio = AplicadorPagoPlan::desglosePagado($acumulado, $cuota->valor_interes, $cuota->valor_otros_gastos)['interes'];
+            $acumulado = $acumulado->sumar($detalle->valor_aplicado);
+            $interesActual = AplicadorPagoPlan::desglosePagado($acumulado, $cuota->valor_interes, $cuota->valor_otros_gastos)['interes'];
 
-            $documentoTercero = $this->documentosTercero->crearDocumento(
+            $interesDeEsteAbono = $interesActual->restar($interesPrevio);
+
+            if ($interesDeEsteAbono->esPositivo()) {
+                $resultado[] = ['pago_detalle_id' => $detalle->id, 'valor' => $interesDeEsteAbono];
+            }
+        }
+
+        return $resultado;
+    }
+
+    /**
+     * Cruza la factura recién emitida contra la cuenta de pasivo donde quedó el interés al pagarse: su propio
+     * asiento (no comparte el del recaudo ni genera uno nuevo en banco) y su propio `CobroFacturacion`, sin
+     * recibo de caja (no hay efectivo nuevo que recibir). Deja la factura cobrada en el acto.
+     */
+    private function cruzarContraInteresRecaudado(DocumentoFacturacion $emitido, Dinero $valor, string $fecha, Usuario $usuario): void
+    {
+        if (! $valor->esPositivo()) {
+            return;
+        }
+
+        $asiento = $this->asientos->contabilizarCruceInteresFacturado($emitido, $valor, $fecha);
+
+        $cobro = $this->cobros->crear([
+            'documento_id' => $emitido->id,
+            'tipo' => MovimientoCobro::Cobro,
+            'comprobante_id' => $asiento->id,
+            'fecha' => $fecha,
+            'valor' => $valor,
+            'medio' => MedioCobroFacturacion::InteresYaRecaudado,
+            'registrado_por' => $usuario->id,
+        ]);
+
+        if ($emitido->documento_tercero_id) {
+            $this->tiposDocumentoNegocio->validarOperacion($emitido->empresa_id, CodigoDocumentoNegocio::ReciboCaja, creaSaldo: false, cruzaSaldo: true);
+
+            $this->documentosTercero->aplicarValor(
                 $emitido->cliente->tercero,
                 NaturalezaDocumento::PorCobrar,
-                'factura',
-                $emitido->numero,
-                $emitido->fecha->toDateString(),
-                "Factura {$emitido->numero}",
-                $totales['total'],
-                'facturacion',
-                $emitido->id,
-                planCuentaId: $this->asientos->cuentaCxcFactura(),
-                fechaVencimiento: $emitido->fecha_vencimiento?->toDateString(),
+                [['documento_tercero_id' => $emitido->documento_tercero_id, 'valor' => $valor]],
+                'facturacion_cobro',
+                $cobro->id,
+                $fecha,
             );
+        }
 
-            $emitido->update(['comprobante_id' => $asiento->id, 'documento_tercero_id' => $documentoTercero->id]);
+        $this->auditoria->registrar(
+            AccionAuditoria::Crear,
+            AuditoriaConstants::MODULO_FACTURACION,
+            "Factura {$emitido->numero} cruzada por {$valor->aDecimalString()} de interés ya recaudado al pagar",
+            'cobro_facturacion',
+            $cobro->id,
+            nuevos: ['documento_id' => $emitido->id, 'valor' => $valor->aDecimalString()],
+            autor: $usuario,
+        );
+    }
 
-            $this->auditoria->registrar(
-                AccionAuditoria::Crear,
-                AuditoriaConstants::MODULO_FACTURACION,
-                "Factura {$emitido->numero} emitida",
-                'documento_facturacion',
-                $emitido->id,
-                nuevos: ['numero' => $emitido->numero, 'credito_id' => $emitido->credito_id, 'total' => $totales['total']->aDecimalString()],
-                autor: $usuario,
-            );
+    /** Si alguno de estos `pago_detalle` ya quedó enlazado a una factura de interés, para que `PagoService::exigirReversible` no deshaga el pago sin antes corregir la factura. */
+    public function existeInteresFacturadoParaPagoDetalle(array $pagoDetalleIds): bool
+    {
+        if ($pagoDetalleIds === []) {
+            return false;
+        }
 
-            return $this->conLineas($emitido);
-        });
+        return $this->aplicacionesInteresFacturado->existeParaPagoDetalleIds($pagoDetalleIds);
     }
 
     /**

@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
 use Tests\Concerns\CreatesCreditFixtures;
+use Tests\Concerns\CreatesFacturacionFixtures;
 use Tests\TestCase;
 
 class ReversarPagoTest extends TestCase
@@ -26,6 +27,7 @@ class ReversarPagoTest extends TestCase
     use ActsAsAdmin;
     use CreatesContabilidadFixtures;
     use CreatesCreditFixtures;
+    use CreatesFacturacionFixtures;
     use RefreshDatabase;
 
     private const MOTIVO = 'Cheque devuelto por el banco';
@@ -241,6 +243,25 @@ class ReversarPagoTest extends TestCase
 
         $this->postJson($this->urlReversa($pago), ['motivo' => self::MOTIVO])->assertOk();
         $this->assertDatabaseHas('reversas_pago', ['pago_id' => $pago->id]);
+    }
+
+    public function test_no_se_reversa_un_pago_cuyo_interes_ya_se_facturo(): void
+    {
+        $this->actingAsAdmin();
+        $this->crearReglasFacturacion();
+        $credito = $this->creditoConTresCuotas();
+        $pago = $this->pagar($credito, 100);
+
+        $cuota = $credito->cuotas()->where('numero_cuota', 1)->firstOrFail();
+        $this->postJson('/api/v1/facturacion/documentos/intereses-pagados', [
+            'credito_id' => $credito->id,
+            'cuota_ids' => [$cuota->id],
+        ])->assertStatus(201);
+
+        $this->postJson($this->urlReversa($pago), ['motivo' => self::MOTIVO])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['pago']);
+        $this->assertDatabaseMissing('reversas_pago', ['pago_id' => $pago->id]);
     }
 
     public function test_el_recibo_anulado_sigue_descargable_como_pdf(): void
