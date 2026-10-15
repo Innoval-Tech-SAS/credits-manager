@@ -23,7 +23,7 @@ class ConceptosSugeridosFacturacionTest extends TestCase
         $this->getJson(self::BASE.'?credito_id=1')->assertStatus(401);
     }
 
-    public function test_sugiere_capital_interes_y_otros_gastos_de_las_cuotas_pendientes_y_vencidas(): void
+    public function test_sugiere_solo_el_interes_de_la_primera_cuota_pendiente_o_vencida(): void
     {
         $this->actingAsAdmin();
         $credito = $this->crearCredito($this->crearCliente());
@@ -33,13 +33,14 @@ class ConceptosSugeridosFacturacionTest extends TestCase
             'valor_capital' => 250, 'valor_interes' => 30, 'valor_otros_gastos' => 5,
             'estado' => EstadoCuota::Vencida,
         ]);
+        // Segunda cuota pendiente: no debe sugerir nada de ella, solo de la más antigua sin pagar.
         $this->crearCuota($credito, [
             'numero_cuota' => 2,
             'fecha_vencimiento' => '2026-03-01',
             'valor_capital' => 260, 'valor_interes' => 20, 'valor_otros_gastos' => 0,
             'estado' => EstadoCuota::Pendiente,
         ]);
-        // Pagada: no debe sugerir nada de esta cuota, aunque sus valores no sean cero.
+        // Pagada: ya no cuenta como "primera pendiente" aunque fuera anterior en número.
         $this->crearCuota($credito, [
             'numero_cuota' => 3,
             'fecha_vencimiento' => '2026-04-01',
@@ -49,16 +50,27 @@ class ConceptosSugeridosFacturacionTest extends TestCase
 
         $conceptos = $this->getJson(self::BASE.'?credito_id='.$credito->id)->assertOk()->json('conceptos');
 
-        $this->assertCount(5, $conceptos);
-        $primeros3 = array_slice($conceptos, 0, 3);
-        $this->assertSame(['capital', 'interes_corriente', 'otros_gastos'], array_column($primeros3, 'tipo_concepto'));
-        $this->assertSame([$cuotaVencida->id, $cuotaVencida->id, $cuotaVencida->id], array_column($primeros3, 'cuota_id'));
-        $this->assertSame(['250.00', '30.00', '5.00'], array_column($primeros3, 'valor'));
-        $this->assertSame('2026-02-01', $primeros3[0]['fecha_vencimiento']);
+        // Solo el interés corriente de la cuota 1 — ni su capital/otros gastos, ni nada de la cuota 2.
+        $this->assertCount(1, $conceptos);
+        $this->assertSame('interes_corriente', $conceptos[0]['tipo_concepto']);
+        $this->assertSame($cuotaVencida->id, $conceptos[0]['cuota_id']);
+        $this->assertSame('30.00', $conceptos[0]['valor']);
+        $this->assertSame('2026-02-01', $conceptos[0]['fecha_vencimiento']);
+    }
 
-        $siguientes = array_slice($conceptos, 3);
-        // La cuota 2 tiene otros_gastos en cero: solo capital e interés, sin la mora (no se precarga nunca).
-        $this->assertSame(['capital', 'interes_corriente'], array_column($siguientes, 'tipo_concepto'));
+    public function test_no_sugiere_nada_si_el_interes_de_la_primera_cuota_pendiente_es_cero(): void
+    {
+        $this->actingAsAdmin();
+        $credito = $this->crearCredito($this->crearCliente());
+        $this->crearCuota($credito, [
+            'numero_cuota' => 1, 'fecha_vencimiento' => '2026-02-01',
+            'valor_capital' => 250, 'valor_interes' => 0, 'valor_otros_gastos' => 0,
+            'estado' => EstadoCuota::Pendiente,
+        ]);
+
+        $conceptos = $this->getJson(self::BASE.'?credito_id='.$credito->id)->assertOk()->json('conceptos');
+
+        $this->assertSame([], $conceptos);
     }
 
     public function test_un_credito_de_otra_empresa_responde_422(): void
@@ -71,7 +83,7 @@ class ConceptosSugeridosFacturacionTest extends TestCase
         $this->getJson(self::BASE.'?credito_id='.$creditoAjeno->id)->assertStatus(422)->assertJsonValidationErrors('credito_id');
     }
 
-    public function test_excluye_lo_ya_facturado_en_una_factura_emitida(): void
+    public function test_excluye_el_interes_ya_facturado_en_una_factura_emitida(): void
     {
         $this->actingAsAdmin();
         $this->crearReglasFacturacion();
@@ -86,14 +98,14 @@ class ConceptosSugeridosFacturacionTest extends TestCase
             'cliente_id' => $credito->cliente_id,
             'credito_id' => $credito->id,
             'lineas' => [
-                ['concepto' => 'Capital cuota 1', 'descripcion' => 'Capital', 'valor' => '250', 'tipo_concepto' => 'capital', 'cuota_id' => $cuota->id],
+                ['concepto' => 'Interés cuota 1', 'descripcion' => 'Interés', 'valor' => '30', 'tipo_concepto' => 'interes_corriente', 'cuota_id' => $cuota->id],
             ],
         ])->assertStatus(201)->json('documento');
         $this->postJson('/api/v1/facturacion/documentos/'.$borrador['id'].'/emitir')->assertOk();
 
         $conceptos = $this->getJson(self::BASE.'?credito_id='.$credito->id)->assertOk()->json('conceptos');
 
-        // El capital ya facturado no se vuelve a sugerir; el interés, no facturado, sigue apareciendo.
-        $this->assertSame(['interes_corriente'], array_column($conceptos, 'tipo_concepto'));
+        // El interés de la cuota 1 ya está facturado: no hay nada más que sugerir (no se salta a otro concepto de la misma cuota).
+        $this->assertSame([], $conceptos);
     }
 }

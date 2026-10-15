@@ -13,7 +13,6 @@ use App\Core\Consecutivos\Services\ConsecutivoDocumentoService;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Models\Credito;
-use App\Creditos\Models\Cuota;
 use App\Creditos\Repositories\CreditoRepository;
 use App\Creditos\Repositories\CuotaRepository;
 use App\Empresas\Models\Empresa;
@@ -91,10 +90,12 @@ class DocumentoFacturacionService
     }
 
     /**
-     * Conceptos sugeridos de un crédito para precargar la factura: una línea por cada componente no-cero (capital,
-     * interés corriente, otros gastos) de sus cuotas pendientes o vencidas, excluyendo lo ya facturado en una
-     * factura emitida. El interés de mora queda fuera a propósito: no está precalculado en la cuota y se agrega
-     * a mano, como ya se hace en nota débito.
+     * Concepto sugerido de un crédito para precargar la factura: solo el interés corriente de la primera cuota
+     * pendiente o vencida (la política de facturación es mensual, una cuota a la vez) — capital y otros gastos no
+     * se sugieren, se facturan aparte cuando el caso lo pida. Si ya se facturó ese interés en una factura emitida
+     * vigente, no sugiere nada. El usuario puede agregar manualmente más líneas (otra cuota, capital, otros
+     * gastos) si de verdad las necesita — ver el formulario de líneas del frontend. El interés de mora queda fuera
+     * a propósito: no está precalculado en la cuota y se agrega a mano, como ya se hace en nota débito.
      *
      * @return list<array{cuota_id: int, tipo_concepto: string, concepto: string, descripcion: string, valor: string, fecha_vencimiento: string}>
      */
@@ -102,27 +103,28 @@ class DocumentoFacturacionService
     {
         /** @var Credito $credito */
         $credito = $this->creditos->buscarPorIdOFallar($creditoId);
-        $yaFacturados = array_flip($this->combosVigentes($credito));
-        $sugerencias = [];
 
-        foreach ($this->cuotas->pendientesOrdenadas($credito->id) as $cuota) {
-            foreach ($this->componentesDeCuota($cuota) as [$tipoConcepto, $valor]) {
-                if (! $valor->esPositivo() || isset($yaFacturados["{$cuota->id}|{$tipoConcepto->value}"])) {
-                    continue;
-                }
+        $cuota = $this->cuotas->pendientesOrdenadas($credito->id)->first();
 
-                $sugerencias[] = [
-                    'cuota_id' => $cuota->id,
-                    'tipo_concepto' => $tipoConcepto->value,
-                    'concepto' => "{$tipoConcepto->etiqueta()} cuota {$cuota->numero_cuota}",
-                    'descripcion' => "{$tipoConcepto->etiqueta()} de la cuota {$cuota->numero_cuota}, vence {$cuota->fecha_vencimiento->toDateString()}",
-                    'valor' => $valor->aDecimalString(),
-                    'fecha_vencimiento' => $cuota->fecha_vencimiento->toDateString(),
-                ];
-            }
+        if (! $cuota || ! $cuota->valor_interes->esPositivo()) {
+            return [];
         }
 
-        return $sugerencias;
+        $tipoConcepto = TipoConceptoFacturacion::InteresCorriente;
+        $yaFacturados = array_flip($this->combosVigentes($credito));
+
+        if (isset($yaFacturados["{$cuota->id}|{$tipoConcepto->value}"])) {
+            return [];
+        }
+
+        return [[
+            'cuota_id' => $cuota->id,
+            'tipo_concepto' => $tipoConcepto->value,
+            'concepto' => "{$tipoConcepto->etiqueta()} cuota {$cuota->numero_cuota}",
+            'descripcion' => "{$tipoConcepto->etiqueta()} de la cuota {$cuota->numero_cuota}, vence {$cuota->fecha_vencimiento->toDateString()}",
+            'valor' => $cuota->valor_interes->aDecimalString(),
+            'fecha_vencimiento' => $cuota->fecha_vencimiento->toDateString(),
+        ]];
     }
 
     /**
@@ -870,16 +872,6 @@ class DocumentoFacturacionService
             ->reject(fn ($fila) => $anuladas->contains($fila->documento_id))
             ->map(fn ($fila) => "{$fila->cuota_id}|{$fila->tipo_concepto}")
             ->all();
-    }
-
-    /** @return list<array{0: TipoConceptoFacturacion, 1: Dinero}> */
-    private function componentesDeCuota(Cuota $cuota): array
-    {
-        return [
-            [TipoConceptoFacturacion::Capital, $cuota->valor_capital],
-            [TipoConceptoFacturacion::InteresCorriente, $cuota->valor_interes],
-            [TipoConceptoFacturacion::OtrosGastos, $cuota->valor_otros_gastos],
-        ];
     }
 
     private function etiquetaMotivo(TipoDocumentoFacturacion $tipo, string $codigo): string
