@@ -80,6 +80,7 @@ const ExpenseTypesPage = lazyPage(() => import('./expenses/pages/expense-types-p
 const ExpensesListPage = lazyPage(() => import('./expenses/pages/expenses-list-page'), 'ExpensesListPage');
 const ConceptTaxSettingsPage = lazyPage(() => import('./invoicing/pages/concept-tax-settings-page'), 'ConceptTaxSettingsPage');
 const CreateInvoicePage = lazyPage(() => import('./invoicing/pages/create-invoice-page'), 'CreateInvoicePage');
+const InvoicePaidInterestPage = lazyPage(() => import('./invoicing/pages/invoice-paid-interest-page'), 'InvoicePaidInterestPage');
 const CreateNotePage = lazyPage(() => import('./invoicing/pages/create-note-page'), 'CreateNotePage');
 const CreateMultiplePaymentPage = lazyPage(() => import('./invoicing/pages/create-multiple-payment-page'), 'CreateMultiplePaymentPage');
 const InvoiceDetailPage = lazyPage(() => import('./invoicing/pages/invoice-detail-page'), 'InvoiceDetailPage');
@@ -853,6 +854,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="facturacion" accion="crear">
                                 <CreateInvoicePage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'facturacion/intereses-pagados/crear',
+                        element: (
+                            <RequireModulePermission modulo="facturacion" accion="crear">
+                                <InvoicePaidInterestPage />
                             </RequireModulePermission>
                         ),
                     },

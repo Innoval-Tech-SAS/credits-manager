@@ -9,6 +9,7 @@ use App\Facturacion\Requests\ActualizarBorradorFacturaRequest;
 use App\Facturacion\Requests\ConceptosSugeridosFacturaRequest;
 use App\Facturacion\Requests\CrearBorradorFacturaRequest;
 use App\Facturacion\Requests\EmitirNotaRequest;
+use App\Facturacion\Requests\FacturarInteresesPagadosRequest;
 use App\Facturacion\Requests\ListarDocumentosFacturacionRequest;
 use App\Facturacion\Requests\MotivoAccionFacturacionRequest;
 use App\Facturacion\Services\AccesoDocumentosFacturacion;
@@ -51,6 +52,17 @@ class DocumentoFacturacionController extends Controller
     public function conceptosSugeridos(ConceptosSugeridosFacturaRequest $peticion): JsonResponse
     {
         return response()->json(['conceptos' => $this->documentos->conceptosSugeridos($peticion->integer('credito_id'))]);
+    }
+
+    public function facturarInteresesPagados(FacturarInteresesPagadosRequest $peticion): JsonResponse
+    {
+        $documento = $this->documentos->facturarInteresesPagados(
+            $peticion->integer('credito_id'),
+            $peticion->validated('cuota_ids'),
+            $peticion->user(),
+        );
+
+        return response()->json($this->documentos->detalle($documento), 201);
     }
 
     public function store(CrearBorradorFacturaRequest $peticion): JsonResponse

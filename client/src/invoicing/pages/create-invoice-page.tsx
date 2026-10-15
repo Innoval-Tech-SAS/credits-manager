@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
@@ -18,20 +18,11 @@ import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { FieldSkeleton } from '@ui/skeleton/components/field-skeleton';
 import { SkeletonStatus } from '@ui/skeleton/components/skeleton-status';
-import { TableSkeleton } from '@ui/skeleton/components/table-skeleton';
 import { DataTable } from '@ui/table/components/data-table';
 import { InvoiceLinesForm } from '../components/invoice-lines-form';
 import { ThirdPartyFiscalSummary } from '../components/third-party-fiscal-summary';
 import type { InvoiceLineDraft } from '../props/invoice-lines-form-props';
-import type { ApiInvoice, ApiSuggestedConcept } from '../types/api-invoice';
-
-const sugerenciaADraft = (sugerencia: ApiSuggestedConcept): InvoiceLineDraft => ({
-    concepto: sugerencia.concepto,
-    descripcion: sugerencia.descripcion,
-    valor: sugerencia.valor,
-    cuota_id: sugerencia.cuota_id,
-    tipo_concepto: sugerencia.tipo_concepto,
-});
+import type { ApiInvoice } from '../types/api-invoice';
 
 export const CreateInvoicePage: FC = () => {
     const navigate = useNavigate();
@@ -45,7 +36,6 @@ export const CreateInvoicePage: FC = () => {
     const [fechaVencimiento, setFechaVencimiento] = useState('');
     const [lineas, setLineas] = useState<InvoiceLineDraft[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const sugerenciasCargadasDe = useRef<string | null>(null);
 
     // El enlace "Facturar" desde el detalle de un crédito llega con `?credito=`: se resuelve su cliente antes de mostrar el paso 1.
     useEffect(() => {
@@ -75,33 +65,17 @@ export const CreateInvoicePage: FC = () => {
     const { data: pendientesData } = useResource<PaginatedResponse<ApiInvoice>>(cliente ? `/facturacion/documentos?${pendientesParams}` : null);
     const pendientes = (pendientesData?.data ?? []).filter((documento) => documento.tipo === 'factura' && parseFloat(documento.saldo ?? '0') > 0);
 
-    const { data: sugeridosData, isLoading: cargandoSugeridos } = useResource<{ conceptos: ApiSuggestedConcept[] }>(
-        creditoId ? `/facturacion/documentos/conceptos-sugeridos?credito_id=${creditoId}` : null,
-    );
-
-    useEffect(() => {
-        if (sugeridosData && sugerenciasCargadasDe.current !== creditoId) {
-            sugerenciasCargadasDe.current = creditoId;
-            setLineas(sugeridosData.conceptos.map(sugerenciaADraft));
-
-            const mayorFecha = sugeridosData.conceptos.reduce<string>((max, s) => (s.fecha_vencimiento > max ? s.fecha_vencimiento : max), '');
-            setFechaVencimiento(mayorFecha);
-        }
-    }, [sugeridosData, creditoId]);
-
     const seleccionarCliente = (seleccionado: ApiClient | null) => {
         setCliente(seleccionado);
         setCreditoId('');
         setLineas([]);
         setFechaVencimiento('');
-        sugerenciasCargadasDe.current = null;
     };
 
     const seleccionarCredito = (valor: string) => {
         setCreditoId(valor);
         setLineas([]);
         setFechaVencimiento('');
-        sugerenciasCargadasDe.current = null;
     };
 
     const guardar = async () => {
@@ -205,15 +179,15 @@ export const CreateInvoicePage: FC = () => {
             {credito && (
                 <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                     <h3 className="mb-4 text-base font-semibold text-gray-800 dark:text-white/90">3. Conceptos a facturar</h3>
-                    {cargandoSugeridos ? (
-                        <SkeletonStatus>
-                            <TableSkeleton columns={5} rows={3} />
-                        </SkeletonStatus>
-                    ) : lineas.length === 0 ? (
+                    {lineas.length === 0 && (
                         <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Este crédito no tiene cuotas pendientes por facturar. Agrega una línea manual si necesitas facturar otro concepto.
+                            Agrega las líneas a facturar (mora, otros gastos...). El interés corriente de una cuota se factura aparte, desde{' '}
+                            <button type="button" className="font-medium text-brand-500 hover:underline" onClick={() => navigate('/facturacion/intereses-pagados/crear')}>
+                                Facturar intereses pagados
+                            </button>
+                            .
                         </p>
-                    ) : null}
+                    )}
 
                     <InvoiceLinesForm lineas={lineas} onChange={setLineas} requiereTipoConcepto />
 

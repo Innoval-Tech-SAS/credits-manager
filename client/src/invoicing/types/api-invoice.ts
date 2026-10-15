@@ -68,7 +68,7 @@ export type ApiInvoiceTotals = {
     situacion?: ApiInvoiceSituation;
 };
 
-/** Raw shape of one row returned by `GET /facturacion/documentos/conceptos-sugeridos`. */
+/** Raw shape of one row returned by `GET /facturacion/documentos/conceptos-sugeridos`: interés de una cuota ya pagada, pendiente de facturar (ver `POST /facturacion/documentos/intereses-pagados`). */
 export type ApiSuggestedConcept = {
     cuota_id: number;
     tipo_concepto: ApiInvoiceConceptType;
@@ -76,7 +76,6 @@ export type ApiSuggestedConcept = {
     descripcion: string;
     /** Decimal string en pesos. */
     valor: string;
-    fecha_vencimiento: string;
 };
 
 /** Raw shape of one row returned by `GET/PUT /facturacion/parametrizacion-conceptos`. */
@@ -100,7 +99,7 @@ export type ApiInvoiceNoteCreditReason = 'devolucion' | 'anulacion' | 'rebaja_de
 
 export type ApiInvoiceNoteDebitReason = 'intereses' | 'gastos_por_cobrar' | 'cambio_valor' | 'otros';
 
-export type ApiInvoicePaymentMethod = 'efectivo' | 'transferencia' | 'consignacion' | 'cheque' | 'tarjeta';
+export type ApiInvoicePaymentMethod = 'efectivo' | 'transferencia' | 'consignacion' | 'cheque' | 'tarjeta' | 'interes_ya_recaudado';
 
 /** Fila de cobro: `cobro` registra dinero recibido; `reversa` lo compensa y apunta al cobro original. */
 export type ApiInvoicePayment = {

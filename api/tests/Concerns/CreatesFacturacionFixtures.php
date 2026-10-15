@@ -15,7 +15,7 @@ trait CreatesFacturacionFixtures
 
     protected function crearReglasFacturacion(): void
     {
-        foreach ([EventoContable::FacturaEmision, EventoContable::NotaCreditoFactura, EventoContable::NotaDebitoFactura, EventoContable::CobroFactura] as $evento) {
+        foreach ([EventoContable::FacturaEmision, EventoContable::NotaCreditoFactura, EventoContable::NotaDebitoFactura, EventoContable::CobroFactura, EventoContable::CruceInteresFacturado] as $evento) {
             if (ReglaContabilizacion::query()->where('evento', $evento)->doesntExist()) {
                 $this->crearRegla($evento);
             }

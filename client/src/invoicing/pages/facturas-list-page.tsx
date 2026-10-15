@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { Eye, FileText, HandCoins, Percent, Settings } from 'lucide-react';
+import { Eye, FileText, HandCoins, Percent, Receipt, Settings } from 'lucide-react';
 
 import { usePermission } from '../../auth/hooks/use-permission';
 import { ModuleListPage } from '@ui/module/components/module-list-page';
@@ -44,6 +44,11 @@ export const FacturasListPage: FC = () => {
                     {canRegisterPayment && (
                         <Button variant="outline" collapseBelow="md" startIcon={<HandCoins className="size-4" />} onClick={() => navigate('/facturacion/cobros/crear')}>
                             Cobro múltiple
+                        </Button>
+                    )}
+                    {canCreate && (
+                        <Button variant="outline" collapseBelow="md" startIcon={<Receipt className="size-4" />} onClick={() => navigate('/facturacion/intereses-pagados/crear')}>
+                            Facturar intereses pagados
                         </Button>
                     )}
                     {canCreate && <CreateButton label="factura" icon={<FileText className="size-4" />} onClick={() => navigate('/facturacion/crear')} />}
