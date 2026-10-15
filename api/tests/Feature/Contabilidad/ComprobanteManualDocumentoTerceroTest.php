@@ -58,6 +58,36 @@ class ComprobanteManualDocumentoTerceroTest extends TestCase
         ]);
     }
 
+    /** Cuenta de proveedores con código del prefijo PUC de CxP (2205xx) pero SIN las flags marcadas: nace así. */
+    private function cuentaCxpSinMarcas(): PlanCuenta
+    {
+        static $contador = 0;
+        $contador++;
+
+        return $this->crearCuenta([
+            'codigo' => "2205{$contador}",
+            'tipo' => TipoCuenta::Pasivo,
+            'naturaleza' => NaturalezaCuenta::Credito,
+            'exige_tercero' => false,
+            'exige_documento_cruce' => false,
+        ]);
+    }
+
+    /** Cuenta de clientes con código del prefijo PUC de CxC (1305xx) pero SIN las flags marcadas: nace así. */
+    private function cuentaCxcSinMarcas(): PlanCuenta
+    {
+        static $contador = 0;
+        $contador++;
+
+        return $this->crearCuenta([
+            'codigo' => "1305{$contador}",
+            'tipo' => TipoCuenta::Activo,
+            'naturaleza' => NaturalezaCuenta::Debito,
+            'exige_tercero' => false,
+            'exige_documento_cruce' => false,
+        ]);
+    }
+
     /** Crea un comprobante manual con 2 líneas y lo lleva hasta contabilizado (creador -> revisor -> contabilizar). */
     private function contabilizarComprobante(array $payload, Empresa $empresa): int
     {
@@ -452,5 +482,173 @@ class ComprobanteManualDocumentoTerceroTest extends TestCase
         $this->postJson(self::BASE."/{$comprobanteId}/contabilizar")
             ->assertStatus(422)
             ->assertJsonValidationErrors('comprobante');
+    }
+
+    public function test_causar_una_cxp_sin_marcas_pero_con_prefijo_de_cartera_crea_el_documento_tercero(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->creador($empresa);
+        $cuentaCxp = $this->cuentaCxpSinMarcas();
+        $tercero = $this->crearTercero();
+
+        $comprobanteId = $this->contabilizarComprobante([
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Honorarios enero',
+            'lineas' => [
+                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 100, 'credito' => 0],
+                [
+                    'cuenta_id' => $cuentaCxp->id, 'debito' => 0, 'credito' => 100,
+                    'tercero_id' => $tercero->id, 'documento_cruce' => 'FE-7001',
+                ],
+            ],
+        ], $empresa);
+
+        $this->assertDatabaseHas('documentos_tercero', [
+            'tercero_id' => $tercero->id,
+            'naturaleza' => 'por_pagar',
+            'numero_documento' => 'FE-7001',
+            'saldo' => 10000,
+            'estado' => 'pendiente',
+            'modulo_origen' => 'contabilidad_manual',
+            'origen_id' => $comprobanteId,
+        ]);
+    }
+
+    public function test_causar_una_cxc_sin_marcas_pero_con_prefijo_de_cartera_crea_el_documento_tercero(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->creador($empresa);
+        $cuentaCxc = $this->cuentaCxcSinMarcas();
+        $tercero = $this->crearTercero();
+
+        $comprobanteId = $this->contabilizarComprobante([
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Factura de venta enero',
+            'lineas' => [
+                [
+                    'cuenta_id' => $cuentaCxc->id, 'debito' => 100, 'credito' => 0,
+                    'tercero_id' => $tercero->id, 'documento_cruce' => 'F-7002',
+                ],
+                ['cuenta_id' => $this->crearCuenta(['naturaleza' => NaturalezaCuenta::Credito])->id, 'debito' => 0, 'credito' => 100],
+            ],
+        ], $empresa);
+
+        $this->assertDatabaseHas('documentos_tercero', [
+            'tercero_id' => $tercero->id,
+            'naturaleza' => 'por_cobrar',
+            'numero_documento' => 'F-7002',
+            'saldo' => 10000,
+            'estado' => 'pendiente',
+            'modulo_origen' => 'contabilidad_manual',
+            'origen_id' => $comprobanteId,
+        ]);
+    }
+
+    public function test_cruzar_una_cxp_sin_marcas_abona_el_documento(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $admin = $this->creador($empresa);
+        $cuentaCxp = $this->cuentaCxpSinMarcas();
+        $cuentaBanco = $this->crearCuenta();
+        $tercero = $this->crearTercero();
+
+        $this->contabilizarComprobante([
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Honorarios enero',
+            'lineas' => [
+                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 100, 'credito' => 0],
+                [
+                    'cuenta_id' => $cuentaCxp->id, 'debito' => 0, 'credito' => 100,
+                    'tercero_id' => $tercero->id, 'documento_cruce' => 'FE-7003',
+                ],
+            ],
+        ], $empresa);
+
+        $this->actingAs($admin, 'sanctum');
+        $this->contabilizarComprobante([
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-02-01',
+            'concepto' => 'Pago honorarios',
+            'lineas' => [
+                [
+                    'cuenta_id' => $cuentaCxp->id, 'debito' => 100, 'credito' => 0,
+                    'tercero_id' => $tercero->id, 'documento_cruce' => 'FE-7003',
+                ],
+                ['cuenta_id' => $cuentaBanco->id, 'debito' => 0, 'credito' => 100],
+            ],
+        ], $empresa);
+
+        $this->assertDatabaseHas('documentos_tercero', [
+            'numero_documento' => 'FE-7003',
+            'saldo' => 0,
+            'estado' => 'cancelado',
+        ]);
+    }
+
+    public function test_reversar_una_causacion_sin_marcas_anula_el_documento_tercero(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $admin = $this->creador($empresa);
+        $cuentaCxp = $this->cuentaCxpSinMarcas();
+        $tercero = $this->crearTercero();
+
+        $comprobanteId = $this->contabilizarComprobante([
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Honorarios enero',
+            'lineas' => [
+                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 100, 'credito' => 0],
+                [
+                    'cuenta_id' => $cuentaCxp->id, 'debito' => 0, 'credito' => 100,
+                    'tercero_id' => $tercero->id, 'documento_cruce' => 'FE-7004',
+                ],
+            ],
+        ], $empresa);
+
+        $documento = DocumentoTercero::where('numero_documento', 'FE-7004')->firstOrFail();
+
+        $this->actingAs($admin, 'sanctum');
+        $this->postJson(self::BASE."/{$comprobanteId}/reversar", ['motivo' => 'Causación duplicada por error'])
+            ->assertStatus(201);
+
+        $this->assertDatabaseHas('documentos_tercero', ['id' => $documento->id, 'estado' => 'anulado', 'borrado_en' => null]);
+    }
+
+    public function test_falta_tercero_en_cuenta_de_cartera_sin_marcas_falla_al_crear(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->creador($empresa);
+        $cuentaCxp = $this->cuentaCxpSinMarcas();
+
+        $this->postJson(self::BASE, [
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Sin tercero',
+            'lineas' => [
+                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 100, 'credito' => 0],
+                ['cuenta_id' => $cuentaCxp->id, 'debito' => 0, 'credito' => 100, 'documento_cruce' => 'FE-7005'],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors('lineas');
+    }
+
+    public function test_falta_documento_cruce_en_cuenta_de_cartera_sin_marcas_falla_al_crear(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->creador($empresa);
+        $cuentaCxp = $this->cuentaCxpSinMarcas();
+        $tercero = $this->crearTercero();
+
+        $this->postJson(self::BASE, [
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Sin documento cruce',
+            'lineas' => [
+                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 100, 'credito' => 0],
+                ['cuenta_id' => $cuentaCxp->id, 'debito' => 0, 'credito' => 100, 'tercero_id' => $tercero->id],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors('lineas');
     }
 }
