@@ -48,7 +48,9 @@ class AislamientoModulosContablesTest extends TestCase
 
         $this->actingAsAdmin();
 
-        $this->cuenta = $this->crearCuenta();
+        // Códigos explícitos: el contador por defecto de crearCuenta() puede caer en un prefijo real de
+        // cartera (1305/2205/2335) y estas cuentas no tienen nada que ver con eso.
+        $this->cuenta = $this->crearCuenta(['codigo' => '910001']);
         $this->centro = CentroCosto::findOrFail($this->postJson('/api/v1/contabilidad/centros-costo', ['codigo' => 'ADM', 'nombre' => 'Administración'])
             ->assertCreated()->json('centro.id'));
         $this->tercero = $this->crearTercero(['tipo_persona' => TipoPersona::Natural, 'nombre' => 'Persona ajena']);
@@ -61,7 +63,7 @@ class AislamientoModulosContablesTest extends TestCase
             'concepto' => 'Comprobante ajeno',
             'lineas' => [
                 ['cuenta_id' => $this->cuenta->id, 'debito' => 50, 'credito' => 0],
-                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 0, 'credito' => 50],
+                ['cuenta_id' => $this->crearCuenta(['codigo' => '910002'])->id, 'debito' => 0, 'credito' => 50],
             ],
         ])->assertCreated()->json('comprobante.id'));
     }

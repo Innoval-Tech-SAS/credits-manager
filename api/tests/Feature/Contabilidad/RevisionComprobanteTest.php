@@ -25,16 +25,23 @@ class RevisionComprobanteTest extends TestCase
 
     private const BASE = '/api/v1/contabilidad/comprobantes';
 
-    /** Crea un borrador como usuario con permiso de crear; las cuentas y el tipo quedan en la empresa de la sesión. */
+    /**
+     * Crea un borrador como usuario con permiso de crear; las cuentas y el tipo quedan en la empresa de la sesión.
+     * Códigos explícitos: el contador por defecto de crearCuenta() puede caer en un prefijo real de cartera
+     * (1305/2205/2335) y estas cuentas no tienen nada que ver con eso.
+     */
     private function crearBorrador(int $total = 100): int
     {
+        static $contador = 0;
+        $contador++;
+
         $payload = [
             'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
             'fecha' => '2026-01-15',
             'concepto' => 'Asiento manual de prueba',
             'lineas' => [
-                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => $total, 'credito' => 0],
-                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 0, 'credito' => $total],
+                ['cuenta_id' => $this->crearCuenta(['codigo' => "91{$contador}001"])->id, 'debito' => $total, 'credito' => 0],
+                ['cuenta_id' => $this->crearCuenta(['codigo' => "91{$contador}002"])->id, 'debito' => 0, 'credito' => $total],
             ],
         ];
 

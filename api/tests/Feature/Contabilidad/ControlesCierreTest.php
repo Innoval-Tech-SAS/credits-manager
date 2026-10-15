@@ -64,9 +64,10 @@ class ControlesCierreTest extends TestCase
         $cxc = $this->crearCuenta(['codigo' => '130505', 'nombre' => 'Clientes']);
         $ingreso = $this->crearCuenta(['codigo' => '413505', 'nombre' => 'Ingreso', 'naturaleza' => NaturalezaCuenta::Credito, 'tipo' => TipoCuenta::Ingreso]);
         $tipo = $this->crearTipoComprobante();
+        $tercero = $this->crearTercero();
 
         app(ComprobanteService::class)->crearComprobante($tipo->id, '2026-01-15', [
-            ['cuenta_id' => $cxc->id, 'debito' => 1000, 'credito' => 0],
+            ['cuenta_id' => $cxc->id, 'debito' => 1000, 'credito' => 0, 'tercero_id' => $tercero->id, 'documento_cruce' => 'FE-1000'],
             ['cuenta_id' => $ingreso->id, 'debito' => 0, 'credito' => 1000],
         ], 'Venta de prueba', 'manual');
 
@@ -86,11 +87,12 @@ class ControlesCierreTest extends TestCase
         $cxc = $this->crearCuenta(['codigo' => '130505', 'nombre' => 'Clientes']);
         $ingreso = $this->crearCuenta(['codigo' => '413505', 'nombre' => 'Ingreso', 'naturaleza' => NaturalezaCuenta::Credito, 'tipo' => TipoCuenta::Ingreso]);
         $tipo = $this->crearTipoComprobante();
+        $tercero = $this->crearTercero();
 
         // Una 1305 con saldo CRÉDITO (al revés de lo esperado para una cuenta deudora).
         app(ComprobanteService::class)->crearComprobante($tipo->id, '2026-01-15', [
             ['cuenta_id' => $ingreso->id, 'debito' => 500, 'credito' => 0],
-            ['cuenta_id' => $cxc->id, 'debito' => 0, 'credito' => 500],
+            ['cuenta_id' => $cxc->id, 'debito' => 0, 'credito' => 500, 'tercero_id' => $tercero->id, 'documento_cruce' => 'FE-1001'],
         ], 'Reverso mal clasificado', 'manual');
 
         $this->lector($empresa);
@@ -127,8 +129,9 @@ class ControlesCierreTest extends TestCase
         $this->actingAsRolConPermisos('carga', ['configuracion_contable.crear_plan_cuentas', 'contabilidad.crear_manual'], $otra);
         $cxc = $this->crearCuenta(['codigo' => '130505', 'nombre' => 'Clientes']);
         $ingreso = $this->crearCuenta(['codigo' => '413505', 'nombre' => 'Ingreso', 'naturaleza' => NaturalezaCuenta::Credito, 'tipo' => TipoCuenta::Ingreso]);
+        $tercero = $this->crearTercero();
         app(ComprobanteService::class)->crearComprobante($this->crearTipoComprobante()->id, '2026-01-15', [
-            ['cuenta_id' => $cxc->id, 'debito' => 1000, 'credito' => 0],
+            ['cuenta_id' => $cxc->id, 'debito' => 1000, 'credito' => 0, 'tercero_id' => $tercero->id, 'documento_cruce' => 'FE-1002'],
             ['cuenta_id' => $ingreso->id, 'debito' => 0, 'credito' => 1000],
         ], 'Venta de la otra empresa', 'manual');
 

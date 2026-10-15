@@ -149,8 +149,8 @@ class ExportarReportesContablesTest extends TestCase
         $this->assertContains('Débito', $datos[0]);
         $this->assertCount(4, $datos, 'encabezado, dos movimientos y la fila de totales');
         $this->assertSame('Totales', $datos[3][3]);
-        $this->assertEquals(100, $datos[3][5]);
         $this->assertEquals(100, $datos[3][6]);
+        $this->assertEquals(100, $datos[3][7]);
     }
 
     public function test_libro_mayor_exporta_el_saldo_corrido_segun_la_naturaleza(): void
@@ -206,6 +206,6 @@ class ExportarReportesContablesTest extends TestCase
         $datos = $this->leerDatos(Exportacion::find($respuesta->json('exportacion.id')));
 
         $this->assertCount(4, $datos, 'solo los dos movimientos de la empresa que pidió el libro');
-        $this->assertEquals(250, $datos[3][5], 'el total no incluye el cobro de la otra empresa');
+        $this->assertEquals(250, $datos[3][6], 'el total no incluye el cobro de la otra empresa');
     }
 }

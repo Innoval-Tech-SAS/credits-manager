@@ -97,7 +97,9 @@ class SeparacionModulosContablesTest extends TestCase
         $this->actividad = $this->crearActividadEconomica();
         $this->valorUvt = $this->crearValorUvt(2031, 47065);
 
-        $this->cuenta = $this->crearCuenta();
+        // Código explícito: el contador por defecto de crearCuenta() puede caer en un prefijo real de
+        // cartera (1305/2205/2335) y esta cuenta no tiene nada que ver con eso.
+        $this->cuenta = $this->crearCuenta(['codigo' => '910001']);
         $this->centroId = $this->postJson('/api/v1/contabilidad/centros-costo', ['codigo' => 'ADM', 'nombre' => 'Administración'])
             ->assertCreated()->json('centro.id');
 
@@ -116,7 +118,7 @@ class SeparacionModulosContablesTest extends TestCase
             'concepto' => 'Comprobante de prueba',
             'lineas' => [
                 ['cuenta_id' => $this->cuenta->id, 'debito' => 100, 'credito' => 0],
-                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 0, 'credito' => 100],
+                ['cuenta_id' => $this->crearCuenta(['codigo' => '910002'])->id, 'debito' => 0, 'credito' => 100],
             ],
         ])->assertCreated()->json('comprobante.id'));
     }
