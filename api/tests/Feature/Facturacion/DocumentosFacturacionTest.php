@@ -507,6 +507,22 @@ class DocumentosFacturacionTest extends TestCase
         $this->assertCount(1, $porMotivo->json('data'));
     }
 
+    public function test_el_listado_se_filtra_por_tercero(): void
+    {
+        $this->actingAsAdmin();
+
+        $creditoAna = $this->credito();
+        $facturaAna = $this->factura($creditoAna);
+
+        $creditoOtro = $this->crearCredito($this->crearCliente(['nombre' => 'Luis Perez']));
+        $this->factura($creditoOtro);
+
+        $terceroIdAna = $creditoAna->cliente->tercero_id;
+
+        $porTercero = $this->getJson(self::BASE.'?tipo=factura&tercero_id='.$terceroIdAna)->assertOk();
+        $this->assertSame([$facturaAna['id']], collect($porTercero->json('data'))->pluck('id')->all());
+    }
+
     public function test_un_documento_de_otra_empresa_responde_404(): void
     {
         $this->actingAsAdmin();

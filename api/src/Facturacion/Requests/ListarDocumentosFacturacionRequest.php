@@ -22,6 +22,7 @@ class ListarDocumentosFacturacionRequest extends FormRequest
             'tipo' => ['nullable', Rule::enum(TipoDocumentoFacturacion::class)],
             'estado' => ['nullable', Rule::enum(EstadoDocumentoFacturacion::class)],
             'cliente_id' => ['nullable', 'integer', Rule::exists('clientes', 'id')->where('empresa_id', $this->user()->empresa_id)],
+            'tercero_id' => ['nullable', 'integer', Rule::exists('terceros', 'id')->where('empresa_id', $this->user()->empresa_id)],
             'con_saldo' => ['nullable', 'boolean'],
             'desde' => ['nullable', 'date_format:Y-m-d'],
             'hasta' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:desde'],

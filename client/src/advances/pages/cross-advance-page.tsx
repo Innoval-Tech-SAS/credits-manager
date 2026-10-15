@@ -34,11 +34,11 @@ export const CrossAdvancePage: FC = () => {
     const location = useLocation();
     const { sendRequest, isLoading: isSubmitting } = useSendRequest();
 
-    const mensajeInicial = (location.state as { message?: string } | null)?.message ?? null;
-    const [mensaje, setMensaje] = useState(mensajeInicial);
+    const estadoInicial = location.state as { message?: string; terceroPreseleccionado?: ApiThirdParty } | null;
+    const [mensaje, setMensaje] = useState(estadoInicial?.message ?? null);
 
     const [lado, setLado] = useState<Lado>('proveedor');
-    const [tercero, setTercero] = useState<ApiThirdParty | null>(null);
+    const [tercero, setTercero] = useState<ApiThirdParty | null>(estadoInicial?.terceroPreseleccionado ?? null);
     const [anticipoId, setAnticipoId] = useState('');
     const [documentoId, setDocumentoId] = useState('');
     const [valor, setValor] = useState('');

@@ -73,7 +73,7 @@ class DocumentoFacturacionService
 
     /**
      * @param  list<TipoDocumentoFacturacion>  $tipos
-     * @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo_codigo: ?string}  $filtros
+     * @param  array{estado: ?EstadoDocumentoFacturacion, cliente_id: ?int, tercero_id: ?int, desde: ?string, hasta: ?string, factura: ?string, motivo_codigo: ?string}  $filtros
      */
     public function listar(array $tipos, array $filtros, bool $conSaldo, int $porPagina, int $pagina): LengthAwarePaginator
     {
