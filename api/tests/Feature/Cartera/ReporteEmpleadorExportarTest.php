@@ -93,8 +93,7 @@ class ReporteEmpleadorExportarTest extends TestCase
      */
     private function textoDe(string $pdf): string
     {
-        preg_match_all('/stream\r?\n(.*?)\r?\nendstream/s', $pdf, $flujos);
-        $contenido = collect($flujos[1])->map(fn (string $flujo) => @gzuncompress($flujo) ?: '')->implode("\n");
+        $contenido = $this->flujosDescomprimidos($pdf);
 
         $partes = [];
 
@@ -112,6 +111,23 @@ class ReporteEmpleadorExportarTest extends TestCase
         }
 
         return implode(' ', $partes);
+    }
+
+    /**
+     * Corta cada flujo por su `/Length` en vez de buscar `endstream`: los bytes comprimidos cambian con la fecha de
+     * generación y pueden terminar en `\r` o contener `\nendstream`, lo que dejaba la página sin texto según el día.
+     */
+    private function flujosDescomprimidos(string $pdf): string
+    {
+        preg_match_all('/\/Length\s+(\d+)[^>]*>>\s*stream\r?\n/', $pdf, $cabeceras, PREG_OFFSET_CAPTURE);
+
+        $flujos = [];
+        foreach ($cabeceras[0] as $indice => [$cabecera, $posicion]) {
+            $datos = substr($pdf, $posicion + strlen($cabecera), (int) $cabeceras[1][$indice][0]);
+            $flujos[] = @gzuncompress($datos) ?: '';
+        }
+
+        return implode("\n", $flujos);
     }
 
     /** Quita el escape PDF de paréntesis y backslash dentro de una cadena literal `(...)`. */
