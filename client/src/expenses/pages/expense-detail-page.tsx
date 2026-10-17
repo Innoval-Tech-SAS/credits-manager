@@ -149,7 +149,7 @@ export const ExpenseDetailPage: FC = () => {
                                     ),
                                 },
                                 { key: 'regla', label: 'Regla' },
-                                { key: 'tarifa_aplicada', label: 'Tarifa', render: (row) => (row.tarifa_aplicada ? `${row.tarifa_aplicada}%` : '—') },
+                                { key: 'tarifa_aplicada', label: 'Tarifa', render: (row) => (row.tarifa_aplicada ? `${row.tarifa_aplicada}${row.tipo_retencion === 'reteica' ? '‰' : '%'}` : '—') },
                                 { key: 'detalle', label: 'Detalle', render: (row) => row.detalle ?? '—' },
                             ]}
                             rows={gasto.reglas_fiscales_aplicadas ?? []}
