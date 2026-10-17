@@ -1,5 +1,5 @@
 import type { FC, SubmitEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
@@ -23,7 +23,7 @@ import type { VoucherFormLine } from '../types/voucher-form-line';
 
 let nextLineKey = 1;
 
-function nuevaLinea(tercero: ApiThirdParty | null = null): VoucherFormLine {
+function nuevaLinea(tercero: ApiThirdParty | null = null, descripcion = ''): VoucherFormLine {
     return {
         key: nextLineKey++,
         cuenta_id: '',
@@ -31,7 +31,7 @@ function nuevaLinea(tercero: ApiThirdParty | null = null): VoucherFormLine {
         tercero,
         documento_cruce: '',
         fecha_vencimiento: '',
-        descripcion: '',
+        descripcion,
         debito: '',
         credito: '',
     };
@@ -76,7 +76,25 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
         setLineas((actuales) => actuales.map((linea) => (linea.tercero ? linea : { ...linea, tercero: nuevoTercero })));
     };
 
-    const agregarLinea = () => setLineas((actuales) => [...actuales, nuevaLinea(tercero)]);
+    const descripcionSugeridaRef = useRef('');
+
+    useEffect(() => {
+        const sugerida = documentoSoporte && concepto ? `${documentoSoporte} - ${concepto}` : '';
+        const anterior = descripcionSugeridaRef.current;
+        if (sugerida === anterior) return;
+
+        // Solo pisa las líneas cuya descripción seguía vacía o coincidía con la sugerencia anterior: no borra lo que el usuario ya escribió.
+        // `anterior` se captura en una constante (no se lee `descripcionSugeridaRef.current` dentro del updater) porque React ejecuta
+        // esta función más tarde, cuando el ref ya habría sido mutado a `sugerida` por la línea de abajo.
+        setLineas((actuales) =>
+            actuales.map((linea) =>
+                linea.descripcion === '' || linea.descripcion === anterior ? { ...linea, descripcion: sugerida } : linea,
+            ),
+        );
+        descripcionSugeridaRef.current = sugerida;
+    }, [documentoSoporte, concepto]);
+
+    const agregarLinea = () => setLineas((actuales) => [...actuales, nuevaLinea(tercero, descripcionSugeridaRef.current)]);
 
     const eliminarLinea = (key: number) => {
         setLineas((actuales) => (actuales.length > 2 ? actuales.filter((linea) => linea.key !== key) : actuales));
