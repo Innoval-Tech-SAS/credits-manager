@@ -23,7 +23,6 @@ class ConfiguracionCorreoTest extends TestCase
         return array_merge([
             'remitente' => 'cobranza@creditosdda.com',
             'nombre_remitente' => 'Cobranza DDA',
-            'driver' => 'smtp',
             'host' => 'smtp.example.com',
             'puerto' => 587,
             'cifrado' => 'tls',
@@ -46,7 +45,6 @@ class ConfiguracionCorreoTest extends TestCase
             'empresa_id' => $admin->empresa_id,
             'tipo' => 'cobranza',
             'remitente' => 'cobranza@creditosdda.com',
-            'driver' => 'smtp',
             'puerto' => 587,
         ]);
 
@@ -77,6 +75,31 @@ class ConfiguracionCorreoTest extends TestCase
             ->assertOk()
             ->assertJsonPath('configuracion.estado', 'sin_configurar')
             ->assertJsonPath('configuracion.clave_estado', 'sin_configurar');
+    }
+
+    /** Fila heredada del extinto driver de prueba: quedó sin host. Se trata igual que si no existiera. */
+    public function test_fila_heredada_sin_host_se_muestra_y_se_trata_como_sin_configurar(): void
+    {
+        $admin = $this->actingAsAdmin();
+
+        DB::table('configuraciones_correo')->insert([
+            'empresa_id' => $admin->empresa_id,
+            'tipo' => 'cobranza',
+            'remitente' => 'viejo@creditosdda.com',
+            'nombre_remitente' => 'Viejo',
+            'cifrado' => 'tls',
+            'creado_en' => now(),
+            'ultima_actualizacion' => now(),
+        ]);
+
+        $this->getJson('/api/v1/correo/configuracion/cobranza')
+            ->assertOk()
+            ->assertJsonPath('configuracion.estado', 'sin_configurar')
+            ->assertJsonPath('configuracion.clave_estado', 'sin_configurar');
+
+        $this->postJson('/api/v1/correo/configuracion/cobranza/prueba', ['destinatario' => 'destino@example.com'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['destinatario']);
     }
 
     public function test_cada_tipo_tiene_su_propia_configuracion(): void
@@ -116,7 +139,7 @@ class ConfiguracionCorreoTest extends TestCase
             ->assertJsonValidationErrors(['remitente', 'host', 'puerto']);
     }
 
-    public function test_el_driver_de_prueba_no_exige_host_ni_puerto_ni_cifrado(): void
+    public function test_el_driver_registro_ya_no_se_acepta_y_exige_host_puerto_y_cifrado(): void
     {
         $this->actingAsAdmin();
 
@@ -125,7 +148,9 @@ class ConfiguracionCorreoTest extends TestCase
             'host' => null,
             'puerto' => null,
             'cifrado' => null,
-        ]))->assertOk();
+        ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['host', 'puerto', 'cifrado']);
     }
 
     public function test_401_sin_sesion(): void

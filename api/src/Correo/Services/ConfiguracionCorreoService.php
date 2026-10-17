@@ -7,11 +7,11 @@ use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
 use App\Correo\Constants\CorreoConstants;
 use App\Correo\Enums\CifradoCorreo;
-use App\Correo\Enums\DriverCorreo;
 use App\Correo\Enums\TipoCorreo;
 use App\Correo\Mail\CorreoCobranza;
 use App\Correo\Models\ConfiguracionCorreo;
 use App\Correo\Repositories\ConfiguracionCorreoRepository;
+use App\Correo\Support\ContextoFalloCorreo;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
@@ -32,6 +32,12 @@ class ConfiguracionCorreoService
         return $this->representar($this->configuraciones->deEmpresaYTipo((int) $usuario->empresa_id, $tipo));
     }
 
+    /** Una fila heredada del driver de prueba (sin host) se trata como si no existiera. */
+    private function estaLista(?ConfiguracionCorreo $configuracion): bool
+    {
+        return $configuracion !== null && filled($configuracion->host);
+    }
+
     /** La clave solo se reemplaza si llega una nueva; omitida, se conserva la guardada. */
     public function guardar(Usuario $usuario, TipoCorreo $tipo, array $datos): array
     {
@@ -47,9 +53,6 @@ class ConfiguracionCorreoService
 
         $anteriores = $esNueva ? [] : $this->auditoria->instantanea($configuracion);
         $clave = $datos['clave'] ?? null;
-
-        // La columna `cifrado` no es nullable en la base: el driver de prueba no lo necesita, pero algo hay que guardar.
-        $datos['cifrado'] ??= CifradoCorreo::Tls->value;
 
         $configuracion->fill(Arr::except($datos, ['clave']) + ['actualizado_por' => $usuario->id]);
 
@@ -69,9 +72,11 @@ class ConfiguracionCorreoService
     {
         $configuracion = $this->configuraciones->deEmpresaYTipo((int) $usuario->empresa_id, $tipo);
 
-        if ($configuracion === null) {
+        if (! $this->estaLista($configuracion)) {
             throw ValidationException::withMessages(['destinatario' => __('validation.custom.correo.sin_configurar')]);
         }
+
+        $inicio = hrtime(true);
 
         try {
             $this->fabrica->paraConfiguracion($configuracion)->send(new CorreoCobranza(
@@ -82,17 +87,16 @@ class ConfiguracionCorreoService
                 nombreRemitente: $configuracion->nombre_remitente,
             ));
         } catch (Throwable $excepcion) {
-            Log::warning('Prueba de correo fallida', ['empresa_id' => $configuracion->empresa_id, 'tipo' => $tipo->value, 'excepcion' => $excepcion::class]);
+            Log::warning('Prueba de correo fallida', [
+                'empresa_id' => $configuracion->empresa_id,
+                'tipo' => $tipo->value,
+                ...ContextoFalloCorreo::construir($configuracion, $excepcion, (hrtime(true) - $inicio) / 1_000_000),
+            ]);
 
             return ['enviado' => false, 'mensaje' => $this->mensajeDeFallo($excepcion)];
         }
 
-        return [
-            'enviado' => true,
-            'mensaje' => $configuracion->driver === DriverCorreo::Registro
-                ? CorreoConstants::MENSAJE_PRUEBA_REGISTRO
-                : CorreoConstants::MENSAJE_PRUEBA_ENVIADA,
-        ];
+        return ['enviado' => true, 'mensaje' => CorreoConstants::MENSAJE_PRUEBA_ENVIADA];
     }
 
     private function mensajeDeFallo(Throwable $excepcion): string
@@ -127,13 +131,14 @@ class ConfiguracionCorreoService
         );
     }
 
-    /** Nunca incluye la clave: solo indica si está guardada. */
+    /** Nunca incluye la clave: solo indica si está guardada. Una fila incompleta (sin host) se muestra como sin configurar. */
     private function representar(?ConfiguracionCorreo $configuracion): array
     {
+        $configuracion = $this->estaLista($configuracion) ? $configuracion : null;
+
         return [
             'estado' => $configuracion ? 'configurada' : 'sin_configurar',
             'clave_estado' => $configuracion && filled($configuracion->getRawOriginal('clave')) ? 'configurada' : 'sin_configurar',
-            'driver' => $configuracion?->driver->value ?? DriverCorreo::Smtp->value,
             'remitente' => $configuracion?->remitente,
             'nombre_remitente' => $configuracion?->nombre_remitente,
             'host' => $configuracion?->host,

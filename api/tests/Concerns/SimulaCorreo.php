@@ -43,7 +43,6 @@ trait SimulaCorreo
             'tipo' => $tipo,
             'remitente' => 'cobranza@creditosdda.com',
             'nombre_remitente' => 'Cobranza DDA',
-            'driver' => 'smtp',
             'host' => 'smtp.example.com',
             'puerto' => 587,
             'cifrado' => 'tls',

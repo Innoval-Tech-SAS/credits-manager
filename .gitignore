@@ -9,7 +9,6 @@ certbot/www/
 .pnpm-store/
 
 /resources/
-.mcp.json
 
 graphify-out/
 

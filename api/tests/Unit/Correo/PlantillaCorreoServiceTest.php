@@ -4,7 +4,6 @@ namespace Tests\Unit\Correo;
 
 use App\Core\Dinero\Dinero;
 use App\Correo\Enums\CifradoCorreo;
-use App\Correo\Enums\DriverCorreo;
 use App\Correo\Enums\TipoCorreo;
 use App\Correo\Models\ConfiguracionCorreo;
 use App\Correo\Services\FabricaMailerCobranza;
@@ -68,20 +67,16 @@ class PlantillaCorreoServiceTest extends TestCase
         $this->assertSame('-$ 12,50', $this->plantillas->formatearPesos(Dinero::desdeCentavos(-1250)));
     }
 
-    public function test_la_fabrica_usa_smtps_con_ssl_y_el_proveedor_de_prueba_registra_sin_salir(): void
+    public function test_la_fabrica_usa_smtps_con_ssl(): void
     {
         $fabrica = new FabricaMailerCobranza;
 
-        $smtp = new ConfiguracionCorreo(['driver' => DriverCorreo::Smtp, 'host' => 'smtp.example.com', 'puerto' => 465, 'cifrado' => CifradoCorreo::Ssl, 'usuario' => 'u']);
+        $smtp = new ConfiguracionCorreo(['host' => 'smtp.example.com', 'puerto' => 465, 'cifrado' => CifradoCorreo::Ssl, 'usuario' => 'u']);
         $smtp->clave = 'clave';
         $transporte = $fabrica->transporte($smtp);
 
         $this->assertSame('smtp', $transporte['transport']);
         $this->assertSame('smtps', $transporte['scheme']);
         $this->assertSame('clave', $transporte['password']);
-
-        $registro = new ConfiguracionCorreo(['driver' => DriverCorreo::Registro, 'cifrado' => CifradoCorreo::Tls]);
-
-        $this->assertSame('log', $fabrica->transporte($registro)['transport']);
     }
 }
