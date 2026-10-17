@@ -91,7 +91,7 @@ export const PermissionMatrix: FC<PermissionMatrixProps> = ({ permisos, isChecke
                     ))}
                 </SkeletonStatus>
             ) : (
-                <div className="space-y-6">
+                <div className="custom-scrollbar max-h-[65vh] space-y-6 overflow-y-auto pr-1">
                     {grupos.map((grupo) => {
                         const modulos = grupo.modulos
                             .map((modulo) => ({ modulo, visibles: modulo.permisos.filter((permiso) => matchesPermissionSearch(permiso, busqueda)) }))

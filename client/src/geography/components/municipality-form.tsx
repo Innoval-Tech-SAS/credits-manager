@@ -1,5 +1,6 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
+import { Hash, MapPin } from 'lucide-react';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
@@ -56,12 +57,28 @@ export const MunicipalityForm: FC<MunicipalityFormProps> = ({ onCreated }) => {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="codigo">Código DANE</Label>
-                        <Input id="codigo" name="codigo" required maxLength={10} value={code} onChange={(event) => setCode(event.target.value)} />
+                        <Input
+                            id="codigo"
+                            name="codigo"
+                            required
+                            maxLength={10}
+                            startIcon={<Hash className="size-4" />}
+                            value={code}
+                            onChange={(event) => setCode(event.target.value)}
+                        />
                     </div>
 
                     <div className="md:col-span-2">
                         <Label htmlFor="nombre">Nombre</Label>
-                        <Input id="nombre" name="nombre" required maxLength={150} value={name} onChange={(event) => setName(event.target.value)} />
+                        <Input
+                            id="nombre"
+                            name="nombre"
+                            required
+                            maxLength={150}
+                            startIcon={<MapPin className="size-4" />}
+                            value={name}
+                            onChange={(event) => setName(event.target.value)}
+                        />
                     </div>
                 </div>
 

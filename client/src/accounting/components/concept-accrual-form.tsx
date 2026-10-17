@@ -14,7 +14,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { Save } from 'lucide-react';
+import { IdCard, Save } from 'lucide-react';
 import type { ConceptAccrualFormProps } from '../props/concept-accrual-form-props';
 import type { ApiVoucher } from '../types/api-voucher';
 import type { ApiCostCenter } from '../types/api-cost-center';
@@ -122,6 +122,7 @@ export const ConceptAccrualForm: FC<ConceptAccrualFormProps> = ({ tiposGasto }) 
                             id="numero-documento"
                             name="numero-documento"
                             required
+                            startIcon={<IdCard className="size-4" />}
                             value={numeroDocumento}
                             onChange={(event) => setNumeroDocumento(event.target.value)}
                         />

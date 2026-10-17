@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { Mail, MapPin, Phone } from 'lucide-react';
 
 import type { ApiEconomicActivity } from '../../expenses/types/api-economic-activity';
 import { useResource } from '../../shared/hooks/use-resource';
@@ -22,7 +23,13 @@ export const ThirdPartyContactFields: FC<ThirdPartyContactFieldsProps> = ({ valu
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="direccion">Dirección</Label>
-                        <Input id="direccion" name="direccion" value={values.direccion} onChange={(event) => onChange('direccion', event.target.value)} />
+                        <Input
+                            id="direccion"
+                            name="direccion"
+                            startIcon={<MapPin className="size-4" />}
+                            value={values.direccion}
+                            onChange={(event) => onChange('direccion', event.target.value)}
+                        />
                     </div>
 
                     <div>
@@ -42,7 +49,13 @@ export const ThirdPartyContactFields: FC<ThirdPartyContactFieldsProps> = ({ valu
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="celular">Celular</Label>
-                        <Input id="celular" name="celular" value={values.celular} onChange={(event) => onChange('celular', event.target.value)} />
+                        <Input
+                            id="celular"
+                            name="celular"
+                            startIcon={<Phone className="size-4" />}
+                            value={values.celular}
+                            onChange={(event) => onChange('celular', event.target.value)}
+                        />
                     </div>
 
                     <div>
@@ -50,6 +63,7 @@ export const ThirdPartyContactFields: FC<ThirdPartyContactFieldsProps> = ({ valu
                         <Input
                             id="telefono-fijo"
                             name="telefono-fijo"
+                            startIcon={<Phone className="size-4" />}
                             value={values.telefonoFijo}
                             onChange={(event) => onChange('telefonoFijo', event.target.value)}
                         />
@@ -61,6 +75,7 @@ export const ThirdPartyContactFields: FC<ThirdPartyContactFieldsProps> = ({ valu
                             id="correo"
                             name="correo"
                             type="email"
+                            startIcon={<Mail className="size-4" />}
                             value={values.correo}
                             onChange={(event) => onChange('correo', event.target.value)}
                         />

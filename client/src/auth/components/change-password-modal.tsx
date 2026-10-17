@@ -66,13 +66,10 @@ export const ChangePasswordModal: FC<ChangePasswordModalProps> = ({ user, onClos
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="cursor-pointer"
+                                    aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                    className="cursor-pointer text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                                 >
-                                    {showPassword ? (
-                                        <Eye className="fill-gray-500 dark:fill-gray-400 size-5" />
-                                    ) : (
-                                        <EyeOff className="fill-gray-500 dark:fill-gray-400 size-5" />
-                                    )}
+                                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                                 </button>
                             }
                             minLength={8}

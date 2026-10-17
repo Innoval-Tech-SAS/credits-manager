@@ -1,5 +1,6 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
+import { Building2, IdCard, User } from 'lucide-react';
 
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
@@ -54,7 +55,14 @@ export const LegalThirdPartyForm: FC<LegalThirdPartyFormProps> = ({ thirdPartyId
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div>
                             <Label htmlFor="razon-social">Razón social</Label>
-                            <Input id="razon-social" name="razon-social" required value={razonSocial} onChange={(event) => setRazonSocial(event.target.value)} />
+                            <Input
+                                id="razon-social"
+                                name="razon-social"
+                                required
+                                startIcon={<Building2 className="size-4" />}
+                                value={razonSocial}
+                                onChange={(event) => setRazonSocial(event.target.value)}
+                            />
                         </div>
 
                         <div>
@@ -63,6 +71,7 @@ export const LegalThirdPartyForm: FC<LegalThirdPartyFormProps> = ({ thirdPartyId
                                 id="representante-legal"
                                 name="representante-legal"
                                 required
+                                startIcon={<User className="size-4" />}
                                 value={representanteLegal}
                                 onChange={(event) => setRepresentanteLegal(event.target.value)}
                             />
@@ -76,6 +85,7 @@ export const LegalThirdPartyForm: FC<LegalThirdPartyFormProps> = ({ thirdPartyId
                                 required
                                 minLength={6}
                                 maxLength={15}
+                                startIcon={<IdCard className="size-4" />}
                                 value={nit}
                                 onChange={(event) => setNit(event.target.value.replace(/\D/g, ''))}
                             />

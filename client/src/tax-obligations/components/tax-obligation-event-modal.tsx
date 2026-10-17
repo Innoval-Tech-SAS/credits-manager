@@ -1,7 +1,7 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
 
-import { Ban, CheckCircle2, RotateCcw } from 'lucide-react';
+import { Ban, CheckCircle2, Hash, RotateCcw } from 'lucide-react';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { DatePicker } from '@ui/forms/components/date-picker';
@@ -144,6 +144,7 @@ const TaxObligationEventForm: FC<TaxObligationEventFormProps> = ({ obligacion, f
                                     placeholder="Ej. 2026-10"
                                     required
                                     maxLength={20}
+                                    startIcon={<Hash className="size-4" />}
                                     value={periodo}
                                     onChange={(event) => setPeriodo(event.target.value)}
                                 />
