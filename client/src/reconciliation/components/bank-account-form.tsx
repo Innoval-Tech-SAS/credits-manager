@@ -1,5 +1,6 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
+import { Hash } from 'lucide-react';
 
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
@@ -73,7 +74,13 @@ export const BankAccountForm: FC<BankAccountFormProps> = ({ onCreated }) => {
 
                     <div>
                         <Label htmlFor="numero-cuenta">Número de cuenta</Label>
-                        <Input id="numero-cuenta" required value={numeroCuenta} onChange={(event) => setNumeroCuenta(event.target.value)} />
+                        <Input
+                            id="numero-cuenta"
+                            required
+                            startIcon={<Hash className="size-4" />}
+                            value={numeroCuenta}
+                            onChange={(event) => setNumeroCuenta(event.target.value)}
+                        />
                     </div>
 
                     <div>

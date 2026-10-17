@@ -1,7 +1,7 @@
 import type { FC } from 'react';
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Eye, Save } from 'lucide-react';
+import { Eye, FileText, Save } from 'lucide-react';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
@@ -122,7 +122,15 @@ export const EmailTemplateForm: FC<EmailTemplateFormProps> = ({ tipo, templateId
 
             <div className="flex flex-col gap-2">
                 <Label htmlFor="plantilla-nombre">Nombre de la plantilla</Label>
-                <Input id="plantilla-nombre" name="nombre" required maxLength={120} value={nombre} onChange={(event) => setNombre(event.target.value)} />
+                <Input
+                    id="plantilla-nombre"
+                    name="nombre"
+                    required
+                    maxLength={120}
+                    startIcon={<FileText className="size-4" />}
+                    value={nombre}
+                    onChange={(event) => setNombre(event.target.value)}
+                />
             </div>
 
             <div className="flex min-w-0 flex-col gap-6">

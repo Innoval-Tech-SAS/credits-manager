@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Lock, User } from 'lucide-react';
 import { useAuth } from '../hooks/use-auth';
 
 export const LoginForm: FC = () => {
@@ -48,6 +48,7 @@ export const LoginForm: FC = () => {
                         id="username"
                         name="username"
                         autoComplete="username"
+                        startIcon={<User className="size-4" />}
                         value={username}
                         onChange={(event) => setUsername(event.target.value)}
                     />
@@ -60,17 +61,15 @@ export const LoginForm: FC = () => {
                         name="password"
                         type={showPassword ? 'text' : 'password'}
                         autoComplete="current-password"
+                        startIcon={<Lock className="size-4" />}
                         endIcon={
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="cursor-pointer"
+                                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                                className="cursor-pointer text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                             >
-                                {showPassword ? (
-                                    <Eye className="fill-gray-500 dark:fill-gray-400 size-5" />
-                                ) : (
-                                    <EyeOff className="fill-gray-500 dark:fill-gray-400 size-5" />
-                                )}
+                                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                             </button>
                         }
                         value={password}

@@ -1,5 +1,6 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
+import { Hash } from 'lucide-react';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
@@ -56,7 +57,14 @@ export const EconomicActivityForm: FC<EconomicActivityFormProps> = ({ activityId
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="codigo">Código (CIIU)</Label>
-                        <Input id="codigo" name="codigo" required value={codigo} onChange={(event) => setCodigo(event.target.value)} />
+                        <Input
+                            id="codigo"
+                            name="codigo"
+                            required
+                            startIcon={<Hash className="size-4" />}
+                            value={codigo}
+                            onChange={(event) => setCodigo(event.target.value)}
+                        />
                     </div>
 
                     <div className="md:col-span-2">

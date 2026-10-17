@@ -1,10 +1,5 @@
 import type { SelectOption } from '@ui/forms/types/select-option';
 
-export const DRIVER_OPTIONS: SelectOption[] = [
-    { value: 'smtp', label: 'Servidor SMTP (envía a internet)' },
-    { value: 'registro', label: 'Prueba: no envía, solo registra en el log' },
-];
-
 export const CIFRADO_OPTIONS: SelectOption[] = [
     { value: 'tls', label: 'STARTTLS (puerto 587)' },
     { value: 'ssl', label: 'SSL/TLS implícito (puerto 465)' },

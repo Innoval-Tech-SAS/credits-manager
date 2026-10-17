@@ -14,7 +14,7 @@ import { CLIENT_STATUS_BADGE_CLASSES } from '../constants/client-status-badge-cl
 import { NATURAL_DOCUMENT_TYPE_OPTIONS } from '../../third-parties/constants/natural-document-type-options';
 import { EmployerSelector } from '../../employers/components/employer-selector';
 import { AdvisorSelect } from './advisor-select';
-import { Save } from 'lucide-react';
+import { IdCard, Mail, MapPin, Phone, Save, User } from 'lucide-react';
 import type { ClientFormProps } from '../props/client-form-props';
 import type { ApiClient } from '../types/api-client';
 import type { ApiEmployer } from '../../employers/types/api-employer';
@@ -112,12 +112,26 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                 <div className={`grid grid-cols-1 gap-6 ${isEditMode ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
                     <div>
                         <Label htmlFor="nombres">Nombres</Label>
-                        <Input id="nombres" name="nombres" required value={nombres} onChange={(event) => setNombres(event.target.value)} />
+                        <Input
+                            id="nombres"
+                            name="nombres"
+                            required
+                            startIcon={<User className="size-4" />}
+                            value={nombres}
+                            onChange={(event) => setNombres(event.target.value)}
+                        />
                     </div>
 
                     <div>
                         <Label htmlFor="apellidos">Apellidos</Label>
-                        <Input id="apellidos" name="apellidos" required value={apellidos} onChange={(event) => setApellidos(event.target.value)} />
+                        <Input
+                            id="apellidos"
+                            name="apellidos"
+                            required
+                            startIcon={<User className="size-4" />}
+                            value={apellidos}
+                            onChange={(event) => setApellidos(event.target.value)}
+                        />
                     </div>
 
                     {isEditMode && (
@@ -154,6 +168,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                                 id="numero-documento"
                                 name="numero-documento"
                                 required
+                                startIcon={<IdCard className="size-4" />}
                                 value={numeroDocumento}
                                 onChange={(event) => setNumeroDocumento(event.target.value)}
                             />
@@ -182,6 +197,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                                 id="direccion"
                                 name="direccion"
                                 required
+                                startIcon={<MapPin className="size-4" />}
                                 value={direccion}
                                 onChange={(event) => setDireccion(event.target.value)}
                             />
@@ -214,6 +230,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                                 id="celular"
                                 name="celular"
                                 required
+                                startIcon={<Phone className="size-4" />}
                                 value={celular}
                                 onChange={(event) => setCelular(event.target.value)}
                             />
@@ -224,6 +241,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                             <Input
                                 id="telefono-fijo"
                                 name="telefono-fijo"
+                                startIcon={<Phone className="size-4" />}
                                 value={telefonoFijo}
                                 onChange={(event) => setTelefonoFijo(event.target.value)}
                             />
@@ -236,6 +254,7 @@ export const ClientForm: FC<ClientFormProps> = ({ clientId, initialData }) => {
                                 name="correo"
                                 type="email"
                                 required
+                                startIcon={<Mail className="size-4" />}
                                 value={correo}
                                 onChange={(event) => setCorreo(event.target.value)}
                             />

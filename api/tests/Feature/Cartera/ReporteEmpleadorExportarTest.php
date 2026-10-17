@@ -195,7 +195,7 @@ class ReporteEmpleadorExportarTest extends TestCase
 
         $texto = $this->textoDe($pdf);
 
-        foreach (['Relaci', 'Hospital del Norte SAS', 'Ana Gomez', 'Luis Perez', 'Feb 2026', 'Mar 2026', '300.00', 'Pagada', 'Vencida', 'Total por mes', '800.00'] as $esperado) {
+        foreach (['de descuento', 'Hospital del Norte SAS', 'Ana Gomez', 'Luis Perez', 'Feb 2026', 'Mar 2026', '300.00', 'Pagada', 'Vencida', 'Total por mes', '800.00'] as $esperado) {
             $this->assertTrue(str_contains($texto, $esperado), "No aparece «{$esperado}» en el PDF.");
         }
     }

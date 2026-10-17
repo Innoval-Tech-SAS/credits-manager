@@ -8,12 +8,10 @@ import { formatDateTimeEs } from '../../shared/utils/format-datetime-es';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { Alert } from '@ui/alert/components/alert';
 import { ActionButton } from '@ui/action-button/components/action-button';
-import { Button } from '@ui/button/components/button';
 import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
-import { Label } from '@ui/forms/components/label';
 import { ConfirmModal } from '@ui/modal/components/confirm-modal';
-import { Modal } from '@ui/modal/components/modal';
 import { DataTable } from '@ui/table/components/data-table';
+import { MotivoModal } from '../../shared/components/motivo-modal';
 import { ReopenRequestsCard } from '../components/reopen-requests-card';
 import type { ApiPeriod } from '../types/api-period';
 import type { ApiReopenRequest } from '../types/api-reopen-request';
@@ -41,7 +39,6 @@ export const PeriodsPage: FC = () => {
     );
 
     const [reopenTarget, setReopenTarget] = useState<{ periodo: ApiPeriod; mode: ReopenMode } | null>(null);
-    const [motivo, setMotivo] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -50,12 +47,6 @@ export const PeriodsPage: FC = () => {
     const [cerrarTarget, setCerrarTarget] = useState<ApiPeriod | null>(null);
 
     const refrescar = () => setRefreshToken((token) => token + 1);
-
-    const closeReopenModal = () => {
-        setReopenTarget(null);
-        setMotivo('');
-        setError(null);
-    };
 
     const handleCerrar = async () => {
         if (!cerrarTarget) {
@@ -76,7 +67,7 @@ export const PeriodsPage: FC = () => {
         }
     };
 
-    const handleReabrir = async () => {
+    const handleReabrir = async (motivo: string) => {
         if (!reopenTarget) {
             return;
         }
@@ -87,7 +78,7 @@ export const PeriodsPage: FC = () => {
 
         try {
             await sendRequest(`/contabilidad/periodos/${reopenTarget.periodo.id}/${action}`, { method: 'POST', body: { motivo } });
-            closeReopenModal();
+            setReopenTarget(null);
             refrescar();
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
@@ -105,6 +96,12 @@ export const PeriodsPage: FC = () => {
             {cerrarError && (
                 <div className="mb-6">
                     <Alert variant="danger" title="Error" message={cerrarError} onDismiss={() => setCerrarError(null)} />
+                </div>
+            )}
+
+            {error && (
+                <div className="mb-6">
+                    <Alert variant="danger" title="Error" message={error} onDismiss={() => setError(null)} />
                 </div>
             )}
 
@@ -197,48 +194,19 @@ export const PeriodsPage: FC = () => {
                 isConfirming={cerrandoId !== null}
             />
 
-            <Modal isOpen={reopenTarget !== null} onClose={closeReopenModal} size="sm">
-                <h4 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
-                    {isRequestMode ? 'Solicitar reapertura' : 'Reabrir período'}
-                </h4>
-
-                {isRequestMode && (
-                    <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                        Un administrador debe autorizar la solicitud antes de que el período se reabra.
-                    </p>
-                )}
-
-                {error && (
-                    <div className="mb-4 rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400">
-                        {error}
-                    </div>
-                )}
-
-                <Label htmlFor="motivo-reapertura">Motivo de reapertura</Label>
-                <textarea
-                    id="motivo-reapertura"
-                    required
-                    rows={3}
-                    value={motivo}
-                    onChange={(event) => setMotivo(event.target.value)}
-                    className="h-auto w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                />
-
-                <div className="mt-6 flex justify-end gap-3">
-                    <Button variant="outline" onClick={closeReopenModal} disabled={isSubmitting}>
-                        Cancelar
-                    </Button>
-                    <Button onClick={() => void handleReabrir()} disabled={isSubmitting || motivo.trim() === ''}>
-                        {isSubmitting
-                            ? isRequestMode
-                                ? 'Enviando…'
-                                : 'Reabriendo…'
-                            : isRequestMode
-                              ? 'Enviar solicitud'
-                              : 'Reabrir período'}
-                    </Button>
-                </div>
-            </Modal>
+            <MotivoModal
+                isOpen={reopenTarget !== null}
+                title={isRequestMode ? 'Solicitar reapertura' : 'Reabrir período'}
+                description={
+                    isRequestMode
+                        ? 'Un administrador debe autorizar la solicitud antes de que el período se reabra.'
+                        : 'El período vuelve a aceptar comprobantes hasta que se cierre de nuevo.'
+                }
+                confirmLabel={isRequestMode ? 'Enviar solicitud' : 'Reabrir período'}
+                isSubmitting={isSubmitting}
+                onClose={() => setReopenTarget(null)}
+                onConfirm={(motivo) => void handleReabrir(motivo)}
+            />
         </div>
     );
 };

@@ -3,7 +3,6 @@
 namespace App\Correo\Services;
 
 use App\Correo\Enums\CifradoCorreo;
-use App\Correo\Enums\DriverCorreo;
 use App\Correo\Models\ConfiguracionCorreo;
 use Illuminate\Contracts\Mail\Mailer;
 use Illuminate\Support\Facades\Mail;
@@ -19,10 +18,6 @@ class FabricaMailerCobranza
     /** @return array<string, mixed> */
     public function transporte(ConfiguracionCorreo $configuracion): array
     {
-        if ($configuracion->driver === DriverCorreo::Registro) {
-            return ['transport' => 'log', 'name' => 'cobranza'];
-        }
-
         return [
             'transport' => 'smtp',
             'name' => 'cobranza',

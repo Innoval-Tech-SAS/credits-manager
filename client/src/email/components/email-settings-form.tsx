@@ -17,7 +17,6 @@ import { validarPasoCorreo } from '../utils/validate-email-settings-step';
 
 function borradorDesde(settings: ApiEmailSettings): EmailSettingsDraft {
     return {
-        driver: settings.driver,
         host: settings.host ?? '',
         puerto: settings.puerto === null ? '' : String(settings.puerto),
         cifrado: settings.cifrado,
@@ -96,20 +95,17 @@ export const EmailSettingsForm: FC<EmailSettingsFormProps> = ({ tipo, settings, 
         setSuccess(false);
         setIsSubmitting(true);
 
-        const esSmtp = draft.driver === 'smtp';
-
         try {
             await sendRequest(`/correo/configuracion/${tipo}`, {
                 method: 'PUT',
                 body: {
                     remitente: draft.remitente,
                     nombre_remitente: draft.nombreRemitente,
-                    driver: draft.driver,
-                    host: esSmtp ? draft.host : null,
-                    puerto: esSmtp && draft.puerto !== '' ? Number(draft.puerto) : null,
+                    host: draft.host,
+                    puerto: draft.puerto !== '' ? Number(draft.puerto) : null,
                     cifrado: draft.cifrado,
-                    usuario: esSmtp && draft.usuario !== '' ? draft.usuario : null,
-                    clave: esSmtp && draft.clave !== '' ? draft.clave : null,
+                    usuario: draft.usuario !== '' ? draft.usuario : null,
+                    clave: draft.clave !== '' ? draft.clave : null,
                 },
             });
 
