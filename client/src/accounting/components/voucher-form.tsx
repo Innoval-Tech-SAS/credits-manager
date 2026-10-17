@@ -184,9 +184,6 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                     <div>
                         <Label htmlFor="tercero">Tercero</Label>
                         <ThirdPartySelector id="tercero" selected={tercero} onSelect={seleccionarTercero} onClear={() => setTercero(null)} />
-                        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                            Por defecto de las líneas que no tengan uno propio.
-                        </p>
                     </div>
 
                     <div>
@@ -249,19 +246,19 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                         </Button>
                     </div>
 
-                    <div className="custom-scrollbar overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+                    <div className="custom-scrollbar min-h-80 overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
                         <table className="w-full min-w-280 text-left text-sm">
                             <thead>
                                 <tr className="border-b border-gray-100 dark:border-gray-800">
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Cuenta</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Centro de costo</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Tercero</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Doc. cruce</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Vence</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Descripción</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Débito</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Crédito</th>
-                                    <th className="px-4 py-3" />
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Cuenta</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Centro de costo</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Tercero</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Doc. cruce</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Vence</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Descripción</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Débito</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Crédito</th>
+                                    <th className="px-4 py-4" />
                                 </tr>
                             </thead>
                             <tbody>

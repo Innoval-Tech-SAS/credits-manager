@@ -45,7 +45,7 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
                     onChange={(value) => onActualizar({ cuenta_id: value })}
                 />
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <Select
                     options={centroCostoOptions}
                     placeholder="--"
@@ -53,7 +53,7 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
                     onChange={(value) => onActualizar({ centro_costo_id: value })}
                 />
             </td>
-            <td className="min-w-50 px-4 py-2">
+            <td className="min-w-50 px-4 py-4">
                 <ThirdPartySelector
                     id={`tercero-${linea.key}`}
                     selected={linea.tercero}
@@ -104,16 +104,16 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
                     appendToBody
                 />
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <Input value={linea.descripcion} onChange={(event) => onActualizar({ descripcion: event.target.value })} />
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <Input type="number" step={0.01} value={linea.debito} onChange={(event) => onActualizar({ debito: event.target.value })} />
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <Input type="number" step={0.01} value={linea.credito} onChange={(event) => onActualizar({ credito: event.target.value })} />
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <button
                     type="button"
                     onClick={onEliminar}
