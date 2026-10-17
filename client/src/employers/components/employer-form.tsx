@@ -8,7 +8,7 @@ import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Spinner } from '@ui/spinner/components/spinner';
 import { calculateVerificationDigit } from '../../shared/utils/calculate-verification-digit';
-import { Save } from 'lucide-react';
+import { Building2, IdCard, MapPin, Phone, Save } from 'lucide-react';
 import type { EmployerFormProps } from '../props/employer-form-props';
 
 export const EmployerForm: FC<EmployerFormProps> = ({ employerId, initialData }) => {
@@ -68,7 +68,14 @@ export const EmployerForm: FC<EmployerFormProps> = ({ employerId, initialData })
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <div className="md:col-span-2">
                         <Label htmlFor="nombre">Nombre</Label>
-                        <Input id="nombre" name="nombre" required value={nombre} onChange={(event) => setNombre(event.target.value)} />
+                        <Input
+                            id="nombre"
+                            name="nombre"
+                            required
+                            startIcon={<Building2 className="size-4" />}
+                            value={nombre}
+                            onChange={(event) => setNombre(event.target.value)}
+                        />
                     </div>
 
                     <div>
@@ -77,6 +84,7 @@ export const EmployerForm: FC<EmployerFormProps> = ({ employerId, initialData })
                             id="nit"
                             name="nit"
                             maxLength={15}
+                            startIcon={<IdCard className="size-4" />}
                             value={nit}
                             onChange={(event) => setNit(event.target.value.replace(/\D/g, ''))}
                         />
@@ -95,7 +103,13 @@ export const EmployerForm: FC<EmployerFormProps> = ({ employerId, initialData })
 
                     <div>
                         <Label htmlFor="telefono">Teléfono</Label>
-                        <Input id="telefono" name="telefono" value={telefono} onChange={(event) => setTelefono(event.target.value)} />
+                        <Input
+                            id="telefono"
+                            name="telefono"
+                            startIcon={<Phone className="size-4" />}
+                            value={telefono}
+                            onChange={(event) => setTelefono(event.target.value)}
+                        />
                     </div>
 
                     <div className="md:col-span-2">
@@ -103,6 +117,7 @@ export const EmployerForm: FC<EmployerFormProps> = ({ employerId, initialData })
                         <Input
                             id="direccion"
                             name="direccion"
+                            startIcon={<MapPin className="size-4" />}
                             value={direccion}
                             onChange={(event) => setDireccion(event.target.value)}
                         />

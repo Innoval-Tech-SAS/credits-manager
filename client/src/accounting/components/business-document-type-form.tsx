@@ -1,5 +1,6 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
+import { Tag } from 'lucide-react';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
@@ -50,7 +51,14 @@ export const BusinessDocumentTypeForm: FC<BusinessDocumentTypeFormProps> = ({ ti
 
                 <div>
                     <Label htmlFor="nombre">Nombre</Label>
-                    <Input id="nombre" name="nombre" required value={nombre} onChange={(event) => setNombre(event.target.value)} />
+                    <Input
+                        id="nombre"
+                        name="nombre"
+                        required
+                        startIcon={<Tag className="size-4" />}
+                        value={nombre}
+                        onChange={(event) => setNombre(event.target.value)}
+                    />
                 </div>
 
                 <div className="flex flex-wrap gap-8">

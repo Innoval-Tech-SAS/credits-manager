@@ -1,5 +1,6 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
+import { IdCard, User } from 'lucide-react';
 
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
@@ -55,12 +56,26 @@ export const NaturalThirdPartyForm: FC<NaturalThirdPartyFormProps> = ({ thirdPar
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                         <div>
                             <Label htmlFor="nombres">Nombres</Label>
-                            <Input id="nombres" name="nombres" required value={nombres} onChange={(event) => setNombres(event.target.value)} />
+                            <Input
+                                id="nombres"
+                                name="nombres"
+                                required
+                                startIcon={<User className="size-4" />}
+                                value={nombres}
+                                onChange={(event) => setNombres(event.target.value)}
+                            />
                         </div>
 
                         <div>
                             <Label htmlFor="apellidos">Apellidos</Label>
-                            <Input id="apellidos" name="apellidos" required value={apellidos} onChange={(event) => setApellidos(event.target.value)} />
+                            <Input
+                                id="apellidos"
+                                name="apellidos"
+                                required
+                                startIcon={<User className="size-4" />}
+                                value={apellidos}
+                                onChange={(event) => setApellidos(event.target.value)}
+                            />
                         </div>
 
                         <div>
@@ -79,6 +94,7 @@ export const NaturalThirdPartyForm: FC<NaturalThirdPartyFormProps> = ({ thirdPar
                                 id="numero-documento"
                                 name="numero-documento"
                                 required
+                                startIcon={<IdCard className="size-4" />}
                                 value={numeroDocumento}
                                 onChange={(event) => setNumeroDocumento(event.target.value)}
                             />

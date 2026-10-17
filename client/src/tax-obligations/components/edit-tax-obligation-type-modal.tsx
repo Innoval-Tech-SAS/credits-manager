@@ -1,6 +1,7 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
 
+import { Tag } from 'lucide-react';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
@@ -56,7 +57,14 @@ export const EditTaxObligationTypeModal: FC<EditTaxObligationTypeModalProps> = (
 
                     <div>
                         <Label htmlFor="edit-tipo-nombre">Nombre</Label>
-                        <Input id="edit-tipo-nombre" required maxLength={120} value={nombre} onChange={(event) => setNombre(event.target.value)} />
+                        <Input
+                            id="edit-tipo-nombre"
+                            required
+                            maxLength={120}
+                            startIcon={<Tag className="size-4" />}
+                            value={nombre}
+                            onChange={(event) => setNombre(event.target.value)}
+                        />
                     </div>
 
                     <div>

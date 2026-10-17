@@ -1,7 +1,7 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
 
-import { Pencil } from 'lucide-react';
+import { Pencil, Tag } from 'lucide-react';
 import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { ActionButton } from '@ui/action-button/components/action-button';
@@ -103,6 +103,7 @@ export const TaxObligationTypesModal: FC<TaxObligationTypesModalProps> = ({ isOp
                                 placeholder="Ej. IVA bimestral"
                                 required
                                 maxLength={120}
+                                startIcon={<Tag className="size-4" />}
                                 value={nombre}
                                 onChange={(event) => setNombre(event.target.value)}
                             />

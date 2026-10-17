@@ -8,7 +8,7 @@ import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
 import { Label } from '@ui/forms/components/label';
 import { Spinner } from '@ui/spinner/components/spinner';
-import { Save } from 'lucide-react';
+import { Save, Tag } from 'lucide-react';
 import { PermissionMatrix } from './permission-matrix';
 import type { RoleFormProps } from '../props/role-form-props';
 import type { ApiPermisoPanelItem } from '../types/api-permiso';
@@ -86,6 +86,7 @@ export const RoleForm: FC<RoleFormProps> = ({ roleId, initialData }) => {
                             name="nombre"
                             pill
                             disabled={isRolAdmin}
+                            startIcon={<Tag className="size-4" />}
                             value={nombre}
                             onChange={(event) => setNombre(event.target.value)}
                         />

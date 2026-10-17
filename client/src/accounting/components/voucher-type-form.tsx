@@ -1,5 +1,6 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
+import { Hash } from 'lucide-react';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
@@ -92,6 +93,7 @@ export const VoucherTypeForm: FC<VoucherTypeFormProps> = ({ voucherTypeId, initi
                             name="codigo"
                             placeholder="CI, CE, RC…"
                             required
+                            startIcon={<Hash className="size-4" />}
                             value={codigo}
                             onChange={(event) => setCodigo(event.target.value)}
                         />

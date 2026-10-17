@@ -1,6 +1,7 @@
 import type { FC, SubmitEvent } from 'react';
 import { useState } from 'react';
 
+import { Hash, MapPin } from 'lucide-react';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
 import { Button } from '@ui/button/components/button';
 import { Input } from '@ui/forms/components/input';
@@ -53,12 +54,28 @@ export const EditMunicipalityModal: FC<EditMunicipalityModalProps> = ({ municipa
 
                     <div>
                         <Label htmlFor="edit-codigo">Código DANE</Label>
-                        <Input id="edit-codigo" name="edit-codigo" required maxLength={10} value={code} onChange={(event) => setCode(event.target.value)} />
+                        <Input
+                            id="edit-codigo"
+                            name="edit-codigo"
+                            required
+                            maxLength={10}
+                            startIcon={<Hash className="size-4" />}
+                            value={code}
+                            onChange={(event) => setCode(event.target.value)}
+                        />
                     </div>
 
                     <div>
                         <Label htmlFor="edit-nombre">Nombre</Label>
-                        <Input id="edit-nombre" name="edit-nombre" required maxLength={150} value={name} onChange={(event) => setName(event.target.value)} />
+                        <Input
+                            id="edit-nombre"
+                            name="edit-nombre"
+                            required
+                            maxLength={150}
+                            startIcon={<MapPin className="size-4" />}
+                            value={name}
+                            onChange={(event) => setName(event.target.value)}
+                        />
                     </div>
 
                     <ToggleSwitchInput id="edit-es-capital" label="Es capital del departamento" checked={isCapital} onChange={setIsCapital} />
