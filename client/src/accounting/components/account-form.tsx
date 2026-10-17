@@ -1,8 +1,9 @@
 import type { FC, SubmitEvent } from 'react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Hash } from 'lucide-react';
 
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import { RequestValidationError } from '../../shared/utils/request-validation-error';
 import { Button } from '@ui/button/components/button';
 import { Checkbox } from '@ui/forms/components/checkbox';
 import { Input } from '@ui/forms/components/input';
@@ -13,8 +14,9 @@ import { ACCOUNT_NATURE_OPTIONS } from '../constants/account-nature-options';
 import { ACCOUNT_TYPE_OPTIONS } from '../constants/account-type-options';
 import type { AccountFormProps } from '../props/account-form-props';
 import type { ApiAccount } from '../types/api-account';
+import { collectDescendantIds } from '../utils/collect-descendant-ids';
 
-/** En edición el backend solo acepta el nombre y lo que la cuenta exige: código, naturaleza, tipo, nivel y padre quedan fijos. */
+/** Crear y editar comparten campos; el backend rechaza cambiar código, naturaleza o tipo si la cuenta ya tiene movimientos. */
 export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialData, onSaved }) => {
     const { sendRequest } = useSendRequest();
     const isEditMode = accountId !== undefined;
@@ -31,17 +33,32 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialD
     const [exigeVencimiento, setExigeVencimiento] = useState(initialData?.exige_vencimiento ?? false);
     const [exigeCentroCosto, setExigeCentroCosto] = useState(initialData?.exige_centro_costo ?? false);
     const [error, setError] = useState<string | null>(null);
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const cuentaPadre = cuentas.find((cuenta) => String(cuenta.id) === cuentaPadreId);
-    const nombreCuentaPadre = cuentaPadre ? `${cuentaPadre.codigo} - ${cuentaPadre.nombre}` : 'Ninguna';
+    const opcionesCuentaPadre = useMemo(() => {
+        const excluidas = accountId !== undefined ? collectDescendantIds(cuentas, accountId) : new Set<number>();
+
+        return cuentas
+            .filter((cuenta) => !excluidas.has(cuenta.id))
+            .map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }));
+    }, [cuentas, accountId]);
+
+    const fieldError = (campo: string) => fieldErrors[campo]?.[0];
 
     const handleSubmit = async (event: SubmitEvent<HTMLFormElement>) => {
         event.preventDefault();
         setError(null);
+        setFieldErrors({});
         setIsSubmitting(true);
 
-        const requisitos = {
+        const body = {
+            codigo,
+            nombre,
+            naturaleza,
+            nivel: Number(nivel),
+            cuenta_padre_id: cuentaPadreId ? Number(cuentaPadreId) : null,
+            tipo,
             permite_movimiento: permiteMovimiento,
             exige_tercero: exigeTercero,
             exige_documento_cruce: exigeDocumentoCruce,
@@ -51,26 +68,16 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialD
 
         try {
             const respuesta = isEditMode
-                ? await sendRequest<{ cuenta: ApiAccount }>(`/contabilidad/plan-cuentas/${accountId}`, {
-                      method: 'PATCH',
-                      body: { nombre, ...requisitos },
-                  })
-                : await sendRequest<{ cuenta: ApiAccount }>('/contabilidad/plan-cuentas', {
-                      method: 'POST',
-                      body: {
-                          codigo,
-                          nombre,
-                          naturaleza,
-                          nivel: Number(nivel),
-                          cuenta_padre_id: cuentaPadreId ? Number(cuentaPadreId) : null,
-                          tipo,
-                          ...requisitos,
-                      },
-                  });
+                ? await sendRequest<{ cuenta: ApiAccount }>(`/contabilidad/plan-cuentas/${accountId}`, { method: 'PATCH', body })
+                : await sendRequest<{ cuenta: ApiAccount }>('/contabilidad/plan-cuentas', { method: 'POST', body });
 
             onSaved(respuesta.cuenta);
         } catch (caught) {
-            setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
+            if (caught instanceof RequestValidationError) {
+                setFieldErrors(caught.fieldErrors);
+            } else {
+                setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -79,9 +86,9 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialD
     return (
         <form onSubmit={handleSubmit}>
             <div className="space-y-5">
-                {error && (
+                {(error || Object.keys(fieldErrors).length > 0) && (
                     <div className="rounded-lg border border-error-500 bg-error-50 px-4 py-3 text-sm text-error-600 dark:border-error-800 dark:bg-error-500/10 dark:text-error-400">
-                        {error}
+                        {error ?? 'Revisa los campos marcados.'}
                     </div>
                 )}
 
@@ -92,80 +99,73 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialD
                             id="codigo"
                             name="codigo"
                             required
-                            disabled={isEditMode}
-                            startIcon={isEditMode ? undefined : <Hash className="size-4" />}
+                            startIcon={<Hash className="size-4" />}
                             value={codigo}
                             onChange={(event) => setCodigo(event.target.value)}
+                            error={fieldError('codigo') !== undefined}
+                            hint={fieldError('codigo')}
                         />
                     </div>
 
                     <div className="md:col-span-2">
                         <Label htmlFor="nombre">Nombre</Label>
-                        <Input id="nombre" name="nombre" required value={nombre} onChange={(event) => setNombre(event.target.value)} />
+                        <Input
+                            id="nombre"
+                            name="nombre"
+                            required
+                            value={nombre}
+                            onChange={(event) => setNombre(event.target.value)}
+                            error={fieldError('nombre') !== undefined}
+                            hint={fieldError('nombre')}
+                        />
                     </div>
                 </div>
 
-                {isEditMode ? (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-                        <div>
-                            <Label htmlFor="naturaleza">Naturaleza</Label>
-                            <Input id="naturaleza" disabled value={ACCOUNT_NATURE_OPTIONS.find((opcion) => opcion.value === naturaleza)?.label ?? naturaleza} />
-                        </div>
-
-                        <div>
-                            <Label htmlFor="tipo">Tipo</Label>
-                            <Input id="tipo" disabled value={ACCOUNT_TYPE_OPTIONS.find((opcion) => opcion.value === tipo)?.label ?? tipo} />
-                        </div>
-
-                        <div>
-                            <Label htmlFor="nivel">Nivel</Label>
-                            <Input id="nivel" disabled value={nivel} />
-                        </div>
-
-                        <div>
-                            <Label htmlFor="cuenta-padre">Cuenta padre</Label>
-                            <Input id="cuenta-padre" disabled value={nombreCuentaPadre} />
-                        </div>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+                    <div>
+                        <Label htmlFor="naturaleza">Naturaleza</Label>
+                        <Select
+                            id="naturaleza"
+                            options={ACCOUNT_NATURE_OPTIONS}
+                            defaultValue={naturaleza}
+                            onChange={(value) => setNaturaleza(value as ApiAccount['naturaleza'])}
+                        />
+                        {fieldError('naturaleza') && <p className="mt-1.5 text-xs text-error-500">{fieldError('naturaleza')}</p>}
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-                        <div>
-                            <Label htmlFor="naturaleza">Naturaleza</Label>
-                            <Select
-                                id="naturaleza"
-                                options={ACCOUNT_NATURE_OPTIONS}
-                                defaultValue={naturaleza}
-                                onChange={(value) => setNaturaleza(value as ApiAccount['naturaleza'])}
-                            />
-                        </div>
 
-                        <div>
-                            <Label htmlFor="tipo">Tipo</Label>
-                            <Select
-                                id="tipo"
-                                options={ACCOUNT_TYPE_OPTIONS}
-                                defaultValue={tipo}
-                                onChange={(value) => setTipo(value as ApiAccount['tipo'])}
-                            />
-                        </div>
-
-                        <div>
-                            <Label htmlFor="nivel">Nivel</Label>
-                            <Input id="nivel" name="nivel" type="number" min="1" value={nivel} onChange={(event) => setNivel(event.target.value)} />
-                        </div>
-
-                        <div>
-                            <Label htmlFor="cuenta-padre">Cuenta padre</Label>
-                            <Select
-                                id="cuenta-padre"
-                                options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
-                                placeholder="Ninguna"
-                                defaultValue={cuentaPadreId}
-                                onChange={setCuentaPadreId}
-                            />
-                        </div>
+                    <div>
+                        <Label htmlFor="tipo">Tipo</Label>
+                        <Select id="tipo" options={ACCOUNT_TYPE_OPTIONS} defaultValue={tipo} onChange={(value) => setTipo(value as ApiAccount['tipo'])} />
+                        {fieldError('tipo') && <p className="mt-1.5 text-xs text-error-500">{fieldError('tipo')}</p>}
                     </div>
-                )}
+
+                    <div>
+                        <Label htmlFor="nivel">Nivel</Label>
+                        <Input
+                            id="nivel"
+                            name="nivel"
+                            type="number"
+                            min="1"
+                            value={nivel}
+                            onChange={(event) => setNivel(event.target.value)}
+                            error={fieldError('nivel') !== undefined}
+                            hint={fieldError('nivel')}
+                        />
+                    </div>
+
+                    <div>
+                        <Label htmlFor="cuenta-padre">Cuenta padre</Label>
+                        <Select
+                            id="cuenta-padre"
+                            options={opcionesCuentaPadre}
+                            placeholder="Ninguna"
+                            placeholderSelectable
+                            defaultValue={cuentaPadreId}
+                            onChange={setCuentaPadreId}
+                        />
+                        {fieldError('cuenta_padre_id') && <p className="mt-1.5 text-xs text-error-500">{fieldError('cuenta_padre_id')}</p>}
+                    </div>
+                </div>
 
                 <Checkbox
                     id="permite-movimiento"

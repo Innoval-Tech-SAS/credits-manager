@@ -17,6 +17,12 @@ class ContabilidadConstants
     public const PREFIJOS_CUENTAS_POR_PAGAR = ['2205', '2335'];
 
     /**
+     * Los reportes leen código, naturaleza y tipo de `plan_cuentas` al consultarse (los asientos solo guardan `cuenta_id`):
+     * cambiarlos en una cuenta con movimientos reescribiría el histórico, incluidos los períodos cerrados.
+     */
+    public const CAMPOS_ESTRUCTURALES_CUENTA = ['codigo', 'naturaleza', 'tipo'];
+
+    /**
      * Catálogos que otras operaciones consultan para elegir un valor (`algun_permiso`): basta con uno de estos
      * permisos. Administrarlos (crear, editar, eliminar) sigue exigiendo el permiso de su pantalla.
      */

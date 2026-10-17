@@ -2,7 +2,9 @@
 
 namespace App\Contabilidad\Repositories;
 
+use App\Contabilidad\Models\AsientoContable;
 use App\Contabilidad\Models\PlanCuenta;
+use App\Contabilidad\Models\SaldoApertura;
 use App\Contabilidad\Support\EfectoContable;
 use App\Core\Base\BaseRepository;
 use Illuminate\Database\Eloquent\Builder;
@@ -50,6 +52,18 @@ class PlanCuentaRepository extends BaseRepository
     public function buscarDeEmpresaOFallar(int $empresaId, int $id): PlanCuenta
     {
         return $this->consulta()->where('empresa_id', $empresaId)->findOrFail($id);
+    }
+
+    /** Padre de cada cuenta de la empresa, indexado por id: una sola consulta para recorrer la jerarquía en memoria. */
+    public function mapaDePadres(): array
+    {
+        return $this->consulta()->pluck('cuenta_padre_id', 'id')->all();
+    }
+
+    public function tieneMovimientos(int $cuentaId): bool
+    {
+        return AsientoContable::where('cuenta_id', $cuentaId)->exists()
+            || SaldoApertura::where('cuenta_id', $cuentaId)->exists();
     }
 
     public function porCodigos(array $codigos): Collection

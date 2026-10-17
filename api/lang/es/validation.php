@@ -365,6 +365,11 @@ return [
             'no_configurado' => 'No hay un valor de UVT configurado para el año de la fecha del documento.',
             'tiene_gastos_asociados' => 'No se puede modificar ni eliminar: ya hay gastos causados con fecha de ese año.',
         ],
+        'plan_cuenta' => [
+            'padre_es_la_misma_cuenta' => 'Una cuenta no puede ser su propia cuenta padre.',
+            'padre_es_descendiente' => 'La cuenta padre no puede ser una subcuenta de esta cuenta: se formaría un ciclo en la jerarquía.',
+            'cambio_estructural_con_movimientos' => 'La cuenta ya tiene asientos o saldos de apertura: no se puede cambiar su código, naturaleza ni tipo sin alterar los reportes históricos. Crea una cuenta nueva y reclasifica el saldo con un comprobante.',
+        ],
         'centro_costo' => [
             'tiene_movimientos_asociados' => 'No se puede eliminar: ya tiene gastos o asientos contables asociados.',
         ],
