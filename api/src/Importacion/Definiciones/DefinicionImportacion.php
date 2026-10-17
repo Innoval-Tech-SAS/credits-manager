@@ -178,7 +178,7 @@ final class DefinicionImportacion
                     self::c('municipio', 'Código DANE del municipio', true, 'texto'),
                     self::c('actividad_economica', 'Código CIIU de la actividad', true, 'texto'),
                     self::c('fecha_desde', 'Fecha desde', true, 'fecha'),
-                    self::c('tarifa', 'Tarifa (%)', true, 'decimal'),
+                    self::c('tarifa', 'Tarifa (por mil)', true, 'decimal'),
                 ],
             ],
         };

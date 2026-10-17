@@ -138,9 +138,9 @@ const IMPORT_EXAMPLE_BY_TYPE: Record<ImportType, { columns: { key: string; label
         columns: [
             { key: 'municipio', label: 'Municipio' },
             { key: 'actividad_economica', label: 'Actividad económica' },
-            { key: 'tarifa', label: 'Tarifa (%)' },
+            { key: 'tarifa', label: 'Tarifa (por mil)' },
         ],
-        example: { municipio: '11001', actividad_economica: '4722', tarifa: '1,09' },
+        example: { municipio: '11001', actividad_economica: '4722', tarifa: '11,04' },
     },
 };
 

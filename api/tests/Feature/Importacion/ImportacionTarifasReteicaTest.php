@@ -16,7 +16,7 @@ class ImportacionTarifasReteicaTest extends TestCase
     use ImportaArchivos;
     use RefreshDatabase;
 
-    private const ENCABEZADO = "Código DANE del municipio;Código CIIU de la actividad;Fecha desde;Tarifa (%)\n";
+    private const ENCABEZADO = "Código DANE del municipio;Código CIIU de la actividad;Fecha desde;Tarifa (por mil)\n";
 
     protected function setUp(): void
     {
