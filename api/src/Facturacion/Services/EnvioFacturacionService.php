@@ -86,7 +86,7 @@ class EnvioFacturacionService
         $inicio = hrtime(true);
 
         try {
-            if ($configuracion === null) {
+            if ($configuracion === null || blank($configuracion->host)) {
                 throw new RuntimeException('La empresa no tiene configuración de correo.');
             }
 
@@ -210,7 +210,7 @@ class EnvioFacturacionService
 
     private function validarListo(?ConfiguracionCorreo $configuracion, ?PlantillaCorreo $plantilla, DocumentoFacturacion $documento): void
     {
-        if ($configuracion === null) {
+        if ($configuracion === null || blank($configuracion->host)) {
             throw ValidationException::withMessages(['documento' => __('validation.custom.correo.sin_configurar')]);
         }
 

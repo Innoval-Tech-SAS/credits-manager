@@ -195,6 +195,4 @@ HTML;
     public const MENSAJE_ENVIO_FALLIDO = 'No se pudo enviar el correo. Intente de nuevo o revise la configuración.';
 
     public const MENSAJE_PRUEBA_ENVIADA = 'Correo de prueba enviado. Revise la bandeja de entrada del destinatario.';
-
-    public const MENSAJE_PRUEBA_REGISTRO = 'Proveedor de prueba: el mensaje se escribió en el log de la aplicación y no salió a internet.';
 }

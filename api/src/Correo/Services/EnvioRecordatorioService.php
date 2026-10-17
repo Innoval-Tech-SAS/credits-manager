@@ -116,7 +116,7 @@ class EnvioRecordatorioService
         $inicio = hrtime(true);
 
         try {
-            if ($configuracion === null) {
+            if ($configuracion === null || blank($configuracion->host)) {
                 throw new RuntimeException('La empresa no tiene configuración de correo.');
             }
 
@@ -226,7 +226,7 @@ class EnvioRecordatorioService
 
     private function validarListo(?ConfiguracionCorreo $configuracion, Cliente $cliente): void
     {
-        if ($configuracion === null) {
+        if ($configuracion === null || blank($configuracion->host)) {
             throw ValidationException::withMessages(['cuota_id' => __('validation.custom.correo.sin_configurar')]);
         }
 

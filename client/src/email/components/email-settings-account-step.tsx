@@ -33,25 +33,21 @@ export const EmailSettingsAccountStep: FC<EmailSettingsAccountStepProps> = ({ dr
             />
         </div>
 
-        {draft.driver === 'smtp' && (
-            <>
-                <div>
-                    <Label htmlFor="usuario">Usuario del servidor</Label>
-                    <Input id="usuario" name="usuario" autoComplete="off" value={draft.usuario} onChange={(event) => onChange({ usuario: event.target.value })} />
-                </div>
-                <div>
-                    <Label htmlFor="clave">Clave</Label>
-                    <Input
-                        id="clave"
-                        name="clave"
-                        type="password"
-                        autoComplete="current-password"
-                        placeholder={claveGuardada ? 'Guardada: escriba una nueva para cambiarla' : 'Sin configurar'}
-                        value={draft.clave}
-                        onChange={(event) => onChange({ clave: event.target.value })}
-                    />
-                </div>
-            </>
-        )}
+        <div>
+            <Label htmlFor="usuario">Usuario del servidor</Label>
+            <Input id="usuario" name="usuario" autoComplete="off" value={draft.usuario} onChange={(event) => onChange({ usuario: event.target.value })} />
+        </div>
+        <div>
+            <Label htmlFor="clave">Clave</Label>
+            <Input
+                id="clave"
+                name="clave"
+                type="password"
+                autoComplete="current-password"
+                placeholder={claveGuardada ? 'Guardada: escriba una nueva para cambiarla' : 'Sin configurar'}
+                value={draft.clave}
+                onChange={(event) => onChange({ clave: event.target.value })}
+            />
+        </div>
     </div>
 );

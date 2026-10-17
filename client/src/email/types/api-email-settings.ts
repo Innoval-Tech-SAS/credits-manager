@@ -2,7 +2,6 @@
 export type ApiEmailSettings = {
     estado: 'configurada' | 'sin_configurar';
     clave_estado: 'configurada' | 'sin_configurar';
-    driver: 'smtp' | 'registro';
     remitente: string | null;
     nombre_remitente: string | null;
     host: string | null;

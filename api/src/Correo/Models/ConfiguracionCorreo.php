@@ -5,7 +5,6 @@ namespace App\Correo\Models;
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
 use App\Correo\Enums\CifradoCorreo;
-use App\Correo\Enums\DriverCorreo;
 use App\Correo\Enums\TipoCorreo;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -14,7 +13,6 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
     'tipo',
     'remitente',
     'nombre_remitente',
-    'driver',
     'host',
     'puerto',
     'cifrado',
@@ -32,7 +30,6 @@ class ConfiguracionCorreo extends BaseModel
     {
         return [
             'tipo' => TipoCorreo::class,
-            'driver' => DriverCorreo::class,
             'cifrado' => CifradoCorreo::class,
             'puerto' => 'integer',
             'clave' => 'encrypted',

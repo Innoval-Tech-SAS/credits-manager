@@ -6,7 +6,7 @@ export type EmailSettingsErrors = Partial<Record<keyof EmailSettingsDraft, strin
 export function validarPasoCorreo(paso: number, draft: EmailSettingsDraft): EmailSettingsErrors {
     const errores: EmailSettingsErrors = {};
 
-    if (paso === 0 && draft.driver === 'smtp') {
+    if (paso === 0) {
         if (draft.host.trim() === '') {
             errores.host = 'Indique el servidor.';
         }
