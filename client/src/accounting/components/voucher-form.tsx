@@ -1,5 +1,5 @@
 import type { FC, SubmitEvent } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
 import { useResource } from '../../shared/hooks/use-resource';
@@ -23,7 +23,7 @@ import type { VoucherFormLine } from '../types/voucher-form-line';
 
 let nextLineKey = 1;
 
-function nuevaLinea(tercero: ApiThirdParty | null = null): VoucherFormLine {
+function nuevaLinea(tercero: ApiThirdParty | null = null, descripcion = ''): VoucherFormLine {
     return {
         key: nextLineKey++,
         cuenta_id: '',
@@ -31,7 +31,7 @@ function nuevaLinea(tercero: ApiThirdParty | null = null): VoucherFormLine {
         tercero,
         documento_cruce: '',
         fecha_vencimiento: '',
-        descripcion: '',
+        descripcion,
         debito: '',
         credito: '',
     };
@@ -76,7 +76,25 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
         setLineas((actuales) => actuales.map((linea) => (linea.tercero ? linea : { ...linea, tercero: nuevoTercero })));
     };
 
-    const agregarLinea = () => setLineas((actuales) => [...actuales, nuevaLinea(tercero)]);
+    const descripcionSugeridaRef = useRef('');
+
+    useEffect(() => {
+        const sugerida = documentoSoporte && concepto ? `${documentoSoporte} - ${concepto}` : '';
+        const anterior = descripcionSugeridaRef.current;
+        if (sugerida === anterior) return;
+
+        // Solo pisa las líneas cuya descripción seguía vacía o coincidía con la sugerencia anterior: no borra lo que el usuario ya escribió.
+        // `anterior` se captura en una constante (no se lee `descripcionSugeridaRef.current` dentro del updater) porque React ejecuta
+        // esta función más tarde, cuando el ref ya habría sido mutado a `sugerida` por la línea de abajo.
+        setLineas((actuales) =>
+            actuales.map((linea) =>
+                linea.descripcion === '' || linea.descripcion === anterior ? { ...linea, descripcion: sugerida } : linea,
+            ),
+        );
+        descripcionSugeridaRef.current = sugerida;
+    }, [documentoSoporte, concepto]);
+
+    const agregarLinea = () => setLineas((actuales) => [...actuales, nuevaLinea(tercero, descripcionSugeridaRef.current)]);
 
     const eliminarLinea = (key: number) => {
         setLineas((actuales) => (actuales.length > 2 ? actuales.filter((linea) => linea.key !== key) : actuales));
@@ -166,9 +184,6 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                     <div>
                         <Label htmlFor="tercero">Tercero</Label>
                         <ThirdPartySelector id="tercero" selected={tercero} onSelect={seleccionarTercero} onClear={() => setTercero(null)} />
-                        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-                            Por defecto de las líneas que no tengan uno propio.
-                        </p>
                     </div>
 
                     <div>
@@ -231,19 +246,19 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                         </Button>
                     </div>
 
-                    <div className="custom-scrollbar overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
+                    <div className="custom-scrollbar min-h-80 overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
                         <table className="w-full min-w-280 text-left text-sm">
                             <thead>
                                 <tr className="border-b border-gray-100 dark:border-gray-800">
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Cuenta</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Centro de costo</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Tercero</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Doc. cruce</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Vence</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Descripción</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Débito</th>
-                                    <th className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">Crédito</th>
-                                    <th className="px-4 py-3" />
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Cuenta</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Centro de costo</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Tercero</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Doc. cruce</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Vence</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Descripción</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Débito</th>
+                                    <th className="px-4 py-4 text-xs font-medium text-gray-500 dark:text-gray-400">Crédito</th>
+                                    <th className="px-4 py-4" />
                                 </tr>
                             </thead>
                             <tbody>

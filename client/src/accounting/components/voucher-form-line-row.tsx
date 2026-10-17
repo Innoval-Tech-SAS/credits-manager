@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 
 import { useResource } from '../../shared/hooks/use-resource';
@@ -7,6 +8,8 @@ import { ThirdPartySelector } from '../../third-parties/components/third-party-s
 import type { ApiCarteraDocument } from '../types/api-cartera-document';
 import type { VoucherFormLineRowProps } from '../props/voucher-form-line-row-props';
 import { DatePicker } from '@ui/forms/components/date-picker';
+import { Dropdown } from '@ui/dropdown/components/dropdown';
+import { DropdownItem } from '@ui/dropdown/components/dropdown-item';
 import { Input } from '@ui/forms/components/input';
 import { Select } from '@ui/forms/components/select';
 
@@ -30,10 +33,11 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
             : null,
     );
     const pendientes = pendientesData?.data ?? [];
+    const [docCruceAbierto, setDocCruceAbierto] = useState(false);
 
     return (
         <tr className="border-b border-gray-100 dark:border-gray-800">
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <Select
                     options={cuentaOptions}
                     placeholder="--"
@@ -41,7 +45,7 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
                     onChange={(value) => onActualizar({ cuenta_id: value })}
                 />
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <Select
                     options={centroCostoOptions}
                     placeholder="--"
@@ -49,7 +53,7 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
                     onChange={(value) => onActualizar({ centro_costo_id: value })}
                 />
             </td>
-            <td className="min-w-50 px-4 py-2">
+            <td className="min-w-50 px-4 py-4">
                 <ThirdPartySelector
                     id={`tercero-${linea.key}`}
                     selected={linea.tercero}
@@ -57,26 +61,42 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
                     onClear={() => onActualizar({ tercero: null })}
                 />
             </td>
-            <td className="min-w-40 px-4 py-2">
-                <Input value={linea.documento_cruce} onChange={(event) => onActualizar({ documento_cruce: event.target.value })} />
+            <td className="min-w-40 px-4 py-4">
+                <div className="relative">
+                    <Input
+                        value={linea.documento_cruce}
+                        onFocus={() => setDocCruceAbierto(true)}
+                        onChange={(event) => onActualizar({ documento_cruce: event.target.value })}
+                    />
 
-                {pendientes.length > 0 && (
-                    <div className="mt-1.5 flex flex-wrap gap-1">
+                    {/* Deja escribir un número nuevo (documento que se crea en esta línea) y a la vez elegir uno pendiente (documento que se cruza/abona). */}
+                    <Dropdown
+                        isOpen={docCruceAbierto && pendientes.length > 0}
+                        onClose={() => setDocCruceAbierto(false)}
+                        className="max-h-64 w-full overflow-y-auto custom-scrollbar left-0"
+                    >
                         {pendientes.map((documento) => (
-                            <button
+                            <DropdownItem
                                 key={documento.id}
-                                type="button"
-                                onClick={() => onActualizar({ documento_cruce: documento.numero_documento })}
-                                title="Usar como documento cruce"
-                                className="rounded-md border border-gray-200 bg-white px-2 py-0.5 text-xs text-gray-600 hover:border-brand-300 hover:bg-brand-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-brand-800 dark:hover:bg-brand-500/10"
+                                onClick={() => {
+                                    // Cruzar/abonar un documento es el movimiento contrario a su naturaleza: una cuenta débito (CxC) se abona por el crédito, y viceversa.
+                                    const campoSaldo = cuenta?.naturaleza === 'debito' ? 'credito' : 'debito';
+                                    const campoContrario = campoSaldo === 'debito' ? 'credito' : 'debito';
+                                    onActualizar({
+                                        documento_cruce: documento.numero_documento,
+                                        [campoSaldo]: documento.saldo,
+                                        [campoContrario]: '',
+                                    });
+                                    setDocCruceAbierto(false);
+                                }}
                             >
                                 {documento.numero_documento} · {formatMoney(documento.saldo)}
-                            </button>
+                            </DropdownItem>
                         ))}
-                    </div>
-                )}
+                    </Dropdown>
+                </div>
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <DatePicker
                     id={`vencimiento-${linea.key}`}
                     value={linea.fecha_vencimiento}
@@ -84,16 +104,16 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
                     appendToBody
                 />
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <Input value={linea.descripcion} onChange={(event) => onActualizar({ descripcion: event.target.value })} />
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <Input type="number" step={0.01} value={linea.debito} onChange={(event) => onActualizar({ debito: event.target.value })} />
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <Input type="number" step={0.01} value={linea.credito} onChange={(event) => onActualizar({ credito: event.target.value })} />
             </td>
-            <td className="px-4 py-2">
+            <td className="px-4 py-4">
                 <button
                     type="button"
                     onClick={onEliminar}
