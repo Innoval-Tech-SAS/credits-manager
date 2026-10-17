@@ -4,6 +4,7 @@ import { API_PREFIX, API_ROOT } from '../constants/api';
 import { SESSION_EXPIRED_EVENT } from '../constants/auth-events';
 import type { SendRequestOptions } from '../types/send-request-options';
 import { readCookie } from '../utils/read-cookie';
+import { RequestValidationError } from '../utils/request-validation-error';
 
 /** Marca un 401: `AuthProvider` ya reacciona vía `SESSION_EXPIRED_EVENT`, así que el
  * llamador no debe mostrar este mensaje como si fuera un error del formulario/página. */
@@ -54,6 +55,9 @@ export function useSendRequest() {
                 const body = await response.json().catch(() => null);
                 const fieldErrors = body?.errors as Record<string, string[]> | undefined;
                 const firstFieldError = fieldErrors ? Object.values(fieldErrors)[0]?.[0] : undefined;
+                if (fieldErrors && firstFieldError) {
+                    throw new RequestValidationError(firstFieldError, fieldErrors);
+                }
                 throw new Error(firstFieldError ?? body?.message ?? 'Ocurrió un error inesperado.');
             }
 
