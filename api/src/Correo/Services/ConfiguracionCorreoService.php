@@ -12,6 +12,7 @@ use App\Correo\Enums\TipoCorreo;
 use App\Correo\Mail\CorreoCobranza;
 use App\Correo\Models\ConfiguracionCorreo;
 use App\Correo\Repositories\ConfiguracionCorreoRepository;
+use App\Correo\Support\ContextoFalloCorreo;
 use App\Usuarios\Models\Usuario;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
@@ -73,6 +74,8 @@ class ConfiguracionCorreoService
             throw ValidationException::withMessages(['destinatario' => __('validation.custom.correo.sin_configurar')]);
         }
 
+        $inicio = hrtime(true);
+
         try {
             $this->fabrica->paraConfiguracion($configuracion)->send(new CorreoCobranza(
                 asunto: 'Prueba de configuración de correo',
@@ -82,7 +85,11 @@ class ConfiguracionCorreoService
                 nombreRemitente: $configuracion->nombre_remitente,
             ));
         } catch (Throwable $excepcion) {
-            Log::warning('Prueba de correo fallida', ['empresa_id' => $configuracion->empresa_id, 'tipo' => $tipo->value, 'excepcion' => $excepcion::class]);
+            Log::warning('Prueba de correo fallida', [
+                'empresa_id' => $configuracion->empresa_id,
+                'tipo' => $tipo->value,
+                ...ContextoFalloCorreo::construir($configuracion, $excepcion, (hrtime(true) - $inicio) / 1_000_000),
+            ]);
 
             return ['enviado' => false, 'mensaje' => $this->mensajeDeFallo($excepcion)];
         }

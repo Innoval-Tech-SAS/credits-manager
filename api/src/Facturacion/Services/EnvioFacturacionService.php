@@ -13,6 +13,7 @@ use App\Correo\Repositories\ConfiguracionCorreoRepository;
 use App\Correo\Repositories\PlantillaCorreoRepository;
 use App\Correo\Services\FabricaMailerCobranza;
 use App\Correo\Services\PlantillaCorreoService;
+use App\Correo\Support\ContextoFalloCorreo;
 use App\Empresas\Repositories\EmpresaRepository;
 use App\Facturacion\Enums\EstadoDocumentoFacturacion;
 use App\Facturacion\Enums\TipoDocumentoFacturacion;
@@ -82,6 +83,7 @@ class EnvioFacturacionService
         }
 
         $configuracion = $this->configuraciones->deEmpresaYTipo($empresaId, TipoCorreo::Facturacion);
+        $inicio = hrtime(true);
 
         try {
             if ($configuracion === null) {
@@ -111,7 +113,11 @@ class EnvioFacturacionService
             $envio->enviado_en = now();
             $envio->detalle_error = null;
         } catch (Throwable $excepcion) {
-            Log::warning('Envío de documento de facturación fallido', ['envio_id' => $envioId, 'empresa_id' => $empresaId, 'excepcion' => $excepcion::class]);
+            Log::warning('Envío de documento de facturación fallido', [
+                'envio_id' => $envioId,
+                'empresa_id' => $empresaId,
+                ...ContextoFalloCorreo::construir($configuracion, $excepcion, (hrtime(true) - $inicio) / 1_000_000),
+            ]);
 
             $envio->estado = EstadoEnvioCorreo::Fallido;
             $envio->detalle_error = $excepcion instanceof TransportExceptionInterface
