@@ -118,6 +118,8 @@ Abrir `.env` y completar o revisar cada línea:
 | `REVERB_ALLOWED_ORIGINS` | `app.creditos.local` | Origen permitido para el WebSocket. |
 | `RESPALDOS_ORIGEN` | Vacío (o una carpeta, ver abajo) | Vacío: los respaldos van al volumen `respaldos_data`. Una ruta (p. ej. `/srv/respaldos-dda`) los deja en una carpeta que DDA puede copiar. |
 
+La copia externa opcional a S3 no se configura aquí: el superadmin la activa después, desde la pantalla de **Respaldos** de la aplicación (ver [respaldos](respaldos.md), sección 2.1).
+
 Para un servidor de producción, cambiar además `APP_URL`, `VITE_API_URL`, `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS`, `VITE_REVERB_HOST`, `REVERB_ALLOWED_ORIGINS` y `APP_ENV=production` (ya viene así), y los `server_name` de `nginx/nginx.conf`.
 
 > `.env` no se sube al repositorio (está en `.gitignore`). Guardar una copia fuera del equipo: sin `APP_KEY` no se pueden leer los valores cifrados de un respaldo.
@@ -189,7 +191,7 @@ Ejecutar cada comprobación. Todas deben salir como se indica.
 | 2 | API responde | `curl -k https://api.creditos.local/up` | Código de respuesta 200 |
 | 3 | Interfaz responde | Abrir `https://app.creditos.local` | Pantalla de ingreso, sin errores de certificado |
 | 4 | Usuario de la base | Comando de la sección 7 | `creditos_app@%` |
-| 5 | Tablas creadas | `podman compose exec database sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \"$MYSQL_DATABASE\";"'` | 61 (una base recién migrada tiene 61 tablas) |
+| 5 | Tablas creadas | `podman compose exec database sh -c 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" -N -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \"$MYSQL_DATABASE\";"'` | 80 (una base recién migrada tiene 80 tablas) |
 | 6 | Programación | `podman compose exec api php artisan schedule:list` | Incluye `respaldos:ejecutar` a las 01:00 |
 | 7 | Respaldo manual | `podman compose exec --user www-data api php artisan respaldos:ejecutar --manual` | Mensaje `Respaldo manual creado en /var/respaldos/manual/…` |
 | 8 | Sumas del respaldo | `podman compose exec --user www-data api sh -c 'cd "$(ls -d /var/respaldos/manual/* | tail -1)" && sha256sum -c SHA256SUMS'` | `archivos.tar.gz: OK` y `base_datos.sql.gz: OK` |

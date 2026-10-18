@@ -37,6 +37,7 @@ Navegador ──HTTPS──▶ nginx ──┬── /            SPA React (bui
 | `api_storage` | `api`, `scheduler`, `horizon`: `/var/www/html/storage`; `nginx` en solo lectura | Adjuntos (`storage/app/private`), logos (`storage/app/public`), logs y caché | `api`, `horizon` |
 | `exportaciones_data` | `/var/exportaciones` | Archivos de exportación (se limpian a los 7 días) | `horizon` |
 | `importaciones_data` | `/var/importaciones` | CSV subidos para importación | `api`, `horizon` |
+| `conciliacion_data` | `api`, `horizon`, `scheduler`: `/var/conciliacion` | Extractos bancarios subidos para la conciliación | `api`, `horizon` |
 | `respaldos_data` | `api`, `scheduler`: `/var/respaldos` | Respaldos de base y archivos | `scheduler`, `api` (manual) |
 
 `respaldos_data` puede sustituirse por una carpeta del equipo con `RESPALDOS_ORIGEN` en `.env` (ver [respaldos](respaldos.md), sección 2).
@@ -83,6 +84,8 @@ Las ejecuta el servicio `scheduler` (`schedule:work`), en hora de Bogotá. Defin
 | 23:55 | `metas:evaluar` | Evalúa las metas de cada empresa, cierra los períodos vencidos y genera alertas. |
 | 06:00 | `obligaciones_tributarias:evaluar-alertas` | Genera las alertas del calendario tributario por vencer de cada empresa. |
 
+La hora es la por defecto de arriba hasta que el superadmin la cambie desde el panel **Tareas programadas** (`/monitoreo`, endpoints `GET/PATCH /api/v1/tareas-programadas`): el cambio se lee de la tabla `tareas_programadas` y aplica en menos de un minuto, sin reiniciar nada. Todas las tareas se pueden pausar desde ahí salvo `respaldos:ejecutar`, que nunca se pausa.
+
 Las tareas no se solapan (`withoutOverlapping`). Un fallo de `respaldos:ejecutar` deja un registro de error en `podman compose logs scheduler`.
 
 Ver la programación: `podman compose exec api php artisan schedule:list`.
@@ -98,6 +101,7 @@ Resumen (detalle en [respaldos y restauración](respaldos.md)):
 - La base se vuelca con `mariadb-dump` (cliente de MariaDB, incluido en la imagen `api` por el paquete `mysql-client` de Alpine). Se usa `--single-transaction` para una foto consistente de InnoDB sin bloquear la aplicación.
 - La contraseña viaja en la variable de entorno `MYSQL_PWD` del proceso, nunca en los argumentos.
 - Escritura atómica: carpeta temporal `.tmp-…` y renombrado al terminar.
+- Copia externa opcional a un disco S3 (`SubidaRespaldoExternoService`): el superadmin la activa y configura desde la pantalla de **Respaldos** (`/respaldos`, no por `.env`); sin activar o sin credenciales no hace nada, solo avisa en el log. El resultado de la última subida se ve en el panel de salud del superadmin (`/monitoreo`).
 
 ---
 
@@ -179,7 +183,8 @@ Estilo: `vendor/bin/pint --test` (preset Laravel).
 
 ## 9. Decisiones y pendientes
 
-- **Destino externo de respaldos:** pendiente de DDA. La ruta ya es configurable (`RESPALDOS_ORIGEN`).
+- **Destino externo de respaldos:** implementado como copia opcional a un disco S3, configurable por el superadmin desde `/respaldos` (tabla `configuraciones_respaldo_externo`, sin variables de `.env`). La ruta local sigue siendo configurable aparte (`RESPALDOS_ORIGEN`). Queda pendiente de DDA decidir si usarlo y con qué proveedor.
 - **Cifrado de respaldos:** los archivos van en formato estándar sin cifrar, para que DDA los abra sin la aplicación. Cifrarlos exige custodiar una clave adicional; decisión pendiente con DDA.
+- **Conciliación bancaria sin respaldo:** los extractos subidos a `conciliacion_data` no entran en `respaldos:ejecutar` (no está en `config('respaldos.directorios')`); pendiente decidir si deben respaldarse como los demás archivos.
 - **Retención de la bitácora:** la política de 5 años y su archivo histórico siguen pendientes (roadmap, Fase 1).
 - **Imágenes de terceros:** `phpmyadmin` usa `latest`; fijar una versión queda pendiente.

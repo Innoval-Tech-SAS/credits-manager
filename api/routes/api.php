@@ -66,6 +66,7 @@ use App\ObligacionesTributarias\Controllers\TipoObligacionTributariaController;
 use App\Pagos\Controllers\PagoController;
 use App\Proveedores\Controllers\ProveedorController;
 use App\Recibos\Controllers\ReciboCajaController;
+use App\Respaldos\Controllers\ConfiguracionRespaldoExternoController;
 use App\Respaldos\Controllers\DescargaBaseController;
 use App\Respaldos\Controllers\ResumenRespaldosController;
 use App\Seguridad\Controllers\AccesoController;
@@ -118,6 +119,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/respaldos/empresa', [DescargaBaseController::class, 'empresa'])->middleware('admin');
     Route::get('/respaldos/resumen', [ResumenRespaldosController::class, 'index'])->middleware('superadmin');
     Route::post('/respaldos/ejecutar', [ResumenRespaldosController::class, 'ejecutar'])->middleware('superadmin');
+
+    Route::get('/respaldos/externo', [ConfiguracionRespaldoExternoController::class, 'show'])->middleware('superadmin');
+    Route::patch('/respaldos/externo', [ConfiguracionRespaldoExternoController::class, 'update'])->middleware('superadmin');
+    Route::post('/respaldos/externo/prueba', [ConfiguracionRespaldoExternoController::class, 'prueba'])->middleware('superadmin');
 
     Route::get('/monitoreo/estado', [MonitoreoController::class, 'estado'])->middleware('superadmin');
     Route::get('/monitoreo/respaldos', [MonitoreoController::class, 'respaldos'])->middleware('superadmin');

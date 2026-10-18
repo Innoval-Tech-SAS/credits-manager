@@ -187,6 +187,9 @@ return [
         'tareas_programadas' => [
             'no_pausable' => 'El respaldo automático no se puede pausar; solo se puede cambiar su hora.',
         ],
+        'respaldo_externo' => [
+            'datos_incompletos' => 'Para activar la copia externa se necesita el bucket, la clave de acceso y la clave secreta.',
+        ],
         'obligaciones_tributarias' => [
             'nombre_repetido' => 'Ya existe un tipo de obligación tributaria con este nombre.',
             'periodo_repetido' => 'Ya existe esta obligación tributaria para el período.',

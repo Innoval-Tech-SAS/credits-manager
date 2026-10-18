@@ -11,7 +11,7 @@ Qué se respalda, dónde queda, con qué frecuencia, cómo copiarlo sin la aplic
 | Verificación | Sumas SHA-256 de los dos archivos anteriores. | `SHA256SUMS`: formato de `sha256sum`. |
 | Ficha | Fecha de creación, clase, zona horaria, nombre de la base y contenido. **No** lleva usuario, contraseña ni host de la base. | `respaldo.json`: texto plano. |
 
-**No se respalda** el archivo `.env` ni ningún secreto de configuración. Ver la sección 8 (custodia de `APP_KEY`).
+**No se respalda** el archivo `.env` ni ningún secreto de configuración. Ver la sección 8 (custodia de `APP_KEY`). Tampoco se respaldan los extractos bancarios subidos para la conciliación (carpeta `conciliacion/`, volumen `conciliacion_data`): queda pendiente decidir si deben incluirse.
 
 ## 2. Dónde queda
 
@@ -43,6 +43,14 @@ Estructura:
 ```
 
 Cada carpeta lleva la fecha y hora de creación en su nombre (`AAAA-MM-DD_HHMMSS`, hora de Bogotá).
+
+### 2.1. Copia externa automática (opcional, S3)
+
+Además de la copia local, el respaldo principal de cada ejecución (el diario, o el manual cuando se usa `--manual`) se puede subir a un disco compatible con S3 — cualquier proveedor que hable ese protocolo (MinIO, DigitalOcean Spaces, Backblaze B2, AWS S3 real), vía el campo «Endpoint». El superadmin la activa y la edita desde la pantalla de **Respaldos** (`/respaldos`, tarjeta «Copia externa (S3)»; API `GET/PATCH /respaldos/externo`), sin tocar `.env` ni reconstruir nada: bucket, región, endpoint, uso de rutas «path» y las credenciales. La clave secreta queda cifrada con `APP_KEY` (tabla `configuraciones_respaldo_externo`) y nunca se muestra de nuevo; se reemplaza solo si se escribe una nueva. La tarjeta incluye un botón «Probar conexión» que sube y borra un archivo pequeño para verificar las credenciales antes de confiar en la copia automática.
+
+Sin activarla, o sin bucket/credenciales completos, el paso se omite sin error: el respaldo local ya quedó completo antes de intentarlo. Sube los mismos cuatro archivos (`base_datos.sql.gz`, `archivos.tar.gz`, `SHA256SUMS`, `respaldo.json`) bajo el prefijo `<clase>/<carpeta>/` del bucket (p. ej. `diario/2026-10-18_010000/base_datos.sql.gz`). Un fallo de subida no afecta al respaldo local ni a la retención; queda en el log del contenedor `scheduler` y en el resultado que ve el superadmin en el panel de salud (`/monitoreo`).
+
+Esta copia **no sustituye** la retención ni la verificación de la sección 5: es una tercera ubicación, no una política de respaldo distinta.
 
 ## 3. Frecuencia y retención
 
