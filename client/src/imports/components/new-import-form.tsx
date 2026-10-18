@@ -7,9 +7,7 @@ import { useAuth } from '../../auth/hooks/use-auth';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { hasAnyPermission } from '../../auth/utils/has-any-permission';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
-import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
-import type { ApiAccount } from '../../accounting/types/api-account';
 import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { Checkbox } from '@ui/forms/components/checkbox';
@@ -26,7 +24,6 @@ import {
     IMPORT_TYPES,
     IMPORT_TYPES_WITH_ACCOUNTING,
     IMPORT_TYPES_WITH_EMPLOYER_CHECK,
-    IMPORT_TYPES_WITH_OFFSET_ACCOUNT,
     type ImportType,
 } from '../constants/import-types';
 import type { ApiImport } from '../types/api-import';
@@ -52,16 +49,8 @@ export const NewImportForm: FC = () => {
     const [archivo, setArchivo] = useState<File | null>(null);
     const [crearEmpleadores, setCrearEmpleadores] = useState(false);
     const [generarAsiento, setGenerarAsiento] = useState(false);
-    const [cuentaContrapartidaId, setCuentaContrapartidaId] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const mostrarContrapartida = tipo !== '' && IMPORT_TYPES_WITH_OFFSET_ACCOUNT.includes(tipo) && generarAsiento;
-    const { data: cuentas } = useResource<{ cuentas: ApiAccount[] }>(mostrarContrapartida ? '/contabilidad/plan-cuentas' : null);
-
-    const opcionesCuentas = (cuentas?.cuentas ?? [])
-        .filter((cuenta) => cuenta.permite_movimiento && cuenta.activa)
-        .map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} · ${cuenta.nombre}` }));
 
     const handleDescargarGuia = async () => {
         if (tipo !== '') {
@@ -73,7 +62,6 @@ export const NewImportForm: FC = () => {
         setTipo(esTipoImportable(valor) ? valor : '');
         setCrearEmpleadores(false);
         setGenerarAsiento(false);
-        setCuentaContrapartidaId('');
     };
 
     const handleSubir = async () => {
@@ -91,10 +79,6 @@ export const NewImportForm: FC = () => {
             formData.set('archivo', archivo);
             formData.set('crear_empleadores', crearEmpleadores ? '1' : '0');
             formData.set('generar_asiento', generarAsiento ? '1' : '0');
-
-            if (mostrarContrapartida && cuentaContrapartidaId !== '') {
-                formData.set('cuenta_contrapartida_id', cuentaContrapartidaId);
-            }
 
             const respuesta = await sendRequest<{ importacion: ApiImport }>('/importaciones', { method: 'POST', body: formData });
             navigate(`/importaciones/${respuesta.importacion.id}`, { replace: true });
@@ -184,25 +168,12 @@ export const NewImportForm: FC = () => {
                         {tipo !== '' && puedeContabilizar && IMPORT_TYPES_WITH_ACCOUNTING.includes(tipo) && (
                             <Checkbox id="generar-asiento" label="Generar asientos contables" checked={generarAsiento} onChange={setGenerarAsiento} />
                         )}
-
-                        {mostrarContrapartida && (
-                            <div className="max-w-xl">
-                                <Label htmlFor="cuenta-contrapartida">Cuenta de contrapartida del asiento de apertura</Label>
-                                <Select
-                                    id="cuenta-contrapartida"
-                                    options={opcionesCuentas}
-                                    placeholder="Elige la cuenta"
-                                    defaultValue={cuentaContrapartidaId}
-                                    onChange={setCuentaContrapartidaId}
-                                />
-                            </div>
-                        )}
                     </div>
 
                     <div className="flex justify-end">
                         <Button
                             startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : <Upload className="size-4" />}
-                            disabled={isSubmitting || tipo === '' || archivo === null || (mostrarContrapartida && cuentaContrapartidaId === '')}
+                            disabled={isSubmitting || tipo === '' || archivo === null}
                             onClick={() => void handleSubir()}
                         >
                             {isSubmitting ? 'Subiendo…' : 'Validar archivo'}

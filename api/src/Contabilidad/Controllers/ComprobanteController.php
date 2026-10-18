@@ -5,6 +5,7 @@ namespace App\Contabilidad\Controllers;
 use App\Causacion\Services\CausacionService;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Requests\CausarConConceptoRequest;
+use App\Contabilidad\Requests\ConsultarDocumentosCruceRequest;
 use App\Contabilidad\Requests\CrearComprobanteRequest;
 use App\Contabilidad\Requests\ReversarComprobanteRequest;
 use App\Contabilidad\Services\ComprobantePdfService;
@@ -51,6 +52,13 @@ class ComprobanteController extends Controller
         );
 
         return response()->json(['comprobante' => $this->comprobantes->mostrar($comprobante)], 201);
+    }
+
+    public function documentosCruce(ConsultarDocumentosCruceRequest $peticion): JsonResponse
+    {
+        $documentos = $this->comprobantes->documentosCruce($peticion->integer('cuenta_id'), $peticion->integer('tercero_id'));
+
+        return response()->json(['data' => $documentos]);
     }
 
     public function causarConcepto(CausarConConceptoRequest $peticion): JsonResponse

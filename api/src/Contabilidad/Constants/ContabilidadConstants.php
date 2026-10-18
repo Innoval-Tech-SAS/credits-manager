@@ -16,6 +16,8 @@ class ContabilidadConstants
 
     public const PREFIJOS_CUENTAS_POR_PAGAR = ['2205', '2335'];
 
+    public const LIMITE_DOCUMENTOS_CRUCE = 100;
+
     /**
      * Los reportes leen código, naturaleza y tipo de `plan_cuentas` al consultarse (los asientos solo guardan `cuenta_id`):
      * cambiarlos en una cuenta con movimientos reescribiría el histórico, incluidos los períodos cerrados.

@@ -60,7 +60,6 @@ class ImportacionService
         UploadedFile $archivo,
         bool $crearEmpleadores,
         bool $generarAsiento,
-        ?int $cuentaContrapartidaId,
     ): Importacion {
         $this->exigirPermisoDeTipo($usuario, $tipo);
 
@@ -93,7 +92,6 @@ class ImportacionService
             'archivo_ruta' => $ruta,
             'preferencia_crear_empleadores' => $crearEmpleadores,
             'preferencia_generar_asiento' => $generarAsiento,
-            'cuenta_contrapartida_id' => $generarAsiento ? $cuentaContrapartidaId : null,
         ]);
 
         $this->auditoria->registrar(
@@ -138,10 +136,6 @@ class ImportacionService
             if ($generarAsiento) {
                 if (! $usuario->tienePermiso(...ImportacionConstants::PERMISO_CONTABILIZAR)) {
                     abort(403, 'No tienes permiso para realizar esta acción.');
-                }
-
-                if ($importacion->tipo === TipoImportacion::Creditos && $importacion->cuenta_contrapartida_id === null) {
-                    throw ValidationException::withMessages(['generar_asiento' => 'Elige la cuenta de contrapartida al subir el archivo para generar el asiento.']);
                 }
             }
 

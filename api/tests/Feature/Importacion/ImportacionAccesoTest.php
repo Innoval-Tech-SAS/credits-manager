@@ -189,17 +189,6 @@ class ImportacionAccesoTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors('archivo');
     }
 
-    public function test_generar_asiento_en_creditos_exige_la_cuenta_de_contrapartida(): void
-    {
-        $this->actingAsAdmin();
-
-        $this->postJson('/api/v1/importaciones', [
-            'tipo' => 'creditos',
-            'generar_asiento' => true,
-            'archivo' => UploadedFile::fake()->createWithContent('creditos.csv', "Código de crédito;Cédula cliente;Fecha de desembolso;Valor desembolsado (capital);Tasa de interés mensual (%);Plazo (# cuotas);Periodicidad (Mensual/Quincenal)\n"),
-        ])->assertUnprocessable()->assertJsonValidationErrors('cuenta_contrapartida_id');
-    }
-
     public function test_cancelar_antes_de_confirmar_y_luego_no_se_puede_confirmar(): void
     {
         $this->actingAsAdmin();

@@ -27,7 +27,7 @@ class ImportacionConstants
     /** Crear empleadores faltantes usa el mismo permiso que el alta de empleadores (`POST /empleadores`). */
     public const PERMISO_EMPLEADORES = ['empleadores', 'crear'];
 
-    /** Contabilizar (asiento de apertura y recaudos) usa el permiso de comprobantes manuales. */
+    /** Contabilizar (desembolsos y recaudos) usa el permiso de comprobantes manuales. */
     public const PERMISO_CONTABILIZAR = ['contabilidad', 'crear_manual'];
 
     public const ACCION_CONTABILIZAR = 'crear_manual';

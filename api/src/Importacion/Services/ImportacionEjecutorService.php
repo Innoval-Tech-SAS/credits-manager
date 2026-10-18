@@ -25,7 +25,6 @@ use App\Importacion\Repositories\ImportacionRepository;
 use App\Notificaciones\Enums\TipoNotificacion;
 use App\Notificaciones\Services\NotificacionService;
 use App\Usuarios\Models\Usuario;
-use Carbon\CarbonImmutable;
 use Closure;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -63,7 +62,7 @@ class ImportacionEjecutorService
             $this->importaciones->actualizar($importacion, ['estado' => EstadoImportacion::Validando, 'iniciada_en' => now()]);
 
             try {
-                $ctx = new ContextoEjecucion($importacion->empresa_id, $usuario, false, null, false, null);
+                $ctx = new ContextoEjecucion($importacion->empresa_id, $usuario, false, null, false);
                 $conteo = $this->recorrer($importacion, $ctx);
 
                 $this->importaciones->actualizar($importacion, [
@@ -102,12 +101,11 @@ class ImportacionEjecutorService
                 $contabilizar = $this->puedeContabilizar($importacion->tipo);
                 $generarAsiento = $contabilizar
                     && $importacion->decision_generar_asiento === true
-                    && ($importacion->tipo !== TipoImportacion::Creditos || $importacion->cuenta_contrapartida_id !== null)
                     && $usuario->tienePermiso(...ImportacionConstants::PERMISO_CONTABILIZAR);
 
                 if ($generarAsiento && $importacion->tipo === TipoImportacion::Creditos && $this->datos->empresaTieneSaldosApertura($importacion->empresa_id)) {
                     $generarAsiento = false;
-                    $this->errores->insertarLote([$this->error($importacion, null, null, ImportacionSeveridad::Aviso, 'No se generó el asiento de apertura: la empresa ya tiene saldos iniciales y la cartera duplicaría.', FaseImportacion::Escritura)]);
+                    $this->errores->insertarLote([$this->error($importacion, null, null, ImportacionSeveridad::Aviso, 'No se generaron los asientos de desembolso: la empresa ya tiene saldos iniciales y la cartera duplicaría.', FaseImportacion::Escritura)]);
                 }
 
                 $ctx = new ContextoEjecucion(
@@ -116,21 +114,15 @@ class ImportacionEjecutorService
                     true,
                     $importacion->decision_crear_empleadores === true,
                     $generarAsiento,
-                    $importacion->cuenta_contrapartida_id,
                 );
 
                 $conteo = $this->recorrer($importacion, $ctx);
-
-                if ($generarAsiento && $ctx->asientoAcumulado->esPositivo()) {
-                    $importacion->comprobante_id = $this->contabilizarApertura($importacion, $ctx);
-                }
 
                 $this->importaciones->actualizar($importacion, [
                     'estado' => EstadoImportacion::Completada,
                     'filas_aceptadas' => $conteo['aceptadas'],
                     'filas_rechazadas' => $importacion->filas_rechazadas + $conteo['rechazadas'],
                     'filas_pendientes' => 0,
-                    'comprobante_id' => $importacion->comprobante_id,
                     'completada_en' => now(),
                 ]);
 
@@ -286,26 +278,6 @@ class ImportacionEjecutorService
             'fase' => $fase->value,
             'motivo' => mb_substr($motivo, 0, 500),
         ];
-    }
-
-    /** Un solo asiento de apertura por carga, contra la cuenta de contrapartida que eligió el usuario. */
-    private function contabilizarApertura(Importacion $importacion, ContextoEjecucion $ctx): ?int
-    {
-        try {
-            $comprobante = DB::transaction(fn () => $this->comprobantes->contabilizarAperturaCartera(
-                $ctx->asientoAcumulado,
-                (int) $importacion->cuenta_contrapartida_id,
-                CarbonImmutable::now('America/Bogota')->toDateString(),
-                $importacion->id,
-            ));
-
-            return $comprobante?->id;
-        } catch (Throwable $excepcion) {
-            report($excepcion);
-            $this->errores->insertarLote([$this->error($importacion, null, null, ImportacionSeveridad::Error, 'El asiento de apertura no se generó: '.$excepcion->getMessage(), FaseImportacion::Escritura)]);
-
-            return null;
-        }
     }
 
     /** Lo llama el job ante un fallo no capturado (p. ej. timeout). */

@@ -5,7 +5,6 @@ namespace Tests\Feature\Importacion;
 use App\Contabilidad\Enums\EstadoPeriodo;
 use App\Contabilidad\Enums\EventoContable;
 use App\Contabilidad\Models\PeriodoContable;
-use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Services\ComprobanteService;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Models\Credito;
@@ -77,14 +76,11 @@ class ImportacionCoberturaTest extends TestCase
         $this->importarCompleto('creditos', self::CREDITOS.$this->linea([$codigo, '1001', '01/10/2023', '2000000', '2,5', '4', 'mensual', '', 'No', '', '', '', '']));
     }
 
-    private function reglasDeDesembolso(): PlanCuenta
+    private function reglasDeDesembolso(): void
     {
         $cartera = $this->crearCuenta(['codigo' => '133005', 'nombre' => 'Cartera']);
         $caja = $this->crearCuenta(['codigo' => '110505', 'nombre' => 'Caja']);
-        $contrapartida = $this->crearCuenta(['codigo' => '390505', 'nombre' => 'Apertura']);
         $this->crearRegla(EventoContable::DesembolsoCredito, $cartera, $caja, $this->crearTipoComprobante());
-
-        return $contrapartida;
     }
 
     private function reglasDeRecaudo(): void
@@ -213,27 +209,27 @@ class ImportacionCoberturaTest extends TestCase
         $this->assertSame(510, ImportacionError::query()->where('importacion_id', $id)->count());
     }
 
-    public function test_si_el_asiento_no_se_puede_generar_la_carga_termina_y_lo_informa(): void
+    public function test_si_el_desembolso_cae_en_un_periodo_cerrado_la_fila_se_rechaza_sin_dejar_el_credito(): void
     {
         $admin = $this->actingAsAdmin();
         $this->cliente();
-        $contrapartida = $this->reglasDeDesembolso();
-        PeriodoContable::create(['anio' => now()->year, 'mes' => now()->month, 'estado' => EstadoPeriodo::Cerrado]);
+        $this->reglasDeDesembolso();
+        PeriodoContable::create(['anio' => 2023, 'mes' => 10, 'estado' => EstadoPeriodo::Cerrado]);
 
         $id = $this->importarCompleto(
             'creditos',
             self::CREDITOS.$this->linea(['CR-1', '1001', '01/10/2023', '2000000', '2,5', '4', 'mensual', '', 'No', '', '', '', '']),
             ['generar_asiento' => true],
             'creditos.csv',
-            ['generar_asiento' => true, 'cuenta_contrapartida_id' => $contrapartida->id],
+            ['generar_asiento' => true],
         );
 
         $importacion = $this->importacion($id);
         $this->assertSame(EstadoImportacion::Completada, $importacion->estado);
-        $this->assertSame(1, $importacion->filas_aceptadas);
-        $this->assertNull($importacion->comprobante_id);
-        $this->assertStringContainsString('El asiento de apertura no se generó', $this->motivos($id));
-        $this->assertDatabaseCount('creditos', 1);
+        $this->assertSame(0, $importacion->filas_aceptadas);
+        $this->assertSame(1, $importacion->filas_rechazadas);
+        $this->assertDatabaseCount('creditos', 0);
+        $this->assertDatabaseCount('comprobantes', 0);
         $this->assertSame($admin->empresa_id, $importacion->empresa_id);
     }
 
@@ -280,7 +276,7 @@ class ImportacionCoberturaTest extends TestCase
         $this->assertSame(false, $this->importacion($id)->decision_generar_asiento);
     }
 
-    public function test_generar_el_asiento_de_creditos_sin_cuenta_de_contrapartida_responde_422(): void
+    public function test_generar_el_asiento_de_creditos_no_pide_cuenta_de_contrapartida(): void
     {
         $this->actingAsAdmin();
         $this->cliente();
@@ -288,8 +284,8 @@ class ImportacionCoberturaTest extends TestCase
         $id = $this->subirArchivo('creditos', self::CREDITOS.$this->linea(['CR-1', '1001', '01/10/2023', '2000000', '2,5', '4', 'mensual', '', 'No', '', '', '', '']));
         $this->ejecutarValidacion($id);
 
-        $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['generar_asiento' => true])
-            ->assertUnprocessable()->assertJsonValidationErrors('generar_asiento');
+        $this->postJson("/api/v1/importaciones/{$id}/decisiones", ['generar_asiento' => true])->assertOk();
+        $this->assertTrue($this->importacion($id)->decision_generar_asiento);
     }
 
     public function test_confirmar_sin_decidir_el_asiento_pendiente_responde_422(): void
@@ -543,32 +539,16 @@ class ImportacionCoberturaTest extends TestCase
         );
     }
 
-    public function test_sin_una_regla_de_desembolso_el_asiento_de_apertura_se_rechaza(): void
+    public function test_los_creditos_solo_contabilizan_con_una_regla_de_desembolso_activa(): void
     {
         $this->actingAsAdmin();
         $comprobantes = app(ComprobanteService::class);
-        $contrapartida = $this->crearCuenta(['codigo' => '390505', 'nombre' => 'Apertura']);
 
         $this->assertFalse($comprobantes->eventosContablesActivos(EventoContable::DesembolsoCredito));
-        $this->assertNull($comprobantes->contabilizarAperturaCartera(Dinero::cero(), $contrapartida->id, now()->toDateString(), 1));
 
-        $this->expectException(ValidationException::class);
-
-        $comprobantes->contabilizarAperturaCartera(Dinero::desdePesos(100), $contrapartida->id, now()->toDateString(), 1);
-    }
-
-    public function test_con_regla_de_desembolso_y_valor_positivo_el_asiento_de_apertura_se_crea(): void
-    {
-        $this->actingAsAdmin();
-        PeriodoContable::create(['anio' => now()->year, 'mes' => now()->month, 'estado' => EstadoPeriodo::Abierto]);
-        $contrapartida = $this->reglasDeDesembolso();
-        $comprobantes = app(ComprobanteService::class);
+        $this->reglasDeDesembolso();
 
         $this->assertTrue($comprobantes->eventosContablesActivos(EventoContable::DesembolsoCredito));
-        $this->assertNull($comprobantes->contabilizarAperturaCartera(Dinero::cero(), $contrapartida->id, now()->toDateString(), 1));
-        $comprobante = $comprobantes->contabilizarAperturaCartera(Dinero::desdePesos(100), $contrapartida->id, now()->toDateString(), 1);
-        $this->assertNotNull($comprobante);
-        $this->assertSame('importaciones', $comprobante->modulo_origen);
     }
 
     public function test_los_repositorios_no_consultan_nada_con_listas_vacias(): void
