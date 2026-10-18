@@ -13,8 +13,7 @@ use Tests\TestCase;
 
 class EjecutarRespaldoTest extends TestCase
 {
-    use PreparaRespaldos;
-    use RefreshDatabase;
+    use PreparaRespaldos, RefreshDatabase;
 
     protected function setUp(): void
     {
