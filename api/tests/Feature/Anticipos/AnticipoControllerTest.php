@@ -3,6 +3,7 @@
 namespace Tests\Feature\Anticipos;
 
 use App\Contabilidad\Enums\NaturalezaDocumento;
+use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\DocumentoTercero;
 use App\Contabilidad\Services\DocumentoTerceroService;
 use App\Core\Dinero\Dinero;
@@ -89,13 +90,20 @@ class AnticipoControllerTest extends TestCase
         $this->assertDatabaseHas('documentos_tercero', [
             'tercero_id' => $tercero->id,
             'naturaleza' => 'anticipo_proveedor',
-            'numero_documento' => $datos['numero_documento'],
             'saldo' => 50000000,
             'estado' => 'pendiente',
         ]);
 
+        $documento = DocumentoTercero::where('tercero_id', $tercero->id)->firstOrFail();
+        $comprobante = Comprobante::findOrFail($documento->origen_id);
+        $this->assertSame($comprobante->numero, $documento->numero_documento);
+        $this->assertSame($datos['numero_documento'], $comprobante->documento_soporte);
+        $this->assertSame("Anticipo de prueba · Soporte {$datos['numero_documento']}", $documento->concepto);
+
         $asientoDebito = DB::table('asientos_contables')->where('cuenta_id', $datos['cuenta_anticipo_id'])->first();
         $this->assertEquals(50000000, $asientoDebito->debito);
+        $this->assertSame($comprobante->numero, $asientoDebito->documento_cruce);
+        $this->assertEquals($tercero->id, $asientoDebito->tercero_id);
         $asientoCredito = DB::table('asientos_contables')->where('cuenta_id', $datos['cuenta_caja_id'])->first();
         $this->assertEquals(50000000, $asientoCredito->credito);
     }
@@ -135,6 +143,8 @@ class AnticipoControllerTest extends TestCase
         $this->assertSame('abonado_parcial', $respuesta->json('anticipo.estado'));
         $this->assertSame('0.00', $respuesta->json('documento.saldo'));
         $this->assertSame('cancelado', $respuesta->json('documento.estado'));
+        $this->assertDatabaseHas('asientos_contables', ['cuenta_id' => $documento->plan_cuenta_id, 'documento_cruce' => $documento->numero_documento, 'debito' => 30000000]);
+        $this->assertDatabaseHas('asientos_contables', ['documento_cruce' => $anticipo['numero_documento'], 'credito' => 30000000]);
     }
 
     public function test_cruza_anticipo_de_cliente_contra_una_cuenta_por_cobrar_real(): void

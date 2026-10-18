@@ -131,7 +131,10 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
                             key={documento.id}
                             className="grid grid-cols-1 gap-3 rounded-xl border border-gray-100 p-3 dark:border-gray-800 sm:grid-cols-[1fr_auto_auto_auto] sm:items-center"
                         >
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{documento.numero_documento}</p>
+                            <div className="min-w-0">
+                                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{documento.numero_documento}</p>
+                                <p className="truncate text-theme-xs text-gray-500 dark:text-gray-400">{documento.concepto}</p>
+                            </div>
                             <p className="text-sm text-gray-500 dark:text-gray-400 sm:text-right">Saldo: {formatMoney(documento.saldo)}</p>
                             <div className="sm:w-36">
                                 <Label htmlFor={`egreso-valor-${documento.id}`}>Valor</Label>

@@ -117,7 +117,7 @@ export const ConceptAccrualForm: FC<ConceptAccrualFormProps> = ({ tiposGasto }) 
 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
-                        <Label htmlFor="numero-documento">Número de documento</Label>
+                        <Label htmlFor="numero-documento">Documento soporte</Label>
                         <Input
                             id="numero-documento"
                             name="numero-documento"

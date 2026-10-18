@@ -113,7 +113,7 @@ export const CreateAdvanceForm: FC = () => {
                     </div>
 
                     <div>
-                        <Label htmlFor="numero-documento">Documento (ej. ANT-015)</Label>
+                        <Label htmlFor="numero-documento">Documento soporte (ej. recibo RC-015)</Label>
                         <Input
                             id="numero-documento"
                             startIcon={<IdCard className="size-4" />}

@@ -86,7 +86,7 @@ class TipoComprobanteRepository extends BaseRepository
 
         $tipo->save();
 
-        return ['consecutivo' => $consecutivo, 'ciclo_numeracion' => $ciclo];
+        return ['consecutivo' => $consecutivo, 'ciclo_numeracion' => $ciclo, 'codigo' => $tipo->codigo];
     }
 
     private function calcularCiclo(ReinicioConsecutivo $reinicio): string

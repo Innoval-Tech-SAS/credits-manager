@@ -41,7 +41,7 @@ class AsientosFacturacionService
         $parametrizaciones = $this->parametrizacionesConcepto->paraEmpresa($factura->empresa_id);
 
         $lineasComprobante = [
-            ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $totales['total'], 'credito' => 0],
+            ['cuenta_id' => $regla->cuenta_debito_id, 'documento_cruce' => $factura->numero, 'debito' => $totales['total'], 'credito' => 0],
             ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $totales['subtotal']],
         ];
 
@@ -126,14 +126,16 @@ class AsientosFacturacionService
             Dinero::cero(),
         );
         $neto = $bruto->sumar($totalIva)->restar($totalRetencion);
+        // La nota mueve el saldo de la factura que corrige (una nota sobre otra nota apunta a la factura raíz).
+        $numeroFactura = $nota->origen?->tipo === TipoDocumentoFacturacion::Factura ? $nota->origen->numero : $nota->origen?->origen?->numero;
 
         $lineasComprobante = $esNotaCredito
             ? [
                 ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $bruto, 'credito' => 0],
-                ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $neto],
+                ['cuenta_id' => $regla->cuenta_credito_id, 'documento_cruce' => $numeroFactura, 'debito' => 0, 'credito' => $neto],
             ]
             : [
-                ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $neto, 'credito' => 0],
+                ['cuenta_id' => $regla->cuenta_debito_id, 'documento_cruce' => $numeroFactura, 'debito' => $neto, 'credito' => 0],
                 ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $bruto],
             ];
 
@@ -199,7 +201,7 @@ class AsientosFacturacionService
             $fecha,
             [
                 ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $valor, 'credito' => 0],
-                ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $valor],
+                ['cuenta_id' => $regla->cuenta_credito_id, 'documento_cruce' => $documento->numero, 'debito' => 0, 'credito' => $valor],
             ],
             $concepto,
             $modulo,

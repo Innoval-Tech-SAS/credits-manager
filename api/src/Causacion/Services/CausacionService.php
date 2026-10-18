@@ -78,10 +78,9 @@ class CausacionService
     }
 
     /**
-     * Arma las líneas débito/crédito CxP/retenciones de una causación. `$centroCostoId` va en la línea de gasto
-     * (igual que siempre); `$terceroId`/`$documentoCruce`/`$fechaVencimiento` (nuevos, opcionales) van en la línea
-     * de CxP — son los que necesita el comprobante manual para que `ComprobanteService` la trace en
-     * `DocumentoTercero`. Gastos no los usa (sigue pasando tercero/documento a nivel de cabecera del comprobante).
+     * Arma las líneas débito/crédito CxP/retenciones de una causación. `$centroCostoId` va en la línea de gasto;
+     * `$terceroId`/`$fechaVencimiento` van en la línea de CxP, que toma como documento cruce el número del propio
+     * comprobante de causación (`documento_cruce_propio`) cuando hay tercero: ese es el documento que luego se paga.
      *
      * @param  Collection<string, array>  $retencionesPorTipo
      */
@@ -92,7 +91,6 @@ class CausacionService
         Collection $retencionesPorTipo,
         ?int $centroCostoId,
         ?int $terceroId = null,
-        ?string $documentoCruce = null,
         ?string $fechaVencimiento = null,
     ): array {
         $lineas = [
@@ -108,7 +106,7 @@ class CausacionService
             'debito' => 0,
             'credito' => $calculo['valor_neto'],
             'tercero_id' => $terceroId,
-            'documento_cruce' => $documentoCruce,
+            'documento_cruce_propio' => $terceroId !== null,
             'fecha_vencimiento' => $fechaVencimiento,
         ];
 
@@ -160,7 +158,6 @@ class CausacionService
             $resultado['retenciones_por_tipo'],
             $datos['centro_costo_id'] ?? null,
             terceroId: $tercero?->id,
-            documentoCruce: $datos['numero_documento'],
             fechaVencimiento: $datos['fecha_vencimiento'] ?? null,
         );
 
@@ -171,7 +168,7 @@ class CausacionService
             $datos['concepto'] ?? $tipoGasto->nombre,
             'manual',
             null,
-            null,
+            $datos['numero_documento'],
             $tercero?->id,
             contabilizarInmediato: false,
         );

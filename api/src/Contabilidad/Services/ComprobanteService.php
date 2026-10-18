@@ -20,11 +20,13 @@ use App\Contabilidad\Repositories\ComprobanteRepository;
 use App\Contabilidad\Repositories\PlanCuentaRepository;
 use App\Contabilidad\Repositories\ReglaContabilizacionRepository;
 use App\Contabilidad\Repositories\TipoComprobanteRepository;
+use App\Contabilidad\Support\NumeroComprobante;
 use App\Core\Dinero\Dinero;
 use App\Creditos\Models\Credito;
 use App\Pagos\Models\Pago;
 use App\Terceros\Repositories\TerceroRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -69,6 +71,7 @@ class ComprobanteService
     /**
      * Crea y contabiliza (o deja en borrador) un comprobante con sus líneas.
      * Lanza ValidationException si los totales no cuadran o el período está cerrado.
+     * Una línea con `documento_cruce_propio => true` recibe como documento cruce el número de este mismo comprobante.
      */
     public function crearComprobante(
         int $tipoComprobanteId,
@@ -111,8 +114,10 @@ class ComprobanteService
             $this->exigirCuentasDeMovimiento(array_column($lineas, 'cuenta_id'));
         }
 
+        $cuentasManual = null;
         if ($moduloOrigen === 'manual') {
-            $this->exigirRequisitosParametrizados($lineas, $terceroId);
+            $cuentasManual = PlanCuenta::query()->whereIn('id', array_column($lineas, 'cuenta_id'))->get()->keyBy('id');
+            $this->exigirRequisitosParametrizados($lineas, $terceroId, $cuentasManual);
         }
 
         $periodo = $this->periodos->obtenerAbierto($fecha);
@@ -120,14 +125,24 @@ class ComprobanteService
         return DB::transaction(function () use (
             $tipoComprobanteId, $fecha, $lineas, $concepto, $moduloOrigen, $origenId,
             $documentoSoporte, $terceroId, $contabilizarInmediato, $totalDebito,
-            $totalCredito, $periodo, $consecutivoManual,
+            $totalCredito, $periodo, $consecutivoManual, $cuentasManual,
         ) {
             // Dentro de la transacción (no antes, como el diseño anterior): si algo falla después, el
             // ROLLBACK también libera el consecutivo asignado — sin huecos en la numeración.
-            ['consecutivo' => $consecutivo, 'ciclo_numeracion' => $ciclo] = $this->tiposComprobante->asignarConsecutivo(
+            ['consecutivo' => $consecutivo, 'ciclo_numeracion' => $ciclo, 'codigo' => $codigoTipo] = $this->tiposComprobante->asignarConsecutivo(
                 $tipoComprobanteId,
                 $moduloOrigen === 'manual',
                 $consecutivoManual,
+            );
+
+            if ($cuentasManual !== null) {
+                $lineas = $this->marcarDocumentoCrucePropio($lineas, $cuentasManual);
+            }
+
+            $numeroPropio = NumeroComprobante::formatear($codigoTipo, $ciclo, $consecutivo);
+            $lineas = array_map(
+                fn (array $linea) => empty($linea['documento_cruce_propio']) ? $linea : [...$linea, 'documento_cruce' => $numeroPropio],
+                $lineas,
             );
 
             $comprobante = $this->comprobantes->crear([
@@ -404,6 +419,7 @@ class ComprobanteService
                     $comprobante->id,
                     planCuentaId: $cuenta->id,
                     fechaVencimiento: $linea->fecha_vencimiento?->toDateString(),
+                    documentoSoporte: $comprobante->documento_soporte,
                 );
             } else {
                 if (! $existente) {
@@ -493,11 +509,11 @@ class ComprobanteService
      * vencimiento). El tercero se resuelve igual que al armar las líneas (`$linea['tercero_id'] ?? $terceroId`,
      * el del comprobante si la línea no trae uno propio); documento cruce y vencimiento son propios de cada
      * línea. Los flujos automáticos resuelven esos datos por su cuenta y no pasan por aquí.
+     *
+     * @param  Collection<int, PlanCuenta>  $cuentas
      */
-    private function exigirRequisitosParametrizados(array $lineas, ?int $terceroId): void
+    private function exigirRequisitosParametrizados(array $lineas, ?int $terceroId, Collection $cuentas): void
     {
-        $cuentas = PlanCuenta::query()->whereIn('id', array_column($lineas, 'cuenta_id'))->get()->keyBy('id');
-
         foreach ($lineas as $linea) {
             $cuenta = $cuentas[$linea['cuenta_id']] ?? null;
 
@@ -517,7 +533,8 @@ class ComprobanteService
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.tercero_requerido')]);
             }
 
-            if (($cuenta->exige_documento_cruce || $esCarteraDeTerceros) && empty($linea['documento_cruce'])) {
+            // Una línea que causa (aumenta el saldo) sin documento cruce toma el número del propio comprobante al crearse.
+            if (($cuenta->exige_documento_cruce || $esCarteraDeTerceros) && empty($linea['documento_cruce']) && ! self::aumentaElSaldo($cuenta, $linea)) {
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.documento_cruce_requerido')]);
             }
 
@@ -525,6 +542,33 @@ class ComprobanteService
                 throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.vencimiento_requerido')]);
             }
         }
+    }
+
+    /**
+     * El documento que nace en un comprobante manual es el comprobante mismo: la línea que causa la CxP/CxC sin un
+     * documento cruce digitado se marca `documento_cruce_propio` (igual que hacen gastos y anticipos al causar), y
+     * los pagos posteriores la cruzan con el número del comprobante.
+     *
+     * @param  Collection<int, PlanCuenta>  $cuentas
+     */
+    private function marcarDocumentoCrucePropio(array $lineas, Collection $cuentas): array
+    {
+        return array_map(function (array $linea) use ($cuentas) {
+            $cuenta = $cuentas[$linea['cuenta_id']] ?? null;
+
+            if ($cuenta && ($cuenta->exige_documento_cruce || $cuenta->esCarteraDeTerceros())
+                && empty($linea['documento_cruce']) && self::aumentaElSaldo($cuenta, $linea)) {
+                $linea['documento_cruce_propio'] = true;
+            }
+
+            return $linea;
+        }, $lineas);
+    }
+
+    private static function aumentaElSaldo(PlanCuenta $cuenta, array $linea): bool
+    {
+        return ($cuenta->naturaleza === NaturalezaCuenta::Debito && $linea['debito']->esPositivo())
+            || ($cuenta->naturaleza === NaturalezaCuenta::Credito && $linea['credito']->esPositivo());
     }
 
     // -------- Generadores automáticos por evento de negocio --------

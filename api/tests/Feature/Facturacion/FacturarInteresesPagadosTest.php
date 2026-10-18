@@ -111,6 +111,9 @@ class FacturarInteresesPagadosTest extends TestCase
         $respuesta->assertJsonPath('totales.situacion', 'pagada');
 
         $this->assertDatabaseHas('documentos_tercero', ['numero_documento' => $documento['numero'], 'saldo' => 0]);
+        // La CxC que causa la emisión y la que la cruza con el interés recaudado llevan la factura como documento cruce.
+        $this->assertDatabaseHas('asientos_contables', ['documento_cruce' => $documento['numero'], 'debito' => 3000]);
+        $this->assertDatabaseHas('asientos_contables', ['documento_cruce' => $documento['numero'], 'credito' => 3000]);
 
         $pagoDetalle = PagoDetalle::where('cuota_id', $cuota->id)->first();
         $aplicacion = AplicacionInteresFacturado::where('pago_detalle_id', $pagoDetalle->id)->first();

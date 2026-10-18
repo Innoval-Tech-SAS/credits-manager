@@ -115,7 +115,15 @@ class GastoService
             $comprobante = $this->comprobantes->crearComprobante(
                 $parametrizacion->tipo_comprobante_id,
                 $datos['fecha'],
-                $this->causacion->construirLineas($parametrizacion, $valorBruto, $calculo, $retencionesPorTipo, $datos['centro_costo_id']),
+                $this->causacion->construirLineas(
+                    $parametrizacion,
+                    $valorBruto,
+                    $calculo,
+                    $retencionesPorTipo,
+                    $datos['centro_costo_id'],
+                    terceroId: $tercero?->id,
+                    fechaVencimiento: $datos['fecha_vencimiento'] ?? null,
+                ),
                 $datos['concepto'],
                 'gastos',
                 $gasto->id,
@@ -127,11 +135,12 @@ class GastoService
             if ($tercero) {
                 $this->tiposDocumentoNegocio->validarOperacion($gasto->empresa_id, CodigoDocumentoNegocio::ComprobanteCausacion, creaSaldo: true, cruzaSaldo: false);
 
+                // El documento por pagar es el comprobante de causación; la factura del proveedor queda como soporte.
                 $documentoTercero = $this->documentosTercero->crearDocumento(
                     $tercero,
                     NaturalezaDocumento::PorPagar,
                     'gasto',
-                    $datos['numero_documento'],
+                    $comprobante->numero,
                     $datos['fecha'],
                     $datos['concepto'],
                     $calculo['valor_neto'],
@@ -139,6 +148,7 @@ class GastoService
                     $gasto->id,
                     planCuentaId: $parametrizacion->cuenta_cxp_id,
                     fechaVencimiento: $datos['fecha_vencimiento'] ?? null,
+                    documentoSoporte: $datos['numero_documento'],
                 );
             }
 

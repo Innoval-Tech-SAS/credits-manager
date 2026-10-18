@@ -15,6 +15,7 @@ use App\Core\Dinero\Dinero;
 use App\Terceros\Models\Tercero;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -96,7 +97,14 @@ class DocumentoTerceroService
         ?DocumentoTercero $documentoOriginal = null,
         ?int $planCuentaId = null,
         ?string $fechaVencimiento = null,
+        ?string $documentoSoporte = null,
     ): DocumentoTercero {
+        // El número del documento es el del comprobante que lo causa; el soporte externo (factura del proveedor,
+        // recibo) va en el concepto para que se reconozca al elegirlo en un pago o cruce.
+        if (! empty($documentoSoporte) && $documentoSoporte !== $numeroDocumento) {
+            $concepto = Str::limit("{$concepto} · Soporte {$documentoSoporte}", 255, '');
+        }
+
         if ($planCuentaId && empty($fechaVencimiento) && PlanCuenta::query()->find($planCuentaId)?->exige_vencimiento) {
             throw ValidationException::withMessages([
                 'documento' => __('validation.custom.documento.vencimiento_requerido'),

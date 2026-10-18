@@ -33,6 +33,9 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
             : null,
     );
     const pendientes = pendientesData?.data ?? [];
+    // Igual que `ComprobanteService::asignarDocumentoCrucePropio`: la línea que causa sin doc. cruce toma el número del comprobante.
+    const causaElSaldo = cuenta?.naturaleza === 'debito' ? Number(linea.debito) > 0 : Number(linea.credito) > 0;
+    const usaNumeroPropio = Boolean(cuenta?.exige_documento_cruce && naturalezaDocumento && causaElSaldo);
     const [docCruceAbierto, setDocCruceAbierto] = useState(false);
 
     return (
@@ -65,6 +68,7 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
                 <div className="relative">
                     <Input
                         value={linea.documento_cruce}
+                        placeholder={usaNumeroPropio ? 'N.º del comprobante' : undefined}
                         onFocus={() => setDocCruceAbierto(true)}
                         onChange={(event) => onActualizar({ documento_cruce: event.target.value })}
                     />
@@ -90,7 +94,10 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
                                     setDocCruceAbierto(false);
                                 }}
                             >
-                                {documento.numero_documento} · {formatMoney(documento.saldo)}
+                                <span className="block">
+                                    {documento.numero_documento} · {formatMoney(documento.saldo)}
+                                </span>
+                                <span className="block truncate text-theme-xs text-gray-500 dark:text-gray-400">{documento.concepto}</span>
                             </DropdownItem>
                         ))}
                     </Dropdown>

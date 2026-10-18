@@ -3,6 +3,7 @@
 namespace Tests\Feature\Contabilidad;
 
 use App\Contabilidad\Enums\NaturalezaCuenta;
+use App\Contabilidad\Enums\ReinicioConsecutivo;
 use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Models\DocumentoTercero;
 use App\Contabilidad\Models\PlanCuenta;
@@ -634,7 +635,7 @@ class ComprobanteManualDocumentoTerceroTest extends TestCase
         ])->assertStatus(422)->assertJsonValidationErrors('lineas');
     }
 
-    public function test_falta_documento_cruce_en_cuenta_de_cartera_sin_marcas_falla_al_crear(): void
+    public function test_cruzar_sin_documento_cruce_en_cuenta_de_cartera_sin_marcas_falla_al_crear(): void
     {
         $empresa = $this->crearEmpresaDePrueba();
         $this->creador($empresa);
@@ -644,11 +645,79 @@ class ComprobanteManualDocumentoTerceroTest extends TestCase
         $this->postJson(self::BASE, [
             'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
             'fecha' => '2026-01-15',
-            'concepto' => 'Sin documento cruce',
+            'concepto' => 'Pago sin documento cruce',
+            'lineas' => [
+                ['cuenta_id' => $cuentaCxp->id, 'debito' => 100, 'credito' => 0, 'tercero_id' => $tercero->id],
+                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 0, 'credito' => 100],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors('lineas');
+    }
+
+    public function test_causar_sin_documento_cruce_usa_el_numero_del_comprobante_y_el_pago_lo_cruza(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $admin = $this->creador($empresa);
+        $cuentaCxp = $this->cuentaCxp();
+        $cuentaGasto = $this->crearCuenta();
+        $tercero = $this->crearTercero();
+        $tipo = $this->crearTipoComprobante(['codigo' => 'ARR']);
+
+        $causacionId = $this->contabilizarComprobante([
+            'tipo_comprobante_id' => $tipo->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Arriendo enero',
+            'lineas' => [
+                ['cuenta_id' => $cuentaGasto->id, 'debito' => 100, 'credito' => 0],
+                ['cuenta_id' => $cuentaCxp->id, 'debito' => 0, 'credito' => 100, 'tercero_id' => $tercero->id],
+            ],
+        ], $empresa);
+
+        $this->assertDatabaseHas('asientos_contables', ['comprobante_id' => $causacionId, 'cuenta_id' => $cuentaCxp->id, 'documento_cruce' => 'ARR 1']);
+        $this->assertDatabaseHas('asientos_contables', ['comprobante_id' => $causacionId, 'cuenta_id' => $cuentaGasto->id, 'documento_cruce' => null]);
+        $this->assertDatabaseHas('documentos_tercero', [
+            'tercero_id' => $tercero->id,
+            'naturaleza' => 'por_pagar',
+            'numero_documento' => 'ARR 1',
+            'saldo' => 10000,
+            'origen_id' => $causacionId,
+        ]);
+
+        $this->actingAs($admin, 'sanctum');
+        $this->contabilizarComprobante([
+            'tipo_comprobante_id' => $this->crearTipoComprobante()->id,
+            'fecha' => '2026-02-01',
+            'concepto' => 'Pago arriendo enero',
+            'lineas' => [
+                ['cuenta_id' => $cuentaCxp->id, 'debito' => 100, 'credito' => 0, 'tercero_id' => $tercero->id, 'documento_cruce' => 'ARR 1'],
+                ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 0, 'credito' => 100],
+            ],
+        ], $empresa);
+
+        $this->assertDatabaseHas('documentos_tercero', ['numero_documento' => 'ARR 1', 'saldo' => 0, 'estado' => 'cancelado']);
+    }
+
+    public function test_con_reinicio_anual_el_numero_propio_incluye_el_ciclo(): void
+    {
+        $empresa = $this->crearEmpresaDePrueba();
+        $this->creador($empresa);
+        $cuentaCxp = $this->cuentaCxp();
+        $tercero = $this->crearTercero();
+        $tipo = $this->crearTipoComprobante(['codigo' => 'ARR', 'reinicio_periodo' => ReinicioConsecutivo::Anual]);
+
+        $comprobanteId = $this->postJson(self::BASE, [
+            'tipo_comprobante_id' => $tipo->id,
+            'fecha' => '2026-01-15',
+            'concepto' => 'Arriendo enero',
             'lineas' => [
                 ['cuenta_id' => $this->crearCuenta()->id, 'debito' => 100, 'credito' => 0],
                 ['cuenta_id' => $cuentaCxp->id, 'debito' => 0, 'credito' => 100, 'tercero_id' => $tercero->id],
             ],
-        ])->assertStatus(422)->assertJsonValidationErrors('lineas');
+        ])->assertStatus(201)->json('comprobante.id');
+
+        $this->assertDatabaseHas('asientos_contables', [
+            'comprobante_id' => $comprobanteId,
+            'cuenta_id' => $cuentaCxp->id,
+            'documento_cruce' => 'ARR-'.now()->year.'-1',
+        ]);
     }
 }
