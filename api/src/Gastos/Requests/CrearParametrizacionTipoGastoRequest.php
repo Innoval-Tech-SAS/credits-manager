@@ -25,7 +25,14 @@ class CrearParametrizacionTipoGastoRequest extends FormRequest
         return [
             'tipo_gasto_id' => ['required', Rule::exists('tipos_gasto', 'id')->where('empresa_id', $empresaId)],
             'fecha_desde' => ['required', 'date'],
+            ...self::reglasContables($empresaId),
+        ];
+    }
 
+    /** Cuentas, tarifas y retenciones: lo que `EditarParametrizacionTipoGastoRequest` también deja corregir. */
+    public static function reglasContables(int $empresaId): array
+    {
+        return [
             'tipo_comprobante_id' => ['required', Rule::exists('tipos_comprobante', 'id')->where('empresa_id', $empresaId)],
             'cuenta_gasto_id' => ['required', new CuentaDeMovimiento($empresaId)],
             'cuenta_cxp_id' => ['required', new CuentaDeMovimiento($empresaId)],

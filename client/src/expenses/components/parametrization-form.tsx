@@ -12,34 +12,37 @@ import { Spinner } from '@ui/spinner/components/spinner';
 import type { ParametrizationFormProps } from '../props/parametrization-form-props';
 import type { ApiParametrization } from '../types/api-parametrization';
 
-export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, cuentas, tiposComprobante, onCreated }) => {
+const comoTexto = (valor: number | string | null | undefined) => (valor === null || valor === undefined ? '' : String(valor));
+
+export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, cuentas, tiposComprobante, parametrizacionId, initialData, onSaved }) => {
     const { sendRequest } = useSendRequest();
+    const isEditMode = parametrizacionId !== undefined;
 
     const tipoGastoOptions = tiposGasto.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }));
     const cuentaOptions = cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }));
     const tipoComprobanteOptions = tiposComprobante.map((tipo) => ({ value: String(tipo.id), label: `${tipo.codigo} - ${tipo.nombre}` }));
 
-    const [tipoGastoId, setTipoGastoId] = useState('');
-    const [fechaDesde, setFechaDesde] = useState(() => new Date().toISOString().slice(0, 10));
-    const [tipoComprobanteId, setTipoComprobanteId] = useState('');
-    const [cuentaGastoId, setCuentaGastoId] = useState('');
-    const [cuentaCxpId, setCuentaCxpId] = useState('');
-    const [cuentaIvaId, setCuentaIvaId] = useState('');
-    const [tarifaIva, setTarifaIva] = useState('');
+    const [tipoGastoId, setTipoGastoId] = useState(comoTexto(initialData?.tipo_gasto_id));
+    const [fechaDesde, setFechaDesde] = useState(() => initialData?.fecha_desde ?? new Date().toISOString().slice(0, 10));
+    const [tipoComprobanteId, setTipoComprobanteId] = useState(comoTexto(initialData?.tipo_comprobante_id));
+    const [cuentaGastoId, setCuentaGastoId] = useState(comoTexto(initialData?.cuenta_gasto_id));
+    const [cuentaCxpId, setCuentaCxpId] = useState(comoTexto(initialData?.cuenta_cxp_id));
+    const [cuentaIvaId, setCuentaIvaId] = useState(comoTexto(initialData?.cuenta_iva_id));
+    const [tarifaIva, setTarifaIva] = useState(comoTexto(initialData?.tarifa_iva));
 
-    const [aplicaRetefuente, setAplicaRetefuente] = useState(false);
-    const [conceptoDian, setConceptoDian] = useState('');
-    const [baseMinimaUvt, setBaseMinimaUvt] = useState('');
-    const [tarifaRetefuenteNatural, setTarifaRetefuenteNatural] = useState('');
-    const [tarifaRetefuenteJuridica, setTarifaRetefuenteJuridica] = useState('');
-    const [cuentaRetefuenteId, setCuentaRetefuenteId] = useState('');
+    const [aplicaRetefuente, setAplicaRetefuente] = useState(initialData?.aplica_retefuente ?? false);
+    const [conceptoDian, setConceptoDian] = useState(comoTexto(initialData?.concepto_dian));
+    const [baseMinimaUvt, setBaseMinimaUvt] = useState(comoTexto(initialData?.base_minima_uvt));
+    const [tarifaRetefuenteNatural, setTarifaRetefuenteNatural] = useState(comoTexto(initialData?.tarifa_retefuente_persona_natural));
+    const [tarifaRetefuenteJuridica, setTarifaRetefuenteJuridica] = useState(comoTexto(initialData?.tarifa_retefuente_persona_juridica));
+    const [cuentaRetefuenteId, setCuentaRetefuenteId] = useState(comoTexto(initialData?.cuenta_retefuente_id));
 
-    const [aplicaReteica, setAplicaReteica] = useState(false);
-    const [cuentaReteicaId, setCuentaReteicaId] = useState('');
+    const [aplicaReteica, setAplicaReteica] = useState(initialData?.aplica_reteica ?? false);
+    const [cuentaReteicaId, setCuentaReteicaId] = useState(comoTexto(initialData?.cuenta_reteica_id));
 
-    const [aplicaReteiva, setAplicaReteiva] = useState(false);
-    const [tarifaReteiva, setTarifaReteiva] = useState('');
-    const [cuentaReteivaId, setCuentaReteivaId] = useState('');
+    const [aplicaReteiva, setAplicaReteiva] = useState(initialData?.aplica_reteiva ?? false);
+    const [tarifaReteiva, setTarifaReteiva] = useState(comoTexto(initialData?.tarifa_reteiva));
+    const [cuentaReteivaId, setCuentaReteivaId] = useState(comoTexto(initialData?.cuenta_reteiva_id));
 
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,11 +53,12 @@ export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, 
         setIsSubmitting(true);
 
         try {
-            const respuesta = await sendRequest<{ parametrizacion: ApiParametrization }>('/gastos/parametrizaciones', {
-                method: 'POST',
+            const url = isEditMode ? `/gastos/parametrizaciones/${parametrizacionId}` : '/gastos/parametrizaciones';
+            const vigencia = isEditMode ? {} : { tipo_gasto_id: Number(tipoGastoId), fecha_desde: fechaDesde };
+            const respuesta = await sendRequest<{ parametrizacion: ApiParametrization }>(url, {
+                method: isEditMode ? 'PATCH' : 'POST',
                 body: {
-                    tipo_gasto_id: Number(tipoGastoId),
-                    fecha_desde: fechaDesde,
+                    ...vigencia,
                     tipo_comprobante_id: Number(tipoComprobanteId),
                     cuenta_gasto_id: Number(cuentaGastoId),
                     cuenta_cxp_id: Number(cuentaCxpId),
@@ -74,7 +78,7 @@ export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, 
                 },
             });
 
-            onCreated(respuesta.parametrizacion);
+            onSaved(respuesta.parametrizacion);
         } catch (caught) {
             setError(caught instanceof Error ? caught.message : 'Ocurrió un error inesperado.');
         } finally {
@@ -94,11 +98,11 @@ export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, 
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <div>
                         <Label htmlFor="tipo-gasto">Tipo de gasto</Label>
-                        <Select id="tipo-gasto" options={tipoGastoOptions} defaultValue={tipoGastoId} onChange={setTipoGastoId} />
+                        <Select id="tipo-gasto" options={tipoGastoOptions} defaultValue={tipoGastoId} disabled={isEditMode} onChange={setTipoGastoId} />
                     </div>
                     <div>
                         <Label htmlFor="fecha-desde">Vigente desde</Label>
-                        <DatePicker id="fecha-desde" name="fecha-desde" required value={fechaDesde} onChange={setFechaDesde} />
+                        <DatePicker id="fecha-desde" name="fecha-desde" required disabled={isEditMode} value={fechaDesde} onChange={setFechaDesde} />
                     </div>
                     <div>
                         <Label htmlFor="tipo-comprobante">Tipo de comprobante a generar</Label>
@@ -241,7 +245,7 @@ export const ParametrizationForm: FC<ParametrizationFormProps> = ({ tiposGasto, 
                         disabled={isSubmitting || !tipoGastoId || !tipoComprobanteId || !cuentaGastoId || !cuentaCxpId}
                         startIcon={isSubmitting ? <Spinner size="sm" color="white" /> : undefined}
                     >
-                        {isSubmitting ? 'Guardando…' : 'Guardar parametrización'}
+                        {isSubmitting ? 'Guardando…' : isEditMode ? 'Actualizar parametrización' : 'Guardar parametrización'}
                     </Button>
                 </div>
             </div>

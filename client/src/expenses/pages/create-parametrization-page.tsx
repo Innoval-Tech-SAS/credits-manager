@@ -36,7 +36,7 @@ export const CreateParametrizationPage: FC = () => {
                 {isLoading ? (
                     <FormSkeletonBody />
                 ) : (
-                    <ParametrizationForm tiposGasto={tiposGasto} cuentas={cuentas} tiposComprobante={tiposComprobante} onCreated={handleCreated} />
+                    <ParametrizationForm tiposGasto={tiposGasto} cuentas={cuentas} tiposComprobante={tiposComprobante} onSaved={handleCreated} />
                 )}
             </div>
         </div>

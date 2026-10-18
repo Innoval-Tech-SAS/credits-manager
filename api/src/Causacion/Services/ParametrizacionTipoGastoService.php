@@ -73,4 +73,39 @@ class ParametrizacionTipoGastoService
             return $parametrizacion;
         });
     }
+
+    /**
+     * Corrige la configuración contable de una versión en su lugar. Los gastos ya causados no cambian: su asiento y
+     * las retenciones aplicadas quedaron guardados al causarse; solo los gastos que se causen desde ahora usan lo nuevo.
+     * Una retención que se apaga deja sus campos en nulo para no conservar una cuenta o tarifa que ya no aplica.
+     */
+    public function editar(ParametrizacionTipoGasto $parametrizacion, array $datos): ParametrizacionTipoGasto
+    {
+        $retenciones = [
+            'aplica_retefuente' => ['concepto_dian', 'base_minima_uvt', 'tarifa_retefuente_persona_natural', 'tarifa_retefuente_persona_juridica', 'cuenta_retefuente_id'],
+            'aplica_reteica' => ['cuenta_reteica_id'],
+            'aplica_reteiva' => ['tarifa_reteiva', 'cuenta_reteiva_id'],
+        ];
+
+        foreach ($retenciones as $bandera => $campos) {
+            if (array_key_exists($bandera, $datos) && ! $datos[$bandera]) {
+                $datos = [...$datos, ...array_fill_keys($campos, null)];
+            }
+        }
+
+        return DB::transaction(function () use ($parametrizacion, $datos) {
+            $anteriores = $this->auditoria->instantanea($parametrizacion);
+
+            $parametrizacion = $this->parametrizaciones->actualizar($parametrizacion, $datos);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_GASTOS,
+                "Parametrización #{$parametrizacion->id} del tipo de gasto #{$parametrizacion->tipo_gasto_id} editada",
+                $parametrizacion,
+                $anteriores,
+            );
+
+            return $parametrizacion;
+        });
+    }
 }

@@ -1,12 +1,13 @@
 import type { FC } from 'react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { FileText } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router';
+import { FileText, Pencil } from 'lucide-react';
 
 import { useLocationSuccessMessage } from '../../shared/hooks/use-location-success-message';
 import { useResource } from '../../shared/hooks/use-resource';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { formatDateEs } from '../../shared/utils/format-date-es';
+import { ActionButton } from '@ui/action-button/components/action-button';
 import { CreateButton } from '@ui/button/components/create-button';
 import { Label } from '@ui/forms/components/label';
 import { Select } from '@ui/forms/components/select';
@@ -21,7 +22,9 @@ export const ParametrizationsPage: FC = () => {
 
     const canCreate = usePermission('gastos', 'crear_parametrizaciones');
     const [successMessage, setSuccessMessage] = useLocationSuccessMessage<ParametrizationsListLocationState>();
-    const [tipoGastoId, setTipoGastoId] = useState('');
+    const [searchParams] = useSearchParams();
+    // Al volver de editar una versión, el historial abre en el mismo tipo de gasto.
+    const [tipoGastoId, setTipoGastoId] = useState(() => searchParams.get('tipo_gasto_id') ?? '');
 
     const { data: tiposData } = useResource<{ tipos_gasto: ApiExpenseType[] }>('/gastos/tipos-gasto');
     const tiposGasto = tiposData?.tipos_gasto ?? [];
@@ -62,6 +65,21 @@ export const ParametrizationsPage: FC = () => {
                     { key: 'aplica_retefuente', label: 'ReteFuente', render: (item) => (item.aplica_retefuente ? 'Sí' : 'No') },
                     { key: 'aplica_reteica', label: 'ReteICA', render: (item) => (item.aplica_reteica ? 'Sí' : 'No') },
                     { key: 'aplica_reteiva', label: 'ReteIVA', render: (item) => (item.aplica_reteiva ? 'Sí' : 'No') },
+                    ...(canCreate
+                        ? [
+                              {
+                                  key: 'acciones',
+                                  label: 'Acciones',
+                                  render: (item: ApiParametrization) => (
+                                      <ActionButton
+                                          icon={<Pencil className="size-5" />}
+                                          label="Editar"
+                                          onClick={() => navigate(`/gastos/parametrizaciones/${item.id}/editar`)}
+                                      />
+                                  ),
+                              },
+                          ]
+                        : []),
                 ]}
                 rows={parametrizaciones}
                 getRowKey={(row) => row.id}

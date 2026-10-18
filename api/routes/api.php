@@ -372,6 +372,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/gastos/parametrizaciones', [ParametrizacionTipoGastoController::class, 'index'])->middleware('algun_permiso:'.implode(',', GastosConstants::CONSULTA_PARAMETRIZACIONES));
     Route::post('/gastos/parametrizaciones', [ParametrizacionTipoGastoController::class, 'store'])->middleware('permiso:gastos,crear_parametrizaciones');
+    Route::get('/gastos/parametrizaciones/{parametrizacion}', [ParametrizacionTipoGastoController::class, 'show'])->middleware('algun_permiso:'.implode(',', GastosConstants::CONSULTA_PARAMETRIZACIONES));
+    Route::patch('/gastos/parametrizaciones/{parametrizacion}', [ParametrizacionTipoGastoController::class, 'update'])->middleware('permiso:gastos,crear_parametrizaciones');
 
     Route::get('/gastos/tarifas-reteica', [TarifaReteIcaMunicipioController::class, 'index'])->middleware('algun_permiso:'.implode(',', GastosConstants::CONSULTA_TARIFAS_RETEICA));
     Route::post('/gastos/tarifas-reteica', [TarifaReteIcaMunicipioController::class, 'store'])->middleware('permiso:tributario,crear_tarifas_reteica');

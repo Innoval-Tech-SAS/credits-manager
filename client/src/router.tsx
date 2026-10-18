@@ -69,6 +69,7 @@ const EditExpenseTypePage = lazyPage(() => import('./expenses/pages/edit-expense
 const ExpenseTypeDetailPage = lazyPage(() => import('./expenses/pages/expense-type-detail-page'), 'ExpenseTypeDetailPage');
 const CreateMunicipalityPage = lazyPage(() => import('./geography/pages/create-municipality-page'), 'CreateMunicipalityPage');
 const CreateParametrizationPage = lazyPage(() => import('./expenses/pages/create-parametrization-page'), 'CreateParametrizationPage');
+const EditParametrizationPage = lazyPage(() => import('./expenses/pages/edit-parametrization-page'), 'EditParametrizationPage');
 const CreateReteicaTariffPage = lazyPage(() => import('./expenses/pages/create-reteica-tariff-page'), 'CreateReteicaTariffPage');
 const CreateUvtValuePage = lazyPage(() => import('./expenses/pages/create-uvt-value-page'), 'CreateUvtValuePage');
 const EditUvtValuePage = lazyPage(() => import('./expenses/pages/edit-uvt-value-page'), 'EditUvtValuePage');
@@ -1014,6 +1015,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="gastos" accion="crear_parametrizaciones">
                                 <CreateParametrizationPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'gastos/parametrizaciones/:id/editar',
+                        element: (
+                            <RequireModulePermission modulo="gastos" accion="crear_parametrizaciones">
+                                <EditParametrizationPage />
                             </RequireModulePermission>
                         ),
                     },

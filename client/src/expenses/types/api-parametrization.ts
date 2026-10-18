@@ -1,4 +1,4 @@
-/** Raw shape of a row returned by `GET /gastos/parametrizaciones` and `POST /gastos/parametrizaciones`. */
+/** Raw shape of a row returned by `GET /gastos/parametrizaciones`, `GET`/`PATCH /gastos/parametrizaciones/{id}` and `POST /gastos/parametrizaciones`. */
 export type ApiParametrization = {
     id: number;
     tipo_gasto_id: number;
