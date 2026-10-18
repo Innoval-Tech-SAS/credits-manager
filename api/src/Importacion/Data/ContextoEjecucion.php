@@ -40,6 +40,12 @@ final class ContextoEjecucion
     /** @var array<int, Collection<int, Cuota>> crédito → plan, cargado una vez; en validación los pagos lo avanzan en memoria */
     public array $planes = [];
 
+    /** @var array<int, string> id de cuenta → fecha de su primer asiento con efecto contable, precargado por lote */
+    public array $primerAsientoPorCuenta = [];
+
+    /** Corte más reciente de los saldos iniciales: lo ocurrido hasta esa fecha ya está en ellos y no lleva asiento. */
+    public ?string $fechaCorteApertura = null;
+
     /** @var array<string, true> claves ya vistas en el archivo, para detectar repetidos */
     public array $vistos = [];
 
@@ -50,6 +56,11 @@ final class ContextoEjecucion
         public ?bool $crearEmpleadores,
         public bool $generarAsiento,
     ) {}
+
+    public function cubiertoPorApertura(string $fecha): bool
+    {
+        return $this->fechaCorteApertura !== null && $fecha <= $this->fechaCorteApertura;
+    }
 
     /** Devuelve true la primera vez que ve la clave; false si ya apareció antes en el archivo. */
     public function primeraVez(string $clave): bool

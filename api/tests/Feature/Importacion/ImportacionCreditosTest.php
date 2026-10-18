@@ -190,7 +190,7 @@ class ImportacionCreditosTest extends TestCase
         DB::table('saldos_apertura')->insert([
             'empresa_id' => $admin->empresa_id,
             'cuenta_id' => $cuentaCartera,
-            'fecha_corte' => '2023-09-30',
+            'fecha_corte' => '2023-10-31',
             'debito' => 45000000,
             'credito' => 0,
             'creado_en' => now(),
@@ -206,7 +206,7 @@ class ImportacionCreditosTest extends TestCase
         );
 
         $this->assertDatabaseCount('comprobantes', 0);
-        $this->assertStringContainsString('duplicaría', implode(' ', array_column($this->erroresDe($id), 'motivo')));
+        $this->assertStringContainsString('ya incluyen esta cartera', implode(' ', array_column($this->erroresDe($id), 'motivo')));
     }
 
     public function test_el_plan_del_archivo_reemplaza_la_cuota_y_recalcula_el_saldo_de_capital(): void

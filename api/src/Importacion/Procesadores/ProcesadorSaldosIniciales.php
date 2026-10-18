@@ -23,6 +23,8 @@ final class ProcesadorSaldosIniciales implements ProcesadorFila
             $ctx->empresaId,
             array_values(array_filter(array_column($valoresLote, 'cuenta'))),
         );
+
+        $ctx->primerAsientoPorCuenta = $this->datos->primerAsientoPorCuenta($ctx->empresaId, array_values($ctx->cuentasPorCodigo));
     }
 
     public function procesar(array $valores, ContextoEjecucion $ctx): void
@@ -50,6 +52,12 @@ final class ProcesadorSaldosIniciales implements ProcesadorFila
 
         if ($this->datos->saldoExiste($ctx->empresaId, $cuentaId, $fecha)) {
             throw new FilaRechazada('Ya existe un saldo para esta cuenta y fecha de corte.', 'fecha_corte');
+        }
+
+        $primerAsiento = $ctx->primerAsientoPorCuenta[$cuentaId] ?? null;
+
+        if ($primerAsiento !== null && $primerAsiento <= $fecha) {
+            throw new FilaRechazada("La cuenta {$valores['cuenta']} ya tiene asientos desde el {$primerAsiento}: este saldo los contaría dos veces. Usa una fecha de corte anterior o quita la cuenta del archivo.", 'fecha_corte');
         }
 
         if (! $ctx->escribir) {
