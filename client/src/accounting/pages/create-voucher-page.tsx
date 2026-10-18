@@ -18,7 +18,7 @@ export const CreateVoucherPage: FC = () => {
         '/contabilidad/centros-costo?per_page=100',
     );
 
-    const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento);
+    const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento && cuenta.activa);
     const tipos = tiposData?.data ?? [];
     const centrosCosto = (centrosData?.data ?? []).filter((centro) => centro.activo);
 

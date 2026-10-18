@@ -17,6 +17,7 @@ use App\Contabilidad\Models\ReglaContabilizacion;
 use App\Contabilidad\Repositories\AplicacionDocumentoRepository;
 use App\Contabilidad\Repositories\AsientoContableRepository;
 use App\Contabilidad\Repositories\ComprobanteRepository;
+use App\Contabilidad\Repositories\PlanCuentaRepository;
 use App\Contabilidad\Repositories\ReglaContabilizacionRepository;
 use App\Contabilidad\Repositories\TipoComprobanteRepository;
 use App\Core\Dinero\Dinero;
@@ -46,6 +47,7 @@ class ComprobanteService
         protected DocumentoTerceroService $documentosTercero,
         protected AplicacionDocumentoRepository $aplicacionesDocumento,
         protected TerceroRepository $terceros,
+        protected PlanCuentaRepository $cuentas,
         protected EmisorAuditoria $auditoria,
     ) {}
 
@@ -102,6 +104,11 @@ class ComprobanteService
             throw ValidationException::withMessages([
                 'lineas' => __('validation.custom.lineas.sin_valor'),
             ]);
+        }
+
+        // El reverso calca las líneas del original: debe poder anular un asiento aunque su cuenta ya no admita movimiento.
+        if ($moduloOrigen !== 'reverso') {
+            $this->exigirCuentasDeMovimiento(array_column($lineas, 'cuenta_id'));
         }
 
         if ($moduloOrigen === 'manual') {
@@ -285,6 +292,8 @@ class ComprobanteService
         $this->periodos->obtenerAbierto($comprobante->fecha->toDateString());
 
         $comprobante->loadMissing('lineas');
+        $this->exigirCuentasDeMovimiento($comprobante->lineas->pluck('cuenta_id')->all());
+
         $debito = Dinero::sumarVarios(...$comprobante->lineas->pluck('debito')->all());
         $credito = Dinero::sumarVarios(...$comprobante->lineas->pluck('credito')->all());
 
@@ -452,6 +461,30 @@ class ComprobanteService
 
         foreach ($documentosCreados as $documento) {
             $this->documentosTercero->anular($documento);
+        }
+    }
+
+    /**
+     * Cubre manuales y automáticos: una regla o parametrización que apunte a una cuenta mayor o inactiva falla aquí en
+     * vez de dejar un asiento que el balance no suma. Al contabilizar se repite porque la cuenta pudo cambiar en borrador.
+     */
+    private function exigirCuentasDeMovimiento(array $cuentaIds): void
+    {
+        $cuentas = $this->cuentas->paraValidarAsientos(array_values(array_unique($cuentaIds)));
+
+        foreach ($cuentaIds as $cuentaId) {
+            $cuenta = $cuentas[$cuentaId] ?? null;
+
+            $mensaje = match (true) {
+                $cuenta === null => __('validation.custom.plan_cuenta.no_disponible'),
+                ! $cuenta->permite_movimiento => __('validation.custom.plan_cuenta.no_admite_movimiento', ['cuenta' => $cuenta->codigo]),
+                ! $cuenta->activa => __('validation.custom.plan_cuenta.inactiva', ['cuenta' => $cuenta->codigo]),
+                default => null,
+            };
+
+            if ($mensaje !== null) {
+                throw ValidationException::withMessages(['lineas' => $mensaje]);
+            }
         }
     }
 

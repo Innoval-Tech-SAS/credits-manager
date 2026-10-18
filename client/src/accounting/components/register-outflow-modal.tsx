@@ -39,7 +39,7 @@ const FormularioEgreso: FC<FormularioEgresoProps> = ({ terceroId, documentos, on
     const { data: cuentasData, isLoading: isLoadingCuentas } = useResource<{ cuentas: ApiAccount[] }>('/contabilidad/plan-cuentas');
     const { data: tiposData, isLoading: isLoadingTipos } = useResource<PaginatedResponse<ApiVoucherType>>('/contabilidad/tipos-comprobante?per_page=100');
 
-    const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento);
+    const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento && cuenta.activa);
     const tipos = tiposData?.data ?? [];
 
     const [valores, setValores] = useState<Record<number, string>>(() => Object.fromEntries(documentos.map((documento) => [documento.id, documento.saldo])));

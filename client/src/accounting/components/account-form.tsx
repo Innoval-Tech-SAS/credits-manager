@@ -167,12 +167,15 @@ export const AccountForm: FC<AccountFormProps> = ({ cuentas, accountId, initialD
                     </div>
                 </div>
 
-                <Checkbox
-                    id="permite-movimiento"
-                    label="Permite movimiento (cuenta de detalle)"
-                    checked={permiteMovimiento}
-                    onChange={setPermiteMovimiento}
-                />
+                <div>
+                    <Checkbox
+                        id="permite-movimiento"
+                        label="Permite movimiento (cuenta de detalle)"
+                        checked={permiteMovimiento}
+                        onChange={setPermiteMovimiento}
+                    />
+                    {fieldError('permite_movimiento') && <p className="mt-1.5 text-xs text-error-500">{fieldError('permite_movimiento')}</p>}
+                </div>
 
                 <div>
                     <p className="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-400">Qué exige esta cuenta al usarse en un comprobante</p>

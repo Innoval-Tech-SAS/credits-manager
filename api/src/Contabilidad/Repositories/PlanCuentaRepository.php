@@ -47,6 +47,12 @@ class PlanCuentaRepository extends BaseRepository
         return $this->consulta()->where('permite_movimiento', true)->whereIn('tipo', $tipos)->orderBy('codigo')->get();
     }
 
+    /** Lo justo para validar las líneas de un comprobante en una sola consulta, indexado por id. */
+    public function paraValidarAsientos(array $ids): Collection
+    {
+        return $this->consulta()->whereIn('id', $ids)->get(['id', 'codigo', 'permite_movimiento', 'activa'])->keyBy('id');
+    }
+
     /** Precarga de una sola vez las cuentas de varios códigos (evita una consulta por fila en importaciones). */
     /** La empresa va explícita: el libro mayor también corre en el worker de exportación, sin sesión. */
     public function buscarDeEmpresaOFallar(int $empresaId, int $id): PlanCuenta
