@@ -5,6 +5,7 @@ namespace Tests\Feature\Respaldos;
 use App\Respaldos\Constants\RespaldosConstants;
 use App\Respaldos\Services\VolcadoBaseDatosService;
 use Carbon\CarbonImmutable;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
 use Tests\Concerns\PreparaRespaldos;
@@ -12,7 +13,7 @@ use Tests\TestCase;
 
 class EjecutarRespaldoTest extends TestCase
 {
-    use PreparaRespaldos;
+    use PreparaRespaldos, RefreshDatabase;
 
     protected function setUp(): void
     {
