@@ -5,7 +5,7 @@ import { Trash2 } from 'lucide-react';
 import { useResource } from '../../shared/hooks/use-resource';
 import { formatMoney } from '../../shared/utils/format-money';
 import { ThirdPartySelector } from '../../third-parties/components/third-party-selector';
-import type { ApiCarteraDocument } from '../types/api-cartera-document';
+import type { ApiCrossDocument } from '../types/api-cross-document';
 import type { VoucherFormLineRowProps } from '../props/voucher-form-line-row-props';
 import { DatePicker } from '@ui/forms/components/date-picker';
 import { Dropdown } from '@ui/dropdown/components/dropdown';
@@ -18,21 +18,21 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
     cuentas,
     cuentaOptions,
     centroCostoOptions,
+    terceroComprobante,
     puedeEliminar,
     onActualizar,
     onEliminar,
 }) => {
     const cuenta = cuentas.find((item) => String(item.id) === linea.cuenta_id);
-    const tercero = linea.tercero;
-    // La dirección del documento se deriva de `tipo` igual que en `ComprobanteService::procesarDocumentosTerceroAlContabilizar`.
-    const naturalezaDocumento = cuenta?.tipo === 'activo' ? 'por_cobrar' : cuenta?.tipo === 'pasivo' ? 'por_pagar' : null;
+    // Al contabilizar, el backend usa el tercero del encabezado cuando la línea no trae uno.
+    const tercero = linea.tercero ?? terceroComprobante;
 
-    const { data: pendientesData } = useResource<{ data: ApiCarteraDocument[] }>(
-        cuenta?.exige_documento_cruce && naturalezaDocumento && tercero
-            ? `/cartera-terceros?naturaleza=${naturalezaDocumento}&tercero_id=${tercero.id}&plan_cuenta_id=${cuenta.id}&estado=pendiente&per_page=10`
-            : null,
+    // El backend decide qué cuentas manejan documento cruce y qué saldos (vencidos, abonados, anticipos) se pueden cruzar.
+    const { data: documentosData } = useResource<{ data: ApiCrossDocument[] }>(
+        cuenta && tercero ? `/contabilidad/comprobantes/documentos-cruce?cuenta_id=${cuenta.id}&tercero_id=${tercero.id}` : null,
     );
-    const pendientes = pendientesData?.data ?? [];
+    const filtro = linea.documento_cruce.trim().toLowerCase();
+    const documentos = (documentosData?.data ?? []).filter((documento) => documento.numero_documento.toLowerCase().includes(filtro));
     const [docCruceAbierto, setDocCruceAbierto] = useState(false);
 
     return (
@@ -71,11 +71,11 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
 
                     {/* Deja escribir un número nuevo (documento que se crea en esta línea) y a la vez elegir uno pendiente (documento que se cruza/abona). */}
                     <Dropdown
-                        isOpen={docCruceAbierto && pendientes.length > 0}
+                        isOpen={docCruceAbierto && documentos.length > 0}
                         onClose={() => setDocCruceAbierto(false)}
-                        className="max-h-64 w-full overflow-y-auto custom-scrollbar left-0"
+                        className="max-h-64 w-full min-w-72 overflow-y-auto custom-scrollbar left-0"
                     >
-                        {pendientes.map((documento) => (
+                        {documentos.map((documento) => (
                             <DropdownItem
                                 key={documento.id}
                                 onClick={() => {
@@ -90,7 +90,13 @@ export const VoucherFormLineRow: FC<VoucherFormLineRowProps> = ({
                                     setDocCruceAbierto(false);
                                 }}
                             >
-                                {documento.numero_documento} · {formatMoney(documento.saldo)}
+                                <span className="block font-medium text-gray-800 dark:text-white/90">
+                                    {documento.numero_documento} · {formatMoney(documento.saldo)}
+                                </span>
+                                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                                    {documento.tipo_documento}
+                                    {documento.fecha_vencimiento && ` · vence ${documento.fecha_vencimiento}`}
+                                </span>
                             </DropdownItem>
                         ))}
                     </Dropdown>

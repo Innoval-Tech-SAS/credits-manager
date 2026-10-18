@@ -5,6 +5,7 @@ namespace App\Contabilidad\Services;
 use App\Auditoria\Constants\AuditoriaConstants;
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Auditoria\Services\EmisorAuditoria;
+use App\Contabilidad\Constants\ContabilidadConstants;
 use App\Contabilidad\Enums\EstadoComprobante;
 use App\Contabilidad\Enums\EstadoPeriodo;
 use App\Contabilidad\Enums\EventoContable;
@@ -12,6 +13,7 @@ use App\Contabilidad\Enums\NaturalezaCuenta;
 use App\Contabilidad\Enums\NaturalezaDocumento;
 use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Models\Comprobante;
+use App\Contabilidad\Models\DocumentoTercero;
 use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Models\ReglaContabilizacion;
 use App\Contabilidad\Repositories\AplicacionDocumentoRepository;
@@ -24,6 +26,7 @@ use App\Creditos\Models\Credito;
 use App\Pagos\Models\Pago;
 use App\Terceros\Repositories\TerceroRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -374,10 +377,8 @@ class ComprobanteService
                 || ($cuenta->naturaleza === NaturalezaCuenta::Credito && $linea->credito->esPositivo());
             $monto = $linea->debito->esPositivo() ? $linea->debito : $linea->credito;
 
-            $existente = $this->documentosTercero->buscarPorNumero($terceroId, $naturalezaDocumento, $linea->documento_cruce);
-
             if ($aumentaElSaldo) {
-                if ($existente) {
+                if ($this->documentosTercero->buscarPorNumero($terceroId, $naturalezaDocumento, $linea->documento_cruce)) {
                     throw ValidationException::withMessages([
                         'comprobante' => __('validation.custom.comprobante.documento_cruce_duplicado', ['documento' => $linea->documento_cruce]),
                     ]);
@@ -397,6 +398,13 @@ class ComprobanteService
                     fechaVencimiento: $linea->fecha_vencimiento?->toDateString(),
                 );
             } else {
+                $existente = $this->documentosTercero->buscarParaCruce(
+                    $terceroId,
+                    $this->naturalezasDeCruce($cuenta->tipo),
+                    $linea->documento_cruce,
+                    $cuenta->id,
+                );
+
                 if (! $existente) {
                     throw ValidationException::withMessages([
                         'comprobante' => __('validation.custom.comprobante.documento_cruce_no_encontrado', ['documento' => $linea->documento_cruce]),
@@ -405,7 +413,7 @@ class ComprobanteService
 
                 $this->documentosTercero->aplicarValor(
                     $existente->tercero,
-                    $naturalezaDocumento,
+                    $existente->naturaleza,
                     [['documento_tercero_id' => $existente->id, 'valor' => $monto]],
                     'contabilidad_manual',
                     $comprobante->id,
@@ -413,6 +421,41 @@ class ComprobanteService
                 );
             }
         }
+    }
+
+    /**
+     * Saldos vivos que una línea puede cruzar en `$cuentaId`, con la misma regla que aplica
+     * `procesarDocumentosTerceroAlContabilizar()`: vacío si la cuenta no maneja documento cruce.
+     *
+     * @return Collection<int, DocumentoTercero>
+     */
+    public function documentosCruce(int $cuentaId, int $terceroId): Collection
+    {
+        $cuenta = PlanCuenta::query()->findOrFail($cuentaId);
+
+        if (! $cuenta->esCarteraDeTerceros() || ! in_array($cuenta->tipo, [TipoCuenta::Activo, TipoCuenta::Pasivo], true)) {
+            return collect();
+        }
+
+        return $this->documentosTercero->conSaldoParaCruce(
+            $terceroId,
+            $this->naturalezasDeCruce($cuenta->tipo),
+            $cuenta->id,
+            ContabilidadConstants::LIMITE_DOCUMENTOS_CRUCE,
+        );
+    }
+
+    /**
+     * Un abono a una cuenta de activo baja una cuenta por cobrar o un anticipo entregado al proveedor;
+     * en una de pasivo, una cuenta por pagar o un anticipo recibido del cliente.
+     *
+     * @return list<NaturalezaDocumento>
+     */
+    private function naturalezasDeCruce(TipoCuenta $tipo): array
+    {
+        return $tipo === TipoCuenta::Activo
+            ? [NaturalezaDocumento::PorCobrar, NaturalezaDocumento::AnticipoProveedor]
+            : [NaturalezaDocumento::PorPagar, NaturalezaDocumento::AnticipoCliente];
     }
 
     /**
