@@ -6,6 +6,7 @@ use App\Respaldos\Constants\RespaldosConstants;
 use App\Respaldos\Enums\ClaseRespaldo;
 use App\Respaldos\Services\SubidaRespaldoExternoService;
 use Carbon\CarbonImmutable;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Mockery;
 use Tests\Concerns\PreparaRespaldos;
@@ -14,7 +15,7 @@ use Tests\TestCase;
 
 class SubidaRespaldoExternoTest extends TestCase
 {
-    use PreparaRespaldos, SimulaRespaldoExterno;
+    use PreparaRespaldos, RefreshDatabase, SimulaRespaldoExterno;
 
     protected function setUp(): void
     {
