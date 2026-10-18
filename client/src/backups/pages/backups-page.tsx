@@ -9,6 +9,7 @@ import type { ApiBackupsStatus } from '../../monitoring/types/api-backups-status
 import { useResource } from '../../shared/hooks/use-resource';
 import { BackupActionCard } from '../components/backup-action-card';
 import { BackupDownloadCard } from '../components/backup-download-card';
+import { ExternalBackupSettingsCard } from '../components/external-backup-settings-card';
 
 /** Superadmin: base completa de todas las empresas, más el detalle operativo (historial, estado, respaldo manual). Administrador de empresa: solo los datos de la suya. */
 export const BackupsPage: FC = () => {
@@ -36,6 +37,8 @@ export const BackupsPage: FC = () => {
                         </div>
 
                         <BackupsStatusCard status={status} error={statusError} />
+
+                        <ExternalBackupSettingsCard onSaved={refetch} />
                     </>
                 )}
 
