@@ -7,5 +7,8 @@ export type ParametrizationFormProps = {
     tiposGasto: ApiExpenseType[];
     cuentas: ApiAccount[];
     tiposComprobante: ApiVoucherType[];
-    onCreated: (parametrizacion: ApiParametrization) => void;
+    /** Presente en edición: el tipo de gasto y la vigencia quedan fijos, solo se corrige la configuración contable. */
+    parametrizacionId?: number;
+    initialData?: ApiParametrization;
+    onSaved: (parametrizacion: ApiParametrization) => void;
 };
