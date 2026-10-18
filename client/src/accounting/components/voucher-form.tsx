@@ -269,6 +269,7 @@ export const VoucherForm: FC<VoucherFormProps> = ({ tipos, cuentas, centrosCosto
                                         cuentas={cuentas}
                                         cuentaOptions={cuentaOptions}
                                         centroCostoOptions={centroCostoOptions}
+                                        terceroComprobante={tercero}
                                         puedeEliminar={lineas.length > 2}
                                         onActualizar={(cambios) => actualizarLinea(linea.key, cambios)}
                                         onEliminar={() => eliminarLinea(linea.key)}

@@ -72,6 +72,43 @@ class DocumentoTerceroRepository extends BaseRepository
             ->first();
     }
 
+    /**
+     * Documento que una línea cruza por su número. Se prefiere el causado en la misma cuenta; los que no la
+     * guardaron (`plan_cuenta_id` nulo) se aceptan como respaldo.
+     *
+     * @param  list<NaturalezaDocumento>  $naturalezas
+     */
+    public function buscarParaCruce(int $terceroId, array $naturalezas, string $numeroDocumento, int $planCuentaId): ?DocumentoTercero
+    {
+        return $this->consulta()
+            ->where('tercero_id', $terceroId)
+            ->whereIn('naturaleza', $naturalezas)
+            ->where('numero_documento', $numeroDocumento)
+            ->where(fn ($query) => $query->where('plan_cuenta_id', $planCuentaId)->orWhereNull('plan_cuenta_id'))
+            ->orderByRaw('plan_cuenta_id is null')
+            ->with('tercero')
+            ->first();
+    }
+
+    /**
+     * Saldos vivos del tercero en una cuenta, vencidos o no, para elegir el documento cruce de una línea.
+     *
+     * @param  list<NaturalezaDocumento>  $naturalezas
+     */
+    public function conSaldoParaCruce(int $terceroId, array $naturalezas, int $planCuentaId, int $limite): Collection
+    {
+        return $this->consulta()
+            ->select('id', 'naturaleza', 'tipo_documento', 'numero_documento', 'fecha', 'fecha_vencimiento', 'concepto', 'valor_original', 'saldo', 'estado')
+            ->where('tercero_id', $terceroId)
+            ->whereIn('naturaleza', $naturalezas)
+            ->whereIn('estado', self::ESTADOS_CON_SALDO)
+            ->where(fn ($query) => $query->where('plan_cuenta_id', $planCuentaId)->orWhereNull('plan_cuenta_id'))
+            ->orderBy('fecha')
+            ->orderBy('id')
+            ->limit($limite)
+            ->get();
+    }
+
     /** Documentos que un origen concreto (p. ej. un comprobante manual) creó, para poder deshacerlos si se reversa. */
     public function creadosPorOrigen(string $moduloOrigen, int $origenId): Collection
     {

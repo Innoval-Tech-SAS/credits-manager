@@ -77,6 +77,21 @@ class DocumentoTerceroService
         return $this->documentos->buscarPorNumero($terceroId, $naturaleza, $numeroDocumento);
     }
 
+    /** @param  list<NaturalezaDocumento>  $naturalezas */
+    public function buscarParaCruce(int $terceroId, array $naturalezas, string $numeroDocumento, int $planCuentaId): ?DocumentoTercero
+    {
+        return $this->documentos->buscarParaCruce($terceroId, $naturalezas, $numeroDocumento, $planCuentaId);
+    }
+
+    /**
+     * @param  list<NaturalezaDocumento>  $naturalezas
+     * @return Collection<int, DocumentoTercero>
+     */
+    public function conSaldoParaCruce(int $terceroId, array $naturalezas, int $planCuentaId, int $limite): Collection
+    {
+        return $this->documentos->conSaldoParaCruce($terceroId, $naturalezas, $planCuentaId, $limite);
+    }
+
     /** @return Collection<int, DocumentoTercero> */
     public function creadosPorOrigen(string $moduloOrigen, int $origenId): Collection
     {
