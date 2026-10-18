@@ -94,6 +94,78 @@ class ConsecutivoComprobanteTest extends TestCase
         $this->assertEquals(1, $deFebrero->consecutivo);
     }
 
+    public function test_un_comprobante_de_un_anio_anterior_se_numera_en_el_ciclo_de_su_fecha(): void
+    {
+        $this->actingAsAdmin();
+        $tipo = $this->crearTipoComprobante();
+        $tipo->update(['reinicio_periodo' => 'anual']);
+        $debito = $this->crearCuenta();
+        $credito = $this->crearCuenta();
+        $servicio = app(ComprobanteService::class);
+        $lineas = [
+            ['cuenta_id' => $debito->id, 'debito' => 10, 'credito' => 0],
+            ['cuenta_id' => $credito->id, 'debito' => 0, 'credito' => 10],
+        ];
+
+        Carbon::setTestNow('2026-10-18');
+        $servicio->crearComprobante($tipo->id, '2026-10-18', $lineas, 'De hoy');
+        $primeroDe2024 = $servicio->crearComprobante($tipo->id, '2024-05-10', $lineas, 'Saldo de 2024');
+        $segundoDeHoy = $servicio->crearComprobante($tipo->id, '2026-10-18', $lineas, 'Otro de hoy');
+        $segundoDe2024 = $servicio->crearComprobante($tipo->id, '2024-06-01', $lineas, 'Otro de 2024');
+
+        $this->assertSame('2024', $primeroDe2024->ciclo_numeracion);
+        $this->assertEquals(1, $primeroDe2024->consecutivo);
+        $this->assertSame("{$tipo->codigo}-2024-2", $segundoDe2024->numero);
+        $this->assertSame('2026', $segundoDeHoy->ciclo_numeracion);
+        $this->assertEquals(2, $segundoDeHoy->consecutivo);
+        $this->assertSame('2026', $tipo->fresh()->ciclo_numeracion_actual);
+        $this->assertSame(2, $tipo->fresh()->consecutivo_actual);
+    }
+
+    public function test_el_reinicio_mensual_toma_el_mes_de_la_fecha_del_comprobante(): void
+    {
+        $this->actingAsAdmin();
+        $tipo = $this->crearTipoComprobante();
+        $tipo->update(['reinicio_periodo' => 'mensual']);
+        $debito = $this->crearCuenta();
+        $credito = $this->crearCuenta();
+
+        Carbon::setTestNow('2026-02-02');
+        $deEnero = app(ComprobanteService::class)->crearComprobante(
+            $tipo->id,
+            '2026-01-31',
+            [
+                ['cuenta_id' => $debito->id, 'debito' => 10, 'credito' => 0],
+                ['cuenta_id' => $credito->id, 'debito' => 0, 'credito' => 10],
+            ],
+            'Cierre de enero registrado en febrero',
+        );
+
+        $this->assertSame('2026-01', $deEnero->ciclo_numeracion);
+        $this->assertEquals(1, $deEnero->consecutivo);
+    }
+
+    public function test_un_ciclo_anterior_continua_despues_de_los_comprobantes_borrados(): void
+    {
+        $this->actingAsAdmin();
+        $tipo = $this->crearTipoComprobante();
+        $tipo->update(['reinicio_periodo' => 'anual']);
+        $debito = $this->crearCuenta();
+        $credito = $this->crearCuenta();
+        $servicio = app(ComprobanteService::class);
+        $lineas = [
+            ['cuenta_id' => $debito->id, 'debito' => 10, 'credito' => 0],
+            ['cuenta_id' => $credito->id, 'debito' => 0, 'credito' => 10],
+        ];
+
+        Carbon::setTestNow('2026-10-18');
+        $servicio->crearComprobante($tipo->id, '2026-10-18', $lineas, 'De hoy');
+        $servicio->crearComprobante($tipo->id, '2024-05-10', $lineas, 'Saldo de 2024')->delete();
+        $siguienteDe2024 = $servicio->crearComprobante($tipo->id, '2024-05-11', $lineas, 'Otro de 2024');
+
+        $this->assertEquals(2, $siguienteDe2024->consecutivo);
+    }
+
     public function test_no_se_puede_superar_el_consecutivo_final(): void
     {
         $this->actingAsAdmin();
