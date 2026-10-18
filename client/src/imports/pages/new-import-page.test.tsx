@@ -176,29 +176,20 @@ describe('NewImportPage', () => {
         expect(await screen.findByText('Pantalla de detalle')).toBeTruthy();
     });
 
-    it('en créditos con asiento exige una cuenta de contrapartida imputable y la envía', async () => {
-        mocks.resource.data = {
-            cuentas: [
-                { id: 5, codigo: '390505', nombre: 'Apertura', permite_movimiento: true, activa: true },
-                { id: 6, codigo: '1', nombre: 'Título', permite_movimiento: false, activa: true },
-            ],
-        };
+    it('en créditos con asiento envía la decisión sin pedir cuenta de contrapartida', async () => {
         mocks.sendRequest.mockResolvedValue({ importacion: { id: 8 } });
         renderPagina('/importaciones/nueva?tipo=creditos');
 
         fireEvent.click(screen.getByLabelText('Generar asientos contables'));
-        expect(screen.getByText('390505 · Apertura')).toBeTruthy();
-        expect(screen.queryByText('1 · Título')).toBeNull();
+        expect(screen.queryByText('Elige la cuenta')).toBeNull();
 
-        await waitFor(() => expect(botonValidar().disabled).toBe(true));
-        fireEvent.change(screen.getByLabelText('Elige la cuenta'), { target: { value: '5' } });
         await waitFor(() => expect(botonValidar().disabled).toBe(false));
         fireEvent.click(botonValidar());
 
         await waitFor(() => expect(mocks.sendRequest).toHaveBeenCalledTimes(1));
         const body = (mocks.sendRequest.mock.calls[0] as [string, { body: FormData }])[1].body;
         expect(body.get('generar_asiento')).toBe('1');
-        expect(body.get('cuenta_contrapartida_id')).toBe('5');
+        expect(body.get('cuenta_contrapartida_id')).toBeNull();
     });
 
     it('muestra el motivo del rechazo del backend en lugar de navegar', async () => {

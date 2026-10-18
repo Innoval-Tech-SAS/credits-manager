@@ -58,10 +58,9 @@ class ImportacionCreditosTest extends TestCase
     {
         $cartera = $this->crearCuenta(['codigo' => '133005', 'nombre' => 'Cartera de créditos']);
         $caja = $this->crearCuenta(['codigo' => '110505', 'nombre' => 'Caja']);
-        $contrapartida = $this->crearCuenta(['codigo' => '390505', 'nombre' => 'Balance de apertura']);
         $this->crearRegla(EventoContable::DesembolsoCredito, $cartera, $caja, $this->crearTipoComprobante());
 
-        return [$cartera, $contrapartida];
+        return [$cartera, $caja];
     }
 
     public function test_un_credito_importado_queda_desembolsado_con_su_plan_y_sin_asiento_por_defecto(): void
@@ -130,32 +129,35 @@ class ImportacionCreditosTest extends TestCase
         $this->assertStringContainsString('refinanciaciones', implode(' ', $this->motivosDeRechazo($id)));
     }
 
-    public function test_aceptar_el_asiento_genera_un_solo_comprobante_balanceado_contra_la_contrapartida(): void
+    public function test_aceptar_el_asiento_contabiliza_cada_desembolso_en_su_fecha_con_las_cuentas_de_la_regla(): void
     {
         $this->actingAsAdmin();
         $this->periodoAbierto();
         $this->clienteCon();
-        [$cartera, $contrapartida] = $this->reglaDesembolso();
+        [$cartera, $caja] = $this->reglaDesembolso();
 
         $id = $this->importarCompleto(
             'creditos',
-            self::ENCABEZADO_CREDITOS."CR-1;1001;01/10/2023;2000000;2,5;4;mensual;;;;;;\nCR-3;1001;02/10/2023;1000000;2,5;4;mensual;;;;;;\n",
+            self::ENCABEZADO_CREDITOS."CR-1;1001;01/10/2023;2000000;2,5;4;mensual;;;;;;\nCR-3;1001;02/11/2023;1000000;2,5;4;mensual;;;;;;\n",
             ['generar_asiento' => true],
             'creditos.csv',
-            ['generar_asiento' => true, 'cuenta_contrapartida_id' => $contrapartida->id],
+            ['generar_asiento' => true],
         );
 
-        $importacion = $this->importacion($id);
-        $this->assertSame(EstadoImportacion::Completada, $importacion->estado);
-        $this->assertDatabaseCount('comprobantes', 1);
-        $this->assertDatabaseHas('comprobantes', ['modulo_origen' => 'importaciones', 'origen_id' => $id]);
+        $this->assertSame(EstadoImportacion::Completada, $this->importacion($id)->estado);
+        $this->assertDatabaseCount('comprobantes', 2);
 
-        $lineas = DB::table('asientos_contables')->where('comprobante_id', $importacion->comprobante_id)->get();
-        $this->assertSame(300000000, (int) $lineas->sum('debito'));
-        $this->assertSame((int) $lineas->sum('debito'), (int) $lineas->sum('credito'));
-        $this->assertTrue($lineas->contains(fn ($linea) => $linea->cuenta_id === $cartera->id && (int) $linea->debito === 300000000));
-        $this->assertTrue($lineas->contains(fn ($linea) => $linea->cuenta_id === $contrapartida->id && (int) $linea->credito === 300000000));
-        $this->assertDatabaseCount('comprobantes', 1);
+        foreach (['CR-1' => ['2023-10-01', 200000000], 'CR-3' => ['2023-11-02', 100000000]] as $codigo => [$fecha, $valor]) {
+            $credito = Credito::query()->where('codigo', $codigo)->firstOrFail();
+            $comprobante = DB::table('comprobantes')->where('modulo_origen', 'creditos')->where('origen_id', $credito->id)->first();
+
+            $this->assertNotNull($comprobante);
+            $this->assertSame($fecha, substr((string) $comprobante->fecha, 0, 10));
+
+            $lineas = DB::table('asientos_contables')->where('comprobante_id', $comprobante->id)->get();
+            $this->assertTrue($lineas->contains(fn ($linea) => $linea->cuenta_id === $cartera->id && (int) $linea->debito === $valor));
+            $this->assertTrue($lineas->contains(fn ($linea) => $linea->cuenta_id === $caja->id && (int) $linea->credito === $valor));
+        }
     }
 
     public function test_rechazar_el_asiento_importa_los_creditos_sin_asiento(): void
@@ -163,14 +165,14 @@ class ImportacionCreditosTest extends TestCase
         $this->actingAsAdmin();
         $this->periodoAbierto();
         $this->clienteCon();
-        [, $contrapartida] = $this->reglaDesembolso();
+        $this->reglaDesembolso();
 
         $id = $this->importarCompleto(
             'creditos',
             $this->creditoCSV(),
             ['generar_asiento' => false],
             'creditos.csv',
-            ['generar_asiento' => true, 'cuenta_contrapartida_id' => $contrapartida->id],
+            ['generar_asiento' => true],
         );
 
         $this->assertSame(1, $this->importacion($id)->filas_aceptadas);
@@ -183,7 +185,7 @@ class ImportacionCreditosTest extends TestCase
         $admin = $this->actingAsAdmin();
         $this->periodoAbierto();
         $this->clienteCon();
-        [, $contrapartida] = $this->reglaDesembolso();
+        $this->reglaDesembolso();
         $cuentaCartera = PlanCuenta::query()->where('codigo', '133005')->value('id');
         DB::table('saldos_apertura')->insert([
             'empresa_id' => $admin->empresa_id,
@@ -200,7 +202,7 @@ class ImportacionCreditosTest extends TestCase
             $this->creditoCSV(),
             ['generar_asiento' => true],
             'creditos.csv',
-            ['generar_asiento' => true, 'cuenta_contrapartida_id' => $contrapartida->id],
+            ['generar_asiento' => true],
         );
 
         $this->assertDatabaseCount('comprobantes', 0);
