@@ -133,6 +133,7 @@ class ComprobanteService
             // ROLLBACK también libera el consecutivo asignado — sin huecos en la numeración.
             ['consecutivo' => $consecutivo, 'ciclo_numeracion' => $ciclo, 'codigo' => $codigoTipo] = $this->tiposComprobante->asignarConsecutivo(
                 $tipoComprobanteId,
+                $fecha,
                 $moduloOrigen === 'manual',
                 $consecutivoManual,
             );
