@@ -3,8 +3,10 @@
 namespace App\Importacion\Repositories;
 
 use App\Clientes\Models\Cliente;
+use App\Contabilidad\Models\AsientoContable;
 use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Models\SaldoApertura;
+use App\Contabilidad\Support\EfectoContable;
 use App\Creditos\Models\Credito;
 use App\Creditos\Models\Cuota;
 use App\Empleadores\Models\Empleador;
@@ -121,8 +123,36 @@ class DatosImportacionRepository
             ->exists();
     }
 
-    public function empresaTieneSaldosApertura(int $empresaId): bool
+    public function ultimaFechaCorteApertura(int $empresaId): ?string
     {
-        return SaldoApertura::query()->where('empresa_id', $empresaId)->exists();
+        $fecha = SaldoApertura::query()->where('empresa_id', $empresaId)->max('fecha_corte');
+
+        return $fecha === null ? null : substr((string) $fecha, 0, 10);
+    }
+
+    /**
+     * Fecha del primer asiento con efecto contable de cada cuenta. Un saldo de apertura con corte en o después de esa
+     * fecha contaría dos veces lo ya contabilizado.
+     *
+     * @param  list<int>  $cuentaIds
+     * @return array<int, string> id de cuenta → fecha (Y-m-d)
+     */
+    public function primerAsientoPorCuenta(int $empresaId, array $cuentaIds): array
+    {
+        if ($cuentaIds === []) {
+            return [];
+        }
+
+        return AsientoContable::query()
+            ->join('comprobantes', 'comprobantes.id', '=', 'asientos_contables.comprobante_id')
+            ->where('comprobantes.empresa_id', $empresaId)
+            ->whereNull('comprobantes.borrado_en')
+            ->whereIn('asientos_contables.cuenta_id', $cuentaIds)
+            ->where(EfectoContable::condicion())
+            ->groupBy('asientos_contables.cuenta_id')
+            ->selectRaw('asientos_contables.cuenta_id, MIN(comprobantes.fecha) as primera_fecha')
+            ->pluck('primera_fecha', 'asientos_contables.cuenta_id')
+            ->map(fn ($fecha) => substr((string) $fecha, 0, 10))
+            ->all();
     }
 }

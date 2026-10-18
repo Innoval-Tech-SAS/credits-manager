@@ -101,6 +101,12 @@ final class ProcesadorPagos implements ProcesadorFila
             return;
         }
 
+        $generarAsiento = $ctx->generarAsiento && ! $ctx->cubiertoPorApertura($fecha);
+
+        if ($ctx->generarAsiento && ! $generarAsiento) {
+            $ctx->reportes[] = ['severidad' => 'aviso', 'columna' => 'fecha', 'motivo' => "Sin asiento de recaudo: los saldos iniciales con corte {$ctx->fechaCorteApertura} ya incluyen este pago."];
+        }
+
         $this->pagos->registrarPagoHistorico(
             $this->creditos->buscarPorIdOFallar($creditoId),
             $valor,
@@ -112,7 +118,7 @@ final class ProcesadorPagos implements ProcesadorFila
                 'observaciones' => $valores['observaciones'] !== '' ? $valores['observaciones'] : null,
             ],
             $registradoPor,
-            $ctx->generarAsiento,
+            $generarAsiento,
         );
     }
 

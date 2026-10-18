@@ -127,7 +127,9 @@ final class ProcesadorCreditos implements ProcesadorFila
             $this->cuotas->crearVarias($credito->id, $cuotasConOtrosGastos);
             $ctx->creditosPorCodigo[$codigo] = $credito->id;
 
-            if ($ctx->generarAsiento) {
+            if ($ctx->generarAsiento && $ctx->cubiertoPorApertura($fecha)) {
+                $ctx->reportes[] = ['severidad' => 'aviso', 'columna' => 'fecha_desembolso', 'motivo' => "Sin asiento de desembolso: los saldos iniciales con corte {$ctx->fechaCorteApertura} ya incluyen esta cartera."];
+            } elseif ($ctx->generarAsiento) {
                 $this->comprobantes->contabilizarDesembolsoCredito($credito);
             }
         }

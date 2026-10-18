@@ -103,11 +103,6 @@ class ImportacionEjecutorService
                     && $importacion->decision_generar_asiento === true
                     && $usuario->tienePermiso(...ImportacionConstants::PERMISO_CONTABILIZAR);
 
-                if ($generarAsiento && $importacion->tipo === TipoImportacion::Creditos && $this->datos->empresaTieneSaldosApertura($importacion->empresa_id)) {
-                    $generarAsiento = false;
-                    $this->errores->insertarLote([$this->error($importacion, null, null, ImportacionSeveridad::Aviso, 'No se generaron los asientos de desembolso: la empresa ya tiene saldos iniciales y la cartera duplicaría.', FaseImportacion::Escritura)]);
-                }
-
                 $ctx = new ContextoEjecucion(
                     $importacion->empresa_id,
                     $usuario,
@@ -115,6 +110,10 @@ class ImportacionEjecutorService
                     $importacion->decision_crear_empleadores === true,
                     $generarAsiento,
                 );
+
+                if ($generarAsiento) {
+                    $ctx->fechaCorteApertura = $this->datos->ultimaFechaCorteApertura($importacion->empresa_id);
+                }
 
                 $conteo = $this->recorrer($importacion, $ctx);
 
