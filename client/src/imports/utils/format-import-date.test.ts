@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { formatImportDate } from './format-import-date';
 import { importStepIndex } from './import-step-index';
 import { IMPORT_STATUS_BADGE_CLASSES, IMPORT_STATUS_LABELS, IMPORT_STATUSES, IMPORT_TRANSITIONAL_STATUSES } from '../constants/import-status';
-import { IMPORT_TYPE_LABELS, IMPORT_TYPE_OPTIONS, IMPORT_TYPES, IMPORT_TYPES_WITH_ACCOUNTING, IMPORT_TYPES_WITH_OFFSET_ACCOUNT } from '../constants/import-types';
+import { IMPORT_TYPE_LABELS, IMPORT_TYPE_OPTIONS, IMPORT_TYPES, IMPORT_TYPES_WITH_ACCOUNTING } from '../constants/import-types';
 
 describe('formatImportDate', () => {
     it('muestra la fecha y la hora sin zona, sin segundos', () => {
@@ -51,8 +51,7 @@ describe('constantes del asistente', () => {
         expect(IMPORT_TYPE_OPTIONS[0].value).toBe('clientes');
     });
 
-    it('solo los créditos piden cuenta de contrapartida, y solo créditos y pagos contabilizan', () => {
-        expect(IMPORT_TYPES_WITH_OFFSET_ACCOUNT).toEqual(['creditos']);
+    it('solo créditos y pagos contabilizan', () => {
         expect(IMPORT_TYPES_WITH_ACCOUNTING).toEqual(['creditos', 'pagos']);
     });
 });

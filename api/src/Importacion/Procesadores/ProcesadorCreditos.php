@@ -2,6 +2,7 @@
 
 namespace App\Importacion\Procesadores;
 
+use App\Contabilidad\Services\ComprobanteService;
 use App\Creditos\Enums\EstadoCredito;
 use App\Creditos\Enums\TipoCredito;
 use App\Creditos\Enums\TipoPago;
@@ -17,7 +18,8 @@ use Carbon\CarbonImmutable;
 
 /**
  * Créditos históricos, ya desembolsados. El plan se calcula con el motor francés; si el archivo trae la cuota fija y
- * no coincide, se usa la calculada y se informa la diferencia. Plan_Cuotas, si viene, reemplaza ese plan.
+ * no coincide, se usa la calculada y se informa la diferencia. Plan_Cuotas, si viene, reemplaza ese plan. Con asiento,
+ * cada crédito se contabiliza como su desembolso real: fecha de desembolso y cuentas de la regla de desembolso.
  */
 final class ProcesadorCreditos implements ProcesadorFila
 {
@@ -25,6 +27,7 @@ final class ProcesadorCreditos implements ProcesadorFila
         private readonly DatosImportacionRepository $datos,
         private readonly CreditoRepository $creditos,
         private readonly CuotaRepository $cuotas,
+        private readonly ComprobanteService $comprobantes,
     ) {}
 
     public function precargar(array $valoresLote, ContextoEjecucion $ctx): void
@@ -125,7 +128,7 @@ final class ProcesadorCreditos implements ProcesadorFila
             $ctx->creditosPorCodigo[$codigo] = $credito->id;
 
             if ($ctx->generarAsiento) {
-                $ctx->asientoAcumulado = $ctx->asientoAcumulado->sumar($valor);
+                $this->comprobantes->contabilizarDesembolsoCredito($credito);
             }
         }
 

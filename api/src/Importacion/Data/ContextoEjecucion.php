@@ -2,7 +2,6 @@
 
 namespace App\Importacion\Data;
 
-use App\Core\Dinero\Dinero;
 use App\Creditos\Models\Cuota;
 use App\Gastos\Models\ActividadEconomica;
 use App\Usuarios\Models\Usuario;
@@ -44,18 +43,13 @@ final class ContextoEjecucion
     /** @var array<string, true> claves ya vistas en el archivo, para detectar repetidos */
     public array $vistos = [];
 
-    public Dinero $asientoAcumulado;
-
     public function __construct(
         public readonly int $empresaId,
         public readonly Usuario $usuario,
         public readonly bool $escribir,
         public ?bool $crearEmpleadores,
         public bool $generarAsiento,
-        public readonly ?int $cuentaContrapartidaId,
-    ) {
-        $this->asientoAcumulado = Dinero::cero();
-    }
+    ) {}
 
     /** Devuelve true la primera vez que ve la clave; false si ya apareció antes en el archivo. */
     public function primeraVez(string $clave): bool

@@ -64,6 +64,3 @@ export const IMPORT_PERMISSIONS: string[] = Object.values(IMPORT_TYPE_PERMISSION
 export const IMPORT_TYPES_WITH_EMPLOYER_CHECK: ImportType[] = ['clientes'];
 
 export const IMPORT_TYPES_WITH_ACCOUNTING: ImportType[] = ['creditos', 'pagos'];
-
-/** Solo el asiento de apertura de cartera necesita una cuenta de contrapartida elegida por el usuario. */
-export const IMPORT_TYPES_WITH_OFFSET_ACCOUNT: ImportType[] = ['creditos'];
