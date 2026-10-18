@@ -6,11 +6,11 @@ use App\Contabilidad\Enums\EventoContable;
 use App\Contabilidad\Models\Comprobante;
 use App\Contabilidad\Models\PlanCuenta;
 use App\Contabilidad\Services\ComprobanteService;
-use App\Core\Dinero\Dinero;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Validation\ValidationException;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\CreatesContabilidadFixtures;
+use Tests\Concerns\CreatesCreditFixtures;
 use Tests\Concerns\CreatesGastosFixtures;
 use Tests\TestCase;
 
@@ -19,6 +19,7 @@ class CuentasDeMovimientoTest extends TestCase
 {
     use ActsAsAdmin;
     use CreatesContabilidadFixtures;
+    use CreatesCreditFixtures;
     use CreatesGastosFixtures;
     use RefreshDatabase;
 
@@ -140,19 +141,15 @@ class CuentasDeMovimientoTest extends TestCase
         $this->crearAutomatico($eliminada, $this->cuenta('910505'));
     }
 
-    public function test_la_apertura_de_cartera_falla_si_la_regla_de_desembolso_apunta_a_una_cuenta_mayor(): void
+    public function test_el_desembolso_falla_si_la_regla_de_desembolso_apunta_a_una_cuenta_mayor(): void
     {
         $this->actingAsAdmin();
         $this->crearRegla(EventoContable::DesembolsoCredito, $this->cuenta('91', ['permite_movimiento' => false]), $this->cuenta('910505'));
+        $credito = $this->crearCredito($this->crearCliente(), ['fecha_desembolso' => '2026-01-15']);
 
         $this->expectException(ValidationException::class);
 
-        app(ComprobanteService::class)->contabilizarAperturaCartera(
-            Dinero::desdeCentavos(10000),
-            $this->cuenta('910510')->id,
-            '2026-01-15',
-            1,
-        );
+        app(ComprobanteService::class)->contabilizarDesembolsoCredito($credito);
     }
 
     public function test_no_contabiliza_un_borrador_si_su_cuenta_se_inactivo_despues(): void
