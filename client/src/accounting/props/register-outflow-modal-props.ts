@@ -1,6 +1,7 @@
 export type OutflowDocumentToPay = {
     id: number;
     numero_documento: string;
+    concepto: string;
     /** Saldo pendiente del documento en pesos, decimal string — valor por defecto a pagar, editable. */
     saldo: string;
 };

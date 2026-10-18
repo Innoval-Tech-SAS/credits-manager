@@ -65,10 +65,12 @@ class CausarConConceptoControllerTest extends TestCase
 
         $respuesta->assertStatus(201);
         $comprobanteId = $respuesta->json('comprobante.id');
+        $numeroComprobante = $respuesta->json('comprobante.numero');
+        $this->assertDatabaseHas('comprobantes', ['id' => $comprobanteId, 'documento_soporte' => 'FE-5001']);
         $this->assertDatabaseHas('asientos_contables', [
             'comprobante_id' => $comprobanteId,
             'tercero_id' => $tercero->id,
-            'documento_cruce' => 'FE-5001',
+            'documento_cruce' => $numeroComprobante,
             'credito' => 100000000,
         ]);
         $this->assertDatabaseMissing('gastos', ['numero_documento' => 'FE-5001']);
@@ -79,7 +81,7 @@ class CausarConConceptoControllerTest extends TestCase
         $this->assertDatabaseHas('documentos_tercero', [
             'tercero_id' => $tercero->id,
             'naturaleza' => 'por_pagar',
-            'numero_documento' => 'FE-5001',
+            'numero_documento' => $numeroComprobante,
             'valor_original' => 100000000,
             'saldo' => 100000000,
             'estado' => 'pendiente',
@@ -114,7 +116,7 @@ class CausarConConceptoControllerTest extends TestCase
         $this->assertDatabaseHas('documentos_tercero', [
             'tercero_id' => $tercero->id,
             'naturaleza' => 'por_pagar',
-            'numero_documento' => 'FE-5011',
+            'numero_documento' => $respuesta->json('comprobante.numero'),
             'saldo' => 100000000,
             'estado' => 'pendiente',
             'modulo_origen' => 'contabilidad_manual',

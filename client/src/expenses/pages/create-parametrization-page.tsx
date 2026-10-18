@@ -20,7 +20,7 @@ export const CreateParametrizationPage: FC = () => {
     );
 
     const tiposGasto = tiposGastoData?.tipos_gasto ?? [];
-    const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento);
+    const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento && cuenta.activa);
     const tiposComprobante = tiposComprobanteData?.data ?? [];
     const isLoading = isLoadingTiposGasto || isLoadingCuentas || isLoadingTiposComprobante;
 

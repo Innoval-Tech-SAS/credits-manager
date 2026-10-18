@@ -247,15 +247,15 @@ class ConsecutivoComprobanteTest extends TestCase
                 '2026-01-15',
                 [
                     ['cuenta_id' => $debito->id, 'debito' => 10, 'credito' => 0],
-                    // Cuenta inexistente: la FK de asientos_contables falla DENTRO de la transacción,
-                    // después de ya haberse asignado el consecutivo.
-                    ['cuenta_id' => 999999, 'debito' => 0, 'credito' => 10],
+                    // Tercero inexistente: la FK de asientos_contables falla DENTRO de la transacción,
+                    // después de ya haberse asignado el consecutivo. (Una cuenta inexistente ya se rechaza antes.)
+                    ['cuenta_id' => $credito->id, 'tercero_id' => 999999, 'debito' => 0, 'credito' => 10],
                 ],
                 'Falla después de asignar el consecutivo',
             );
             $this->fail('Se esperaba que la creación fallara.');
         } catch (QueryException) {
-            // Esperado: la FK de plan_cuentas rechaza la cuenta inexistente.
+            // Esperado: la FK de terceros rechaza el tercero inexistente.
         }
 
         $this->assertSame(0, $tipo->fresh()->consecutivo_actual);

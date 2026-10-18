@@ -33,7 +33,7 @@ export const CreateAdvanceForm: FC = () => {
 
     const { data: cuentasData } = useResource<{ cuentas: ApiAccount[] }>('/contabilidad/plan-cuentas');
     const { data: tiposData } = useResource<PaginatedResponse<ApiVoucherType>>('/contabilidad/tipos-comprobante?per_page=100');
-    const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento);
+    const cuentas = (cuentasData?.cuentas ?? []).filter((cuenta) => cuenta.permite_movimiento && cuenta.activa);
     const tipos = tiposData?.data ?? [];
 
     const [lado, setLado] = useState<Lado>('proveedor');
@@ -113,7 +113,7 @@ export const CreateAdvanceForm: FC = () => {
                     </div>
 
                     <div>
-                        <Label htmlFor="numero-documento">Documento (ej. ANT-015)</Label>
+                        <Label htmlFor="numero-documento">Documento soporte (ej. recibo RC-015)</Label>
                         <Input
                             id="numero-documento"
                             startIcon={<IdCard className="size-4" />}

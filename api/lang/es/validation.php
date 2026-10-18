@@ -369,6 +369,10 @@ return [
             'padre_es_la_misma_cuenta' => 'Una cuenta no puede ser su propia cuenta padre.',
             'padre_es_descendiente' => 'La cuenta padre no puede ser una subcuenta de esta cuenta: se formaría un ciclo en la jerarquía.',
             'cambio_estructural_con_movimientos' => 'La cuenta ya tiene asientos o saldos de apertura: no se puede cambiar su código, naturaleza ni tipo sin alterar los reportes históricos. Crea una cuenta nueva y reclasifica el saldo con un comprobante.',
+            'mayor_con_movimientos' => 'La cuenta ya tiene asientos o saldos de apertura: si deja de permitir movimiento, sus valores desaparecen del balance y de los estados financieros. Reclasifica el saldo a una subcuenta con un comprobante antes de convertirla en cuenta mayor.',
+            'no_admite_movimiento' => 'La cuenta :cuenta es una cuenta mayor: los asientos solo pueden usar cuentas de detalle.',
+            'inactiva' => 'La cuenta :cuenta está inactiva: actívala o usa otra cuenta.',
+            'no_disponible' => 'Una de las cuentas del comprobante no existe o fue eliminada.',
         ],
         'centro_costo' => [
             'tiene_movimientos_asociados' => 'No se puede eliminar: ya tiene gastos o asientos contables asociados.',

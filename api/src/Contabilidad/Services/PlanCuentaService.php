@@ -79,13 +79,21 @@ class PlanCuentaService
             fn (string $campo) => array_key_exists($campo, $datos) && self::valorComparable($cuenta->{$campo}) !== (string) $datos[$campo],
         ));
 
-        if ($cambiados === [] || ! $this->cuentas->tieneMovimientos($cuenta->id)) {
+        // Basta con que tenga movimientos, aunque el saldo sea cero: el balance filtra por `permite_movimiento` y dejaría
+        // de sumar asientos que el libro diario sí muestra.
+        $pasaAMayor = array_key_exists('permite_movimiento', $datos) && $cuenta->permite_movimiento && ! $datos['permite_movimiento'];
+
+        if (($cambiados === [] && ! $pasaAMayor) || ! $this->cuentas->tieneMovimientos($cuenta->id)) {
             return;
         }
 
-        throw ValidationException::withMessages(
-            array_fill_keys($cambiados, __('validation.custom.plan_cuenta.cambio_estructural_con_movimientos')),
-        );
+        $errores = array_fill_keys($cambiados, __('validation.custom.plan_cuenta.cambio_estructural_con_movimientos'));
+
+        if ($pasaAMayor) {
+            $errores['permite_movimiento'] = __('validation.custom.plan_cuenta.mayor_con_movimientos');
+        }
+
+        throw ValidationException::withMessages($errores);
     }
 
     private static function valorComparable(mixed $valor): string

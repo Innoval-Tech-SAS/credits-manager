@@ -288,15 +288,26 @@ class GastoControllerTest extends TestCase
             'soporte' => $this->archivoSoporte(),
         ]);
 
+        $gasto = Gasto::with('comprobante.tipoComprobante')->findOrFail($respuesta->json('gasto.id'));
+        $numeroComprobante = $gasto->comprobante->numero;
+
         $this->assertDatabaseHas('documentos_tercero', [
             'tercero_id' => $tercero->id,
             'naturaleza' => 'por_pagar',
+            'numero_documento' => $numeroComprobante,
+            'concepto' => 'Servicio · Soporte FAC-107',
             'modulo_origen' => 'gastos',
-            'origen_id' => $respuesta->json('gasto.id'),
+            'origen_id' => $gasto->id,
             'valor_original' => 100000000,
             'saldo' => 100000000,
             'estado' => 'pendiente',
         ]);
+        $this->assertDatabaseHas('asientos_contables', [
+            'comprobante_id' => $gasto->comprobante_id,
+            'tercero_id' => $tercero->id,
+            'documento_cruce' => $numeroComprobante,
+        ]);
+        $this->assertDatabaseHas('comprobantes', ['id' => $gasto->comprobante_id, 'documento_soporte' => 'FAC-107']);
     }
 
     public function test_el_soporte_queda_adjunto_al_gasto(): void

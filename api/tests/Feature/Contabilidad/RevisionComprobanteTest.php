@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Contabilidad;
 
+use App\Contabilidad\Enums\NaturalezaCuenta;
 use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Models\CentroCosto;
 use App\Contabilidad\Models\Comprobante;
@@ -252,7 +253,7 @@ class RevisionComprobanteTest extends TestCase
     {
         $empresa = $this->crearEmpresaDePrueba();
         $this->creador($empresa);
-        $cuentaCxp = $this->crearCuenta(['exige_documento_cruce' => true]);
+        $cuentaCxp = $this->crearCuenta(['exige_documento_cruce' => true, 'tipo' => TipoCuenta::Pasivo, 'naturaleza' => NaturalezaCuenta::Credito]);
         $cuentaBanco = $this->crearCuenta();
         $payload = [
             'tipo_comprobante_id' => $this->crearTipoComprobante()->id,

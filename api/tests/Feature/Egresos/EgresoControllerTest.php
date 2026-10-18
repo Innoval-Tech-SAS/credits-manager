@@ -232,14 +232,14 @@ class EgresoControllerTest extends TestCase
         $this->assertDatabaseHas('asientos_contables', [
             'comprobante_id' => $comprobanteId,
             'cuenta_id' => $parametrizacion->cuenta_cxp_id,
-            'documento_cruce' => 'FC-020',
+            'documento_cruce' => $gastoUno->documentoTercero->numero_documento,
             'debito' => 100000,
             'credito' => 0,
         ]);
         $this->assertDatabaseHas('asientos_contables', [
             'comprobante_id' => $comprobanteId,
             'cuenta_id' => $parametrizacion->cuenta_cxp_id,
-            'documento_cruce' => 'FC-021',
+            'documento_cruce' => $gastoDos->documentoTercero->numero_documento,
             'debito' => 50000,
             'credito' => 0,
         ]);

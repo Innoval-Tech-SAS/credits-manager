@@ -274,6 +274,7 @@ export const ThirdPartyLedgerTable: FC<ThirdPartyLedgerTableProps> = ({ naturale
                     documentos={documentosSeleccionados.map((documento) => ({
                         id: documento.id,
                         numero_documento: documento.numero_documento,
+                        concepto: documento.concepto,
                         saldo: documento.saldo,
                     }))}
                     onClose={() => setEgresoModalAbierto(false)}

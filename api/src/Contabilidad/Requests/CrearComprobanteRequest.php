@@ -2,6 +2,7 @@
 
 namespace App\Contabilidad\Requests;
 
+use App\Contabilidad\Rules\CuentaDeMovimiento;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -34,10 +35,7 @@ class CrearComprobanteRequest extends FormRequest
                 Rule::exists('terceros', 'id')->where('empresa_id', $this->user()->empresa_id),
             ],
             'lineas' => ['required', 'array', 'min:1'],
-            'lineas.*.cuenta_id' => [
-                'required',
-                Rule::exists('plan_cuentas', 'id')->where('empresa_id', $this->user()->empresa_id),
-            ],
+            'lineas.*.cuenta_id' => ['required', new CuentaDeMovimiento($this->user()->empresa_id)],
             'lineas.*.centro_costo_id' => [
                 'nullable',
                 Rule::exists('centros_costo', 'id')->where('empresa_id', $this->user()->empresa_id)->where('activo', true)->whereNull('borrado_en'),

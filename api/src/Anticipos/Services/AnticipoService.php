@@ -50,15 +50,15 @@ class AnticipoService
             // Proveedor: débito al anticipo (activo que entra), crédito a la caja que sale. Cliente: al revés —
             // entra dinero (débito caja), queda un pasivo con el cliente (crédito anticipo).
             $esProveedor = $naturaleza === NaturalezaDocumento::AnticipoProveedor;
-            $cuentaDebito = $esProveedor ? $datos['cuenta_anticipo_id'] : $datos['cuenta_caja_id'];
-            $cuentaCredito = $esProveedor ? $datos['cuenta_caja_id'] : $datos['cuenta_anticipo_id'];
+            $lineaAnticipo = ['cuenta_id' => $datos['cuenta_anticipo_id'], 'tercero_id' => $tercero->id, 'documento_cruce_propio' => true];
+            $lineaCaja = ['cuenta_id' => $datos['cuenta_caja_id']];
 
             $comprobante = $this->comprobantes->crearComprobante(
                 $datos['tipo_comprobante_id'],
                 $datos['fecha'],
                 [
-                    ['cuenta_id' => $cuentaDebito, 'debito' => $valor, 'credito' => 0],
-                    ['cuenta_id' => $cuentaCredito, 'debito' => 0, 'credito' => $valor],
+                    [...($esProveedor ? $lineaAnticipo : $lineaCaja), 'debito' => $valor, 'credito' => 0],
+                    [...($esProveedor ? $lineaCaja : $lineaAnticipo), 'debito' => 0, 'credito' => $valor],
                 ],
                 $datos['concepto'],
                 null,
@@ -67,17 +67,19 @@ class AnticipoService
                 $tercero->id,
             );
 
+            // El anticipo se cruza por el número de su comprobante; `numero_documento` queda como documento soporte.
             $documento = $this->documentosTercero->crearDocumento(
                 $tercero,
                 $naturaleza,
                 'anticipo',
-                $datos['numero_documento'],
+                $comprobante->numero,
                 $datos['fecha'],
                 $datos['concepto'],
                 $valor,
                 'anticipos',
                 $comprobante->id,
                 planCuentaId: $datos['cuenta_anticipo_id'],
+                documentoSoporte: $datos['numero_documento'],
             );
 
             $this->auditoria->registrarCreacion(
@@ -129,15 +131,15 @@ class AnticipoService
             $esProveedor = $anticipo->naturaleza === NaturalezaDocumento::AnticipoProveedor;
             // CxP: débito a la cuenta real (baja lo que debemos), crédito al anticipo (se consume el saldo a favor).
             // CxC: al revés — débito al anticipo (se consume el pasivo con el cliente), crédito a la cuenta real.
-            $cuentaDebito = $esProveedor ? $documento->plan_cuenta_id : $anticipo->plan_cuenta_id;
-            $cuentaCredito = $esProveedor ? $anticipo->plan_cuenta_id : $documento->plan_cuenta_id;
+            $lineaDocumento = ['cuenta_id' => $documento->plan_cuenta_id, 'documento_cruce' => $documento->numero_documento];
+            $lineaAnticipo = ['cuenta_id' => $anticipo->plan_cuenta_id, 'documento_cruce' => $anticipo->numero_documento];
 
             $comprobante = $this->comprobantes->crearComprobante(
                 $datos['tipo_comprobante_id'],
                 $datos['fecha'],
                 [
-                    ['cuenta_id' => $cuentaDebito, 'debito' => $valor, 'credito' => 0],
-                    ['cuenta_id' => $cuentaCredito, 'debito' => 0, 'credito' => $valor],
+                    [...($esProveedor ? $lineaDocumento : $lineaAnticipo), 'debito' => $valor, 'credito' => 0],
+                    [...($esProveedor ? $lineaAnticipo : $lineaDocumento), 'debito' => 0, 'credito' => $valor],
                 ],
                 "Cruce anticipo {$anticipo->numero_documento} con {$documento->numero_documento}",
                 'anticipos_cruce',
