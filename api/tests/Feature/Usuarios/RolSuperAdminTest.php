@@ -73,6 +73,7 @@ class RolSuperAdminTest extends TestCase
 
     public function test_una_empresa_no_puede_asignar_el_rol_super_admin(): void
     {
+        $this->crearSuperAdmin();
         $this->actingAsAdmin();
 
         $this->postJson('/api/v1/usuarios', [
