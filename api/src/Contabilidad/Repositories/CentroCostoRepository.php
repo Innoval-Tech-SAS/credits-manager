@@ -2,6 +2,7 @@
 
 namespace App\Contabilidad\Repositories;
 
+use App\Contabilidad\Enums\TipoCuenta;
 use App\Contabilidad\Models\AsientoContable;
 use App\Contabilidad\Models\CentroCosto;
 use App\Contabilidad\Support\EfectoContable;
@@ -9,7 +10,9 @@ use App\Core\Base\BaseRepository;
 use App\Gastos\Models\Gasto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection as SupportCollection;
 use Illuminate\Support\Facades\DB;
 
 class CentroCostoRepository extends BaseRepository
@@ -73,5 +76,32 @@ class CentroCostoRepository extends BaseRepository
         return $gastos->unionAll($asientos)
             ->orderByDesc('fecha')
             ->paginate(perPage: $porPagina, page: $pagina);
+    }
+
+    /**
+     * Gastos y costos contabilizados del rango, agrupados por centro de costo (un grupo "Sin centro de costo"
+     * agrupa los asientos sin `centro_costo_id`). `plan_cuentas` y `centros_costo` se filtran por empresa a mano:
+     * el `join`/`leftJoin` no hereda el scope de la tabla base.
+     */
+    public function gastosPorCentroCosto(int $empresaId, string $desde, string $hasta): SupportCollection
+    {
+        return DB::table('asientos_contables')
+            ->join('comprobantes', 'comprobantes.id', '=', 'asientos_contables.comprobante_id')
+            ->join('plan_cuentas', 'plan_cuentas.id', '=', 'asientos_contables.cuenta_id')
+            ->leftJoin('centros_costo', function (JoinClause $join) use ($empresaId) {
+                $join->on('centros_costo.id', '=', 'asientos_contables.centro_costo_id')->where('centros_costo.empresa_id', $empresaId);
+            })
+            ->where('comprobantes.empresa_id', $empresaId)
+            ->where('plan_cuentas.empresa_id', $empresaId)
+            ->whereIn('plan_cuentas.tipo', [TipoCuenta::Gasto->value, TipoCuenta::Costo->value])
+            ->whereBetween('comprobantes.fecha', [$desde, $hasta])
+            ->where(EfectoContable::condicion())
+            ->groupBy('asientos_contables.centro_costo_id', 'centros_costo.nombre')
+            ->selectRaw(
+                "asientos_contables.centro_costo_id, COALESCE(centros_costo.nombre, 'Sin centro de costo') as nombre, ".
+                'SUM(asientos_contables.debito - asientos_contables.credito) as valor'
+            )
+            ->orderByDesc('valor')
+            ->get();
     }
 }

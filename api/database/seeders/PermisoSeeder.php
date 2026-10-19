@@ -42,6 +42,7 @@ class PermisoSeeder extends Seeder
         'informes_contables' => [
             'listar_libro_diario', 'listar_libro_mayor', 'listar_caja_bancos', 'listar_balance_prueba',
             'listar_estados_financieros', 'listar_auxiliares', 'listar_conciliacion_apertura', 'listar_controles_cierre',
+            'ver_dashboard_contable',
             'exportar_libro_diario', 'exportar_libro_mayor', 'exportar_caja_bancos', 'exportar_balance_prueba',
             'exportar_estados_financieros', 'exportar_auxiliares', 'imprimir',
         ],

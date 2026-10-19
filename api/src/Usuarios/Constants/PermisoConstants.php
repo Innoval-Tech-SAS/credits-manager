@@ -139,6 +139,7 @@ class PermisoConstants
         'informes_contables.listar_auxiliares' => 'Ver auxiliares',
         'informes_contables.listar_conciliacion_apertura' => 'Ver conciliación de apertura',
         'informes_contables.listar_controles_cierre' => 'Ver controles de cierre mensual',
+        'informes_contables.ver_dashboard_contable' => 'Ver dashboard contable',
         'informes_contables.exportar_libro_diario' => 'Exportar libro diario',
         'informes_contables.exportar_libro_mayor' => 'Exportar libro mayor',
         'informes_contables.exportar_caja_bancos' => 'Exportar caja y bancos',

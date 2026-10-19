@@ -16,6 +16,7 @@ use App\Contabilidad\Controllers\AuxiliarContableController;
 use App\Contabilidad\Controllers\CarteraTerceroController;
 use App\Contabilidad\Controllers\CentroCostoController;
 use App\Contabilidad\Controllers\ComprobanteController;
+use App\Contabilidad\Controllers\DashboardContableController;
 use App\Contabilidad\Controllers\DocumentoTerceroController;
 use App\Contabilidad\Controllers\PeriodoContableController;
 use App\Contabilidad\Controllers\PlanCuentaController;
@@ -323,6 +324,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/contabilidad/estados-financieros/pdf', [ReporteContableController::class, 'pdfEstadosFinancieros'])->middleware(['permiso:informes_contables,listar_estados_financieros', 'permiso:informes_contables,imprimir']);
     Route::get('/contabilidad/conciliacion-apertura', [ReporteContableController::class, 'conciliacionApertura'])->middleware('permiso:informes_contables,listar_conciliacion_apertura');
     Route::get('/contabilidad/controles-cierre', [ReporteContableController::class, 'controlesCierre'])->middleware('permiso:informes_contables,listar_controles_cierre');
+
+    Route::get('/contabilidad/dashboard/situacion', [DashboardContableController::class, 'situacion'])->middleware('permiso:informes_contables,ver_dashboard_contable');
+    Route::get('/contabilidad/dashboard/resultados', [DashboardContableController::class, 'resultados'])->middleware('permiso:informes_contables,ver_dashboard_contable');
+    Route::get('/contabilidad/dashboard/cierre', [DashboardContableController::class, 'cierre'])->middleware('permiso:informes_contables,ver_dashboard_contable');
 
     Route::get('/contabilidad/auxiliares', [AuxiliarContableController::class, 'index'])->middleware('permiso:informes_contables,listar_auxiliares');
     Route::post('/contabilidad/auxiliares/exportar', [AuxiliarContableController::class, 'exportar'])->middleware(['permiso:informes_contables,listar_auxiliares', 'exportacion:contabilidad.auxiliar']);
