@@ -70,6 +70,8 @@ class EmpresaConstants
             'recibos.listar',
             'conciliacion.listar', 'conciliacion.configurar', 'conciliacion.cargar_extracto', 'conciliacion.conciliar',
             'conciliacion.cerrar',
+            'obligaciones_tributarias.listar', 'obligaciones_tributarias.configurar',
+            'obligaciones_tributarias.crear', 'obligaciones_tributarias.editar', 'obligaciones_tributarias.cambiar_estado',
         ],
         'cartera' => [
             'clientes.listar', 'clientes.ver', 'clientes.editar', 'clientes.exportar_listado',

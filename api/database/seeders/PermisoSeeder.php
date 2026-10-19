@@ -70,6 +70,7 @@ class PermisoSeeder extends Seeder
             'importar_valores_uvt', 'importar_tarifas_reteica',
         ],
         'metas' => ['listar', 'configurar', 'recalcular'],
+        'obligaciones_tributarias' => ['listar', 'configurar', 'crear', 'editar', 'cambiar_estado'],
     ];
 
     public function run(): void

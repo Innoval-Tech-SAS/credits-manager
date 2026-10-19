@@ -20,7 +20,7 @@ class PermisoConstants
         'contabilidad' => ['etiqueta' => 'Contabilidad', 'modulos' => ['contabilidad', 'egresos', 'anticipos']],
         'configuracion_contable' => ['etiqueta' => 'Configuración contable', 'modulos' => ['configuracion_contable']],
         'gastos' => ['etiqueta' => 'Gastos', 'modulos' => ['gastos']],
-        'tributario' => ['etiqueta' => 'Tributario', 'modulos' => ['tributario']],
+        'tributario' => ['etiqueta' => 'Tributario', 'modulos' => ['tributario', 'obligaciones_tributarias']],
         'facturacion' => ['etiqueta' => 'Facturación', 'modulos' => ['facturacion']],
         'conciliacion' => ['etiqueta' => 'Conciliación bancaria', 'modulos' => ['conciliacion']],
         'informes_contables' => ['etiqueta' => 'Informes contables', 'modulos' => ['informes_contables']],
@@ -44,6 +44,7 @@ class PermisoConstants
         'configuracion_contable' => 'Configuración contable',
         'gastos' => 'Gastos',
         'tributario' => 'Tributario',
+        'obligaciones_tributarias' => 'Calendario tributario',
         'facturacion' => 'Facturación',
         'conciliacion' => 'Conciliación bancaria',
         'informes_contables' => 'Informes contables',
@@ -217,5 +218,10 @@ class PermisoConstants
         'metas.listar' => 'Ver metas de todos los asesores',
         'metas.configurar' => 'Configurar y distribuir metas',
         'metas.recalcular' => 'Recalcular cierres de metas',
+        'obligaciones_tributarias.listar' => 'Ver calendario tributario',
+        'obligaciones_tributarias.configurar' => 'Configurar tipos de obligación',
+        'obligaciones_tributarias.crear' => 'Crear obligaciones',
+        'obligaciones_tributarias.editar' => 'Editar obligaciones',
+        'obligaciones_tributarias.cambiar_estado' => 'Cambiar el estado de una obligación',
     ];
 }
