@@ -9,7 +9,11 @@ use App\Importacion\Data\FilaRechazada;
 use App\Importacion\Lectura\ConvertidorValor;
 use App\Importacion\Repositories\DatosImportacionRepository;
 
-/** Saldos de apertura por cuenta PUC y fecha de corte. Re-subir el mismo saldo se rechaza como duplicado. */
+/**
+ * Saldos de apertura por cuenta PUC y fecha de corte. Re-subir el mismo saldo se rechaza como duplicado. Si la
+ * importación genera asiento, cada fila aceptada se acumula en `$ctx->lineasApertura` — `ImportacionEjecutorService`
+ * arma con ellas un único comprobante de apertura al terminar todo el archivo, no fila por fila.
+ */
 final class ProcesadorSaldosIniciales implements ProcesadorFila
 {
     public function __construct(
@@ -19,12 +23,15 @@ final class ProcesadorSaldosIniciales implements ProcesadorFila
 
     public function precargar(array $valoresLote, ContextoEjecucion $ctx): void
     {
-        $ctx->cuentasPorCodigo = $this->datos->cuentasPorCodigos(
-            $ctx->empresaId,
-            array_values(array_filter(array_column($valoresLote, 'cuenta'))),
-        );
+        $codigosCuenta = array_values(array_filter(array_column($valoresLote, 'cuenta')));
 
+        $ctx->cuentasPorCodigo = $this->datos->cuentasPorCodigos($ctx->empresaId, $codigosCuenta);
+        $ctx->cuentasConDatosPorCodigo = $this->datos->cuentasConDatosPorCodigos($ctx->empresaId, $codigosCuenta);
         $ctx->primerAsientoPorCuenta = $this->datos->primerAsientoPorCuenta($ctx->empresaId, array_values($ctx->cuentasPorCodigo));
+
+        $cedulas = array_values(array_filter(array_column($valoresLote, 'cedula')));
+        $ctx->clientesPorCedula = $this->datos->clientesPorCedulas($ctx->empresaId, $cedulas);
+        $ctx->tercerosPorClienteId = $this->datos->tercerosPorClientes($ctx->empresaId, array_values($ctx->clientesPorCedula));
     }
 
     public function procesar(array $valores, ContextoEjecucion $ctx): void
@@ -60,15 +67,38 @@ final class ProcesadorSaldosIniciales implements ProcesadorFila
             throw new FilaRechazada("La cuenta {$valores['cuenta']} ya tiene asientos desde el {$primerAsiento}: este saldo los contaría dos veces. Usa una fecha de corte anterior o quita la cuenta del archivo.", 'fecha_corte');
         }
 
+        $cuenta = $ctx->cuentasConDatosPorCodigo[$valores['cuenta']] ?? null;
+        $terceroId = null;
+
+        if ($valores['cedula'] !== '') {
+            if ($cuenta === null || ! $cuenta->esCarteraDeTerceros()) {
+                throw new FilaRechazada("La cuenta {$valores['cuenta']} no es de cartera: no lleva cédula.", 'cedula');
+            }
+
+            $clienteId = $ctx->clientesPorCedula[$valores['cedula']]
+                ?? throw new FilaRechazada("No existe un cliente con cédula {$valores['cedula']}.", 'cedula');
+
+            $terceroId = $ctx->tercerosPorClienteId[$clienteId] ?? null;
+        }
+
         if (! $ctx->escribir) {
             return;
         }
 
         $this->saldos->crear([
             'cuenta_id' => $cuentaId,
+            'tercero_id' => $terceroId,
             'fecha_corte' => $fecha,
             'debito' => $debito,
             'credito' => $credito,
         ]);
+
+        $ctx->lineasApertura[] = [
+            'cuenta_id' => $cuentaId,
+            'tercero_id' => $terceroId,
+            'debito' => $debito,
+            'credito' => $credito,
+            'fecha_corte' => $fecha,
+        ];
     }
 }

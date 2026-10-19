@@ -117,12 +117,17 @@ class ImportacionEjecutorService
 
                 $conteo = $this->recorrer($importacion, $ctx);
 
+                $comprobanteAperturaId = $generarAsiento && $importacion->tipo === TipoImportacion::SaldosIniciales && $ctx->lineasApertura !== []
+                    ? $this->generarAperturaSaldos($importacion, $ctx, $conteo)
+                    : null;
+
                 $this->importaciones->actualizar($importacion, [
                     'estado' => EstadoImportacion::Completada,
                     'filas_aceptadas' => $conteo['aceptadas'],
                     'filas_rechazadas' => $importacion->filas_rechazadas + $conteo['rechazadas'],
                     'filas_pendientes' => 0,
                     'completada_en' => now(),
+                    ...($comprobanteAperturaId !== null ? ['comprobante_id' => $comprobanteAperturaId] : []),
                 ]);
 
                 $this->auditoria->registrar(
@@ -154,8 +159,46 @@ class ImportacionEjecutorService
         return match ($tipo) {
             TipoImportacion::Creditos => $this->comprobantes->eventosContablesActivos(EventoContable::DesembolsoCredito),
             TipoImportacion::Pagos => $this->comprobantes->eventosContablesActivos(EventoContable::RecaudoCapital, EventoContable::RecaudoInteres),
+            // Sin regla fija: el tipo de comprobante lo elige quien sube el archivo (`Importacion::tipo_comprobante_id`).
+            TipoImportacion::SaldosIniciales => true,
             default => false,
         };
+    }
+
+    /**
+     * Un solo comprobante con todas las líneas de `$ctx->lineasApertura`, al terminar de escribir el archivo
+     * completo — no fila por fila, porque el cuadre (Σdébito = Σcrédito) es del archivo entero, no de una fila.
+     * Si falla, los saldos ya guardados se quedan (no son fallas de fila, son del paso de contabilizar) y el
+     * motivo queda en el reporte de errores de la importación, sin tumbar las filas que sí se escribieron.
+     *
+     * @param  array{total: int, aceptadas: int, rechazadas: int, pendientes: int}  $conteo
+     */
+    private function generarAperturaSaldos(Importacion $importacion, ContextoEjecucion $ctx, array &$conteo): ?int
+    {
+        $fechasCorte = array_values(array_unique(array_column($ctx->lineasApertura, 'fecha_corte')));
+
+        if (count($fechasCorte) > 1) {
+            $this->errores->insertarLote([$this->error($importacion, null, 'fecha_corte', ImportacionSeveridad::Error, 'El archivo trae más de una fecha de corte: el comprobante de apertura necesita una sola. No se generó.', FaseImportacion::Escritura)]);
+            $conteo['rechazadas']++;
+
+            return null;
+        }
+
+        if ($importacion->tipo_comprobante_id === null) {
+            $this->errores->insertarLote([$this->error($importacion, null, null, ImportacionSeveridad::Error, 'Falta el tipo de comprobante para generar la apertura.', FaseImportacion::Escritura)]);
+            $conteo['rechazadas']++;
+
+            return null;
+        }
+
+        try {
+            return $this->comprobantes->contabilizarAperturaSaldos($ctx->lineasApertura, $fechasCorte[0], $importacion->tipo_comprobante_id, $importacion->id)->id;
+        } catch (ValidationException $excepcion) {
+            $this->errores->insertarLote([$this->error($importacion, null, array_key_first($excepcion->errors()), ImportacionSeveridad::Error, $excepcion->validator->errors()->first(), FaseImportacion::Escritura)]);
+            $conteo['rechazadas']++;
+
+            return null;
+        }
     }
 
     /**

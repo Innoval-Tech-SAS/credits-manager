@@ -130,10 +130,8 @@ class PagoService
     }
 
     /**
-     * Aplica el pago a las cuotas pendientes/vencidas del crédito, de la más antigua
-     * a la más reciente (misma regla que `registrarPago` del legado). El sobrante,
-     * si el pago excede lo adeudado, se descarta silenciosamente — no se guarda ni
-     * se abona a nada (quirk del legado, se replica tal cual).
+     * Aplica el pago a las cuotas pendientes/vencidas del crédito, de la más antigua a la más reciente. El
+     * sobrante, si el pago excede lo adeudado, se descarta silenciosamente — no se guarda ni se abona a nada.
      */
     public function registrarPago(Credito $credito, Dinero $valorPago, FormaPago $formaPago, ?string $observacion, ?int $usuarioId): array
     {
@@ -168,7 +166,7 @@ class PagoService
                 $this->ajustarOtrosGastosRestantes($credito);
             }
 
-            $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $capitalTotal, $interesTotal, $otrosTotal);
+            $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $capitalTotal, $interesTotal, $otrosTotal, $credito->cliente->tercero_id);
             $recibo = $this->recibos->emitir($pago, $comprobante);
 
             $this->auditoria->registrarCreacion(
@@ -281,7 +279,7 @@ class PagoService
             $this->cuotas->cerrarPendientesComoOrigen($credito->id);
             $this->recalcularSaldoCapital($credito);
             $this->creditos->marcarComoPagado($credito);
-            $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $cotizacion['capital_pendiente'], $cotizacion['interes'], $cotizacion['otros_gastos']);
+            $comprobante = $this->comprobantes->contabilizarRecaudoPago($pago, $cotizacion['capital_pendiente'], $cotizacion['interes'], $cotizacion['otros_gastos'], $credito->cliente->tercero_id);
             $recibo = $this->recibos->emitir($pago, $comprobante);
 
             $this->auditoria->registrarCreacion(
@@ -319,10 +317,11 @@ class PagoService
         array $datosOrigen,
         ?int $registradoPor,
         bool $contabilizar,
+        ?int $terceroId = null,
     ): Pago {
         $this->exigirDesembolsado($credito);
 
-        return DB::transaction(function () use ($credito, $valor, $fechaPago, $datosOrigen, $registradoPor, $contabilizar) {
+        return DB::transaction(function () use ($credito, $valor, $fechaPago, $datosOrigen, $registradoPor, $contabilizar, $terceroId) {
             $creditoAnteriores = $this->auditoria->instantanea($credito);
 
             $pago = $this->pagos->crear([
@@ -349,7 +348,7 @@ class PagoService
             }
 
             $comprobante = $contabilizar
-                ? $this->comprobantes->contabilizarRecaudoPago($pago, $aplicacion['capital'], $aplicacion['interes'], $aplicacion['otros'])
+                ? $this->comprobantes->contabilizarRecaudoPago($pago, $aplicacion['capital'], $aplicacion['interes'], $aplicacion['otros'], $terceroId)
                 : null;
 
             $this->auditoria->registrarCreacion(

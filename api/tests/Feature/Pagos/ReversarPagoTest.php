@@ -14,6 +14,7 @@ use App\Pagos\Models\Pago;
 use App\Pagos\Services\PagoService;
 use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
+use Database\Seeders\PermisoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\ActsAsAdmin;
@@ -31,6 +32,12 @@ class ReversarPagoTest extends TestCase
     use RefreshDatabase;
 
     private const MOTIVO = 'Cheque devuelto por el banco';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(PermisoSeeder::class);
+    }
 
     private function configurarReglas(): void
     {

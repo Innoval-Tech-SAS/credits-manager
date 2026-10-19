@@ -56,6 +56,7 @@ class ImportacionReglasDeFilasTest extends TestCase
         $this->credito();
 
         $casos = [
+            ['clientes', self::CLIENTES."53125435;Adriana Maria Daza Mesa;;;;;;;;\n"],
             ['creditos', self::CREDITOS."CR-2023-001;53125435;14/10/2023;2000000;2,5;4;mensual;;No;;;;\n"],
             ['plan_cuotas', self::PLAN."CR-2023-001;1;14/11/2023;255500;25000;280500;Pagada\n"],
             ['pagos', self::PAGOS."CR-2023-001;14/03/2023;280500;Cuota completa;1;Banco;Asesor;\n"],
@@ -222,6 +223,8 @@ class ImportacionReglasDeFilasTest extends TestCase
         $this->assertDatabaseHas('comprobantes', ['modulo_origen' => 'pagos']);
         $lineas = DB::table('asientos_contables')->whereIn('comprobante_id', DB::table('comprobantes')->where('modulo_origen', 'pagos')->pluck('id'))->get();
         $this->assertSame((int) $lineas->sum('debito'), (int) $lineas->sum('credito'));
+        $terceroId = Cliente::query()->value('tercero_id');
+        $this->assertTrue($lineas->every(fn ($linea) => $linea->tercero_id === $terceroId));
     }
 
     public function test_con_el_periodo_cerrado_el_recaudo_rechaza_el_pago_y_no_deja_nada_a_medias(): void

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Respaldos;
 
 use App\Respaldos\Models\ConfiguracionRespaldoExterno;
+use Database\Seeders\ConfiguracionRespaldoExternoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Concerns\ActsAsAdmin;
 use Tests\Concerns\AfirmaAuditoria;
@@ -15,6 +16,12 @@ class ConfiguracionRespaldoExternoTest extends TestCase
     use AfirmaAuditoria;
     use RefreshDatabase;
     use SimulaRespaldoExterno;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(ConfiguracionRespaldoExternoSeeder::class);
+    }
 
     private function datosValidos(array $sobrescribir = []): array
     {

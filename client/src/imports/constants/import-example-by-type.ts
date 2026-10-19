@@ -1,5 +1,9 @@
 import type { ImportType } from './import-types';
 
+/**
+ * El ejemplo de clientes, creditos, plan_cuotas y pagos debe coincidir con la huella que usa el backend para
+ * rechazar la fila de ejemplo (`DefinicionImportacion::huellaDeEjemplo()`) — si cambia uno, cambia el otro.
+ */
 export const IMPORT_EXAMPLE_BY_TYPE: Record<ImportType, { columns: { key: string; label: string }[]; example: Record<string, string> }> = {
     clientes: {
         columns: [
@@ -7,7 +11,7 @@ export const IMPORT_EXAMPLE_BY_TYPE: Record<ImportType, { columns: { key: string
             { key: 'nombre', label: 'Nombre completo' },
             { key: 'telefono', label: 'Teléfono' },
         ],
-        example: { cedula: '53125435', nombre: 'Adriana Daza Mesa', telefono: '3001234567' },
+        example: { cedula: '53125435', nombre: 'Adriana Maria Daza Mesa', telefono: '3001234567' },
     },
     creditos: {
         columns: [
@@ -23,9 +27,9 @@ export const IMPORT_EXAMPLE_BY_TYPE: Record<ImportType, { columns: { key: string
             { key: 'es_refinanciacion', label: '¿Es refinanciación? (Sí/No)' },
         ],
         example: {
-            codigo: 'CR-2024-001',
+            codigo: 'CR-2023-001',
             cedula: '53125435',
-            fecha_desembolso: '01/10/2024',
+            fecha_desembolso: '01/10/2023',
             valor: '2000000',
             tasa: '2,5',
             plazo: '4',
@@ -42,7 +46,7 @@ export const IMPORT_EXAMPLE_BY_TYPE: Record<ImportType, { columns: { key: string
             { key: 'fecha', label: 'Fecha de vencimiento' },
             { key: 'total', label: 'Valor total cuota' },
         ],
-        example: { codigo: 'CR-2024-001', numero: '1', fecha: '01/11/2024', total: '520000' },
+        example: { codigo: 'CR-2023-001', numero: '1', fecha: '01/11/2023', total: '280500' },
     },
     pagos: {
         columns: [
@@ -51,7 +55,7 @@ export const IMPORT_EXAMPLE_BY_TYPE: Record<ImportType, { columns: { key: string
             { key: 'valor', label: 'Valor pagado' },
             { key: 'tipo', label: 'Tipo' },
         ],
-        example: { codigo: 'CR-2024-001', fecha: '01/11/2024', valor: '520000', tipo: 'Cuota completa' },
+        example: { codigo: 'CR-2023-001', fecha: '01/11/2023', valor: '280500', tipo: 'Cuota completa' },
     },
     saldos_iniciales: {
         columns: [
@@ -59,8 +63,9 @@ export const IMPORT_EXAMPLE_BY_TYPE: Record<ImportType, { columns: { key: string
             { key: 'cuenta', label: 'Cuenta PUC' },
             { key: 'debito', label: 'Saldo débito' },
             { key: 'credito', label: 'Saldo crédito' },
+            { key: 'cedula', label: 'Cédula' },
         ],
-        example: { fecha_corte: '01/10/2024', cuenta: '133005', debito: '45000000', credito: '' },
+        example: { fecha_corte: '01/10/2024', cuenta: '133005', debito: '45000000', credito: '', cedula: '' },
     },
     plan_cuentas: {
         columns: [

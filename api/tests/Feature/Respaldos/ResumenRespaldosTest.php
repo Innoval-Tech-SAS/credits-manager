@@ -4,6 +4,8 @@ namespace Tests\Feature\Respaldos;
 
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Respaldos\Constants\RespaldosConstants;
+use Database\Seeders\ConfiguracionRespaldoExternoSeeder;
+use Database\Seeders\TareaProgramadaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Tests\Concerns\ActsAsAdmin;
@@ -22,6 +24,8 @@ class ResumenRespaldosTest extends TestCase
     {
         parent::setUp();
 
+        $this->seed(TareaProgramadaSeeder::class);
+        $this->seed(ConfiguracionRespaldoExternoSeeder::class);
         $this->prepararRespaldos();
     }
 

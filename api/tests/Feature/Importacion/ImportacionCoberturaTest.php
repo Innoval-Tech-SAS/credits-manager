@@ -466,7 +466,7 @@ class ImportacionCoberturaTest extends TestCase
             ."2024-12-31,,100,0\n"
             ."2024-12-31,110505,0,0\n"
             ."2024-12-31,110505,100,0\n"
-            ."2024-12-31,110505,100,0\n");
+            ."2024-12-31,110505,100,0\n", ['generar_asiento' => false]);
 
         $this->assertSame(1, $this->importacion($id)->filas_aceptadas);
         $motivos = $this->motivos($id);
@@ -514,7 +514,7 @@ class ImportacionCoberturaTest extends TestCase
         $this->actingAsAdmin();
         $this->importarCompleto('plan_cuentas', "codigo,nombre,naturaleza,tipo\n110505,Caja,debito,activo\n");
 
-        $id = $this->importarCompleto('saldos_iniciales', "Fecha de corte,Cuenta PUC,Saldo débito,Saldo crédito\n31/12/2024,110505,0,250\n");
+        $id = $this->importarCompleto('saldos_iniciales', "Fecha de corte,Cuenta PUC,Saldo débito,Saldo crédito\n31/12/2024,110505,0,250\n", ['generar_asiento' => false]);
 
         $this->assertSame(1, $this->importacion($id)->filas_aceptadas);
         $this->assertDatabaseCount('saldos_apertura', 1);

@@ -157,6 +157,7 @@ class ImportacionCreditosTest extends TestCase
             $lineas = DB::table('asientos_contables')->where('comprobante_id', $comprobante->id)->get();
             $this->assertTrue($lineas->contains(fn ($linea) => $linea->cuenta_id === $cartera->id && (int) $linea->debito === $valor));
             $this->assertTrue($lineas->contains(fn ($linea) => $linea->cuenta_id === $caja->id && (int) $linea->credito === $valor));
+            $this->assertTrue($lineas->every(fn ($linea) => $linea->tercero_id === $credito->cliente->tercero_id));
         }
     }
 

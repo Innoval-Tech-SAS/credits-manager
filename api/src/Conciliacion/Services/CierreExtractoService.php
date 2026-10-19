@@ -49,8 +49,8 @@ class CierreExtractoService
 
         if (! $saldoLibro->igualA($extracto->saldo_actual)) {
             throw ValidationException::withMessages(['extracto' => __('validation.custom.conciliacion.cierre_no_cuadra', [
-                'saldo_libro' => number_format($saldoLibro->aFloat(), 2),
-                'saldo_extracto' => number_format($extracto->saldo_actual->aFloat(), 2),
+                'saldo_libro' => $saldoLibro->aDecimalString(),
+                'saldo_extracto' => $extracto->saldo_actual->aDecimalString(),
             ])]);
         }
 

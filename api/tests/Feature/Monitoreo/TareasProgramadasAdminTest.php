@@ -4,6 +4,7 @@ namespace Tests\Feature\Monitoreo;
 
 use App\Auditoria\Enums\AccionAuditoria;
 use App\Monitoreo\Constants\TareaProgramadaConstants;
+use Database\Seeders\TareaProgramadaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\ActsAsAdmin;
@@ -15,6 +16,12 @@ class TareasProgramadasAdminTest extends TestCase
     use ActsAsAdmin;
     use AfirmaAuditoria;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(TareaProgramadaSeeder::class);
+    }
 
     public function test_sin_autenticar_responde_401(): void
     {

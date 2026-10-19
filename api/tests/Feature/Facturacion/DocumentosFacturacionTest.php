@@ -7,6 +7,7 @@ use App\Creditos\Models\Credito;
 use App\Empresas\Models\Empresa;
 use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
+use Database\Seeders\PermisoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\ActsAsAdmin;
@@ -26,6 +27,12 @@ class DocumentosFacturacionTest extends TestCase
     use RefreshDatabase;
 
     private const BASE = '/api/v1/facturacion/documentos';
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(PermisoSeeder::class);
+    }
 
     /** @var array<int, Usuario> aprobador de nota crédito ya creado por empresa: `Rol::create` no admite dos roles del mismo nombre en una empresa. */
     private array $aprobadoresNc = [];

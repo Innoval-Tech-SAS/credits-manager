@@ -99,8 +99,8 @@ class ComprobanteService
         if (! $totalDebito->igualA($totalCredito)) {
             throw ValidationException::withMessages([
                 'lineas' => __('validation.custom.lineas.descuadrado', [
-                    'debito' => number_format($totalDebito->aFloat(), 2),
-                    'credito' => number_format($totalCredito->aFloat(), 2),
+                    'debito' => $totalDebito->aDecimalString(),
+                    'credito' => $totalCredito->aDecimalString(),
                 ]),
             ]);
         }
@@ -616,7 +616,8 @@ class ComprobanteService
 
     // -------- Generadores automáticos por evento de negocio --------
 
-    public function contabilizarDesembolsoCredito(Credito $credito): ?Comprobante
+    /** `$terceroId` es el tercero del cliente dueño del crédito: el llamador lo resuelve (directo o precargado por lote) para no forzar aquí un acceso a la relación por fila. */
+    public function contabilizarDesembolsoCredito(Credito $credito, ?int $terceroId = null): ?Comprobante
     {
         // En una refinanciación el saldo tomado ya está en cartera: solo el dinero nuevo mueve caja y cartera.
         $valor = $credito->valorDesembolsado();
@@ -637,6 +638,7 @@ class ComprobanteService
             'Desembolso crédito #'.$credito->id,
             'creditos',
             $credito->id,
+            terceroId: $terceroId,
         );
     }
 
@@ -660,8 +662,12 @@ class ComprobanteService
         return true;
     }
 
-    /** Si hay algo que contabilizar, exige las tres reglas del recaudo (capital, interés y, si aplica, otros gastos): nunca se recauda en silencio sin asiento. */
-    public function contabilizarRecaudoPago(Pago $pago, Dinero $capital, Dinero $interes, ?Dinero $otros = null): ?Comprobante
+    /**
+     * Si hay algo que contabilizar, exige las tres reglas del recaudo (capital, interés y, si aplica, otros gastos):
+     * nunca se recauda en silencio sin asiento. `$terceroId` es el tercero del cliente dueño del pago: el llamador
+     * lo resuelve (directo o precargado por lote) para no forzar aquí un acceso a la relación por fila.
+     */
+    public function contabilizarRecaudoPago(Pago $pago, Dinero $capital, Dinero $interes, ?Dinero $otros = null, ?int $terceroId = null): ?Comprobante
     {
         $otros ??= Dinero::cero();
 
@@ -694,6 +700,61 @@ class ComprobanteService
             'Recaudo pago #'.$pago->id,
             'pagos',
             $pago->id,
+            terceroId: $terceroId,
+        );
+    }
+
+    /**
+     * Comprobante de apertura de los saldos iniciales: una línea por saldo, con el tercero de su fila si lo trae
+     * (cuentas de cartera). `crearComprobante()` ya exige que Σdébito = Σcrédito — si el archivo no cuadra, esto
+     * lanza `ValidationException` y el llamador decide cómo reportarlo sin perder los saldos ya guardados.
+     *
+     * @param  list<array{cuenta_id: int, tercero_id: ?int, debito: Dinero, credito: Dinero}>  $lineas
+     */
+    public function contabilizarAperturaSaldos(array $lineas, string $fechaCorte, int $tipoComprobanteId, int $importacionId): Comprobante
+    {
+        return $this->crearComprobante(
+            $tipoComprobanteId,
+            $fechaCorte,
+            array_map(fn (array $linea) => [
+                'cuenta_id' => $linea['cuenta_id'],
+                'tercero_id' => $linea['tercero_id'],
+                'debito' => $linea['debito'],
+                'credito' => $linea['credito'],
+            ], $lineas),
+            'Apertura de saldos iniciales',
+            'saldos_iniciales',
+            $importacionId,
+        );
+    }
+
+    /**
+     * Comprobante de devengo (M15): una línea débito por tercero (interés corrido de sus cuotas del período,
+     * para que el auxiliar de la cuenta por cobrar quede por cliente) y una sola línea crédito con el total
+     * al ingreso. Las dos cuentas salen de la regla de `EventoContable::DevengoInteres`.
+     *
+     * @param  array<int, Dinero>  $totalPorTercero  tercero_id => interés devengado de sus cuotas
+     */
+    public function contabilizarDevengoInteres(array $totalPorTercero, string $fecha): Comprobante
+    {
+        $regla = $this->reglaActiva(EventoContable::DevengoInteres);
+
+        $total = Dinero::cero();
+        $lineas = [];
+
+        foreach ($totalPorTercero as $terceroId => $valor) {
+            $lineas[] = ['cuenta_id' => $regla->cuenta_debito_id, 'tercero_id' => $terceroId, 'debito' => $valor, 'credito' => 0];
+            $total = $total->sumar($valor);
+        }
+
+        $lineas[] = ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $total];
+
+        return $this->crearComprobante(
+            $regla->tipo_comprobante_id,
+            $fecha,
+            $lineas,
+            'Devengo de interés corrido',
+            'devengo_interes',
         );
     }
 

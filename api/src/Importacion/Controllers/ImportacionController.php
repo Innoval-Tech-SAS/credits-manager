@@ -44,6 +44,7 @@ class ImportacionController extends Controller
             $datos['archivo'],
             $datos['crear_empleadores'],
             $datos['generar_asiento'],
+            $datos['tipo_comprobante_id'],
         );
 
         return response()->json(['importacion' => $importacion], 202);

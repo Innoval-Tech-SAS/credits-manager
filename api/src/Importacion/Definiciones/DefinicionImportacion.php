@@ -89,7 +89,7 @@ final class DefinicionImportacion
             TipoImportacion::SaldosIniciales => [
                 'hoja' => 'Saldos_Contables_Iniciales',
                 'orden' => 5,
-                'nota' => 'Hoja opcional. La cuenta PUC debe existir en el plan de cuentas.',
+                'nota' => 'Hoja opcional. La cuenta PUC debe existir en el plan de cuentas. Si generas el asiento de apertura, el archivo completo debe cuadrar (suma de débitos igual a suma de créditos). La cédula es opcional y solo aplica a cuentas de cartera: si la das, el cliente debe existir.',
                 'permiso' => ['importaciones', 'importar_saldos_iniciales'],
                 'columnas' => [
                     self::c('fecha_corte', 'Fecha de corte', true, 'fecha'),
@@ -97,6 +97,7 @@ final class DefinicionImportacion
                     self::c('nombre', 'Nombre de la cuenta', false, 'texto'),
                     self::c('debito', 'Saldo débito', false, 'monto'),
                     self::c('credito', 'Saldo crédito', false, 'monto'),
+                    self::c('cedula', 'Cédula', false, 'texto'),
                 ],
             ],
             TipoImportacion::Gastos => [
@@ -186,6 +187,8 @@ final class DefinicionImportacion
 
     /**
      * Huella de la fila de ejemplo que trae la plantilla: si una fila la cumple completa, el usuario no la borró.
+     * Debe coincidir con el ejemplo que se ve en pantalla en `client/src/imports/constants/import-example-by-type.ts`
+     * — si cambia uno, cambia el otro, o la fila de ejemplo deja de detectarse.
      *
      * @return array<string, string>
      */

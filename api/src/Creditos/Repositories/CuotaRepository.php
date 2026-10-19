@@ -249,6 +249,35 @@ class CuotaRepository extends BaseRepository
             ->values();
     }
 
+    /**
+     * Cuotas con interés aún sin devengar, vencidas hasta `$hasta`, de créditos desembolsados. La suspensión por
+     * mora no va aquí (es una decisión de negocio, no un filtro de datos): la aplica `DevengoInteresService` con
+     * `CuotaService::diasMora` sobre lo que esta consulta devuelve. Corre sin sesión (tarea programada): `Credito`
+     * y `Cliente` no filtran sin `Auth`, así que `empresa_id` va explícito en ambos.
+     */
+    public function pendientesDeDevengoHasta(int $empresaId, string $hasta): Collection
+    {
+        return $this->consulta()
+            ->whereNull('interes_devengado_en')
+            ->where('valor_interes', '>', 0)
+            ->where('fecha_vencimiento', '<=', $hasta)
+            ->whereHas('credito', fn ($consultaCredito) => $consultaCredito
+                ->where('empresa_id', $empresaId)
+                ->where('estado', EstadoCredito::Desembolsado))
+            ->with(['credito' => fn ($consultaCredito) => $consultaCredito
+                ->where('empresa_id', $empresaId)
+                ->with(['cliente' => fn ($consultaCliente) => $consultaCliente->where('empresa_id', $empresaId)->select('id', 'tercero_id')])])
+            ->get();
+    }
+
+    /** @param list<int> $cuotaIds */
+    public function marcarInteresDevengado(array $cuotaIds): void
+    {
+        foreach (array_chunk($cuotaIds, 1000) as $lote) {
+            $this->consulta()->whereIn('id', $lote)->update(['interes_devengado_en' => now()]);
+        }
+    }
+
     public function cerrarPendientesComoOrigen(int $creditoId): void
     {
         $this->consulta()

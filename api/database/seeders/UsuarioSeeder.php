@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Usuarios\Constants\UsuarioConstants;
+use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
 use App\Usuarios\Repositories\RolRepository;
 use Illuminate\Database\Seeder;
@@ -16,6 +18,11 @@ class UsuarioSeeder extends Seeder
 {
     public function run(RolRepository $roles): void
     {
+        Rol::withoutGlobalScopes()->firstOrCreate(
+            ['empresa_id' => null, 'nombre' => UsuarioConstants::ROL_SUPERADMIN],
+            ['descripcion' => 'Administra la plataforma y el panel de empresas'],
+        );
+
         $usuario = strtolower((string) env('SEED_ADMIN_USUARIO'));
         $password = env('SEED_ADMIN_PASSWORD');
 

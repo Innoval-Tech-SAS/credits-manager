@@ -5,6 +5,7 @@ namespace Tests\Feature\Respaldos;
 use App\Respaldos\Constants\RespaldosConstants;
 use App\Respaldos\Services\VolcadoBaseDatosService;
 use Carbon\CarbonImmutable;
+use Database\Seeders\ConfiguracionRespaldoExternoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
@@ -18,6 +19,7 @@ class EjecutarRespaldoTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed(ConfiguracionRespaldoExternoSeeder::class);
         $this->prepararRespaldos();
     }
 

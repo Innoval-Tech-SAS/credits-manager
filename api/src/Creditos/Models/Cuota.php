@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'fecha_vencimiento',
     'valor',
     'valor_interes',
+    'interes_devengado_en',
     'valor_otros_gastos',
     'valor_capital',
     'saldo_capital',
@@ -33,6 +34,7 @@ class Cuota extends BaseModel
         return [
             'estado' => EstadoCuota::class,
             'fecha_vencimiento' => 'date:Y-m-d',
+            'interes_devengado_en' => 'datetime',
             'valor' => DineroCast::class,
             'valor_interes' => DineroCast::class,
             'valor_otros_gastos' => DineroCast::class,

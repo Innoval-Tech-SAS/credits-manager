@@ -5,7 +5,9 @@ namespace Tests\Feature\Permisos;
 use App\Empresas\Models\Empresa;
 use App\Exportacion\Constants\ExportacionConstants;
 use App\Exportacion\Services\AccesoExportaciones;
+use App\Usuarios\Models\Permiso;
 use App\Usuarios\Models\Usuario;
+use Database\Seeders\PermisoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\ActsAsAdmin;
@@ -27,6 +29,12 @@ class PermisosExportacionPorReporteTest extends TestCase
     use RefreshDatabase;
 
     private Empresa $empresa;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(PermisoSeeder::class);
+    }
 
     private int $creditoId;
 
@@ -97,8 +105,16 @@ class PermisosExportacionPorReporteTest extends TestCase
     public function test_el_exportar_generico_retirado_ya_no_concede_ninguna_exportacion(): void
     {
         $this->prepararEmpresa();
-        $genericos = DB::table('permisos')->where('accion', 'exportar')->whereNotNull('borrado_en')->pluck('id');
-        $this->assertNotEmpty($genericos);
+
+        // `<modulo>.exportar` ya no está en el catálogo vigente (PermisoSeeder): se simula uno retirado, como
+        // quedaría tras una reorganización del catálogo, para probar que una asignación residual no concede nada.
+        $generico = Permiso::withTrashed()->firstOrCreate(['modulo' => 'clientes', 'accion' => 'exportar']);
+
+        if (! $generico->trashed()) {
+            $generico->delete();
+        }
+
+        $genericos = collect([$generico->id]);
 
         foreach ($this->exportaciones() as [$uri, , $lectura]) {
             $usuario = $this->actuarCon($lectura);

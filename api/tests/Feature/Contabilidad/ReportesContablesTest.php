@@ -103,6 +103,32 @@ class ReportesContablesTest extends TestCase
         $this->assertTrue($respuesta->json('situacion_financiera.cuadra'));
     }
 
+    public function test_estados_financieros_restan_una_cuenta_correctora_del_total_de_activos(): void
+    {
+        $this->actingAsAdmin();
+        $tipo = $this->crearTipoComprobante();
+        $caja = $this->crearCuenta(['tipo' => TipoCuenta::Activo]);
+        $capital = $this->crearCuenta(['naturaleza' => NaturalezaCuenta::Credito, 'tipo' => TipoCuenta::Patrimonio]);
+        // Cuenta correctora dentro de Activo: naturaleza crédito, igual que 1399 Deterioro de cartera.
+        $deterioro = $this->crearCuenta(['naturaleza' => NaturalezaCuenta::Credito, 'tipo' => TipoCuenta::Activo]);
+        $gastoDeterioro = $this->crearCuenta(['naturaleza' => NaturalezaCuenta::Debito, 'tipo' => TipoCuenta::Gasto]);
+
+        $servicio = app(ComprobanteService::class);
+        $servicio->crearComprobante($tipo->id, '2026-01-15', [
+            ['cuenta_id' => $caja->id, 'debito' => 1000, 'credito' => 0],
+            ['cuenta_id' => $capital->id, 'debito' => 0, 'credito' => 1000],
+        ], 'Aporte de capital');
+        $servicio->crearComprobante($tipo->id, '2026-01-16', [
+            ['cuenta_id' => $gastoDeterioro->id, 'debito' => 300, 'credito' => 0],
+            ['cuenta_id' => $deterioro->id, 'debito' => 0, 'credito' => 300],
+        ], 'Deterioro de cartera');
+
+        $respuesta = $this->getJson('/api/v1/contabilidad/estados-financieros?desde=2026-01-01&hasta=2026-01-31')->assertOk();
+
+        $this->assertSame('700.00', $respuesta->json('situacion_financiera.total_activos'));
+        $this->assertTrue($respuesta->json('situacion_financiera.cuadra'));
+    }
+
     public function test_los_reportes_no_muestran_movimientos_de_otra_empresa(): void
     {
         $this->actingAsAdmin();

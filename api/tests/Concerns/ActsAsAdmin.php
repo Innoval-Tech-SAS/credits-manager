@@ -10,7 +10,6 @@ use App\Geografia\Models\Pais;
 use App\Usuarios\Constants\UsuarioConstants;
 use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
-use App\Usuarios\Repositories\RolRepository;
 
 /**
  * Setup mínimo para tests HTTP: cada llamada crea su propia empresa (ya no
@@ -76,11 +75,16 @@ trait ActsAsAdmin
     {
         $this->salirDeSesion();
 
+        $rolSuperAdmin = Rol::withoutGlobalScopes()->firstOrCreate(
+            ['empresa_id' => null, 'nombre' => UsuarioConstants::ROL_SUPERADMIN],
+            ['descripcion' => 'Administra la plataforma y el panel de empresas'],
+        );
+
         return Usuario::create(array_merge([
             'nombre' => 'Super Admin de prueba',
             'usuario' => 'superadmin_test_'.uniqid(),
             'password_hash' => 'irrelevante-en-tests',
-            'rol_id' => app(RolRepository::class)->rolSuperAdmin()->id,
+            'rol_id' => $rolSuperAdmin->id,
             'activo' => true,
         ], $overrides));
     }

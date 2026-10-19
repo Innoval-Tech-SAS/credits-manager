@@ -3,6 +3,7 @@
 namespace App\Importacion\Models;
 
 use App\Contabilidad\Models\PlanCuenta;
+use App\Contabilidad\Models\TipoComprobante;
 use App\Core\Base\BaseModel;
 use App\Core\Concerns\PerteneceAEmpresa;
 use App\Empresas\Models\Empresa;
@@ -16,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'empresa_id', 'usuario_id', 'tipo', 'estado', 'archivo_original', 'archivo_ruta',
-    'preferencia_crear_empleadores', 'preferencia_generar_asiento', 'cuenta_contrapartida_id',
+    'preferencia_crear_empleadores', 'preferencia_generar_asiento', 'cuenta_contrapartida_id', 'tipo_comprobante_id',
     'decision_crear_empleadores', 'decision_generar_asiento', 'comprobante_id',
     'total_filas', 'filas_aceptadas', 'filas_rechazadas', 'filas_pendientes', 'empleadores_pendientes',
     'error', 'iniciada_en', 'validada_en', 'completada_en',
@@ -41,6 +42,11 @@ class Importacion extends BaseModel
     public function cuentaContrapartida(): BelongsTo
     {
         return $this->belongsTo(PlanCuenta::class, 'cuenta_contrapartida_id');
+    }
+
+    public function tipoComprobante(): BelongsTo
+    {
+        return $this->belongsTo(TipoComprobante::class);
     }
 
     public function errores(): HasMany

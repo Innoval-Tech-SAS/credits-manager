@@ -17,5 +17,7 @@ class DatabaseSeeder extends Seeder
         $this->call(PermisoSeeder::class);
         $this->call(GeografiaSeeder::class);
         $this->call(UsuarioSeeder::class);
+        $this->call(TareaProgramadaSeeder::class);
+        $this->call(ConfiguracionRespaldoExternoSeeder::class);
     }
 }

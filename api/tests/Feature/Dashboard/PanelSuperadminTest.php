@@ -6,6 +6,8 @@ use App\Auditoria\Models\BitacoraAuditoria;
 use App\Monitoreo\Services\EstadoRespaldosService;
 use App\Monitoreo\Services\EstadoServiciosService;
 use Carbon\CarbonImmutable;
+use Database\Seeders\ConfiguracionRespaldoExternoSeeder;
+use Database\Seeders\TareaProgramadaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -16,6 +18,13 @@ class PanelSuperadminTest extends TestCase
 {
     use ActsAsAdmin;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(TareaProgramadaSeeder::class);
+        $this->seed(ConfiguracionRespaldoExternoSeeder::class);
+    }
 
     public function test_sin_autenticar_responde_401(): void
     {

@@ -61,8 +61,8 @@ class CreditoContabilizacionTest extends TestCase
             'total_debito' => 100000,
             'total_credito' => 100000,
         ]);
-        $this->assertDatabaseHas('asientos_contables', ['cuenta_id' => $cuentaCartera->id, 'debito' => 100000]);
-        $this->assertDatabaseHas('asientos_contables', ['cuenta_id' => $cuentaBancos->id, 'credito' => 100000]);
+        $this->assertDatabaseHas('asientos_contables', ['cuenta_id' => $cuentaCartera->id, 'debito' => 100000, 'tercero_id' => $cliente->tercero_id]);
+        $this->assertDatabaseHas('asientos_contables', ['cuenta_id' => $cuentaBancos->id, 'credito' => 100000, 'tercero_id' => $cliente->tercero_id]);
     }
 
     public function test_desembolso_se_rechaza_sin_regla_configurada_y_el_credito_no_queda_desembolsado(): void

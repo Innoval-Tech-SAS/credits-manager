@@ -2,6 +2,8 @@
 
 namespace App\Importacion\Data;
 
+use App\Contabilidad\Models\PlanCuenta;
+use App\Core\Dinero\Dinero;
 use App\Creditos\Models\Cuota;
 use App\Gastos\Models\ActividadEconomica;
 use App\Usuarios\Models\Usuario;
@@ -31,8 +33,17 @@ final class ContextoEjecucion
     /** @var array<string, int> código de crédito → id, precargado por lote */
     public array $creditosPorCodigo = [];
 
+    /** @var array<int, int> id de cliente → tercero_id, precargado por lote */
+    public array $tercerosPorClienteId = [];
+
+    /** @var array<int, int> id de crédito → tercero_id de su cliente, precargado por lote */
+    public array $tercerosPorCreditoId = [];
+
     /** @var array<string, int> cuenta PUC → id de cuenta, precargado por lote */
     public array $cuentasPorCodigo = [];
+
+    /** @var array<string, PlanCuenta> cuenta PUC → cuenta con los campos que deciden si exige tercero, precargado por lote */
+    public array $cuentasConDatosPorCodigo = [];
 
     /** @var array<string, int> nombre normalizado del usuario → id, para «Registrado por» */
     public array $usuariosPorNombre = [];
@@ -45,6 +56,9 @@ final class ContextoEjecucion
 
     /** Corte más reciente de los saldos iniciales: lo ocurrido hasta esa fecha ya está en ellos y no lleva asiento. */
     public ?string $fechaCorteApertura = null;
+
+    /** @var list<array{cuenta_id: int, tercero_id: ?int, debito: Dinero, credito: Dinero, fecha_corte: string}> líneas de saldos iniciales aceptadas en esta pasada de escritura, para el comprobante de apertura */
+    public array $lineasApertura = [];
 
     /** @var array<string, true> claves ya vistas en el archivo, para detectar repetidos */
     public array $vistos = [];

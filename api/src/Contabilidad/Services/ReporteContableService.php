@@ -89,11 +89,14 @@ class ReporteContableService
 
     public function estadosFinancieros(int $empresaId, string $desde, string $hasta): array
     {
-        $neto = function ($fila) {
+        /** El signo sale del tipo de cuenta en el estado financiero, no de la naturaleza propia de la cuenta:
+         * así una cuenta correctora (p. ej. 1399, naturaleza crédito dentro de Activo) resta del total del
+         * grupo en vez de sumarlo. */
+        $neto = function ($fila, bool $debitoAumenta) {
             $d = Dinero::desdeCentavos((int) $fila->d);
             $c = Dinero::desdeCentavos((int) $fila->c);
 
-            return $fila->naturaleza === NaturalezaCuenta::Debito ? $d->restar($c) : $c->restar($d);
+            return $debitoAumenta ? $d->restar($c) : $c->restar($d);
         };
 
         $filaDto = fn ($fila, Dinero $valor) => [
@@ -101,7 +104,8 @@ class ReporteContableService
             'nombre' => $fila->nombre,
             'valor' => $valor,
         ];
-        $conValores = fn ($coleccion) => $coleccion->map(fn ($fila) => $filaDto($fila, $neto($fila)));
+        $conValores = fn ($coleccion, bool $debitoAumenta) => $coleccion->map(fn ($fila) => $filaDto($fila, $neto($fila, $debitoAumenta)));
+        $totalDe = fn ($coleccion, bool $debitoAumenta) => Dinero::sumarVarios(...$coleccion->map(fn ($fila) => $neto($fila, $debitoAumenta))->all());
 
         $activos = $this->cuentas->saldosPorTipo($empresaId, [TipoCuenta::Activo->value], null, $hasta);
         $pasivos = $this->cuentas->saldosPorTipo($empresaId, [TipoCuenta::Pasivo->value], null, $hasta);
@@ -109,25 +113,25 @@ class ReporteContableService
         $ingresos = $this->cuentas->saldosPorTipo($empresaId, [TipoCuenta::Ingreso->value], $desde, $hasta);
         $gastosCostos = $this->cuentas->saldosPorTipo($empresaId, [TipoCuenta::Gasto->value, TipoCuenta::Costo->value], $desde, $hasta);
 
-        $totalActivos = Dinero::sumarVarios(...$activos->map($neto)->all());
-        $totalPasivos = Dinero::sumarVarios(...$pasivos->map($neto)->all());
-        $totalPatrimonio = Dinero::sumarVarios(...$patrimonio->map($neto)->all());
-        $totalIngresos = Dinero::sumarVarios(...$ingresos->map($neto)->all());
-        $totalGastos = Dinero::sumarVarios(...$gastosCostos->map($neto)->all());
+        $totalActivos = $totalDe($activos, true);
+        $totalPasivos = $totalDe($pasivos, false);
+        $totalPatrimonio = $totalDe($patrimonio, false);
+        $totalIngresos = $totalDe($ingresos, false);
+        $totalGastos = $totalDe($gastosCostos, true);
         $utilidad = $totalIngresos->restar($totalGastos);
 
         return [
             'estado_resultados' => [
-                'ingresos' => $conValores($ingresos),
-                'gastos_costos' => $conValores($gastosCostos),
+                'ingresos' => $conValores($ingresos, false),
+                'gastos_costos' => $conValores($gastosCostos, true),
                 'total_ingresos' => $totalIngresos,
                 'total_gastos' => $totalGastos,
                 'utilidad' => $utilidad,
             ],
             'situacion_financiera' => [
-                'activos' => $conValores($activos),
-                'pasivos' => $conValores($pasivos),
-                'patrimonio' => $conValores($patrimonio),
+                'activos' => $conValores($activos, true),
+                'pasivos' => $conValores($pasivos, false),
+                'patrimonio' => $conValores($patrimonio, false),
                 'total_activos' => $totalActivos,
                 'total_pasivos' => $totalPasivos,
                 'total_patrimonio' => $totalPatrimonio,

@@ -7,7 +7,10 @@ import { useAuth } from '../../auth/hooks/use-auth';
 import { usePermission } from '../../auth/hooks/use-permission';
 import { hasAnyPermission } from '../../auth/utils/has-any-permission';
 import { useDownloadFile } from '../../shared/hooks/use-download-file';
+import { useResource } from '../../shared/hooks/use-resource';
 import { useSendRequest } from '../../shared/hooks/use-send-request';
+import type { ApiVoucherType } from '../../accounting/types/api-voucher-type';
+import type { PaginatedResponse } from '../../shared/types/paginated-response';
 import { Alert } from '@ui/alert/components/alert';
 import { Button } from '@ui/button/components/button';
 import { Checkbox } from '@ui/forms/components/checkbox';
@@ -27,6 +30,8 @@ import {
     type ImportType,
 } from '../constants/import-types';
 import type { ApiImport } from '../types/api-import';
+
+const TIPOS_CON_TIPO_COMPROBANTE: ImportType[] = ['saldos_iniciales'];
 
 const STEPS = ['Preparar', 'Subir', 'Validar', 'Decidir', 'Escribir', 'Resultado'];
 
@@ -49,8 +54,17 @@ export const NewImportForm: FC = () => {
     const [archivo, setArchivo] = useState<File | null>(null);
     const [crearEmpleadores, setCrearEmpleadores] = useState(false);
     const [generarAsiento, setGenerarAsiento] = useState(false);
+    const [tipoComprobanteId, setTipoComprobanteId] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const pideTipoComprobante = tipo !== '' && generarAsiento && TIPOS_CON_TIPO_COMPROBANTE.includes(tipo);
+    const { data: tiposComprobanteData } = useResource<PaginatedResponse<ApiVoucherType>>(
+        pideTipoComprobante ? '/contabilidad/tipos-comprobante?per_page=100' : null,
+    );
+    const opcionesTipoComprobante = (tiposComprobanteData?.data ?? [])
+        .filter((tipoComprobante) => tipoComprobante.activo)
+        .map((tipoComprobante) => ({ value: String(tipoComprobante.id), label: `${tipoComprobante.codigo} — ${tipoComprobante.nombre}` }));
 
     const handleDescargarGuia = async () => {
         if (tipo !== '') {
@@ -62,11 +76,17 @@ export const NewImportForm: FC = () => {
         setTipo(esTipoImportable(valor) ? valor : '');
         setCrearEmpleadores(false);
         setGenerarAsiento(false);
+        setTipoComprobanteId('');
     };
 
     const handleSubir = async () => {
         if (tipo === '' || archivo === null) {
             setError('Elige la hoja y el archivo CSV.');
+            return;
+        }
+
+        if (pideTipoComprobante && tipoComprobanteId === '') {
+            setError('Elige el tipo de comprobante para la apertura.');
             return;
         }
 
@@ -79,6 +99,9 @@ export const NewImportForm: FC = () => {
             formData.set('archivo', archivo);
             formData.set('crear_empleadores', crearEmpleadores ? '1' : '0');
             formData.set('generar_asiento', generarAsiento ? '1' : '0');
+            if (pideTipoComprobante) {
+                formData.set('tipo_comprobante_id', tipoComprobanteId);
+            }
 
             const respuesta = await sendRequest<{ importacion: ApiImport }>('/importaciones', { method: 'POST', body: formData });
             navigate(`/importaciones/${respuesta.importacion.id}`, { replace: true });
@@ -167,6 +190,19 @@ export const NewImportForm: FC = () => {
 
                         {tipo !== '' && puedeContabilizar && IMPORT_TYPES_WITH_ACCOUNTING.includes(tipo) && (
                             <Checkbox id="generar-asiento" label="Generar asientos contables" checked={generarAsiento} onChange={setGenerarAsiento} />
+                        )}
+
+                        {pideTipoComprobante && (
+                            <div>
+                                <Label htmlFor="tipo-comprobante-apertura">Tipo de comprobante para la apertura</Label>
+                                <Select
+                                    id="tipo-comprobante-apertura"
+                                    options={opcionesTipoComprobante}
+                                    placeholder="Elige el tipo de comprobante"
+                                    defaultValue={tipoComprobanteId}
+                                    onChange={setTipoComprobanteId}
+                                />
+                            </div>
                         )}
                     </div>
 

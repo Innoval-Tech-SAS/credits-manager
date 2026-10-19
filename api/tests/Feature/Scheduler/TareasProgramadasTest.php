@@ -4,6 +4,7 @@ namespace Tests\Feature\Scheduler;
 
 use App\Creditos\Enums\EstadoCuota;
 use App\Creditos\Models\Cuota;
+use Database\Seeders\TareaProgramadaSeeder;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,6 +20,12 @@ class TareasProgramadasTest extends TestCase
     use AfirmaAuditoria;
     use CreatesCreditFixtures;
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(TareaProgramadaSeeder::class);
+    }
 
     private function tarea(string $nombre): Event
     {

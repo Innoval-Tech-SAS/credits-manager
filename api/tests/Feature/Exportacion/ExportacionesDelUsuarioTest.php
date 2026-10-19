@@ -15,6 +15,7 @@ use App\Exportacion\Services\ExportacionService;
 use App\Notificaciones\Events\NotificacionCreada;
 use App\Usuarios\Models\Permiso;
 use App\Usuarios\Models\Usuario;
+use Database\Seeders\PermisoSeeder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -36,6 +37,7 @@ class ExportacionesDelUsuarioTest extends TestCase
     {
         parent::setUp();
 
+        $this->seed(PermisoSeeder::class);
         Storage::fake(ExportacionConstants::DISCO);
         $this->registrarReporteDePruebas();
     }
