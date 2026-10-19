@@ -93,6 +93,59 @@ const Card: FC<{ title: string; to?: string; children: ReactNode; centerContent?
     </div>
 );
 
+/** Fila ya procesada para el donut: homogeneiza `ApiDashboardAccountRow` y `ApiDashboardCostCenterExpenseRow`. */
+type DonutBreakdownRow = { key: string | number; nombre: string; valor: string };
+
+const MAX_FILAS_DONUT = 5;
+
+/** Convierte un string decimal de 2 cifras (ej. "1234.56", el formato que siempre emite `Dinero`) a centavos, sin pasar por float. */
+function centavosDeTexto(valor: string): bigint {
+    const negativo = valor.startsWith('-');
+    const [entero, decimal = '00'] = valor.replace('-', '').split('.');
+    const centavos = BigInt(entero) * 100n + BigInt(decimal.padEnd(2, '0').slice(0, 2));
+
+    return negativo ? -centavos : centavos;
+}
+
+/** Inverso de `centavosDeTexto`. */
+function textoDeCentavos(centavos: bigint): string {
+    const negativo = centavos < 0n;
+    const absolutos = negativo ? -centavos : centavos;
+
+    return `${negativo ? '-' : ''}${absolutos / 100n}.${(absolutos % 100n).toString().padStart(2, '0')}`;
+}
+
+/**
+ * Descarta las filas en cero y, si quedan más de `MAX_FILAS_DONUT`, conserva las de mayor magnitud y agrupa
+ * el resto en una fila "Otros" — la suma de "Otros" se hace en centavos enteros, nunca con floats.
+ */
+function construirFilasDonut(rows: (ApiDashboardAccountRow | ApiDashboardCostCenterExpenseRow)[]): DonutBreakdownRow[] {
+    const conValor = rows
+        .map((fila) => ({
+            key: 'codigo' in fila ? fila.codigo : (fila.centro_costo_id ?? fila.nombre),
+            nombre: fila.nombre,
+            valor: fila.valor,
+        }))
+        .filter((fila) => centavosDeTexto(fila.valor) !== 0n);
+
+    if (conValor.length <= MAX_FILAS_DONUT) {
+        return conValor;
+    }
+
+    const ordenadas = [...conValor].sort((a, b) => {
+        const absolutaA = centavosDeTexto(a.valor) < 0n ? -centavosDeTexto(a.valor) : centavosDeTexto(a.valor);
+        const absolutaB = centavosDeTexto(b.valor) < 0n ? -centavosDeTexto(b.valor) : centavosDeTexto(b.valor);
+
+        return absolutaA > absolutaB ? -1 : absolutaA < absolutaB ? 1 : 0;
+    });
+
+    const principales = ordenadas.slice(0, MAX_FILAS_DONUT);
+    const resto = ordenadas.slice(MAX_FILAS_DONUT);
+    const totalResto = resto.reduce((suma, fila) => suma + centavosDeTexto(fila.valor), 0n);
+
+    return [...principales, { key: 'otros', nombre: 'Otros', valor: textoDeCentavos(totalResto) }];
+}
+
 /**
  * Donut de composición + leyenda con participación %, igual patrón que "Categoría de ventas" del demo CRM de
  * TailAdmin. `compact` apila el donut sobre la leyenda (en vez de lado a lado) y reduce tamaños, para cuando
@@ -105,20 +158,21 @@ const DonutBreakdown: FC<{
     emptyMessage: string;
     compact?: boolean;
 }> = ({ title, to, rows, emptyMessage, compact = false }) => {
-    const magnitudes = rows.map((fila) => Math.abs(Number(fila.valor)));
+    const filas = construirFilasDonut(rows);
+    const magnitudes = filas.map((fila) => Math.abs(Number(fila.valor)));
     const total = magnitudes.reduce((suma, valor) => suma + valor, 0);
 
     return (
         <Card title={title} to={to} centerContent>
-            {rows.length === 0 || total === 0 ? (
+            {filas.length === 0 ? (
                 <p className="text-center text-sm text-gray-500 dark:text-gray-400">{emptyMessage}</p>
             ) : (
                 <div className={`flex flex-col items-center gap-4 ${compact ? '' : 'sm:flex-row sm:gap-6'}`}>
                     <div className={`w-full shrink-0 ${compact ? 'max-w-40' : 'max-w-55'}`}>
                         <DonutChart
                             series={magnitudes}
-                            labels={rows.map((fila) => fila.nombre)}
-                            colors={rows.map((_, indice) => CATEGORY_COLORS[indice % CATEGORY_COLORS.length])}
+                            labels={filas.map((fila) => fila.nombre)}
+                            colors={filas.map((_, indice) => CATEGORY_COLORS[indice % CATEGORY_COLORS.length])}
                             totalLabel="Total"
                             totalValue={formatMoney(total)}
                             valueFormatter={(valor) => formatMoney(valor)}
@@ -126,12 +180,9 @@ const DonutBreakdown: FC<{
                             showLegend={false}
                         />
                     </div>
-                    <ul className={`w-full flex-1 ${compact ? 'space-y-1.5' : 'space-y-3'}`}>
-                        {rows.map((fila, indice) => (
-                            <li
-                                key={'codigo' in fila ? fila.codigo : (fila.centro_costo_id ?? fila.nombre)}
-                                className={`flex items-center justify-between gap-2 ${compact ? 'text-xs' : 'text-sm'}`}
-                            >
+                    <ul className={`custom-scrollbar w-full flex-1 overflow-y-auto ${compact ? 'max-h-40 space-y-1.5' : 'max-h-96 space-y-3'}`}>
+                        {filas.map((fila, indice) => (
+                            <li key={fila.key} className={`flex items-center justify-between gap-2 ${compact ? 'text-xs' : 'text-sm'}`}>
                                 <span className="flex min-w-0 items-center gap-2">
                                     <span
                                         className="size-2.5 shrink-0 rounded-full"
@@ -318,16 +369,18 @@ export const AccountingDashboardPage: FC = () => {
 
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         <Card title="Ingresos por cuenta" to="/contabilidad/estados-financieros">
-                            <DataTable
-                                columns={[
-                                    { key: 'codigo', label: 'Cuenta' },
-                                    { key: 'nombre', label: 'Nombre' },
-                                    { key: 'valor', label: 'Valor', render: (row) => formatMoney(row.valor) },
-                                ]}
-                                rows={resultados.ingresos}
-                                getRowKey={(row) => row.codigo}
-                                emptyMessage="Sin ingresos en el rango."
-                            />
+                            <div className="custom-scrollbar max-h-96 overflow-y-auto">
+                                <DataTable
+                                    columns={[
+                                        { key: 'codigo', label: 'Cuenta' },
+                                        { key: 'nombre', label: 'Nombre' },
+                                        { key: 'valor', label: 'Valor', render: (row) => formatMoney(row.valor) },
+                                    ]}
+                                    rows={resultados.ingresos}
+                                    getRowKey={(row) => row.codigo}
+                                    emptyMessage="Sin ingresos en el rango."
+                                />
+                            </div>
                         </Card>
                         <DonutBreakdown
                             title="Gastos y costos por centro de costo"

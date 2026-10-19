@@ -166,6 +166,13 @@ export const NAV_ITEMS: NavItem[] = [
         icon: Calculator,
         subItems: [
             {
+                name: "Panel Contable",
+                path: "/contabilidad/dashboard",
+                icon: LayoutDashboard,
+                moduleKey: "informes_contables",
+                action: "ver_dashboard_contable",
+            },
+            {
                 name: "Comprobantes Contables",
                 path: "/contabilidad/comprobantes",
                 icon: FileCheck,
@@ -355,13 +362,6 @@ export const NAV_ITEMS: NavItem[] = [
         name: "Informes Contables",
         icon: ChartColumn,
         subItems: [
-            {
-                name: "Panel Contable",
-                path: "/contabilidad/dashboard",
-                icon: LayoutDashboard,
-                moduleKey: "informes_contables",
-                action: "ver_dashboard_contable",
-            },
             {
                 name: "Libro Diario",
                 path: "/contabilidad/libro-diario",
