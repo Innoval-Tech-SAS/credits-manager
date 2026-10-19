@@ -64,6 +64,8 @@ class RolSuperAdminTest extends TestCase
 
     public function test_la_base_rechaza_un_segundo_rol_sin_empresa(): void
     {
+        $this->crearSuperAdmin();
+
         $this->expectException(QueryException::class);
 
         Rol::create(['nombre' => 'otro_rol_de_plataforma']);
