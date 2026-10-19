@@ -10,6 +10,7 @@ use App\Gastos\Models\Gasto;
 use App\Gastos\Services\GastoService;
 use App\Usuarios\Models\Rol;
 use App\Usuarios\Models\Usuario;
+use Database\Seeders\PermisoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,7 @@ class ReversarEgresoTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed(PermisoSeeder::class);
         Storage::fake('public');
     }
 

@@ -7,6 +7,8 @@ use App\Monitoreo\Constants\MonitoreoConstants;
 use App\Monitoreo\Enums\EstadoServicio;
 use App\Monitoreo\Services\RegistroLatidos;
 use App\Respaldos\Constants\RespaldosConstants;
+use Database\Seeders\ConfiguracionRespaldoExternoSeeder;
+use Database\Seeders\TareaProgramadaSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -29,6 +31,8 @@ class PanelMonitoreoTest extends TestCase
     {
         parent::setUp();
 
+        $this->seed(TareaProgramadaSeeder::class);
+        $this->seed(ConfiguracionRespaldoExternoSeeder::class);
         $this->prepararRespaldos();
         File::ensureDirectoryExists($this->raizRespaldos);
         $this->procFalso = sys_get_temp_dir().'/proc-test-'.uniqid();

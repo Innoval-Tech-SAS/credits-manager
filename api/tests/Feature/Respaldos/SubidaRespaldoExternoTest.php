@@ -6,6 +6,7 @@ use App\Respaldos\Constants\RespaldosConstants;
 use App\Respaldos\Enums\ClaseRespaldo;
 use App\Respaldos\Services\SubidaRespaldoExternoService;
 use Carbon\CarbonImmutable;
+use Database\Seeders\ConfiguracionRespaldoExternoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Log;
 use Mockery;
@@ -20,6 +21,7 @@ class SubidaRespaldoExternoTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed(ConfiguracionRespaldoExternoSeeder::class);
         $this->prepararRespaldos();
     }
 
