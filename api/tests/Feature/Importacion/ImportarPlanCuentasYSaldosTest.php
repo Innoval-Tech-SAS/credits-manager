@@ -2,15 +2,21 @@
 
 namespace Tests\Feature\Importacion;
 
+use App\Contabilidad\Enums\NaturalezaCuenta;
+use App\Contabilidad\Enums\TipoCuenta;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\CreatesContabilidadFixtures;
+use Tests\Concerns\CreatesCreditFixtures;
 use Tests\Concerns\ImportaArchivos;
 use Tests\TestCase;
 
 class ImportarPlanCuentasYSaldosTest extends TestCase
 {
     use ActsAsAdmin;
+    use CreatesContabilidadFixtures;
+    use CreatesCreditFixtures;
     use ImportaArchivos;
     use RefreshDatabase;
 
@@ -84,7 +90,7 @@ class ImportarPlanCuentasYSaldosTest extends TestCase
         $this->importarCompleto('plan_cuentas', "codigo,nombre,naturaleza,tipo\n1105,Caja,debito,activo\n");
 
         $csv = "Fecha de corte,Cuenta PUC,Saldo débito,Saldo crédito\n31/12/2026,1105,1000,0\n";
-        $primera = $this->importarCompleto('saldos_iniciales', $csv);
+        $primera = $this->importarCompleto('saldos_iniciales', $csv, ['generar_asiento' => false]);
         $segunda = $this->importarCompleto('saldos_iniciales', $csv);
 
         $this->assertSame(1, $this->importacion($primera)->filas_aceptadas);
@@ -104,5 +110,97 @@ class ImportarPlanCuentasYSaldosTest extends TestCase
 
         $this->assertSame(1, $this->importacion($id)->filas_aceptadas);
         $this->assertDatabaseCount('plan_cuentas', 2);
+    }
+
+    public function test_el_archivo_balanceado_genera_el_comprobante_de_apertura_con_tercero_en_cartera(): void
+    {
+        $this->actingAsAdmin();
+        $this->prepararImportaciones();
+
+        $caja = $this->crearCuenta(['codigo' => '1105', 'nombre' => 'Caja', 'naturaleza' => NaturalezaCuenta::Debito, 'tipo' => TipoCuenta::Activo]);
+        $cartera = $this->crearCuenta(['codigo' => '1305', 'nombre' => 'Cartera', 'naturaleza' => NaturalezaCuenta::Debito, 'tipo' => TipoCuenta::Activo]);
+        $this->crearCuenta(['codigo' => '3105', 'nombre' => 'Capital', 'naturaleza' => NaturalezaCuenta::Credito, 'tipo' => TipoCuenta::Patrimonio]);
+        $tipoComprobante = $this->crearTipoComprobante();
+        $cliente = $this->crearCliente();
+
+        $csv = "Fecha de corte,Cuenta PUC,Saldo débito,Saldo crédito,Cédula\n"
+            ."31/12/2026,1105,10000,0,\n"
+            ."31/12/2026,1305,5000,0,{$cliente->tercero->numero_documento}\n"
+            ."31/12/2026,3105,0,15000,\n";
+
+        $id = $this->importarCompleto(
+            'saldos_iniciales',
+            $csv,
+            ['generar_asiento' => true],
+            'saldos.csv',
+            ['generar_asiento' => true, 'tipo_comprobante_id' => $tipoComprobante->id],
+        );
+
+        $importacion = $this->importacion($id);
+        $this->assertSame(3, $importacion->filas_aceptadas);
+        $this->assertNotNull($importacion->comprobante_id);
+        $this->assertDatabaseHas('comprobantes', ['id' => $importacion->comprobante_id, 'modulo_origen' => 'saldos_iniciales', 'estado' => 'contabilizado']);
+        $this->assertDatabaseHas('asientos_contables', ['comprobante_id' => $importacion->comprobante_id, 'cuenta_id' => $cartera->id, 'debito' => 500000, 'tercero_id' => $cliente->tercero_id]);
+        $this->assertDatabaseHas('asientos_contables', ['comprobante_id' => $importacion->comprobante_id, 'cuenta_id' => $caja->id, 'debito' => 1000000, 'tercero_id' => null]);
+        $this->assertDatabaseHas('saldos_apertura', ['cuenta_id' => $cartera->id, 'tercero_id' => $cliente->tercero_id]);
+    }
+
+    public function test_el_archivo_descuadrado_no_genera_comprobante_pero_deja_los_saldos_guardados(): void
+    {
+        $this->actingAsAdmin();
+        $this->prepararImportaciones();
+
+        $this->crearCuenta(['codigo' => '1105', 'naturaleza' => NaturalezaCuenta::Debito, 'tipo' => TipoCuenta::Activo]);
+        $this->crearCuenta(['codigo' => '3105', 'naturaleza' => NaturalezaCuenta::Credito, 'tipo' => TipoCuenta::Patrimonio]);
+        $tipoComprobante = $this->crearTipoComprobante();
+
+        $csv = "Fecha de corte,Cuenta PUC,Saldo débito,Saldo crédito\n"
+            ."31/12/2026,1105,10000,0\n"
+            ."31/12/2026,3105,0,9000\n";
+
+        $id = $this->importarCompleto(
+            'saldos_iniciales',
+            $csv,
+            ['generar_asiento' => true],
+            'saldos.csv',
+            ['generar_asiento' => true, 'tipo_comprobante_id' => $tipoComprobante->id],
+        );
+
+        $importacion = $this->importacion($id);
+        $this->assertSame(2, $importacion->filas_aceptadas);
+        $this->assertNull($importacion->comprobante_id);
+        $this->assertDatabaseCount('saldos_apertura', 2);
+        $this->assertDatabaseCount('comprobantes', 0);
+
+        $motivosEscritura = array_column(array_filter($this->erroresDe($id), fn (array $error) => $error['fase'] === 'escritura'), 'motivo');
+        $this->assertStringContainsString('descuadrado', implode(' ', $motivosEscritura));
+    }
+
+    public function test_generar_asiento_sin_tipo_de_comprobante_se_rechaza_antes_de_encolar(): void
+    {
+        $this->actingAsAdmin();
+        $this->prepararImportaciones();
+        $this->importarCompleto('plan_cuentas', "codigo,nombre,naturaleza,tipo\n1105,Caja,debito,activo\n");
+
+        $this->postJson('/api/v1/importaciones', [
+            'tipo' => 'saldos_iniciales',
+            'generar_asiento' => '1',
+            'archivo' => UploadedFile::fake()->createWithContent('saldos.csv', "Fecha de corte,Cuenta PUC,Saldo débito,Saldo crédito\n31/12/2026,1105,1000,0\n"),
+        ])->assertUnprocessable()->assertJsonValidationErrors('tipo_comprobante_id');
+    }
+
+    public function test_la_cedula_en_una_cuenta_que_no_es_cartera_se_rechaza(): void
+    {
+        $this->actingAsAdmin();
+        $this->prepararImportaciones();
+        $this->crearCuenta(['codigo' => '1105', 'naturaleza' => NaturalezaCuenta::Debito, 'tipo' => TipoCuenta::Activo]);
+        $cliente = $this->crearCliente();
+
+        $csv = "Fecha de corte,Cuenta PUC,Saldo débito,Saldo crédito,Cédula\n31/12/2026,1105,10000,0,{$cliente->tercero->numero_documento}\n";
+
+        $id = $this->importarCompleto('saldos_iniciales', $csv);
+
+        $this->assertSame(0, $this->importacion($id)->filas_aceptadas);
+        $this->assertStringContainsString('no es de cartera', implode(' ', $this->motivosDeRechazo($id)));
     }
 }

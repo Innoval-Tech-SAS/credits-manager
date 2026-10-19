@@ -138,7 +138,7 @@ class ImportacionDobleConteoCarteraTest extends TestCase
         $id = $this->importarCompleto('saldos_iniciales', self::SALDOS
             ."31/12/2023,133005,2000000,0\n"
             ."31/12/2023,421005,0,500000\n"
-            ."30/09/2023,110505,800000,0\n");
+            ."30/09/2023,110505,800000,0\n", ['generar_asiento' => false]);
 
         $this->assertSame(2, $this->importacion($id)->filas_aceptadas);
         $this->assertSame([2], array_column($this->erroresDe($id), 'fila'));
@@ -156,7 +156,7 @@ class ImportacionDobleConteoCarteraTest extends TestCase
         $this->actingAsAdmin();
         $this->crearCuenta(['codigo' => '133005', 'nombre' => 'Cartera de créditos']);
 
-        $id = $this->importarCompleto('saldos_iniciales', self::SALDOS."31/12/2023,133005,2000000,0\n");
+        $id = $this->importarCompleto('saldos_iniciales', self::SALDOS."31/12/2023,133005,2000000,0\n", ['generar_asiento' => false]);
 
         $this->assertSame(1, $this->importacion($id)->filas_aceptadas);
     }
