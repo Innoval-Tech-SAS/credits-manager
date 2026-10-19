@@ -214,7 +214,7 @@ export const AccountingDashboardPage: FC = () => {
 
     return (
         <div className="flex min-h-full flex-col gap-6 pb-6">
-            <PageBreadcrumb pageTitle="Dashboard contable" />
+            <PageBreadcrumb pageTitle="Panel contable" />
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">

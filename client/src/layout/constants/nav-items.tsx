@@ -356,7 +356,7 @@ export const NAV_ITEMS: NavItem[] = [
         icon: ChartColumn,
         subItems: [
             {
-                name: "Dashboard Contable",
+                name: "Panel Contable",
                 path: "/contabilidad/dashboard",
                 icon: LayoutDashboard,
                 moduleKey: "informes_contables",
