@@ -9,6 +9,7 @@ use App\Core\Dinero\Dinero;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
 
 class AsientoContableRepository extends BaseRepository
@@ -306,10 +307,18 @@ class AsientoContableRepository extends BaseRepository
             ->whereBetween('comprobantes.fecha', [$desde, $hasta])
             ->groupBy('mes', 'plan_cuentas.tipo')
             ->selectRaw(
-                "DATE_FORMAT(comprobantes.fecha, '%Y-%m') as mes, plan_cuentas.tipo, ".
+                $this->expresionMes('comprobantes.fecha').' as mes, plan_cuentas.tipo, '.
                 'SUM(asientos_contables.debito) as debitos, SUM(asientos_contables.credito) as creditos'
             )
             ->get();
+    }
+
+    /** Agrupa por mes sin depender de una función de un solo motor: MySQL en producción, SQLite en tests. */
+    private function expresionMes(string $columna): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', {$columna})"
+            : "DATE_FORMAT({$columna}, '%Y-%m')";
     }
 
     /**
