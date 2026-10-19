@@ -8,6 +8,7 @@ export const SCHEDULED_TASK_LABELS: Record<string, string> = {
     'importaciones:limpiar': 'Limpiar importaciones',
     'metas:evaluar': 'Evaluar metas',
     'obligaciones_tributarias:evaluar-alertas': 'Alertas tributarias',
+    'contabilidad:devengar-intereses': 'Devengar intereses',
 };
 
 export const SCHEDULED_TASK_RESULT_LABELS: Record<ResultadoEjecucionTarea, string> = {

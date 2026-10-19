@@ -64,6 +64,13 @@ Schedule::command('importaciones:limpiar')
     ->name('importaciones:limpiar')
     ->withoutOverlapping(30);
 
+/** Devenga el 1 de cada mes lo vencido hasta hoy; si un mes falla, el siguiente lo recupera (la consulta es acumulativa, no solo del mes). */
+Schedule::command('contabilidad:devengar-intereses')
+    ->monthlyOn(1, $horaDe('contabilidad:devengar-intereses'))
+    ->when(fn () => $activaDe('contabilidad:devengar-intereses'))
+    ->name('contabilidad:devengar-intereses')
+    ->withoutOverlapping(60);
+
 /**
  * Respaldo diario de base y archivos (los domingos y el día 1 también se copia a semanal y mensual).
  * Un fallo queda en el log del scheduler; el respaldo anterior sigue disponible. No admite pausa desde

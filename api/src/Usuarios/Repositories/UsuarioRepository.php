@@ -24,6 +24,16 @@ class UsuarioRepository extends BaseRepository
             ->first();
     }
 
+    /** Autor temporal para procesos sin sesión que necesitan un `Auth::user()` de la empresa (ver `conAutor`). */
+    public function primerActivoDeEmpresa(int $empresaId): ?Usuario
+    {
+        return $this->consulta()
+            ->where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->orderBy('id')
+            ->first();
+    }
+
     /** Incluye inactivos y dados de baja: solo para explicar por qué falló un inicio de sesión. */
     public function buscarPorUsuario(string $usuario): ?Usuario
     {
