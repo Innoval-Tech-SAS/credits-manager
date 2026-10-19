@@ -56,6 +56,9 @@ Todo servicio con escrituras de negocio emite su evento; los módulos son las co
 | `cartera` | Mora: cuotas que pasaron a vencida (un evento por empresa y corrida) |
 | `contabilidad` | Comprobantes (manuales y automáticos, `contabilizar`/`crear`), reverso, descarga de un comprobante en PDF (`exportar`), cierre y reapertura de período (con motivo), plan de cuentas, centros de costo, tipos de comprobante, reglas, documentos de terceros (alta, aplicación, anulación) e importación de apertura |
 | `gastos` | Causación y anulación de gastos, tipos de gasto, actividades, valor UVT, parametrizaciones y tarifas ReteICA (incluida la vigencia que se cierra sola) |
+| `egresos` | Registro y reversa de un egreso (pago de documentos por pagar) |
+| `facturacion` | Borrador, emisión y anulación de facturas, notas débito/crédito (incluida su aprobación), cobro y reversa de cobro, descarga en PDF (`exportar`) |
+| `conciliacion` | Marcar y desmarcar un movimiento del extracto contra un asiento, envío a cuenta puente |
 | `geografia` | Alta y edición de municipios del catálogo global (solo superadmin; el evento no lleva empresa) |
 | `auditoria` | Exportaciones y descargas de la bitácora |
 
