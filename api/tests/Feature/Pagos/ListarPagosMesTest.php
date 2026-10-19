@@ -67,4 +67,19 @@ class ListarPagosMesTest extends TestCase
 
         $this->getJson('/api/v1/pagos')->assertJsonPath('data.0.reversa.motivo', 'Pago registrado por error');
     }
+
+    public function test_recorrer_todas_las_paginas_no_repite_ni_omite_pagos_con_la_misma_fecha(): void
+    {
+        $this->actingAsAdmin();
+        $ids = collect(range(1, 5))->map(fn () => $this->pagar($this->creditoConCuota())->id);
+        Pago::query()->whereKey($ids)->update(['fecha_pago' => '2026-05-10 10:00:00']);
+
+        $vistos = collect();
+        for ($pagina = 1; $pagina <= 3; $pagina++) {
+            $vistos->push(...$this->getJson("/api/v1/pagos?per_page=2&page={$pagina}")->json('data.*.id'));
+        }
+
+        $this->assertSame($ids->sort()->values()->all(), $vistos->unique()->sort()->values()->all());
+        $this->assertCount($ids->count(), $vistos);
+    }
 }

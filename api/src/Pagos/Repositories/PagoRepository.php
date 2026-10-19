@@ -24,7 +24,8 @@ class PagoRepository extends BaseRepository
     {
         $consulta = $this->consulta()
             ->with(['cliente.tercero', 'credito', 'recibo:id,pago_id,numero,estado', 'reversa:id,pago_id,fecha,motivo'])
-            ->orderByDesc('fecha_pago');
+            ->orderByDesc('fecha_pago')
+            ->orderByDesc('id');
 
         return $this->filtrarMes($this->filtrar($consulta, $busqueda), $mes)->paginate(perPage: $porPagina, page: $pagina);
     }
@@ -35,7 +36,8 @@ class PagoRepository extends BaseRepository
         $consulta = $this->consulta()
             ->where('pagos.empresa_id', $empresaId)
             ->with(['cliente.tercero', 'recibo:id,pago_id,numero,estado', 'reversa:id,pago_id,fecha,motivo'])
-            ->orderByDesc('fecha_pago');
+            ->orderByDesc('fecha_pago')
+            ->orderByDesc('id');
 
         if ($asesorId !== null) {
             $consulta->whereIn('pagos.cliente_id', DB::table('clientes')->select('id')->where('empresa_id', $empresaId)->where('asesor_id', $asesorId));
