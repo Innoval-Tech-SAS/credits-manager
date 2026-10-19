@@ -60,6 +60,7 @@ class ImportacionService
         UploadedFile $archivo,
         bool $crearEmpleadores,
         bool $generarAsiento,
+        ?int $tipoComprobanteId = null,
     ): Importacion {
         $this->exigirPermisoDeTipo($usuario, $tipo);
 
@@ -92,6 +93,7 @@ class ImportacionService
             'archivo_ruta' => $ruta,
             'preferencia_crear_empleadores' => $crearEmpleadores,
             'preferencia_generar_asiento' => $generarAsiento,
+            'tipo_comprobante_id' => $tipoComprobanteId,
         ]);
 
         $this->auditoria->registrar(

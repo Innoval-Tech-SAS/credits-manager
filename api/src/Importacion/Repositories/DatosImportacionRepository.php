@@ -54,6 +54,36 @@ class DatosImportacionRepository
             ->all();
     }
 
+    /** @param list<int> $clienteIds @return array<int, int> id de cliente → tercero_id */
+    public function tercerosPorClientes(int $empresaId, array $clienteIds): array
+    {
+        if ($clienteIds === []) {
+            return [];
+        }
+
+        return Cliente::query()
+            ->where('empresa_id', $empresaId)
+            ->whereIn('id', $clienteIds)
+            ->pluck('tercero_id', 'id')
+            ->all();
+    }
+
+    /** @param list<int> $creditoIds @return array<int, int> id de crédito → tercero_id de su cliente */
+    public function tercerosPorCreditos(int $empresaId, array $creditoIds): array
+    {
+        if ($creditoIds === []) {
+            return [];
+        }
+
+        return Credito::query()
+            ->join('clientes', 'clientes.id', '=', 'creditos.cliente_id')
+            ->where('creditos.empresa_id', $empresaId)
+            ->where('clientes.empresa_id', $empresaId)
+            ->whereIn('creditos.id', $creditoIds)
+            ->pluck('clientes.tercero_id', 'creditos.id')
+            ->all();
+    }
+
     /** @param list<string> $codigos @return array<string, int> */
     public function cuentasPorCodigos(int $empresaId, array $codigos): array
     {
@@ -65,6 +95,21 @@ class DatosImportacionRepository
             ->where('empresa_id', $empresaId)
             ->whereIn('codigo', $codigos)
             ->pluck('id', 'codigo')
+            ->all();
+    }
+
+    /** @param list<string> $codigos @return array<string, PlanCuenta> código → cuenta, con los campos que deciden si exige tercero (ver `PlanCuenta::esCarteraDeTerceros()`) */
+    public function cuentasConDatosPorCodigos(int $empresaId, array $codigos): array
+    {
+        if ($codigos === []) {
+            return [];
+        }
+
+        return PlanCuenta::query()
+            ->where('empresa_id', $empresaId)
+            ->whereIn('codigo', $codigos)
+            ->get(['id', 'codigo', 'exige_tercero', 'exige_documento_cruce'])
+            ->keyBy('codigo')
             ->all();
     }
 

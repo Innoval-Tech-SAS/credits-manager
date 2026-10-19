@@ -63,4 +63,4 @@ export const IMPORT_PERMISSIONS: string[] = Object.values(IMPORT_TYPE_PERMISSION
 
 export const IMPORT_TYPES_WITH_EMPLOYER_CHECK: ImportType[] = ['clientes'];
 
-export const IMPORT_TYPES_WITH_ACCOUNTING: ImportType[] = ['creditos', 'pagos'];
+export const IMPORT_TYPES_WITH_ACCOUNTING: ImportType[] = ['creditos', 'pagos', 'saldos_iniciales'];

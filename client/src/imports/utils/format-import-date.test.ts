@@ -51,7 +51,7 @@ describe('constantes del asistente', () => {
         expect(IMPORT_TYPE_OPTIONS[0].value).toBe('clientes');
     });
 
-    it('solo créditos y pagos contabilizan', () => {
-        expect(IMPORT_TYPES_WITH_ACCOUNTING).toEqual(['creditos', 'pagos']);
+    it('solo créditos, pagos y saldos iniciales contabilizan', () => {
+        expect(IMPORT_TYPES_WITH_ACCOUNTING).toEqual(['creditos', 'pagos', 'saldos_iniciales']);
     });
 });
