@@ -26,6 +26,7 @@ import {
     House,
     Landmark,
     Layers,
+    LayoutDashboard,
     ListChecks,
     ListTree,
     MapPin,
@@ -354,6 +355,13 @@ export const NAV_ITEMS: NavItem[] = [
         name: "Informes Contables",
         icon: ChartColumn,
         subItems: [
+            {
+                name: "Dashboard Contable",
+                path: "/contabilidad/dashboard",
+                icon: LayoutDashboard,
+                moduleKey: "informes_contables",
+                action: "ver_dashboard_contable",
+            },
             {
                 name: "Libro Diario",
                 path: "/contabilidad/libro-diario",
