@@ -369,16 +369,18 @@ export const AccountingDashboardPage: FC = () => {
 
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         <Card title="Ingresos por cuenta" to="/contabilidad/estados-financieros">
-                            <DataTable
-                                columns={[
-                                    { key: 'codigo', label: 'Cuenta' },
-                                    { key: 'nombre', label: 'Nombre' },
-                                    { key: 'valor', label: 'Valor', render: (row) => formatMoney(row.valor) },
-                                ]}
-                                rows={resultados.ingresos}
-                                getRowKey={(row) => row.codigo}
-                                emptyMessage="Sin ingresos en el rango."
-                            />
+                            <div className="custom-scrollbar max-h-96 overflow-y-auto">
+                                <DataTable
+                                    columns={[
+                                        { key: 'codigo', label: 'Cuenta' },
+                                        { key: 'nombre', label: 'Nombre' },
+                                        { key: 'valor', label: 'Valor', render: (row) => formatMoney(row.valor) },
+                                    ]}
+                                    rows={resultados.ingresos}
+                                    getRowKey={(row) => row.codigo}
+                                    emptyMessage="Sin ingresos en el rango."
+                                />
+                            </div>
                         </Card>
                         <DonutBreakdown
                             title="Gastos y costos por centro de costo"
