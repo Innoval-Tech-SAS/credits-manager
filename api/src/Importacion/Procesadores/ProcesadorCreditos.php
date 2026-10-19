@@ -40,6 +40,10 @@ final class ProcesadorCreditos implements ProcesadorFila
             $ctx->empresaId,
             array_values(array_filter(array_column($valoresLote, 'codigo'))),
         );
+        $ctx->tercerosPorClienteId = $this->datos->tercerosPorClientes(
+            $ctx->empresaId,
+            array_values($ctx->clientesPorCedula),
+        );
     }
 
     public function procesar(array $valores, ContextoEjecucion $ctx): void
@@ -130,7 +134,7 @@ final class ProcesadorCreditos implements ProcesadorFila
             if ($ctx->generarAsiento && $ctx->cubiertoPorApertura($fecha)) {
                 $ctx->reportes[] = ['severidad' => 'aviso', 'columna' => 'fecha_desembolso', 'motivo' => "Sin asiento de desembolso: los saldos iniciales con corte {$ctx->fechaCorteApertura} ya incluyen esta cartera."];
             } elseif ($ctx->generarAsiento) {
-                $this->comprobantes->contabilizarDesembolsoCredito($credito);
+                $this->comprobantes->contabilizarDesembolsoCredito($credito, $ctx->tercerosPorClienteId[$clienteId] ?? null);
             }
         }
 

@@ -318,7 +318,7 @@ class CreditoService
                 'estado' => EstadoCredito::Desembolsado,
                 'desembolsado_en' => now(),
             ]);
-            $comprobante = $this->comprobantes->contabilizarDesembolsoCredito($credito);
+            $comprobante = $this->comprobantes->contabilizarDesembolsoCredito($credito, $credito->cliente->tercero_id);
 
             $this->auditoria->registrarModificacion(
                 AuditoriaConstants::MODULO_CREDITOS,

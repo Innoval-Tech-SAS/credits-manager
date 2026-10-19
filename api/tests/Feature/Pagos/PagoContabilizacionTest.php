@@ -66,8 +66,8 @@ class PagoContabilizacionTest extends TestCase
             'total_debito' => 30000,
             'total_credito' => 30000,
         ]);
-        $this->assertDatabaseHas('asientos_contables', ['credito' => 5000]); // interés
-        $this->assertDatabaseHas('asientos_contables', ['credito' => 25000]); // capital
+        $this->assertDatabaseHas('asientos_contables', ['credito' => 5000, 'tercero_id' => $cliente->tercero_id]); // interés
+        $this->assertDatabaseHas('asientos_contables', ['credito' => 25000, 'tercero_id' => $cliente->tercero_id]); // capital
 
         // La cuota sigue reflejando el mismo comportamiento que antes de este enganche.
         $this->assertEquals(300, $cuota->fresh()->valor_pagado->aFloat());

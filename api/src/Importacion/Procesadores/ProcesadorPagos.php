@@ -35,6 +35,10 @@ final class ProcesadorPagos implements ProcesadorFila
             $ctx->empresaId,
             array_values(array_filter(array_column($valoresLote, 'codigo'))),
         );
+        $ctx->tercerosPorCreditoId = $this->datos->tercerosPorCreditos(
+            $ctx->empresaId,
+            array_values($ctx->creditosPorCodigo),
+        );
 
         if ($ctx->usuariosPorNombre === []) {
             $ctx->usuariosPorNombre = $this->datos->usuariosPorNombre($ctx->empresaId);
@@ -119,6 +123,7 @@ final class ProcesadorPagos implements ProcesadorFila
             ],
             $registradoPor,
             $generarAsiento,
+            $ctx->tercerosPorCreditoId[$creditoId] ?? null,
         );
     }
 
