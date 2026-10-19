@@ -9,6 +9,7 @@ use App\Core\Dinero\Dinero;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\LazyCollection;
 
 class AsientoContableRepository extends BaseRepository
@@ -286,6 +287,38 @@ class AsientoContableRepository extends BaseRepository
                 'asientos_contables.credito',
             ])
             ->get();
+    }
+
+    /**
+     * Saldo neto mensual (débito-crédito) de las cuentas de los tipos dados, agrupado por mes de la fecha del
+     * comprobante y por tipo de cuenta — una sola consulta agregada para toda la serie, no una por mes.
+     *
+     * @param  list<string>  $tipos
+     */
+    public function saldosMensualesPorTipo(int $empresaId, array $tipos, string $desde, string $hasta): Collection
+    {
+        return $this->consulta()
+            ->join('comprobantes', 'comprobantes.id', '=', 'asientos_contables.comprobante_id')
+            ->join('plan_cuentas', 'plan_cuentas.id', '=', 'asientos_contables.cuenta_id')
+            ->where('comprobantes.empresa_id', $empresaId)
+            ->where('plan_cuentas.empresa_id', $empresaId)
+            ->whereIn('plan_cuentas.tipo', $tipos)
+            ->where(EfectoContable::condicion())
+            ->whereBetween('comprobantes.fecha', [$desde, $hasta])
+            ->groupBy('mes', 'plan_cuentas.tipo')
+            ->selectRaw(
+                $this->expresionMes('comprobantes.fecha').' as mes, plan_cuentas.tipo, '.
+                'SUM(asientos_contables.debito) as debitos, SUM(asientos_contables.credito) as creditos'
+            )
+            ->get();
+    }
+
+    /** Agrupa por mes sin depender de una función de un solo motor: MySQL en producción, SQLite en tests. */
+    private function expresionMes(string $columna): string
+    {
+        return DB::connection()->getDriverName() === 'sqlite'
+            ? "strftime('%Y-%m', {$columna})"
+            : "DATE_FORMAT({$columna}, '%Y-%m')";
     }
 
     /**

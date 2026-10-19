@@ -26,6 +26,17 @@ class SolicitudReaperturaPeriodoRepository extends BaseRepository
             ->get();
     }
 
+    /** Para el dashboard contable: solo las pendientes de la empresa, lo justo para listarlas en una tarjeta. */
+    public function pendientes(int $limite = 10): Collection
+    {
+        return $this->consulta()
+            ->where('estado', EstadoSolicitudReapertura::Pendiente)
+            ->with(['periodo:id,anio,mes', 'solicitante:id,nombre'])
+            ->orderByDesc('creado_en')
+            ->limit($limite)
+            ->get();
+    }
+
     public function existePendienteDelPeriodo(int $periodoId): bool
     {
         return $this->consulta()

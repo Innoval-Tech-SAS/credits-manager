@@ -16,6 +16,12 @@ class ContabilidadConstants
 
     public const PREFIJOS_CUENTAS_POR_PAGAR = ['2205', '2335'];
 
+    /** Deterioro (provisión) de cartera: cuenta correctora del activo, naturaleza crédito dentro de 1305. */
+    public const PREFIJO_CUENTA_DETERIORO_CARTERA = '1399';
+
+    /** Clave de la tarea programada que el dashboard contable consulta para "devengo de intereses este mes". */
+    public const TAREA_DEVENGAR_INTERESES = 'contabilidad:devengar-intereses';
+
     public const LIMITE_DOCUMENTOS_CRUCE = 100;
 
     /**

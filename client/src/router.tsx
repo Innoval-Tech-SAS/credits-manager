@@ -16,6 +16,7 @@ import { AppLayout } from './layout/components/app-layout';
 import { ErrorPage } from './layout/pages/error-page';
 import { lazyPage } from './shared/utils/lazy-page';
 
+const AccountingDashboardPage = lazyPage(() => import('./accounting/pages/accounting-dashboard-page'), 'AccountingDashboardPage');
 const AccountsPayablePage = lazyPage(() => import('./accounting/pages/accounts-payable-page'), 'AccountsPayablePage');
 const AccountsReceivablePage = lazyPage(() => import('./accounting/pages/accounts-receivable-page'), 'AccountsReceivablePage');
 const CreateAdvancePage = lazyPage(() => import('./advances/pages/create-advance-page'), 'CreateAdvancePage');
@@ -687,6 +688,14 @@ const routes: RouteObject[] = [
                         element: (
                             <RequireModulePermission modulo="contabilidad" accion="listar_comprobantes">
                                 <VoucherDetailPage />
+                            </RequireModulePermission>
+                        ),
+                    },
+                    {
+                        path: 'contabilidad/dashboard',
+                        element: (
+                            <RequireModulePermission modulo="informes_contables" accion="ver_dashboard_contable">
+                                <AccountingDashboardPage />
                             </RequireModulePermission>
                         ),
                     },

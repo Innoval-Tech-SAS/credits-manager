@@ -48,6 +48,12 @@ class CreditoRepository extends BaseRepository
         return $this->consulta()->where('estado', EstadoCredito::Desembolsado)->count();
     }
 
+    /** Solo los ids: el dashboard contable solo necesita cruzarlos con `CuotaRepository::resumenPorCreditos()`. */
+    public function idsVigentesDeEmpresa(int $empresaId): array
+    {
+        return $this->consultaDeEmpresa($empresaId)->where('estado', EstadoCredito::Desembolsado)->pluck('id')->all();
+    }
+
     public function paginar(?string $busqueda, int $porPagina, int $pagina, ?int $clienteId = null, ?EstadoCredito $estado = null): LengthAwarePaginator
     {
         $consulta = $this->consulta()

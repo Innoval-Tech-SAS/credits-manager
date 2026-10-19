@@ -48,4 +48,9 @@ class ComprobanteRepository extends BaseRepository
             ->latest('id')
             ->first();
     }
+
+    public function contarPorEstado(EstadoComprobante $estado): int
+    {
+        return $this->consulta()->where('estado', $estado)->count();
+    }
 }

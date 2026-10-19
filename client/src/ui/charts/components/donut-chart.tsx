@@ -12,6 +12,7 @@ export const DonutChart: FC<DonutChartProps> = ({
     totalValue,
     valueFormatter = (value) => value.toLocaleString('es-CO'),
     height = 260,
+    showLegend = true,
 }) => {
     const options: ApexOptions = {
         chart: { type: 'donut', fontFamily: 'Outfit, sans-serif' },
@@ -27,6 +28,7 @@ export const DonutChart: FC<DonutChartProps> = ({
             y: { formatter: (value) => valueFormatter(value) },
         },
         legend: {
+            show: showLegend,
             position: 'bottom',
             horizontalAlign: 'center',
             fontFamily: 'Outfit, sans-serif',
@@ -45,7 +47,7 @@ export const DonutChart: FC<DonutChartProps> = ({
                         show: true,
                         name: { show: true, fontSize: '13px' },
                         value: { show: true, fontSize: '20px', fontWeight: 700, formatter: (value) => valueFormatter(Number(value)) },
-                        total: { show: true, label: totalLabel, formatter: () => totalValue },
+                        total: { show: false, label: totalLabel, formatter: () => totalValue },
                     },
                 },
             },
@@ -55,6 +57,10 @@ export const DonutChart: FC<DonutChartProps> = ({
     return (
         <div id="chartDarkStyle">
             <Chart type="donut" height={height} series={series} options={options} />
+            <div className="-mt-2 text-center">
+                <p className="text-theme-xs text-gray-500 dark:text-gray-400">{totalLabel}</p>
+                <p className="mt-0.5 text-lg font-semibold text-gray-800 dark:text-white/90">{totalValue}</p>
+            </div>
         </div>
     );
 };
