@@ -40,7 +40,7 @@ Si una migración falla, la aplicación **queda en mantenimiento a propósito**:
 
 ### 2.1. Servidor: usuario de despliegue
 
-Como root en `62.72.21.110`:
+Como root en `<IP_DEL_SERVIDOR>`:
 
 ```bash
 # Usuario sin contraseña (useradd la deja bloqueada), solo para recibir el SSH de GitHub
@@ -73,7 +73,7 @@ chmod 600 /home/deploy/.ssh/authorized_keys
 restorecon -R /home/deploy/.ssh       # solo si `getenforce` no dice Disabled (hoy está Disabled)
 
 # Huella del servidor para el known_hosts de GitHub
-ssh-keyscan -t ed25519 62.72.21.110
+ssh-keyscan -t ed25519 <IP_DEL_SERVIDOR>
 ```
 
 Con `restrict,command=…` esa llave **solo** puede ejecutar el script de despliegue: no abre shell ni permite túneles. El script descarta cualquier argumento que no sea un SHA de 40 caracteres.
@@ -123,10 +123,10 @@ En `github.com/Innoval-Tech-SAS/credits-manager` → **Settings → Environments
 
 | Secreto | Valor |
 |---|---|
-| `DEPLOY_HOST` | `62.72.21.110` |
+| `DEPLOY_HOST` | `<IP_DEL_SERVIDOR>` |
 | `DEPLOY_USER` | `deploy` |
 | `DEPLOY_SSH_KEY` | contenido completo de `/root/deploy_key`, incluidas las líneas `-----BEGIN/END…-----` |
-| `DEPLOY_KNOWN_HOSTS` | salida de `ssh-keyscan -t ed25519 62.72.21.110` |
+| `DEPLOY_KNOWN_HOSTS` | salida de `ssh-keyscan -t ed25519 <IP_DEL_SERVIDOR>` |
 
 **Plan de la organización:** en GitHub Free, los environments, sus secretos y los rulesets no se aplican a repositorios privados. Si el job de Deploy falla en *Verificar secretos*, mueve los 4 secretos a **Settings → Secrets and variables → Actions** (secretos del repositorio). Protegerlos solo para la rama `main` y hacer cumplir el ruleset requiere GitHub Team.
 
