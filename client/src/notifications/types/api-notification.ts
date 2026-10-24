@@ -1,0 +1,33 @@
+export type NotificationType =
+    | 'exportacion_lista'
+    | 'exportacion_fallida'
+    | 'reapertura_solicitada'
+    | 'reapertura_autorizada'
+    | 'reapertura_rechazada'
+    | 'importacion_validada'
+    | 'importacion_completada'
+    | 'importacion_fallida'
+    | 'extracto_bancario_cargado'
+    | 'extracto_bancario_rechazado'
+    | 'obligacion_tributaria_por_vencer';
+
+/** Raw shape returned by `GET /notificaciones` (rows), `GET /notificaciones/pagina`, `POST /notificaciones/{id}/leer` and pushed by the `.notificacion.creada` WebSocket event. */
+export type ApiNotification = {
+    id: number;
+    empresa_id: number | null;
+    usuario_id: number;
+    tipo: NotificationType;
+    titulo: string;
+    mensaje: string;
+    datos: {
+        exportacion_id?: number;
+        formato?: string;
+        solicitud_id?: number;
+        periodo_id?: number;
+        importacion_id?: number;
+        extracto_bancario_id?: number;
+        obligacion_id?: number;
+    } | null;
+    leida_en: string | null;
+    creado_en: string | null;
+};

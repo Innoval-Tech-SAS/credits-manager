@@ -1,0 +1,226 @@
+<?php
+
+namespace Tests\Feature\Correo;
+
+use App\Correo\Mail\CorreoCobranza;
+use App\Correo\Models\ConfiguracionCorreo;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\Concerns\ActsAsAdmin;
+use Tests\Concerns\AfirmaAuditoria;
+use Tests\Concerns\SimulaCorreo;
+use Tests\TestCase;
+
+class ConfiguracionCorreoTest extends TestCase
+{
+    use ActsAsAdmin;
+    use AfirmaAuditoria;
+    use RefreshDatabase;
+    use SimulaCorreo;
+
+    private function datosValidos(array $sobrescribir = []): array
+    {
+        return array_merge([
+            'remitente' => 'cobranza@creditosdda.com',
+            'nombre_remitente' => 'Cobranza DDA',
+            'host' => 'smtp.example.com',
+            'puerto' => 587,
+            'cifrado' => 'tls',
+            'usuario' => 'cobranza@example.com',
+            'clave' => 'secreto-de-prueba',
+        ], $sobrescribir);
+    }
+
+    public function test_admin_guarda_la_configuracion_y_la_clave_queda_cifrada_en_bd(): void
+    {
+        $admin = $this->actingAsAdmin();
+
+        $respuesta = $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos());
+
+        $respuesta->assertOk()
+            ->assertJsonPath('configuracion.estado', 'configurada')
+            ->assertJsonPath('configuracion.clave_estado', 'configurada');
+
+        $this->assertDatabaseHas('configuraciones_correo', [
+            'empresa_id' => $admin->empresa_id,
+            'tipo' => 'cobranza',
+            'remitente' => 'cobranza@creditosdda.com',
+            'puerto' => 587,
+        ]);
+
+        $crudo = DB::table('configuraciones_correo')->where('empresa_id', $admin->empresa_id)->value('clave');
+        $this->assertNotSame('secreto-de-prueba', $crudo);
+        $this->assertSame('secreto-de-prueba', ConfiguracionCorreo::query()->first()->clave);
+    }
+
+    public function test_la_respuesta_nunca_incluye_la_clave(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())
+            ->assertOk()
+            ->assertDontSee('secreto-de-prueba');
+
+        $this->getJson('/api/v1/correo/configuracion/cobranza')
+            ->assertOk()
+            ->assertJsonPath('configuracion.clave_estado', 'configurada')
+            ->assertDontSee('secreto-de-prueba');
+    }
+
+    public function test_muestra_sin_configurar_cuando_la_empresa_no_tiene_fila(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->getJson('/api/v1/correo/configuracion/cobranza')
+            ->assertOk()
+            ->assertJsonPath('configuracion.estado', 'sin_configurar')
+            ->assertJsonPath('configuracion.clave_estado', 'sin_configurar');
+    }
+
+    /** Fila heredada del extinto driver de prueba: quedó sin host. Se trata igual que si no existiera. */
+    public function test_fila_heredada_sin_host_se_muestra_y_se_trata_como_sin_configurar(): void
+    {
+        $admin = $this->actingAsAdmin();
+
+        DB::table('configuraciones_correo')->insert([
+            'empresa_id' => $admin->empresa_id,
+            'tipo' => 'cobranza',
+            'remitente' => 'viejo@creditosdda.com',
+            'nombre_remitente' => 'Viejo',
+            'cifrado' => 'tls',
+            'creado_en' => now(),
+            'ultima_actualizacion' => now(),
+        ]);
+
+        $this->getJson('/api/v1/correo/configuracion/cobranza')
+            ->assertOk()
+            ->assertJsonPath('configuracion.estado', 'sin_configurar')
+            ->assertJsonPath('configuracion.clave_estado', 'sin_configurar');
+
+        $this->postJson('/api/v1/correo/configuracion/cobranza/prueba', ['destinatario' => 'destino@example.com'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['destinatario']);
+    }
+
+    public function test_cada_tipo_tiene_su_propia_configuracion(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertOk();
+
+        $this->getJson('/api/v1/correo/configuracion/facturacion')
+            ->assertOk()
+            ->assertJsonPath('configuracion.estado', 'sin_configurar');
+
+        $this->putJson('/api/v1/correo/configuracion/facturacion', $this->datosValidos(['remitente' => 'facturas@creditosdda.com']))->assertOk();
+
+        $this->assertDatabaseHas('configuraciones_correo', ['tipo' => 'cobranza', 'remitente' => 'cobranza@creditosdda.com']);
+        $this->assertDatabaseHas('configuraciones_correo', ['tipo' => 'facturacion', 'remitente' => 'facturas@creditosdda.com']);
+    }
+
+    public function test_guardar_sin_clave_conserva_la_clave_guardada(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertOk();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos(['clave' => null, 'nombre_remitente' => 'Otro nombre']))->assertOk();
+
+        $configuracion = ConfiguracionCorreo::query()->first();
+        $this->assertSame('secreto-de-prueba', $configuracion->clave);
+        $this->assertSame('Otro nombre', $configuracion->nombre_remitente);
+    }
+
+    public function test_422_si_faltan_campos_o_el_remitente_no_es_un_correo(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos(['remitente' => 'no-es-correo', 'host' => null, 'puerto' => null]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['remitente', 'host', 'puerto']);
+    }
+
+    public function test_el_driver_registro_ya_no_se_acepta_y_exige_host_puerto_y_cifrado(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos([
+            'driver' => 'registro',
+            'host' => null,
+            'puerto' => null,
+            'cifrado' => null,
+        ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['host', 'puerto', 'cifrado']);
+    }
+
+    public function test_401_sin_sesion(): void
+    {
+        $this->getJson('/api/v1/correo/configuracion/cobranza')->assertUnauthorized();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertUnauthorized();
+    }
+
+    public function test_403_para_un_asesor(): void
+    {
+        $this->actingAsAsesor();
+
+        $this->getJson('/api/v1/correo/configuracion/cobranza')->assertForbidden();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertForbidden();
+        $this->assertDatabaseCount('configuraciones_correo', 0);
+    }
+
+    public function test_guardar_registra_la_bitacora_sin_la_clave(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertOk();
+
+        $evento = $this->assertEventoAuditoria('crear', 'correo', 'configuracion_correo');
+        $this->assertStringNotContainsString('secreto-de-prueba', json_encode($evento));
+    }
+
+    public function test_cambiar_solo_la_clave_emite_evento_sin_mostrar_la_clave(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertOk();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos(['clave' => 'clave-nueva-de-prueba']))->assertOk();
+
+        $eventos = $this->eventosDeAuditoria('modificar', 'correo');
+        $this->assertCount(1, $eventos);
+        $this->assertStringContainsString('clave actualizada', $eventos[0]['descripcion']);
+        $this->assertStringNotContainsString('clave-nueva-de-prueba', json_encode($eventos));
+        $this->assertStringNotContainsString('secreto-de-prueba', json_encode($eventos));
+    }
+
+    public function test_prueba_envia_con_el_fake_y_devuelve_el_resultado_sin_credenciales(): void
+    {
+        $fake = $this->simulaCorreo();
+        $this->actingAsAdmin();
+        $this->putJson('/api/v1/correo/configuracion/cobranza', $this->datosValidos())->assertOk();
+
+        $respuesta = $this->postJson('/api/v1/correo/configuracion/cobranza/prueba', ['destinatario' => 'destino@example.com']);
+
+        $respuesta->assertOk()->assertJsonPath('enviado', true)->assertDontSee('secreto-de-prueba');
+        $fake->assertSent(CorreoCobranza::class, fn (CorreoCobranza $correo) => $correo->destinatario === 'destino@example.com'
+            && $correo->remitente === 'cobranza@creditosdda.com');
+    }
+
+    public function test_prueba_sin_configuracion_responde_422(): void
+    {
+        $this->simulaCorreo();
+        $this->actingAsAdmin();
+
+        $this->postJson('/api/v1/correo/configuracion/cobranza/prueba', ['destinatario' => 'destino@example.com'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['destinatario']);
+    }
+
+    public function test_422_si_la_prueba_no_trae_un_destinatario_valido(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->postJson('/api/v1/correo/configuracion/cobranza/prueba', ['destinatario' => 'no-es-correo'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['destinatario']);
+    }
+}

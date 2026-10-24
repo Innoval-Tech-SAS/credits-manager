@@ -1,0 +1,283 @@
+services:
+  database:
+    image: docker.io/library/mysql:8.4
+    container_name: credits-manager-database
+    command: ["mysqld", "--default-time-zone=-05:00", "--log-bin-trust-function-creators=1"]
+    environment:
+      TZ: America/Bogota
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/my.cnf:/etc/mysql/conf.d/custom.cnf:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    container_name: credits-manager-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: docker.io/phpmyadmin/phpmyadmin:latest
+    container_name: credits-manager-phpmyadmin
+    environment:
+      TZ: America/Bogota
+      PMA_HOST: database
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Suscriptor de larga duración de la bitácora: lee el stream de Redis e inserta en la tabla.
+  auditoria-listener:
+    image: localhost/credits-manager-api:latest
+    container_name: credits-manager-auditoria-listener
+    entrypoint: ["php", "artisan", "auditoria:escuchar"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 15s
+    environment: &api-worker-env
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: info
+      TZ: America/Bogota
+      APP_NAME: ${APP_NAME}
+      APP_ENV: ${APP_ENV}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: ${APP_URL}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+      APP_LOCALE: ${APP_LOCALE}
+      APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE}
+      DB_CONNECTION: mysql
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      REDIS_QUEUE_RETRY_AFTER: 4000
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_storage:/var/www/html/storage
+    restart: unless-stopped
+
+
+  horizon:
+    image: localhost/credits-manager-api:latest
+    container_name: credits-manager-horizon
+    entrypoint: ["php", "artisan", "horizon"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 60s
+    environment: *api-worker-env
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_storage:/var/www/html/storage
+      - exportaciones_data:/var/exportaciones
+      - importaciones_data:/var/importaciones
+      - conciliacion_data:/var/conciliacion
+    restart: unless-stopped
+
+  # Ejecuta las tareas programadas de Laravel (`routes/console.php`): mora diaria y limpieza de exportaciones.
+  # Una sola instancia: con dos réplicas cada tarea correría duplicada.
+  scheduler:
+    image: localhost/credits-manager-api:latest
+    container_name: credits-manager-scheduler
+    entrypoint: ["php", "artisan", "schedule:work"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
+    environment: *api-worker-env
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_storage:/var/www/html/storage
+      - exportaciones_data:/var/exportaciones
+      - importaciones_data:/var/importaciones
+      - conciliacion_data:/var/conciliacion
+      - ${RESPALDOS_ORIGEN:-respaldos_data}:/var/respaldos
+    restart: unless-stopped
+
+  # Panel de salud del superadmin: cada 5 s, y solo si alguien lo está mirando, publica por Reverb el
+  # estado del servidor, los servicios y las colas. El volumen de respaldos va en solo lectura: solo
+  # se usa para medir el disco del servidor, donde viven los volúmenes.
+  monitor:
+    image: localhost/credits-manager-api:latest
+    container_name: credits-manager-monitor
+    entrypoint: ["php", "artisan", "monitoreo:publicar"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 10s
+    environment: *api-worker-env
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - api_storage:/var/www/html/storage
+      - ${RESPALDOS_ORIGEN:-respaldos_data}:/var/respaldos:ro
+    restart: unless-stopped
+
+  # Servidor WebSocket (Laravel Reverb). El navegador entra por nginx (wss://api.ddasolucionescredicias.tech/app).
+  reverb:
+    image: localhost/credits-manager-api:latest
+    container_name: credits-manager-reverb
+    entrypoint: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    user: www-data
+    stop_signal: SIGTERM
+    stop_grace_period: 10s
+    environment:
+      <<: *api-worker-env
+      REVERB_SERVER_HOST: 0.0.0.0
+      REVERB_SERVER_PORT: 8080
+      REVERB_ALLOWED_ORIGINS: ${REVERB_ALLOWED_ORIGINS}
+      # Reverb consulta la caché cada 5 s (llave del comando reverb:restart): en Redis no depende de MySQL.
+      CACHE_STORE: redis
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    image: localhost/credits-manager-api:latest
+    container_name: credits-manager-api
+    environment:
+      TZ: America/Bogota
+      APP_NAME: ${APP_NAME}
+      APP_ENV: ${APP_ENV}
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: ${APP_DEBUG}
+      APP_URL: ${APP_URL}
+      APP_TIMEZONE: ${APP_TIMEZONE}
+      APP_LOCALE: ${APP_LOCALE}
+      APP_FALLBACK_LOCALE: ${APP_FALLBACK_LOCALE}
+      APP_FAKER_LOCALE: ${APP_FAKER_LOCALE}
+      DB_CONNECTION: mysql
+      DB_HOST: database
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SESSION_DOMAIN: ${SESSION_DOMAIN}
+      SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS}
+      SEED_ADMIN_NOMBRE: ${SEED_ADMIN_NOMBRE}
+      SEED_ADMIN_USUARIO: ${SEED_ADMIN_USUARIO}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      BROADCAST_CONNECTION: reverb
+      REVERB_APP_ID: ${REVERB_APP_ID}
+      REVERB_APP_KEY: ${REVERB_APP_KEY}
+      REVERB_APP_SECRET: ${REVERB_APP_SECRET}
+      REVERB_HOST: reverb
+      REVERB_PORT: 8080
+      REVERB_SCHEME: http
+      REVERB_ALLOWED_ORIGINS: ${REVERB_ALLOWED_ORIGINS}
+      REDIS_QUEUE_RETRY_AFTER: 4000
+    depends_on:
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auditoria-listener:
+        condition: service_started
+      horizon:
+        condition: service_started
+      reverb:
+        condition: service_started
+    volumes:
+      - api_storage:/var/www/html/storage
+      - exportaciones_data:/var/exportaciones
+      - importaciones_data:/var/importaciones
+      - conciliacion_data:/var/conciliacion
+      - ${RESPALDOS_ORIGEN:-respaldos_data}:/var/respaldos
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 9000) ? 0 : 1);"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_REVERB_APP_KEY: ${REVERB_APP_KEY}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME}
+    image: localhost/credits-manager-nginx:latest
+    container_name: credits-manager-nginx
+    environment:
+      TZ: America/Bogota
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./certbot/www:/var/www/certbot:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - api_storage:/var/www/html/storage:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      reverb:
+        condition: service_started
+      phpmyadmin:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:
+  api_storage:
+  exportaciones_data:
+  importaciones_data:
+  conciliacion_data:
+  respaldos_data:

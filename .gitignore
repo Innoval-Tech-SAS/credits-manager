@@ -1,0 +1,17 @@
+certs/
+certbot/www/
+.env
+.claude
+.github/*
+!.github/workflows/
+.agents
+.vscode/
+.pnpm-store/
+
+/resources/
+
+graphify-out/
+
+CLAUDE.md
+.playwright-mcp/
+*.png

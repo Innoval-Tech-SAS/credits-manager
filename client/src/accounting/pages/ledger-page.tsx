@@ -1,0 +1,151 @@
+import type { FC } from 'react';
+import { useState } from 'react';
+
+import { useResource } from '../../shared/hooks/use-resource';
+import { ReportExportButton } from '../components/report-export-button';
+import { formatDateEs } from '../../shared/utils/format-date-es';
+import { formatMoney } from '../../shared/utils/format-money';
+import { PageBreadcrumb } from '@ui/breadcrumb/components/page-breadcrumb';
+import { DatePicker } from '@ui/forms/components/date-picker';
+import { Label } from '@ui/forms/components/label';
+import { Select } from '@ui/forms/components/select';
+import { SkeletonStatus } from '@ui/skeleton/components/skeleton-status';
+import { TableSkeleton } from '@ui/skeleton/components/table-skeleton';
+import type { ApiAccount } from '../types/api-account';
+import type { ApiLedger, ApiLedgerMovement } from '../types/api-ledger';
+import type { LedgerPageProps } from '../props/ledger-page-props';
+
+function primerDiaDelAnio(): string {
+    return `${new Date().getFullYear()}-01-01`;
+}
+
+export const LedgerPage: FC<LedgerPageProps> = ({ modo = 'mayor' }) => {
+    const { data: cuentasData } = useResource<{ cuentas: ApiAccount[] }>('/contabilidad/plan-cuentas');
+    // Caja y bancos son las cuentas de la clase 11 del PUC; el control es el mismo libro mayor, filtrado a ellas.
+    const cuentas = (cuentasData?.cuentas ?? []).filter(
+        (cuenta) => cuenta.permite_movimiento && (modo === 'mayor' || cuenta.codigo.startsWith('11')),
+    );
+
+    const [cuentaId, setCuentaId] = useState('');
+    // Una cuenta de caja y bancos se exporta también con `exportar_caja_bancos` (mismo criterio que el backend).
+    const esCajaBancos = modo === 'cajaBancos' || (cuentas.find((cuenta) => String(cuenta.id) === cuentaId)?.codigo.startsWith('11') ?? false);
+    const exportPermissions = esCajaBancos
+        ? ['informes_contables.exportar_libro_mayor', 'informes_contables.exportar_caja_bancos']
+        : ['informes_contables.exportar_libro_mayor'];
+    const [desde, setDesde] = useState(primerDiaDelAnio());
+    const [hasta, setHasta] = useState(() => new Date().toISOString().slice(0, 10));
+
+    const { data, isLoading } = useResource<ApiLedger>(
+        cuentaId ? `/contabilidad/libro-mayor?cuenta_id=${cuentaId}&desde=${desde}&hasta=${hasta}` : null,
+    );
+
+    // Mismo criterio que el export: una cuenta débito sube con el débito, una crédito sube con el crédito.
+    const esDebito = data?.cuenta.naturaleza === 'debito';
+    const movimientosConSaldo = (data?.movimientos ?? []).reduce<Array<ApiLedgerMovement & { saldo: number }>>((filas, movimiento) => {
+        const saldoAnterior = filas.length > 0 ? filas[filas.length - 1].saldo : Number(data?.saldo_inicial ?? 0);
+        const debito = parseFloat(movimiento.debito);
+        const credito = parseFloat(movimiento.credito);
+        const saldo = esDebito ? saldoAnterior + debito - credito : saldoAnterior + credito - debito;
+
+        return [...filas, { ...movimiento, saldo }];
+    }, []);
+
+    return (
+        <div className="flex min-h-full flex-col gap-6 pb-6">
+            <PageBreadcrumb pageTitle={modo === 'cajaBancos' ? 'Caja y bancos' : 'Libro mayor / auxiliares'} />
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-3 xl:grid-cols-4">
+                    <div>
+                        <Label htmlFor="cuenta">Cuenta</Label>
+                        <Select
+                            id="cuenta"
+                            options={cuentas.map((cuenta) => ({ value: String(cuenta.id), label: `${cuenta.codigo} - ${cuenta.nombre}` }))}
+                            placeholder="Seleccione..."
+                            defaultValue={cuentaId}
+                            onChange={setCuentaId}
+                        />
+                    </div>
+                    <div>
+                        <Label htmlFor="desde">Desde</Label>
+                        <DatePicker id="desde" value={desde} onChange={setDesde} />
+                    </div>
+                    <div>
+                        <Label htmlFor="hasta">Hasta</Label>
+                        <DatePicker id="hasta" value={hasta} onChange={setHasta} />
+                    </div>
+                    <div className="flex items-end">
+                        <ReportExportButton
+                            endpoint="/contabilidad/libro-mayor/exportar"
+                            exportPermissions={exportPermissions}
+                            pdfEndpoint="/contabilidad/libro-mayor/pdf"
+                            pdfFilename="libro-mayor.pdf"
+                            filters={{ cuenta_id: cuentaId, desde, hasta }}
+                            disabled={!cuentaId}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {cuentaId && (
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/3">
+                    {isLoading && (
+                        <SkeletonStatus>
+                            <TableSkeleton columns={7} />
+                        </SkeletonStatus>
+                    )}
+
+                    {data && (
+                        <div className="custom-scrollbar overflow-x-auto">
+                            <table className="w-full text-left text-sm">
+                                <thead>
+                                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                                        {['Fecha', 'Comp.', 'Tercero', 'Descripción', 'Débito', 'Crédito', 'Saldo'].map((label) => (
+                                            <th key={label} className="px-4 py-3 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                {label}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="border-b border-gray-100 dark:border-gray-800">
+                                        <td colSpan={6} className="px-4 py-3 font-semibold text-gray-800 dark:text-white/90">
+                                            Saldo inicial
+                                        </td>
+                                        <td className="px-4 py-3 font-semibold text-gray-800 dark:text-white/90">
+                                            {formatMoney(data.saldo_inicial)}
+                                        </td>
+                                    </tr>
+
+                                    {movimientosConSaldo.map((movimiento, index) => (
+                                        <tr key={index} className="border-b border-gray-100 dark:border-gray-800">
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatDateEs(movimiento.fecha)}</td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{movimiento.numero}</td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{movimiento.tercero ?? '-'}</td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{movimiento.descripcion ?? ''}</td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                                                {parseFloat(movimiento.debito) > 0 ? formatMoney(movimiento.debito) : ''}
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                                                {parseFloat(movimiento.credito) > 0 ? formatMoney(movimiento.credito) : ''}
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{formatMoney(movimiento.saldo)}</td>
+                                        </tr>
+                                    ))}
+
+                                    {movimientosConSaldo.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="px-4 py-6 text-center text-sm text-gray-400 dark:text-gray-500">
+                                                Sin movimientos en el rango.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};

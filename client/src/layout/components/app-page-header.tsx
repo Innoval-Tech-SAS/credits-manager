@@ -1,0 +1,69 @@
+import type { FC } from 'react';
+import { Link, useLocation } from 'react-router';
+
+import { ChevronRight, Home } from 'lucide-react';
+import { usePageHeader } from '@ui/breadcrumb/hooks/use-page-header';
+import { GoBackButton } from '@ui/go-back/components/go-back-button';
+import { SkeletonBar } from '@ui/skeleton/components/skeleton-bar';
+import { Tooltip } from '@ui/tooltip/components/tooltip';
+import { findNavBreadcrumb } from '../utils/find-nav-breadcrumb';
+
+/**
+ * Encabezado fijo de cada página (no se va con el scroll del contenido). Mientras la página no registra su título
+ * (su código aún se está descargando) muestra un esqueleto en su lugar, para que el encabezado no salte al llegar.
+ * Desde `md` la ruta de migas muestra icono y nombre; en móvil y tablet solo el icono, con el nombre en el tooltip.
+ */
+export const AppPageHeader: FC = () => {
+    const { title, trail: trailOverride } = usePageHeader();
+    const location = useLocation();
+    const trail = trailOverride ?? findNavBreadcrumb(location.pathname);
+
+    return (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2">
+                <GoBackButton />
+                {title ? (
+                    <h2 className="text-xl font-semibold text-gray-800 dark:text-white/90">{title}</h2>
+                ) : (
+                    <SkeletonBar className="h-7 w-48" />
+                )}
+            </div>
+            <nav aria-label="Ruta de navegación">
+                <ol className="flex items-center gap-1.5">
+                    <li className="flex items-center gap-1.5">
+                        <Tooltip label="Inicio" hideFrom="md">
+                            <Link to="/" aria-label="Inicio" className="inline-flex min-h-6 items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90">
+                                <Home className="size-4" />
+                                <span className="hidden md:inline">Inicio</span>
+                            </Link>
+                        </Tooltip>
+                        {trail.length > 0 && <ChevronRight className="size-4 text-gray-400" />}
+                    </li>
+                    {trail.map((crumb, index) => {
+                        const isLast = index === trail.length - 1;
+                        const Icon = crumb.icon;
+
+                        return (
+                            <li key={crumb.name} className="flex items-center gap-1.5">
+                                <Tooltip label={crumb.name} hideFrom="md">
+                                    <span
+                                        tabIndex={0}
+                                        aria-label={crumb.name}
+                                        aria-current={isLast ? 'page' : undefined}
+                                        className={`inline-flex min-h-6 items-center gap-1.5 text-sm ${
+                                            isLast ? 'text-gray-800 dark:text-white/90' : 'text-gray-500 dark:text-gray-400'
+                                        }`}
+                                    >
+                                        {Icon && <Icon className="size-4" />}
+                                        <span className={Icon ? 'hidden md:inline' : undefined}>{crumb.name}</span>
+                                    </span>
+                                </Tooltip>
+                                {!isLast && <ChevronRight className="size-4 text-gray-400" />}
+                            </li>
+                        );
+                    })}
+                </ol>
+            </nav>
+        </div>
+    );
+};

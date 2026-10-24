@@ -1,0 +1,779 @@
+<?php
+
+namespace App\Contabilidad\Services;
+
+use App\Auditoria\Constants\AuditoriaConstants;
+use App\Auditoria\Enums\AccionAuditoria;
+use App\Auditoria\Services\EmisorAuditoria;
+use App\Contabilidad\Constants\ContabilidadConstants;
+use App\Contabilidad\Enums\EstadoComprobante;
+use App\Contabilidad\Enums\EstadoPeriodo;
+use App\Contabilidad\Enums\EventoContable;
+use App\Contabilidad\Enums\NaturalezaCuenta;
+use App\Contabilidad\Enums\NaturalezaDocumento;
+use App\Contabilidad\Enums\TipoCuenta;
+use App\Contabilidad\Models\Comprobante;
+use App\Contabilidad\Models\DocumentoTercero;
+use App\Contabilidad\Models\PlanCuenta;
+use App\Contabilidad\Models\ReglaContabilizacion;
+use App\Contabilidad\Repositories\AplicacionDocumentoRepository;
+use App\Contabilidad\Repositories\AsientoContableRepository;
+use App\Contabilidad\Repositories\ComprobanteRepository;
+use App\Contabilidad\Repositories\PlanCuentaRepository;
+use App\Contabilidad\Repositories\ReglaContabilizacionRepository;
+use App\Contabilidad\Repositories\TipoComprobanteRepository;
+use App\Contabilidad\Support\NumeroComprobante;
+use App\Core\Dinero\Dinero;
+use App\Creditos\Models\Credito;
+use App\Pagos\Models\Pago;
+use App\Terceros\Repositories\TerceroRepository;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+
+/**
+ * Puerto directo del motor de `includes/contabilidad.php` del legado. Toda
+ * generación automática (créditos, pagos) pasa por `crearComprobante()`, que:
+ *  - exige período contable abierto
+ *  - valida SIEMPRE que total débitos = total créditos antes de contabilizar
+ *  - nunca permite eliminar un comprobante contabilizado (solo reverso/anulación)
+ */
+class ComprobanteService
+{
+    public function __construct(
+        protected ComprobanteRepository $comprobantes,
+        protected AsientoContableRepository $asientos,
+        protected TipoComprobanteRepository $tiposComprobante,
+        protected ReglaContabilizacionRepository $reglas,
+        protected PeriodoContableService $periodos,
+        protected DocumentoTerceroService $documentosTercero,
+        protected AplicacionDocumentoRepository $aplicacionesDocumento,
+        protected TerceroRepository $terceros,
+        protected PlanCuentaRepository $cuentas,
+        protected EmisorAuditoria $auditoria,
+    ) {}
+
+    public function listar(?string $busqueda, int $porPagina, int $pagina): LengthAwarePaginator
+    {
+        return $this->comprobantes->paginar($busqueda, max(1, min(100, $porPagina)), max(1, $pagina));
+    }
+
+    public function mostrar(Comprobante $comprobante): Comprobante
+    {
+        return $this->comprobantes->obtenerConLineas($comprobante);
+    }
+
+    public function buscarContabilizadoPorOrigen(string $moduloOrigen, int $origenId): ?Comprobante
+    {
+        return $this->comprobantes->buscarContabilizadoPorOrigen($moduloOrigen, $origenId);
+    }
+
+    /**
+     * Crea y contabiliza (o deja en borrador) un comprobante con sus líneas.
+     * Lanza ValidationException si los totales no cuadran o el período está cerrado.
+     * Una línea con `documento_cruce_propio => true` recibe como documento cruce el número de este mismo comprobante.
+     */
+    public function crearComprobante(
+        int $tipoComprobanteId,
+        string $fecha,
+        array $lineas,
+        string $concepto,
+        ?string $moduloOrigen = null,
+        ?int $origenId = null,
+        ?string $documentoSoporte = null,
+        ?int $terceroId = null,
+        bool $contabilizarInmediato = true,
+        ?int $consecutivoManual = null,
+    ): Comprobante {
+        $lineas = array_map(fn (array $linea) => [
+            ...$linea,
+            'debito' => self::aDinero($linea['debito'] ?? 0),
+            'credito' => self::aDinero($linea['credito'] ?? 0),
+        ], $lineas);
+
+        $totalDebito = Dinero::sumarVarios(...array_column($lineas, 'debito'));
+        $totalCredito = Dinero::sumarVarios(...array_column($lineas, 'credito'));
+
+        if (! $totalDebito->igualA($totalCredito)) {
+            throw ValidationException::withMessages([
+                'lineas' => __('validation.custom.lineas.descuadrado', [
+                    'debito' => $totalDebito->aDecimalString(),
+                    'credito' => $totalCredito->aDecimalString(),
+                ]),
+            ]);
+        }
+
+        if (! $totalDebito->esPositivo()) {
+            throw ValidationException::withMessages([
+                'lineas' => __('validation.custom.lineas.sin_valor'),
+            ]);
+        }
+
+        // El reverso calca las líneas del original: debe poder anular un asiento aunque su cuenta ya no admita movimiento.
+        if ($moduloOrigen !== 'reverso') {
+            $this->exigirCuentasDeMovimiento(array_column($lineas, 'cuenta_id'));
+        }
+
+        $cuentasManual = null;
+        if ($moduloOrigen === 'manual') {
+            $cuentasManual = PlanCuenta::query()->whereIn('id', array_column($lineas, 'cuenta_id'))->get()->keyBy('id');
+            $this->exigirRequisitosParametrizados($lineas, $terceroId, $cuentasManual);
+        }
+
+        $periodo = $this->periodos->obtenerAbierto($fecha);
+
+        return DB::transaction(function () use (
+            $tipoComprobanteId, $fecha, $lineas, $concepto, $moduloOrigen, $origenId,
+            $documentoSoporte, $terceroId, $contabilizarInmediato, $totalDebito,
+            $totalCredito, $periodo, $consecutivoManual, $cuentasManual,
+        ) {
+            // Dentro de la transacción (no antes, como el diseño anterior): si algo falla después, el
+            // ROLLBACK también libera el consecutivo asignado — sin huecos en la numeración.
+            ['consecutivo' => $consecutivo, 'ciclo_numeracion' => $ciclo, 'codigo' => $codigoTipo] = $this->tiposComprobante->asignarConsecutivo(
+                $tipoComprobanteId,
+                $fecha,
+                $moduloOrigen === 'manual',
+                $consecutivoManual,
+            );
+
+            if ($cuentasManual !== null) {
+                $lineas = $this->marcarDocumentoCrucePropio($lineas, $cuentasManual);
+            }
+
+            $numeroPropio = NumeroComprobante::formatear($codigoTipo, $ciclo, $consecutivo);
+            $lineas = array_map(
+                fn (array $linea) => empty($linea['documento_cruce_propio']) ? $linea : [...$linea, 'documento_cruce' => $numeroPropio],
+                $lineas,
+            );
+
+            $comprobante = $this->comprobantes->crear([
+                'tipo_comprobante_id' => $tipoComprobanteId,
+                'consecutivo' => $consecutivo,
+                'ciclo_numeracion' => $ciclo,
+                'periodo_id' => $periodo->id,
+                'fecha' => $fecha,
+                'tercero_id' => $terceroId,
+                'concepto' => $concepto,
+                'modulo_origen' => $moduloOrigen,
+                'origen_id' => $origenId,
+                'documento_soporte' => $documentoSoporte,
+                'estado' => $contabilizarInmediato ? EstadoComprobante::Contabilizado : EstadoComprobante::Borrador,
+                'total_debito' => $totalDebito,
+                'total_credito' => $totalCredito,
+                'creado_por' => Auth::id(),
+            ]);
+
+            $this->asientos->crearVarias($comprobante->id, array_map(fn (array $linea) => [
+                'cuenta_id' => $linea['cuenta_id'],
+                'tercero_id' => $linea['tercero_id'] ?? $terceroId,
+                'centro_costo_id' => $linea['centro_costo_id'] ?? null,
+                'documento_cruce' => $linea['documento_cruce'] ?? null,
+                'fecha_vencimiento' => $linea['fecha_vencimiento'] ?? null,
+                'debito' => $linea['debito'],
+                'credito' => $linea['credito'],
+                'descripcion' => $linea['descripcion'] ?? $concepto,
+            ], $lineas));
+
+            if ($contabilizarInmediato) {
+                $this->comprobantes->actualizar($comprobante, [
+                    'contabilizado_por' => Auth::id(),
+                    'contabilizado_en' => now(),
+                ]);
+            }
+
+            $origen = $moduloOrigen ? " (origen: {$moduloOrigen}".($origenId ? " #{$origenId}" : '').')' : '';
+            $this->auditoria->registrarCreacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                'Comprobante #'.$comprobante->consecutivo.($contabilizarInmediato ? ' contabilizado' : ' creado en borrador')." por {$totalDebito->aDecimalString()}{$origen}",
+                $comprobante,
+                ['lineas' => count($lineas)],
+                $contabilizarInmediato ? AccionAuditoria::Contabilizar : AccionAuditoria::Crear,
+            );
+
+            return $comprobante;
+        });
+    }
+
+    /**
+     * Reversa un comprobante contabilizado generando uno nuevo con las líneas
+     * invertidas. El original NUNCA se elimina ni se modifica salvo su estado.
+     */
+    public function reversarComprobante(Comprobante $original, string $motivo): Comprobante
+    {
+        if (in_array($original->estado, [EstadoComprobante::Borrador, EstadoComprobante::Revisado], true)) {
+            return $this->anularSinEfecto($original, $motivo);
+        }
+
+        if ($original->estado !== EstadoComprobante::Contabilizado) {
+            throw ValidationException::withMessages([
+                'comprobante' => __('validation.custom.comprobante.no_contabilizado'),
+            ]);
+        }
+
+        if ($original->periodo->estado === EstadoPeriodo::Cerrado) {
+            throw ValidationException::withMessages([
+                'comprobante' => __('validation.custom.comprobante.periodo_cerrado'),
+            ]);
+        }
+
+        $lineasReverso = $original->lineas->map(fn ($linea) => [
+            'cuenta_id' => $linea->cuenta_id,
+            'tercero_id' => $linea->tercero_id,
+            'centro_costo_id' => $linea->centro_costo_id,
+            'documento_cruce' => $linea->documento_cruce,
+            'fecha_vencimiento' => $linea->fecha_vencimiento?->toDateString(),
+            'debito' => $linea->credito,
+            'credito' => $linea->debito,
+            'descripcion' => 'Reverso: '.$linea->descripcion,
+        ])->all();
+
+        return DB::transaction(function () use ($original, $motivo, $lineasReverso) {
+            $anteriores = $this->auditoria->instantanea($original);
+
+            $reverso = $this->crearComprobante(
+                $original->tipo_comprobante_id,
+                now()->toDateString(),
+                $lineasReverso,
+                'REVERSO - '.$motivo,
+                'reverso',
+                $original->id,
+                'Reverso de comprobante #'.$original->consecutivo,
+                $original->tercero_id,
+            );
+
+            if ($original->modulo_origen === 'manual') {
+                $this->reversarDocumentosTercero($original);
+            }
+
+            $this->comprobantes->actualizar($original, [
+                'comprobante_reverso_id' => $reverso->id,
+                'estado' => EstadoComprobante::Anulado,
+                'anulado_por' => Auth::id(),
+                'anulado_en' => now(),
+            ]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                'Comprobante #'.$original->consecutivo.' reversado por el #'.$reverso->consecutivo,
+                $original,
+                $anteriores,
+                $motivo,
+                AccionAuditoria::Reversar,
+            );
+
+            return $reverso;
+        });
+    }
+
+    /**
+     * Revisión de un asiento manual. Un borrador no afecta reportes, así que la revisión no cambia saldos; solo
+     * deja constancia de quién lo revisó antes de contabilizarlo.
+     */
+    public function revisar(Comprobante $comprobante): Comprobante
+    {
+        if ($comprobante->estado !== EstadoComprobante::Borrador) {
+            throw ValidationException::withMessages(['comprobante' => __('validation.custom.comprobante.no_borrador')]);
+        }
+
+        $this->periodos->obtenerAbierto($comprobante->fecha->toDateString());
+
+        return DB::transaction(function () use ($comprobante) {
+            $anteriores = $this->auditoria->instantanea($comprobante);
+
+            $comprobante = $this->comprobantes->actualizar($comprobante, [
+                'estado' => EstadoComprobante::Revisado,
+                'revisado_por' => Auth::id(),
+                'revisado_en' => now(),
+            ]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                'Comprobante #'.$comprobante->consecutivo.' revisado',
+                $comprobante,
+                $anteriores,
+                accion: AccionAuditoria::Revisar,
+            );
+
+            return $comprobante;
+        });
+    }
+
+    /** Publica un asiento revisado. Vuelve a comprobar el cuadre línea por línea: el total guardado no basta. */
+    public function contabilizar(Comprobante $comprobante): Comprobante
+    {
+        if ($comprobante->estado !== EstadoComprobante::Revisado) {
+            throw ValidationException::withMessages(['comprobante' => __('validation.custom.comprobante.no_revisado')]);
+        }
+
+        $this->periodos->obtenerAbierto($comprobante->fecha->toDateString());
+
+        $comprobante->loadMissing('lineas');
+        $this->exigirCuentasDeMovimiento($comprobante->lineas->pluck('cuenta_id')->all());
+
+        $debito = Dinero::sumarVarios(...$comprobante->lineas->pluck('debito')->all());
+        $credito = Dinero::sumarVarios(...$comprobante->lineas->pluck('credito')->all());
+
+        if (! $debito->igualA($credito) || ! $debito->igualA($comprobante->total_debito) || ! $credito->igualA($comprobante->total_credito)) {
+            throw ValidationException::withMessages(['comprobante' => __('validation.custom.comprobante.descuadrado_al_contabilizar')]);
+        }
+
+        return DB::transaction(function () use ($comprobante, $debito) {
+            $anteriores = $this->auditoria->instantanea($comprobante);
+
+            $comprobante = $this->comprobantes->actualizar($comprobante, [
+                'estado' => EstadoComprobante::Contabilizado,
+                'contabilizado_por' => Auth::id(),
+                'contabilizado_en' => now(),
+            ]);
+
+            if ($comprobante->modulo_origen === 'manual') {
+                $this->procesarDocumentosTerceroAlContabilizar($comprobante);
+            }
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                'Comprobante #'.$comprobante->consecutivo.' contabilizado por '.$debito->aDecimalString(),
+                $comprobante,
+                $anteriores,
+                accion: AccionAuditoria::Contabilizar,
+            );
+
+            return $comprobante;
+        });
+    }
+
+    /** Un borrador o revisado nunca llegó a los reportes: se anula sin reverso ni asiento. */
+    private function anularSinEfecto(Comprobante $comprobante, string $motivo): Comprobante
+    {
+        return DB::transaction(function () use ($comprobante, $motivo) {
+            $anteriores = $this->auditoria->instantanea($comprobante);
+
+            $comprobante = $this->comprobantes->actualizar($comprobante, [
+                'estado' => EstadoComprobante::Anulado,
+                'anulado_por' => Auth::id(),
+                'anulado_en' => now(),
+            ]);
+
+            $this->auditoria->registrarModificacion(
+                AuditoriaConstants::MODULO_CONTABILIDAD,
+                'Comprobante #'.$comprobante->consecutivo.' anulado sin efecto contable',
+                $comprobante,
+                $anteriores,
+                $motivo,
+                AccionAuditoria::Anular,
+            );
+
+            return $comprobante;
+        });
+    }
+
+    /**
+     * Conecta el comprobante manual al motor genérico de `DocumentoTerceroService`: una línea sobre una cuenta
+     * marcada `exige_tercero` + `exige_documento_cruce` (cartera o proveedores reales, no retenciones ni bancos)
+     * causa un documento con saldo la primera vez que aparece ese documento cruce, y lo cruza (abona) las veces
+     * siguientes. La dirección se deriva de la propia cuenta: `naturaleza` (débito/crédito) dice qué lado "aumenta"
+     * el saldo, y `tipo` (activo/pasivo) dice si el documento es por cobrar o por pagar. Corre en `contabilizar()`,
+     * no en `crearComprobante()`, porque un borrador no tiene efecto contable todavía.
+     */
+    private function procesarDocumentosTerceroAlContabilizar(Comprobante $comprobante): void
+    {
+        $comprobante->loadMissing(['lineas.cuenta', 'tipoComprobante']);
+
+        foreach ($comprobante->lineas as $linea) {
+            $cuenta = $linea->cuenta;
+
+            if (! $cuenta->esCarteraDeTerceros() || empty($linea->documento_cruce)) {
+                continue;
+            }
+
+            $terceroId = $linea->tercero_id ?? $comprobante->tercero_id;
+            $naturalezaDocumento = match ($cuenta->tipo) {
+                TipoCuenta::Activo => NaturalezaDocumento::PorCobrar,
+                TipoCuenta::Pasivo => NaturalezaDocumento::PorPagar,
+                default => throw ValidationException::withMessages([
+                    'comprobante' => __('validation.custom.comprobante.cuenta_no_apta_para_documento_cruce', ['cuenta' => $cuenta->codigo]),
+                ]),
+            };
+
+            $aumentaElSaldo = ($cuenta->naturaleza === NaturalezaCuenta::Debito && $linea->debito->esPositivo())
+                || ($cuenta->naturaleza === NaturalezaCuenta::Credito && $linea->credito->esPositivo());
+            $monto = $linea->debito->esPositivo() ? $linea->debito : $linea->credito;
+
+            if ($aumentaElSaldo) {
+                if ($this->documentosTercero->buscarPorNumero($terceroId, $naturalezaDocumento, $linea->documento_cruce)) {
+                    throw ValidationException::withMessages([
+                        'comprobante' => __('validation.custom.comprobante.documento_cruce_duplicado', ['documento' => $linea->documento_cruce]),
+                    ]);
+                }
+
+                $this->documentosTercero->crearDocumento(
+                    $this->terceros->buscarPorIdOFallar($terceroId),
+                    $naturalezaDocumento,
+                    $comprobante->tipoComprobante->codigo,
+                    $linea->documento_cruce,
+                    $comprobante->fecha->toDateString(),
+                    $linea->descripcion ?? $comprobante->concepto,
+                    $monto,
+                    'contabilidad_manual',
+                    $comprobante->id,
+                    planCuentaId: $cuenta->id,
+                    fechaVencimiento: $linea->fecha_vencimiento?->toDateString(),
+                    documentoSoporte: $comprobante->documento_soporte,
+                );
+            } else {
+                $existente = $this->documentosTercero->buscarParaCruce(
+                    $terceroId,
+                    $this->naturalezasDeCruce($cuenta->tipo),
+                    $linea->documento_cruce,
+                    $cuenta->id,
+                );
+
+                if (! $existente) {
+                    throw ValidationException::withMessages([
+                        'comprobante' => __('validation.custom.comprobante.documento_cruce_no_encontrado', ['documento' => $linea->documento_cruce]),
+                    ]);
+                }
+
+                $this->documentosTercero->aplicarValor(
+                    $existente->tercero,
+                    $existente->naturaleza,
+                    [['documento_tercero_id' => $existente->id, 'valor' => $monto]],
+                    'contabilidad_manual',
+                    $comprobante->id,
+                    $comprobante->fecha->toDateString(),
+                );
+            }
+        }
+    }
+
+    /**
+     * Saldos vivos que una línea puede cruzar en `$cuentaId`, con la misma regla que aplica
+     * `procesarDocumentosTerceroAlContabilizar()`: vacío si la cuenta no maneja documento cruce.
+     *
+     * @return Collection<int, DocumentoTercero>
+     */
+    public function documentosCruce(int $cuentaId, int $terceroId): Collection
+    {
+        $cuenta = PlanCuenta::query()->findOrFail($cuentaId);
+
+        if (! $cuenta->esCarteraDeTerceros() || ! in_array($cuenta->tipo, [TipoCuenta::Activo, TipoCuenta::Pasivo], true)) {
+            return collect();
+        }
+
+        return $this->documentosTercero->conSaldoParaCruce(
+            $terceroId,
+            $this->naturalezasDeCruce($cuenta->tipo),
+            $cuenta->id,
+            ContabilidadConstants::LIMITE_DOCUMENTOS_CRUCE,
+        );
+    }
+
+    /**
+     * Un abono a una cuenta de activo baja una cuenta por cobrar o un anticipo entregado al proveedor;
+     * en una de pasivo, una cuenta por pagar o un anticipo recibido del cliente.
+     *
+     * @return list<NaturalezaDocumento>
+     */
+    private function naturalezasDeCruce(TipoCuenta $tipo): array
+    {
+        return $tipo === TipoCuenta::Activo
+            ? [NaturalezaDocumento::PorCobrar, NaturalezaDocumento::AnticipoProveedor]
+            : [NaturalezaDocumento::PorPagar, NaturalezaDocumento::AnticipoCliente];
+    }
+
+    /**
+     * Deshace, al reversar, los efectos que `procesarDocumentosTerceroAlContabilizar()` causó: restaura el saldo
+     * de los documentos que este comprobante cruzó (abonó) y anula los que él mismo creó — salvo que alguno de
+     * esos ya tenga un abono vigente de otro origen, caso en el que se bloquea la reversa (ver `GastoService::anular`
+     * para el mismo guard, y `EgresoService::reversar` para el mismo patrón de restaurar saldo).
+     */
+    private function reversarDocumentosTercero(Comprobante $original): void
+    {
+        $documentosCreados = $this->documentosTercero->creadosPorOrigen('contabilidad_manual', $original->id);
+
+        foreach ($documentosCreados as $documento) {
+            if ($this->aplicacionesDocumento->existeVigentePara($documento->id)) {
+                throw ValidationException::withMessages([
+                    'comprobante' => __('validation.custom.comprobante.no_se_puede_reversar_documento_con_pagos', ['documento' => $documento->numero_documento]),
+                ]);
+            }
+        }
+
+        $vigentes = $this->aplicacionesDocumento->vigentesDe('contabilidad_manual', $original->id);
+
+        if ($vigentes->isNotEmpty()) {
+            $documentos = $this->documentosTercero->buscarVariosPorId($vigentes->pluck('documento_tercero_id')->unique()->all())->keyBy('id');
+
+            foreach ($vigentes as $aplicacion) {
+                $this->documentosTercero->incrementarValor(
+                    $documentos[$aplicacion->documento_tercero_id],
+                    $aplicacion->valor_aplicado,
+                    'contabilidad_manual_reverso',
+                    $original->id,
+                );
+            }
+
+            $this->aplicacionesDocumento->marcarReversadas($vigentes->pluck('id')->all());
+        }
+
+        foreach ($documentosCreados as $documento) {
+            $this->documentosTercero->anular($documento);
+        }
+    }
+
+    /**
+     * Cubre manuales y automáticos: una regla o parametrización que apunte a una cuenta mayor o inactiva falla aquí en
+     * vez de dejar un asiento que el balance no suma. Al contabilizar se repite porque la cuenta pudo cambiar en borrador.
+     */
+    private function exigirCuentasDeMovimiento(array $cuentaIds): void
+    {
+        $cuentas = $this->cuentas->paraValidarAsientos(array_values(array_unique($cuentaIds)));
+
+        foreach ($cuentaIds as $cuentaId) {
+            $cuenta = $cuentas[$cuentaId] ?? null;
+
+            $mensaje = match (true) {
+                $cuenta === null => __('validation.custom.plan_cuenta.no_disponible'),
+                ! $cuenta->permite_movimiento => __('validation.custom.plan_cuenta.no_admite_movimiento', ['cuenta' => $cuenta->codigo]),
+                ! $cuenta->activa => __('validation.custom.plan_cuenta.inactiva', ['cuenta' => $cuenta->codigo]),
+                default => null,
+            };
+
+            if ($mensaje !== null) {
+                throw ValidationException::withMessages(['lineas' => $mensaje]);
+            }
+        }
+    }
+
+    /**
+     * Cada cuenta declara qué exige al usarse en un asiento manual (centro de costo, tercero, documento cruce,
+     * vencimiento). El tercero se resuelve igual que al armar las líneas (`$linea['tercero_id'] ?? $terceroId`,
+     * el del comprobante si la línea no trae uno propio); documento cruce y vencimiento son propios de cada
+     * línea. Los flujos automáticos resuelven esos datos por su cuenta y no pasan por aquí.
+     *
+     * @param  Collection<int, PlanCuenta>  $cuentas
+     */
+    private function exigirRequisitosParametrizados(array $lineas, ?int $terceroId, Collection $cuentas): void
+    {
+        foreach ($lineas as $linea) {
+            $cuenta = $cuentas[$linea['cuenta_id']] ?? null;
+
+            if (! $cuenta) {
+                continue;
+            }
+
+            if ($cuenta->exige_centro_costo && empty($linea['centro_costo_id'])) {
+                throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.centro_costo_requerido')]);
+            }
+
+            // La cartera de terceros exige tercero y documento cruce aunque la cuenta no tenga las flags marcadas
+            // (nacen en false): de lo contrario `procesarDocumentosTerceroAlContabilizar()` la saltaría en silencio.
+            $esCarteraDeTerceros = $cuenta->esCarteraDeTerceros();
+
+            if (($cuenta->exige_tercero || $esCarteraDeTerceros) && empty($linea['tercero_id'] ?? $terceroId)) {
+                throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.tercero_requerido')]);
+            }
+
+            // Una línea que causa (aumenta el saldo) sin documento cruce toma el número del propio comprobante al crearse.
+            if (($cuenta->exige_documento_cruce || $esCarteraDeTerceros) && empty($linea['documento_cruce']) && ! self::aumentaElSaldo($cuenta, $linea)) {
+                throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.documento_cruce_requerido')]);
+            }
+
+            if ($cuenta->exige_vencimiento && empty($linea['fecha_vencimiento'])) {
+                throw ValidationException::withMessages(['lineas' => __('validation.custom.lineas.vencimiento_requerido')]);
+            }
+        }
+    }
+
+    /**
+     * El documento que nace en un comprobante manual es el comprobante mismo: la línea que causa la CxP/CxC sin un
+     * documento cruce digitado se marca `documento_cruce_propio` (igual que hacen gastos y anticipos al causar), y
+     * los pagos posteriores la cruzan con el número del comprobante.
+     *
+     * @param  Collection<int, PlanCuenta>  $cuentas
+     */
+    private function marcarDocumentoCrucePropio(array $lineas, Collection $cuentas): array
+    {
+        return array_map(function (array $linea) use ($cuentas) {
+            $cuenta = $cuentas[$linea['cuenta_id']] ?? null;
+
+            if ($cuenta && ($cuenta->exige_documento_cruce || $cuenta->esCarteraDeTerceros())
+                && empty($linea['documento_cruce']) && self::aumentaElSaldo($cuenta, $linea)) {
+                $linea['documento_cruce_propio'] = true;
+            }
+
+            return $linea;
+        }, $lineas);
+    }
+
+    private static function aumentaElSaldo(PlanCuenta $cuenta, array $linea): bool
+    {
+        return ($cuenta->naturaleza === NaturalezaCuenta::Debito && $linea['debito']->esPositivo())
+            || ($cuenta->naturaleza === NaturalezaCuenta::Credito && $linea['credito']->esPositivo());
+    }
+
+    // -------- Generadores automáticos por evento de negocio --------
+
+    /** `$terceroId` es el tercero del cliente dueño del crédito: el llamador lo resuelve (directo o precargado por lote) para no forzar aquí un acceso a la relación por fila. */
+    public function contabilizarDesembolsoCredito(Credito $credito, ?int $terceroId = null): ?Comprobante
+    {
+        // En una refinanciación el saldo tomado ya está en cartera: solo el dinero nuevo mueve caja y cartera.
+        $valor = $credito->valorDesembolsado();
+
+        if (! $valor->esPositivo()) {
+            return null;
+        }
+
+        $regla = $this->reglaActiva(EventoContable::DesembolsoCredito);
+
+        return $this->crearComprobante(
+            $regla->tipo_comprobante_id,
+            $credito->fecha_desembolso->toDateString(),
+            [
+                ['cuenta_id' => $regla->cuenta_debito_id, 'debito' => $valor, 'credito' => 0],
+                ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $valor],
+            ],
+            'Desembolso crédito #'.$credito->id,
+            'creditos',
+            $credito->id,
+            terceroId: $terceroId,
+        );
+    }
+
+    /**
+     * `$capital`/`$interes` se derivan en `PagoService::registrarPago()` a partir de
+     * `cuotas.valor_capital`/`valor_interes` (regla "interés primero") — el legado los
+     * sumaba de `pago_detalle`, que en este sistema no guarda ese desglose por línea.
+     * Se contabiliza `capital + interes` (lo efectivamente aplicado a cuotas) en la
+     * línea débito, no `pago.valor_pago`: si hay sobrante (que `PagoService` ya
+     * descarta silenciosamente), usar el valor completo del pago haría que el
+     * comprobante nunca cuadrara.
+     */
+    public function eventosContablesActivos(EventoContable ...$eventos): bool
+    {
+        foreach ($eventos as $evento) {
+            if ($this->reglas->activaParaEvento($evento) === null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Si hay algo que contabilizar, exige las tres reglas del recaudo (capital, interés y, si aplica, otros gastos):
+     * nunca se recauda en silencio sin asiento. `$terceroId` es el tercero del cliente dueño del pago: el llamador
+     * lo resuelve (directo o precargado por lote) para no forzar aquí un acceso a la relación por fila.
+     */
+    public function contabilizarRecaudoPago(Pago $pago, Dinero $capital, Dinero $interes, ?Dinero $otros = null, ?int $terceroId = null): ?Comprobante
+    {
+        $otros ??= Dinero::cero();
+
+        $aplicado = $capital->sumar($interes)->sumar($otros);
+        if (! $aplicado->esPositivo()) {
+            return null;
+        }
+
+        $reglaCapital = $this->reglaActiva(EventoContable::RecaudoCapital);
+        $reglaInteres = $this->reglaActiva(EventoContable::RecaudoInteres);
+        $reglaOtros = $otros->esPositivo() ? $this->reglaActiva(EventoContable::RecaudoOtrosGastos) : null;
+
+        $lineas = [
+            ['cuenta_id' => $reglaCapital->cuenta_debito_id, 'debito' => $aplicado, 'credito' => 0],
+        ];
+        if ($capital->esPositivo()) {
+            $lineas[] = ['cuenta_id' => $reglaCapital->cuenta_credito_id, 'debito' => 0, 'credito' => $capital];
+        }
+        if ($interes->esPositivo()) {
+            $lineas[] = ['cuenta_id' => $reglaInteres->cuenta_credito_id, 'debito' => 0, 'credito' => $interes];
+        }
+        if ($otros->esPositivo()) {
+            $lineas[] = ['cuenta_id' => $reglaOtros->cuenta_credito_id, 'debito' => 0, 'credito' => $otros];
+        }
+
+        return $this->crearComprobante(
+            $reglaCapital->tipo_comprobante_id,
+            $pago->fecha_pago->toDateString(),
+            $lineas,
+            'Recaudo pago #'.$pago->id,
+            'pagos',
+            $pago->id,
+            terceroId: $terceroId,
+        );
+    }
+
+    /**
+     * Comprobante de apertura de los saldos iniciales: una línea por saldo, con el tercero de su fila si lo trae
+     * (cuentas de cartera). `crearComprobante()` ya exige que Σdébito = Σcrédito — si el archivo no cuadra, esto
+     * lanza `ValidationException` y el llamador decide cómo reportarlo sin perder los saldos ya guardados.
+     *
+     * @param  list<array{cuenta_id: int, tercero_id: ?int, debito: Dinero, credito: Dinero}>  $lineas
+     */
+    public function contabilizarAperturaSaldos(array $lineas, string $fechaCorte, int $tipoComprobanteId, int $importacionId): Comprobante
+    {
+        return $this->crearComprobante(
+            $tipoComprobanteId,
+            $fechaCorte,
+            array_map(fn (array $linea) => [
+                'cuenta_id' => $linea['cuenta_id'],
+                'tercero_id' => $linea['tercero_id'],
+                'debito' => $linea['debito'],
+                'credito' => $linea['credito'],
+            ], $lineas),
+            'Apertura de saldos iniciales',
+            'saldos_iniciales',
+            $importacionId,
+        );
+    }
+
+    /**
+     * Comprobante de devengo (M15): una línea débito por tercero (interés corrido de sus cuotas del período,
+     * para que el auxiliar de la cuenta por cobrar quede por cliente) y una sola línea crédito con el total
+     * al ingreso. Las dos cuentas salen de la regla de `EventoContable::DevengoInteres`.
+     *
+     * @param  array<int, Dinero>  $totalPorTercero  tercero_id => interés devengado de sus cuotas
+     */
+    public function contabilizarDevengoInteres(array $totalPorTercero, string $fecha): Comprobante
+    {
+        $regla = $this->reglaActiva(EventoContable::DevengoInteres);
+
+        $total = Dinero::cero();
+        $lineas = [];
+
+        foreach ($totalPorTercero as $terceroId => $valor) {
+            $lineas[] = ['cuenta_id' => $regla->cuenta_debito_id, 'tercero_id' => $terceroId, 'debito' => $valor, 'credito' => 0];
+            $total = $total->sumar($valor);
+        }
+
+        $lineas[] = ['cuenta_id' => $regla->cuenta_credito_id, 'debito' => 0, 'credito' => $total];
+
+        return $this->crearComprobante(
+            $regla->tipo_comprobante_id,
+            $fecha,
+            $lineas,
+            'Devengo de interés corrido',
+            'devengo_interes',
+        );
+    }
+
+    private static function aDinero(Dinero|int|float|string $valor): Dinero
+    {
+        return $valor instanceof Dinero ? $valor : Dinero::desdePesos($valor);
+    }
+
+    /** Sin regla activa la operación no se confirma: nunca se desembolsa ni se recauda sin que quede su asiento. */
+    private function reglaActiva(EventoContable $evento): ReglaContabilizacion
+    {
+        $regla = $this->reglas->activaParaEvento($evento);
+
+        if ($regla === null) {
+            throw ValidationException::withMessages([
+                'contabilidad' => __('validation.custom.contabilidad.sin_regla_contable', ['evento' => $evento->etiqueta()]),
+            ]);
+        }
+
+        return $regla;
+    }
+}

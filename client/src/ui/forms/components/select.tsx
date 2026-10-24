@@ -1,0 +1,50 @@
+import type { ChangeEvent, FC } from 'react';
+import { useState } from 'react';
+
+import { FIELD_SIZE_CLASSES } from '../constants/field-size-classes';
+import type { SelectProps } from '../props/select-props';
+
+export const Select: FC<SelectProps> = ({
+    id,
+    name,
+    ariaLabel,
+    options,
+    placeholder = 'Selecciona una opción',
+    onChange,
+    className = '',
+    defaultValue = '',
+    placeholderSelectable = false,
+    disabled = false,
+    size = 'md',
+}) => {
+    const [selectedValue, setSelectedValue] = useState<string>(defaultValue);
+
+    const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
+        const value = event.target.value;
+        setSelectedValue(value);
+        onChange(value);
+    };
+
+    return (
+        <select
+            id={id}
+            name={name}
+            aria-label={ariaLabel}
+            disabled={disabled}
+            className={`${FIELD_SIZE_CLASSES[size]} w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${
+                disabled ? 'cursor-not-allowed bg-gray-100 text-gray-500 opacity-40 dark:bg-gray-800 dark:text-gray-400' : selectedValue ? 'text-gray-800 dark:text-white/90' : 'text-gray-400 dark:text-gray-400'
+            } ${className}`}
+            value={selectedValue}
+            onChange={handleChange}
+        >
+            <option value="" disabled={!placeholderSelectable} className="text-gray-700 dark:bg-gray-900 dark:text-gray-400">
+                {placeholder}
+            </option>
+            {options.map((option) => (
+                <option key={option.value} value={option.value} className="text-gray-700 dark:bg-gray-900 dark:text-gray-400">
+                    {option.label}
+                </option>
+            ))}
+        </select>
+    );
+};

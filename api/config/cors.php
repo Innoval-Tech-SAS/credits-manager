@@ -1,0 +1,21 @@
+<?php
+
+return [
+
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+
+    'allowed_methods' => ['*'],
+
+    'allowed_origins' => ['https://'.env('SANCTUM_STATEFUL_DOMAINS', 'app.ddasolucionescredicias.tech')],
+
+    'allowed_origins_patterns' => [],
+
+    'allowed_headers' => ['*'],
+
+    'exposed_headers' => ['Content-Disposition'],
+
+    'max_age' => 0,
+
+    'supports_credentials' => true,
+
+];
